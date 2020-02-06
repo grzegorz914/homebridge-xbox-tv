@@ -1,6 +1,6 @@
 # homebridge-xbox-tv
 [![npm](https://img.shields.io/npm/dt/homebridge-xbox-tv.svg)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://img.shields.io/npm/v/homebridge-xbox-tv.svg)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-denon-tv/pulls)
-[![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-config-ui-x.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
+[![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
 Plugin to control Microsoft game consoles in HomeKit as TV service.
 Tested with Xbox One X.
