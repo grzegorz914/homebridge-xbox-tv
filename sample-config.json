@@ -1,0 +1,45 @@
+{
+    "platform": "XboxTv",
+    "devices": [
+        {
+            "name": "Xbox One",
+            "host": "192.168.1.6",
+            "xboxliveid": "FD0000000000",
+            "switchInfoMenu": true,
+            "apps": [
+                {
+                    "name": "Game",
+                    "reference": ""
+                },
+                {
+                    "name": "TV",
+                    "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
+                },
+                {
+                    "name": "Dashboard",
+                    "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
+                },
+                {
+                    "name": "App",
+                    "reference": ""
+                },
+                {
+                    "name": "Spotify",
+                    "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
+                },
+                {
+                    "name": "Youtube",
+                    "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
+                },
+                {
+                    "name": "Netflix",
+                    "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
+                },
+                {
+                    "name": "Airserver",
+                    "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
+                }
+            ]
+        }
+    ]
+}

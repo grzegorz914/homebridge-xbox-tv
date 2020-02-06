@@ -1,0 +1,64 @@
+{
+  "pluginAlias": "XboxTv",
+  "pluginType": "platform",
+  "footerDisplay": "This plugin works with Xbox game console which is available [here](https://github.com/grzegorz914/homebridge-xbox-tv).",
+  "schema": {
+    "type": "object",
+    "properties": {
+          "devices": {
+        "title": "Devices",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Game console",
+        "required": true
+      },
+            "host": {
+              "title": "IP Address/Hostname",
+              "type": "string",
+              "required": true,
+              "format": "hostname"
+            },
+            "xboxliveid": {
+              "title": "Xbox Live ID",
+              "type": "string",
+              "default": "FD0000000000",
+              "required": true
+            },
+            "switchInfoMenu": {
+              "title": "Switch Info/Menu",
+              "type": "boolean",
+              "default": true,
+              "required": true
+            },
+            "apps": {
+              "title": "Apps",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "App name",
+                    "type": "string",
+                    "default": "Spotify",
+                    "required": true
+                  },
+                  "reference": {
+                    "title": "App reference",
+                    "type": "string",
+                    "default": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+                    "required": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
