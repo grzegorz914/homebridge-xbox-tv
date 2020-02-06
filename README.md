@@ -4,7 +4,7 @@
 
 Plugin to control Microsoft game consoles in HomeKit as TV service.
 Tested with Xbox One X.
-Present as TV service, schange inputs, volume/mute control, power control.
+Present as TV service, change apps, volume/mute control, power control.
 
 HomeBridge: https://github.com/nfarina/homebridge
 
