@@ -1,9 +1,10 @@
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const dataDelay = 1000;
+const tcpp = require('tcp-ping');
+const responseDelay = 1500;
 
-const Smartglass = require('xbox-smartglass-core-node')
+const Smartglass = require('xbox-smartglass-core-node');
 var SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
 var SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 var TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
@@ -47,7 +48,7 @@ class xboxTvPlatform {
 		setTimeout(function () {
 			me.log.debug('didFinishLaunching');
 		},
-			(this.devices.length + 1) * dataDelay);
+			(this.devices.length + 1) * responseDelay);
 	}
 }
 
@@ -65,6 +66,7 @@ class xboxTvDevice {
 		this.apps = device.apps;
 
 		//get Device info
+		this.getDeviceInfo();
 		this.manufacturer = device.manufacturer || 'Microsoft';
 		this.modelName = device.model || 'homebridge-xbox-tv';
 		this.serialNumber = device.serialNumber || 'SN00000003';
@@ -72,57 +74,87 @@ class xboxTvDevice {
 
 		//setup variablee
 		this.sgClient = Smartglass();
-		this.connection_status = false;
+		this.connectionStatus = false;
 		this.appReferences = new Array();
-
-		this.appsDir = ppath('xboxTv/');
-		this.appsFile = this.appsDir + 'apps_' + this.host.split('.').join('');
+		this.prefDir = ppath('xboxTv/');
+		this.appsFile = this.prefDir + 'apps_' + this.host.split('.').join('');
 
 		//check if prefs directory ends with a /, if not then add it
-		if (this.appsDir.endsWith('/') === false) {
-			this.appsDir = this.appsDir + '/';
+		if (this.prefDir.endsWith('/') === false) {
+			this.prefDir = this.prefDir + '/';
 		}
 
 		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.appsDir) === false) {
-			mkdirp(this.appsDir);
+		if (fs.existsSync(this.prefDir) === false) {
+			mkdirp(this.prefDir);
 		}
 
-		//Start Smartglass Client
-		var connect_client = function () {
-			var me = this;
-			if (this.sgClient._connection_status == false) {
-				this.sgClient.connect(this.host).then(function () {
-					me.log('Device: %s, succesfully connected!', me.host);
-					me.connection_status = true;
-					this.sgClient.addManager('system_input', SystemInputChannel())
-					this.sgClient.addManager('system_media', SystemMediaChannel())
-					this.sgClient.addManager('tv_remote', TvRemoteChannel())
-				}.bind(this), function (error) {
-					if (error) {
-						me.log('Device: %s, failed to connect, state: %s', me.host, error);
-					}
-					me.connection_status = false;
-				});
+		//Check net state of device
+		var me = this;
+		setInterval(function () {
+			tcpp.probe(me.host, me.port, (error, isAlive) => {
+				if (!isAlive && me.connectionStatus) {
+					me.log('Device: %s, state: Offline.', me.host);
+					me.connectionStatus = false;
+					callback(null, false);
+				} else if (isAlive && !me.connectionStatus) {
+					me.log('Device: %s, state: Online.', me.host);
+					me.connectionStatus = true;
+				}
+			});
 
-				this.sgClient.on('_on_timeout', function (message, xbox, remote, smartglass) {
-					me.connection_status = false;
-					me.log('Device: %s, connection timed out.', me.host)
-				}.bind(this, connect_client))
+			if (me.connectionStatus) {
+				me.sgClient.addManager('system_input', SystemInputChannel());
+				me.sgClient.addManager('system_media', SystemMediaChannel());
+				me.sgClient.addManager('tv_remote', TvRemoteChannel());
 			}
-		}.bind(this)
 
-		setInterval(connect_client, 5000)
-		connect_client()
+			me.log.debug('Device: %s, connection status: %s', me.host, me.sgClient._connection_status ? 'Connected' : 'Disconnected')
+		}.bind(this), 5000);
 
 		//Delay to wait for device info
-		setTimeout(this.prepereTvService.bind(this), dataDelay);
+		setTimeout(this.prepereTvService.bind(this), responseDelay);
 
 		var deviceName = this.name;
 		var uuid = UUIDGen.generate(deviceName);
 		this.tvAccesory = new Accessory(deviceName, uuid, hap.Accessory.Categories.TV);
 		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
 		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.tvAccesory]);
+	}
+
+	getDeviceInfo() {
+		var me = this;
+		if (me.connectionStatus) {
+			//me.sgClient.getManager('tv_remote').getConfiguration().then(function (configuration) {
+			//	me.log('Device: %s, get getConfiguration: %s', me.host, configuration)
+			//}, function (error) {
+			//	me.log('Device: %s, failed to get getConfiguration, error: %s', me.host, error)
+			//});
+
+			//me.sgClient.getManager('tv_remote').getHeadendInfo().then(function (configuration) {
+			//	me.log('Device: %s, get getHeadendInfo: %s', me.host, configuration)
+			//}, function (error) {
+			//	me.log('Device: %s, failed to get getHeadendInfo, error: %s', me.host, error)
+			//});
+
+			//me.sgClient.getManager('tv_remote').getLiveTVInfo().then(function (configuration) {
+			//	me.log('Device: %s, get getLiveTVInfo: %s', me.host, configuration)
+			//}, function (error) {
+			//	me.log('Device: %s, failed to get getLiveTVInfo, error: %s', me.host, error)
+			//});
+
+			//me.sgClient.getManager('tv_remote').getTunerLineups().then(function (configuration) {
+			//	me.log('Device: %s, get getTunerLineups: %s', me.host, configuration)
+			//}, function (error) {
+			//	me.log('Device: %s, failed to get getTunerLineups, error: %s', me.host, error)
+			//});
+
+			//me.sgClient.getManager('tv_remote').getAppChannelLineups().then(function (configuration) {
+			//	me.log('Device: %s, get getAppChannelLineups: %s', me.host, configuration)
+			//}, function (error) {
+			//	me.log('Device: %s, failed to get getAppChannelLineups, error: %s', me.host, error)
+			//});
+		}
 	}
 
 	//Prepare TV service 
@@ -250,42 +282,50 @@ class xboxTvDevice {
 
 	getPowerState(callback) {
 		var me = this;
-		if (this.sgClient._connection_status) {
-			var state = this.sgClient._connection_status;
+		if (me.connectionStatus) {
+			var state = (me.sgClient._connection_status == true);
 			me.log('Device: %s, get current Power state successfull, state: %s', me.host, state ? 'ON' : 'OFF');
-			callback(null, true);
+			callback(null, state);
 		} else {
-			me.log('Device: %s, get current Power state successfull, state: %s', me.host, state ? 'ON' : 'OFF');
+			me.log('Device: %s, get current Power state failed, not connected to network.', me.host);
 			callback(null, false);
 		}
 	}
 
 	setPowerState(state, callback) {
 		var me = this;
-		if (!this.sgClient._connection_status) {
-			this.sgClient.powerOn({
-				live_id: me.xboxliveid,
-				tries: 10,
-				ip: me.host
-			}).then(function (data) {
-				me.log('Device: %s booting, response: %s', me.host, data);
-				callback(null, true);
-			}, function (error) {
-				me.log.debug('Device: %s booting failed, error: %s', me.host, error);
-				callback(error);
-			});
-		} else {
-			if (state != 1) {
-				this.sgClient.powerOff().then(function (data) {
-					me.log('Device: %s, set new Power state successfull: %s', me.host, data ? 'OFF' : 'ON');
+		if (me.connectionStatus) {
+			if (me.sgClient._connection_status != true) {
+				me.sgClient.powerOn({
+					live_id: me.xboxliveid,
+					tries: 10,
+					ip: me.host
+				}).then(function (data) {
+					me.log('Device: %s booting, response: %s', me.host, data);
 					callback(null, true);
 				}, function (error) {
-					me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
+					me.log.debug('Device: %s booting failed, error: %s', me.host, error);
 					callback(error);
-				})
+				});
+			} else {
+				if (state != true) {
+					me.sgClient.powerOff().then(function (data) {
+						me.log('Device: %s, set new Power state successfull, new state: %s', me.host, data ? 'ON' : 'OFF');
+						me.sgClient._connection_status = false;
+						callback(null, true);
+					}, function (error) {
+						me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
+						callback(error);
+					});
+				} else {
+					callback(null, true);
+				}
 			}
+		} else {
+			me.log('Device: %s, set new Power state failed, not connected to network.', me.host);
 		}
 	}
+
 
 	getMute(callback) {
 		var me = this;
@@ -305,7 +345,7 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (this.sgClient._connection_status) {
+		if (me.connectionStatus) {
 			let appReference = this.sgClient._current_app;
 			for (let i = 0; i < me.appReferences.length; i++) {
 				if (appReference === me.appReferences[i]) {
@@ -317,14 +357,14 @@ class xboxTvDevice {
 			}
 			callback(null, appReference);
 		} else {
-			me.log('Device: %s, not reachable or Power Setting not set to Instant ON', me.host);
-			callback(null);
+			me.log('Device: %s, get current Input failed, not connected to network.', me.host);
+			callback(null, false);
 		}
 	}
 
 	setApp(callback, appReference) {
 		var me = this;
-		if (this.sgClient._connection_status) {
+		if (me.connectionStatus) {
 			me.getApp(function (error, currentAppReference) {
 				if (error) {
 					me.log.debug('Device: %s, can not get current App Reference. Might be due to a wrong settings in config, error: %s', me.host, error);
@@ -334,103 +374,113 @@ class xboxTvDevice {
 					if (currentAppReference == appReference) {
 						callback(null, appReference);
 					} else {
-						me.log('Device: %s, set new App successfull: %s', me.host, appReference);
+						me.log('Device: %s, set new App successfull, new App reference: %s', me.host, appReference);
 						callback(null, appReference);
 					}
 				}
 			});
+		} else {
+			me.log('Device: %s, set new App failed, not connected to network.', me.host);
 		}
 	}
 
 	setPowerMode(callback, state) {
 		var me = this;
-		var command = this.menuButton ? 'menu' : 'view';
-		me.log('Device: %s, send command: %s', me.host, command);
-		this.sgClient.getManager('system_input').sendCommand(command).then(function () { });
-		callback(null, state);
+		if (me.connectionStatus) {
+			var command = this.menuButton ? 'menu' : 'view';
+			me.log('Device: %s, send command: %s', me.host, command);
+			this.sgClient.getManager('system_input').sendCommand(command).then(function () { });
+		} else {
+			me.log('Device: %s, set new PowerModeState failed, not connected to network.', me.host);
+		}
 	}
 
 	volumeSelectorPress(remoteKey, callback) {
 		var me = this;
-		var command;
-		var type;
-		switch (remoteKey) {
-			case Characteristic.VolumeSelector.INCREMENT:
-				command = 'btn.vol_up';
-				type = 'tv_remote';
-				break;
-			case Characteristic.VolumeSelector.DECREMENT:
-				command = 'btn.vol_down';
-				type = 'tv_remote';
-				break;
+		if (me.connectionStatus) {
+			var command;
+			var type;
+			switch (remoteKey) {
+				case Characteristic.VolumeSelector.INCREMENT:
+					command = 'btn.vol_up';
+					type = 'tv_remote';
+					break;
+				case Characteristic.VolumeSelector.DECREMENT:
+					command = 'btn.vol_down';
+					type = 'tv_remote';
+					break;
+			}
+			me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
+			this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
+		} else {
+			me.log('Device: %s, set new Volume level failed, not connected to network.', me.host);
 		}
-		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
-		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
-		callback(null, scommand);
 	}
 
 
 	remoteKeyPress(remoteKey, callback) {
 		var me = this;
-		var command;
-		var type;
-
-		switch (state) {
-			case Characteristic.RemoteKey.PLAY_PAUSE:
-				command = 'playpause';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.REWIND:
-				command = 'rewind';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.FAST_FORWARD:
-				command = 'fast_forward';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.NEXT_TRACK:
-				command = 'next_track';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-				command = 'prev_track';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.ARROW_UP:
-				command = 'up';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_DOWN:
-				command = 'down';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_LEFT:
-				command = 'left';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_RIGHT:
-				command = 'right';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.SELECT:
-				command = 'a';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.EXIT:
-				command = 'nexus';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.BACK:
-				command = 'b';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.INFORMATION:
-				command = 'nexus';
-				type = 'system_input';
-				break;
+		if (me.connectionStatus) {
+			var command;
+			var type;
+			switch (state) {
+				case Characteristic.RemoteKey.PLAY_PAUSE:
+					command = 'playpause';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.REWIND:
+					command = 'rewind';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.FAST_FORWARD:
+					command = 'fast_forward';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.NEXT_TRACK:
+					command = 'next_track';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.PREVIOUS_TRACK:
+					command = 'prev_track';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.ARROW_UP:
+					command = 'up';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_DOWN:
+					command = 'down';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_LEFT:
+					command = 'left';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_RIGHT:
+					command = 'right';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.SELECT:
+					command = 'a';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.EXIT:
+					command = 'nexus';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.BACK:
+					command = 'b';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.INFORMATION:
+					command = 'nexus';
+					type = 'system_input';
+					break;
+			}
+			me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
+			this.sgClient.getManager(type).sendCommand(command).then(function () { });
+		} else {
+			me.log('Device: %s, set RemoteKey failed, not connected to network.', me.host);
 		}
-		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
-		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		callback(null, command);
 	}
 };
