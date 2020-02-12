@@ -90,14 +90,14 @@ class xboxTvDevice {
 		}
 
 		//Check net state of device
-		var me = this;
 		setInterval(function () {
-			tcpp.probe(me.host, me.port, (error, isAlive) => {
-				if (!isAlive && me.connectionStatus) {
+			var me = this;
+			tcpp.probe(me.host, 80, (error, state) => {
+				if (!state && me.connectionStatus) {
 					me.log('Device: %s, state: Offline.', me.host);
 					me.connectionStatus = false;
 					callback(null, false);
-				} else if (isAlive && !me.connectionStatus) {
+				} else if (state && !me.connectionStatus) {
 					me.log('Device: %s, state: Online.', me.host);
 					me.connectionStatus = true;
 				}
@@ -111,7 +111,7 @@ class xboxTvDevice {
 
 			me.log.debug('Device: %s, connection status: %s', me.host, me.sgClient._connection_status ? 'Connected' : 'Disconnected')
 		}.bind(this), 5000);
-
+		
 		//Delay to wait for device info
 		setTimeout(this.prepereTvService.bind(this), responseDelay);
 
