@@ -93,13 +93,20 @@ class xboxTvDevice {
 		setInterval(function () {
 			var me = this;
 			tcpp.probe(me.host, 80, (error, state) => {
-				if (!state && me.connectionStatus) {
+				if (!state) {
 					me.log('Device: %s, state: Offline.', me.host);
 					me.connectionStatus = false;
 					callback(null, false);
-				} else if (state && !me.connectionStatus) {
-					me.log('Device: %s, state: Online.', me.host);
-					me.connectionStatus = true;
+				} else {
+					if (me.connectionStatus) {
+						me.log('Device: %s, state: Offline.', me.host);
+						me.connectionStatus = false;
+						callback(null, false);
+					} else {
+						me.log('Device: %s, state: Online.', me.host);
+						me.connectionStatus = true;
+						callback(null, true);
+					}
 				}
 			});
 
