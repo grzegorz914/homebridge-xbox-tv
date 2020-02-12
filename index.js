@@ -101,8 +101,10 @@ class xboxTvDevice {
 						me.log('Device: %s, state: Offline.', me.host);
 						me.connectionStatus = false;
 					} else {
-						me.log('Device: %s, state: Online.', me.host);
-						me.connectionStatus = true;
+						(!me.connectionStatus) {
+							me.log('Device: %s, state: Online.', me.host);
+							me.connectionStatus = true;
+						}
 					}
 				}
 			});
