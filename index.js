@@ -96,8 +96,9 @@ class xboxTvDevice {
 		}
 
 		// Start Smartglass Client
+               var me = this;
 		this.sgClient.connect(this.host).then(function () {
-			this.log('Device: %s, name: %s, state: Connected', me.host, me.name);
+			me.log('Device: %s, name: %s, state: Connected', me.host, me.name);
 			this.connectionStatus = true;
 
 			this.sgClient.addManager('system_input', SystemInputChannel())
@@ -105,7 +106,7 @@ class xboxTvDevice {
 			this.sgClient.addManager('tv_remote', TvRemoteChannel())
 		}, function (error) {
 			if (error) {
-				this.log('Device: %s, name: %s, state: Disconnected, error: %s', me.host, me.name, error);
+				me.log('Device: %s, name: %s, state: Disconnected, error: %s', me.host, me.name, error);
 			}
 
 			this.sgClient.on('_on_console_status', function (response, device, smartglass) {
