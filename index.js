@@ -1,7 +1,7 @@
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const responseDelay = 1500;
+const responseDelay = 1000;
 
 const Smartglass = require('xbox-smartglass-core-node');
 var SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
@@ -96,34 +96,43 @@ class xboxTvDevice {
 		}
 
 		// Start Smartglass Client
-               var me = this;
-		this.sgClient.connect(this.host).then(function () {
-			me.log('Device: %s, name: %s, state: Connected', me.host, me.name);
-			this.connectionStatus = true;
+		var connect_client = function () {
+			var me = this;
+			if (this.sgClient._connection_status == false) {
+				this.sgClient = Smartglass()
 
-			this.sgClient.addManager('system_input', SystemInputChannel())
-			this.sgClient.addManager('system_media', SystemMediaChannel())
-			this.sgClient.addManager('tv_remote', TvRemoteChannel())
-		}, function (error) {
-			if (error) {
-				me.log('Device: %s, name: %s, state: Disconnected, error: %s', me.host, me.name, error);
+				this.sgClient.connect(this.host).then(function () {
+					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+					me.connectionStatus = true
+
+					this.sgClient.addManager('system_input', SystemInputChannel())
+					this.sgClient.addManager('system_media', SystemMediaChannel())
+					this.sgClient.addManager('tv_remote', TvRemoteChannel())
+				}.bind(this), function (error) {
+					if (error) {
+						me.log('Device: %s, name: %s, state: Offline, test error: %s', me.host, me.name, error);
+					}
+					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
+					me.connectionStatus = false
+				});
+
+				this.sgClient.on('_on_timeout', function (connect_client) {
+					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
+					me.connectionStatus = false
+				}.bind(this, connect_client))
+
+				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
+					if (response.packet_decoded.protected_payload.apps[0] != undefined) {
+						me.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id
+					}
+				}.bind(this));
 			}
+		}.bind(this);
 
-			this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-				if (response.packet_decoded.protected_payload.apps[0] != undefined) {
-					this.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					this.currentPowerState = true;
-				}
-			});
-		}.bind(this));
+		setInterval(connect_client, 15000);
+		connect_client();
 
-		this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-			this.connectionStatus = false;
-			this.sgClient.disconnect();
-		}.bind(this));
-
-		// End Start Smartglass Client
-
+		this.currentPowerState = this.sgClient._connection_status;
 
 		//Delay to wait for device info
 		setTimeout(this.prepereTvService.bind(this), responseDelay);
@@ -307,53 +316,73 @@ class xboxTvDevice {
 
 	setPowerState(state, callback) {
 		var me = this;
-		if (me.currentPowerState == state) {
-			callback(null, state);
-			return;
-		} else {
-			if (!me.currentPowerState) {
-				this.sgClient.powerOn({
-					live_id: me.xboxliveid,
-					tries: 10,
-					ip: me.host
-				}).then(function (data) {
-					me.log('Device: %s booting, response: %s', me.host, data);
-					callback(null, true);
-				}, function (error) {
-					me.log.debug('Device: %s booting failed, error: %s', me.host, error);
-					callback(error);
-				});
+		me.getPowerState(function (error, currentPowerState) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
 			} else {
-				this.sgClient.powerOff().then(function (data) {
-					me.log('Device: %s, set new Power state successfull, new state: OFF', me.host);
-					me.currentPowerState = false;
-					callback(null, true);
-				}, function (error) {
-					me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
-					callback(error);
-				});
+				if (state !== currentPowerState) {
+					if (state) {
+						this.sgClient.powerOn({
+							live_id: me.xboxliveid,
+							tries: 10,
+							ip: me.host
+						}).then(function (data) {
+							me.log('Device: %s booting, response: %s', me.host, data);
+							me.currentPowerState = true;
+							callback(null, true);
+						}, function (error) {
+							me.log.debug('Device: %s booting failed, error: %s', me.host, error);
+							callback(error);
+						});
+					} else {
+						this.sgClient.powerOff().then(function (data) {
+							me.log('Device: %s, set new Power state successfull, new state: OFF', me.host);
+							me.sgClient._connection_status = false;
+							callback(null, true);
+						}, function (error) {
+							me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
+							callback(error);
+						});
+					}
+				}
 			}
-		}
+		});
 	}
 
 
 	getMute(callback) {
 		var me = this;
-		callback(null, me.currentMuteState);
+		var state = me.currentMuteState;
+		me.log('Device: %s, get current Mute state successfull: %s', me.host, state ? 'ON' : 'OFF');
+		callback(null, state);
 	}
 
 	setMute(state, callback) {
 		var me = this;
-		callback(null, state);
+		me.getMute(function (error, currentMuteState) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Mute for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				if (state !== currentMuteState) {
+					me.log('Device: %s, set new Mute state successfull: %s', me.host, state ? 'ON' : 'OFF');
+					callback(null, state);
+				}
+			}
+		});
 	}
 
 	getVolume(callback) {
 		var me = this;
-		callback(null, me.currentVolume);
+		var volume = me.currentVolume;
+		me.log('Device: %s, get current Volume level successfull: %s', me.host, volume);
+		callback(null, volume);
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
+		me.log('Device: %s, set new Volume level successfull: %s', me.host, volume);
 		callback(null, volume);
 	}
 
@@ -382,11 +411,18 @@ class xboxTvDevice {
 
 	setApp(callback, appReference) {
 		var me = this;
-		if (appReference !== me.currentAppReference) {
-			me.log('Device: %s, set new App successfull, new App reference: %s', me.host, appReference);
-			me.currentAppReference = appReference;
-			callback(null, appReference);
-		}
+		me.getChannel(function (error, currentAppReference) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Input. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				if (appReference !== currentAppReference) {
+					me.log('Device: %s, set new App successfull, new App reference: %s', me.host, appReference);
+					me.currentAppReference = appReference;
+					callback(null, appReference);
+				}
+			}
+		});
 	}
 
 	setPowerModeSelection(state, callback) {
