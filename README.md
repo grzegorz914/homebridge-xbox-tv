@@ -1,22 +1,21 @@
 # homebridge-xbox-tv
+
 [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Plugin to control Microsoft game consoles in HomeKit as TV service.
-Tested with Xbox One X.
-Present as TV service, change apps, volume/mute control, power control.
+Plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X. Present as TV service, change apps, volume/mute control, power control.
 
-HomeBridge: https://github.com/nfarina/homebridge
+Homebridge: https://github.com/homebridge/homebridge
 
-# Installation
+## Installation
 
-1. Install homebridge using: npm install -g homebridge
-2. Install homebridge-denon-tv using: npm install -g homebridge-xbox-tv
-3. Update your configuration file. See sample-config.json in this repository for a sample. 
+1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
+2. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv`
+3. Update your configuration file. See `sample-config.json` in this repository for a sample. 
 
-# Configuration
+## Configuration
 
- <pre>
+```json
 {
     "platform": "XboxTv",
     "devices": [
@@ -62,9 +61,9 @@ HomeBridge: https://github.com/nfarina/homebridge
         }
     ]
 }
-</pre>
+```
 
-# Limitations:
+## Limitations:
 
-# Whats new:
+## Whats new:
 https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md
