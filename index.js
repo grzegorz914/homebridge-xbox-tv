@@ -1,7 +1,6 @@
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const responseDelay = 1000;
 
 const Smartglass = require('xbox-smartglass-core-node');
 var SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
@@ -44,11 +43,8 @@ class xboxTvPlatform {
 	removeAccessory() { }
 	didFinishLaunching() {
 		var me = this;
-		setTimeout(function () {
-			me.log.debug('didFinishLaunching');
-		},
-			(this.devices.length + 1) * responseDelay);
-	}
+		me.log.debug('didFinishLaunching');
+	};
 }
 
 class xboxTvDevice {
@@ -133,9 +129,7 @@ class xboxTvDevice {
 		connect_client();
 
 		this.currentPowerState = this.sgClient._connection_status;
-
-		//Delay to wait for device info
-		setTimeout(this.prepereTvService.bind(this), responseDelay);
+		this.prepereTvService();
 	}
 
 
@@ -316,27 +310,27 @@ class xboxTvDevice {
 
 	setPowerState(state, callback) {
 		var me = this;
+		var smartglass = Smartglass();
 		me.getPowerState(function (error, currentPowerState) {
 			if (error) {
 				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				if (state !== currentPowerState) {
-					if (state) {
-						this.sgClient.powerOn({
-							live_id: me.xboxliveid,
-							tries: 10,
-							ip: me.host
-						}).then(function (data) {
-							me.log('Device: %s booting, response: %s', me.host, data);
-							me.currentPowerState = true;
-							callback(null, true);
-						}, function (error) {
-							me.log.debug('Device: %s booting failed, error: %s', me.host, error);
-							callback(error);
-						});
-					} else {
-						this.sgClient.powerOff().then(function (data) {
+				if (!currentPowerState) {
+					smartglass.powerOn({
+						live_id: me.xboxliveid,
+						tries: 10,
+						ip: me.host
+					}).then(function (data) {
+						me.log('Device: %s booting, response: %s', me.host, data);
+						callback(null, true);
+					}, function (error) {
+						me.log.debug('Device: %s booting failed, error: %s', me.host, error);
+						callback(error);
+					});
+				} else {
+					if (!state) {
+						me.sgClient.powerOff().then(function (data) {
 							me.log('Device: %s, set new Power state successfull, new state: OFF', me.host);
 							me.sgClient._connection_status = false;
 							callback(null, true);
@@ -344,6 +338,8 @@ class xboxTvDevice {
 							me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
 							callback(error);
 						});
+					} else {
+						callback(null, true);
 					}
 				}
 			}
