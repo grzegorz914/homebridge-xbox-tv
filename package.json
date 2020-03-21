@@ -1,7 +1,7 @@
 {
   "name": "homebridge-xbox-tv",
-  "version": "0.0.106",
-  "description": "Plugin for Homebridge (https://github.com/nfarina/homebridge) to controll Xbox game console.",
+  "version": "0.0.115",
+  "description": "Plugin for Homebridge (https://github.com/homebridge/homebridge) to controll Xbox game console.",
   "license": "MIT",
   "author": "grzegorz914",
   "homepage": "https://github.com/grzegorz914/homebridge-xbox-tv#readme",
@@ -16,7 +16,7 @@
   "engines": {
     "node": ">=10.0.0",
     "homebridge": ">=0.4.50",
-    "hap-nodejs": ">=0.4.13"
+    "hap-nodejs": ">=0.4.51"
   },
   "dependencies": {
     "mkdirp": ">=0.5.1",
@@ -35,5 +35,4 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   }
-}
 }
