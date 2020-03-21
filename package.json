@@ -19,7 +19,7 @@
     "hap-nodejs": ">=0.4.51"
   },
   "dependencies": {
-    "mkdirp": ">=0.5.1",
+    "mkdirp": ">=1.0.0",
     "persist-path": ">=1.0.2",
     "xbox-smartglass-core-node": ">=0.6.3"
   },
