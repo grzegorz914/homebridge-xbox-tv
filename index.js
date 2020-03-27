@@ -9,7 +9,7 @@ var TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote')
 
 var Accessory, Service, Characteristic, UUIDGen;
 
-module.exports = function(homebridge) {
+module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
@@ -292,8 +292,7 @@ class xboxTvDevice {
 						callback()
 					});
 				this.tvAccesory.addService(tempInput);
-				if (!tempInput.linked)
-					this.tvService.addLinkedService(tempInput);
+				this.tvService.addLinkedService(tempInput);
 				this.appReferences.push(appReference);
 			}
 
@@ -383,24 +382,16 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (!me.currentPowerState) {
-			me.tvService
-				.getCharacteristic(Characteristic.ActiveIdentifier)
-				.updateValue(0);
-			callback(null, me.currentAppReference);
-			return;
-		} else {
-			var appReference = me.currentAppReference;
-			for (let i = 0; i < me.appReferences.length; i++) {
-				if (appReference === me.appReferences[i]) {
-					me.tvService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(i);
-					me.log('Device: %s, get current App successfull: %s', me.host, appReference);
-					me.currentAppReference = appReference;
-				}
+		var appReference = me.currentAppReference;
+		for (let i = 0; i < me.appReferences.length; i++) {
+			if (appReference === me.appReferences[i]) {
+				me.tvService
+					.getCharacteristic(Characteristic.ActiveIdentifier)
+					.updateValue(i);
+				me.log('Device: %s, get current App successfull: %s', me.host, appReference);
+				me.currentAppReference = appReference;
+				callback(null, appReference);
 			}
-			callback(null, appReference);
 		}
 	}
 
