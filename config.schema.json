@@ -20,6 +20,7 @@
             "host": {
               "title": "IP Address/Hostname",
               "type": "string",
+              "default": "192.168.1.6",
               "required": true,
               "format": "hostname"
             },
@@ -32,8 +33,8 @@
             "switchInfoMenu": {
               "title": "Switch Info/Menu",
               "type": "boolean",
-              "default": true,
-              "required": true
+              "default": false,
+              "required": false
             },
             "apps": {
               "title": "Apps",
