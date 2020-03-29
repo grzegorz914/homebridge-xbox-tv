@@ -5,20 +5,20 @@
   "schema": {
     "type": "object",
     "properties": {
-          "devices": {
+      "devices": {
         "title": "Devices",
         "type": "array",
         "items": {
           "type": "object",
           "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "default": "Game console",
-        "required": true
-      },
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "default": "Game console",
+              "required": true
+            },
             "host": {
-              "title": "IP Address/Hostname",
+              "title": "IP Address",
               "type": "string",
               "default": "192.168.1.6",
               "required": true,

@@ -1,8 +1,9 @@
 'use strict';
 
-let Accessory, Service, Characteristic, hap, UUIDGen;const ppath = require('persist-path');
+let Accessory, Service, Characteristic, hap, UUIDGen;
 const fs = require('fs');
 const mkdirp = require('mkdirp');
+const path = require('path');
 
 const Smartglass = require('xbox-smartglass-core-node');
 var SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
@@ -22,7 +23,7 @@ module.exports = homebridge => {
 class xboxTvPlatform {
 	constructor(log, config, api) {
 		// only load if configured
-		if (!config) {
+		if (!config || !Array.isArray(config.devices)) {
 			log('No configuration found for homebridge-xbox-tv');
 			return;
 		}
@@ -39,7 +40,11 @@ class xboxTvPlatform {
 
 			for (let i = 0, len = this.config.devices.length; i < len; i++) {
 				let deviceName = this.config.devices[i];
-				this.tvAccessories.push(new xboxTvDevice(log, deviceName, api));
+				if (!deviceName.name) {
+					this.log.warn('Device Name Missing')
+				} else {
+					this.tvAccessories.push(new denonTvDevice(log, deviceName, api));
+				}
 			}
 			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
 		}
@@ -81,9 +86,9 @@ class xboxTvDevice {
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInfoMenuState = false;
-		this.prefDir = ppath('xboxTv/');
-		this.appsFile = this.prefDir + 'apps_' + this.host.split('.').join('');
-		this.devInfoFile = this.prefDir + 'info_' + this.host.split('.').join('');
+		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
+		this.appsFile = this.prefDir + '/' + 'apps_' + this.host.split('.').join('');
+		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
 
 		this.sgClient = Smartglass();
 
