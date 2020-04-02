@@ -1,6 +1,6 @@
 'use strict';
 
-let Accessory, Service, Characteristic, hap, UUIDGen;
+let Accessory, Service, Characteristic, UUIDGen;
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const path = require('path');
@@ -293,13 +293,13 @@ class xboxTvDevice {
 
 				tempInput
 					.getCharacteristic(Characteristic.ConfiguredName)
-					.on('set', (name, callback) => {
-						this.apps[appReference] = name;
+					.on('set', (newAppName, callback) => {
+						this.apps[appReference] = newAppName;
 						fs.writeFile(this.appsFile, JSON.stringify(this.apps), (error) => {
 							if (error) {
 								this.log.debug('Device: %s, can not write new App name, error: %s', this.host, error);
 							} else {
-								this.log('Device: %s, saved new App successfull, name: %s reference: %s', this.host, name, appReference);
+								this.log('Device: %s, saved new App successfull, name: %s reference: %s', this.host, newAppName, appReference);
 							}
 						});
 						callback()
