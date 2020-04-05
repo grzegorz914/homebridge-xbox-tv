@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/xbox.png" height="140"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/xbox.png" height="140"></a>
 </p>
 
 <span align="center">
@@ -26,6 +26,10 @@ Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X
 3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` 
 
 ## Configuration
+
+<p align="left">
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="100"></a>
+</p>
 
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 
