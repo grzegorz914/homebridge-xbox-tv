@@ -78,19 +78,20 @@ class xboxTvDevice {
 		this.firmwareRevision = device.firmwareRevision || 'FW00000003';
 
 		//setup variablee
-		this.connectionStatus = false;
 		this.appReferences = new Array();
+		this.connectionStatus = false;
 		this.currentPowerState = false;
-		this.currentAppReference = '';
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
+		this.currentAppReference = '';
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.appsFile = this.prefDir + '/' + 'apps_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
 
-		this.sgClient = Smartglass();
+		this.sgClient = false;
+		this.sgClient = new Smartglass();
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -106,15 +107,14 @@ class xboxTvDevice {
 		var connect_client = function () {
 			var me = this;
 			if (this.sgClient._connection_status == false) {
-				this.sgClient = Smartglass();
 
 				this.sgClient.connect(this.host).then(function () {
 					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
 					me.connectionStatus = true;
 
-					this.sgClient.addManager('system_input', SystemInputChannel())
-					this.sgClient.addManager('system_media', SystemMediaChannel())
-					this.sgClient.addManager('tv_remote', TvRemoteChannel())
+					this.sgClient.addManager('system_input', SystemInputChannel());
+					this.sgClient.addManager('system_media', SystemMediaChannel());
+					this.sgClient.addManager('tv_remote', TvRemoteChannel());
 				}.bind(this), function (error) {
 					if (error) {
 						me.log('Device: %s, name: %s, state: Offline, test error: %s', me.host, me.name, error);
@@ -334,6 +334,7 @@ class xboxTvDevice {
 						ip: me.host
 					}).then(function (data) {
 						me.log('Device: %s booting, response: %s', me.host, data);
+						me.currentPowerState = true;
 						callback(null, true);
 					}, function (error) {
 						me.log.debug('Device: %s booting failed, error: %s', me.host, error);
@@ -344,6 +345,7 @@ class xboxTvDevice {
 						me.sgClient.powerOff().then(function (data) {
 							me.log('Device: %s, set new Power state successfull, new state: OFF', me.host);
 							me.sgClient._connection_status = false;
+							me.currentPowerState = false;
 							callback(null, true);
 						}.bind(this), function (error) {
 							me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
@@ -395,22 +397,29 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		var appReference = me.currentAppReference;
-		for (let i = 0; i < me.appReferences.length; i++) {
-			if (appReference === me.appReferences[i]) {
-				me.tvService
-					.getCharacteristic(Characteristic.ActiveIdentifier)
-					.updateValue(i);
-				me.log('Device: %s, get current App successfull: %s', me.host, appReference);
-				me.currentAppReference = appReference;
-				callback(null, appReference);
+		if (me.currentPowerState == false) {
+			me.tvService
+				.getCharacteristic(Characteristic.ActiveIdentifier)
+				.updateValue(0);
+			callback(null);
+		} else {
+			var appReference = me.currentAppReference;
+			for (let i = 0; i < me.appReferences.length; i++) {
+				if (appReference == me.appReferences[i]) {
+					me.tvService
+						.getCharacteristic(Characteristic.ActiveIdentifier)
+						.updateValue(i);
+					me.log('Device: %s, get current App successfull: %s', me.host, appReference);
+					me.currentAppReference = appReference;
+				}
 			}
+			callback(null, appReference);
 		}
 	}
 
 	setApp(callback, appReference) {
 		var me = this;
-		me.getChannel(function (error, currentAppReference) {
+		me.getApp(function (error, currentAppReference) {
 			if (error) {
 				me.log.debug('Device: %s, can not get current Input. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
