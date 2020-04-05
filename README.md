@@ -16,7 +16,7 @@ Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X
 
 ## Package
 
-1. [Homebridge](https://github.com/homebridge/homebridge)
+1. <a href="https://github.com/homebridge/homebridge"><img src="https://raw.githubusercontent.com/homebridge/branding/master/logos/homebridge-color-round-stylized.png" height="40"></a>[Homebridge](https://github.com/homebridge/homebridge)
 2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
 
 ## Installation
