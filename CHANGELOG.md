@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.1.2 (05.04.2020)
+- some improvements
+
 ## 0.1.1 (05.04.2020)
 - update README.md
 - update sample-config.json
