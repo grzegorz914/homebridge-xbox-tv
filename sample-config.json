@@ -1,43 +1,62 @@
 {
-    "platform": "XboxTv",
-    "devices": [
+    "bridge": {
+        "name": "Homebridge",
+        "username": "AA:BB:CC:DD:EE:FF",
+        "manufacturer": "homebridge.io",
+        "model": "homebridge",
+        "port": 9100,
+        "pin": "123-45-678"
+    },
+    "description": "HomeKit Bridge",
+    "ports": {
+        "start": 9101,
+        "end": 9150,
+        "comment": "In this section set the port for Homebridge accessories."
+    },
+    "accessories": [],
+    "platforms": [
         {
-            "name": "Game Console",
-            "host": "192.168.1.6",
-            "xboxliveid": "FD0000000000",
-            "switchInfoMenu": true,
-            "apps": [
+            "platform": "XboxTv",
+            "devices": [
                 {
-                    "name": "Game",
-                    "reference": ""
-                },
-                {
-                    "name": "TV",
-                    "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
-                },
-                {
-                    "name": "Dashboard",
-                    "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
-                },
-                {
-                    "name": "App",
-                    "reference": ""
-                },
-                {
-                    "name": "Spotify",
-                    "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
-                },
-                {
-                    "name": "Youtube",
-                    "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
-                },
-                {
-                    "name": "Netflix",
-                    "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
-                },
-                {
-                    "name": "Airserver",
-                    "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
+                    "name": "Game Console",
+                    "host": "192.168.1.6",
+                    "xboxliveid": "FD0000000000",
+                    "switchInfoMenu": true,
+                    "apps": [
+                        {
+                            "name": "Game",
+                            "reference": ""
+                        },
+                        {
+                            "name": "TV",
+                            "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
+                        },
+                        {
+                            "name": "Dashboard",
+                            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
+                        },
+                        {
+                            "name": "App",
+                            "reference": ""
+                        },
+                        {
+                            "name": "Spotify",
+                            "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
+                        },
+                        {
+                            "name": "Youtube",
+                            "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
+                        },
+                        {
+                            "name": "Netflix",
+                            "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
+                        },
+                        {
+                            "name": "Airserver",
+                            "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
+                        }
+                    ]
                 }
             ]
         }

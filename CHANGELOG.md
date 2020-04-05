@@ -1,5 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.1.1 (05.04.2020)
+- update README.md
+- update sample-config.json
+
 ## 0.1.0 (29.03.2020)
 - fixes crash if no device name defined
 - fixed config.schema.json

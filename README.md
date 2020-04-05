@@ -3,15 +3,19 @@
 [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
+##This plugin is in development phase and some functions not working correct.
+
 Plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X. Present as TV service, change apps, volume/mute control, power control.
 
 Homebridge: https://github.com/homebridge/homebridge
+Homebridge Config UI X: https://github.com/oznu/homebridge-config-ui-x
 
 ## Installation
 
 1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv`
-3. Update your configuration file. See `sample-config.json` in this repository for a sample. 
+2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
+3. Install homebridge-lgwebos-tv using: `npm install -g homebridge-xbox-tv`
+4. Use Homebridge Config UI X to configure the plugin(strongly recomended) or update your configuration file manually. See `sample-config.json` in this repository for a sample.
 
 ## Configuration
 
