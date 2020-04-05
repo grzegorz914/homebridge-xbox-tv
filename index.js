@@ -6,9 +6,9 @@ const mkdirp = require('mkdirp');
 const path = require('path');
 
 const Smartglass = require('xbox-smartglass-core-node');
-var SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
-var SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
-var TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
+const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
+const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
+const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
@@ -52,7 +52,7 @@ class xboxTvPlatform {
 
 	configureAccessory() {
 		this.log.debug('configureAccessory');
-	 }
+	}
 	didFinishLaunching() {
 		this.log.debug('didFinishLaunching');
 	}
@@ -106,11 +106,11 @@ class xboxTvDevice {
 		var connect_client = function () {
 			var me = this;
 			if (this.sgClient._connection_status == false) {
-				this.sgClient = Smartglass()
+				this.sgClient = Smartglass();
 
 				this.sgClient.connect(this.host).then(function () {
 					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
-					me.connectionStatus = true
+					me.connectionStatus = true;
 
 					this.sgClient.addManager('system_input', SystemInputChannel())
 					this.sgClient.addManager('system_media', SystemMediaChannel())
@@ -120,17 +120,17 @@ class xboxTvDevice {
 						me.log('Device: %s, name: %s, state: Offline, test error: %s', me.host, me.name, error);
 					}
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
-					me.connectionStatus = false
+					me.connectionStatus = false;
 				});
 
 				this.sgClient.on('_on_timeout', function (connect_client) {
 					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
-					me.connectionStatus = false
-				}.bind(this, connect_client))
+					me.connectionStatus = false;
+				}.bind(this, connect_client));
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-					if (response.packet_decoded.protected_payload.apps[0] != undefined) {
-						me.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id
+					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
+						me.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 					}
 				}.bind(this));
 			}
@@ -302,7 +302,7 @@ class xboxTvDevice {
 								this.log('Device: %s, saved new App successfull, name: %s reference: %s', this.host, newAppName, appReference);
 							}
 						});
-						callback()
+						callback();
 					});
 				this.tvAccesory.addService(tempInput);
 				this.tvService.addLinkedService(tempInput);
@@ -345,7 +345,7 @@ class xboxTvDevice {
 							me.log('Device: %s, set new Power state successfull, new state: OFF', me.host);
 							me.sgClient._connection_status = false;
 							callback(null, true);
-						}, function (error) {
+						}.bind(this), function (error) {
 							me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
 							callback(error);
 						});
