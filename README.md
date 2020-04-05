@@ -11,7 +11,7 @@
 
 ## This plugin is in development phase and some functions not working correct.
 
-Plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X. Present as TV service, change apps, volume/mute control, power control.
+Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X. Present as TV service, change apps, volume/mute control, power control, RC control.
 
 </span>
 
