@@ -38,27 +38,30 @@ class xboxTvPlatform {
 			if (this.version < 2.1) {
 				throw new Error('Unexpected API version.');
 			}
-
-			for (let i = 0, len = this.devices.length; i < len; i++) {
-				let deviceName = this.devices[i];
-				if (!deviceName.name) {
-					this.log.warn('Device Name Missing')
-				} else {
-					this.tvAccessories.push(new xboxTvDevice(log, deviceName, api));
-				}
-			}
 			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
 		}
 	}
 
-	configureAccessory(accessory) {
-		this.log.debug('configureAccessory');
-		if (this.tvAccessories) {
-            this.tvAccessories.push(accessory);
-        }
-	}
 	didFinishLaunching() {
 		this.log.debug('didFinishLaunching');
+		for (let i = 0, len = this.devices.length; i < len; i++) {
+			let deviceName = this.devices[i];
+			if (!deviceName.name) {
+				this.log.warn('Device Name Missing')
+			} else {
+				this.tvAccessories.push(new xboxTvDevice(this.log, deviceName, this.api));
+			}
+		}
+	}
+	configureAccessory(platformAccessory) {
+		this.log.debug('configureAccessory');
+		if (this.tvAccessories) {
+			this.tvAccessories.push(platformAccessory);
+		}
+	}
+	removeAccessory(platformAccessory) {
+		this.log.debug('removeAccessory');
+		this.api.unregisterPlatformAccessories('homebridge-openwebif-tv', 'OpenWebIfTv', [platformAccessory]);
 	}
 }
 
