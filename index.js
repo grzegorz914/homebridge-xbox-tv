@@ -51,8 +51,11 @@ class xboxTvPlatform {
 		}
 	}
 
-	configureAccessory() {
+	configureAccessory(accessory) {
 		this.log.debug('configureAccessory');
+		if (this.tvAccessories) {
+            this.tvAccessories.push(accessory);
+        }
 	}
 	didFinishLaunching() {
 		this.log.debug('didFinishLaunching');
