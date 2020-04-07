@@ -44,20 +44,12 @@ Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X
             "switchInfoMenu": true,
             "apps": [
                 {
-                    "name": "Game",
-                    "reference": ""
-                },
-                {
                     "name": "TV",
                     "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
                 },
                 {
                     "name": "Dashboard",
                     "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
-                },
-                {
-                    "name": "App",
-                    "reference": ""
                 },
                 {
                     "name": "Spotify",
