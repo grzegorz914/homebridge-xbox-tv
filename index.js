@@ -88,7 +88,6 @@ class xboxTvDevice {
 		this.appReferences = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
-		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentAppReference = '';
@@ -189,7 +188,7 @@ class xboxTvDevice {
 	prepareTvService() {
 		this.log.debug('prepereTvService');
 		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
-		
+
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
