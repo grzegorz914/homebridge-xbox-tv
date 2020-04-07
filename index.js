@@ -260,7 +260,7 @@ class xboxTvDevice {
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.appsFile));
 		} catch (err) {
-			this.log.debug('Device: %s, inputs file does not exist', this.host)
+			this.log.debug('Device: %s, apps file does not exist', this.host)
 		}
 
 		this.apps.forEach((app, i) => {
@@ -425,7 +425,7 @@ class xboxTvDevice {
 		var me = this;
 		me.getApp(function (error, currentAppReference) {
 			if (error) {
-				me.log.debug('Device: %s, can not get current Input. Might be due to a wrong settings in config, error: %s', me.host, error);
+				me.log.debug('Device: %s, can not get current App. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				if (appReference !== currentAppReference) {
