@@ -32,7 +32,7 @@ Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X
 </p>
 
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
-
+2. `xboxliveid` You can get this in the console settings.
 ```json
 {
     "platform": "XboxTv",
