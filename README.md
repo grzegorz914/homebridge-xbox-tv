@@ -10,9 +10,15 @@
 
 ## This plugin is in development phase and some functions not working correct.
 
-Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X. Present as TV service, change apps, volume/mute control, power control, RC control.
+Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X.
 
 </span>
+
+## Info
+1. The Volume/Mute and RC/Media is possible after You go to RC Control app on iPhone/iPad.
+2. Volume and Mute can be changed using hardware buttons on iPhone/iPad.
+3. RC/Media control function available from RC Control app on iPhone/iPad
+4. Siri control using siri command.
 
 ## Package
 
