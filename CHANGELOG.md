@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.1.12 (13.04.2020)
+- fixed memory leak.
+
 ## 0.1.9 (07.04.2020)
 - fixed store of positin in HomeKit fav.
 
