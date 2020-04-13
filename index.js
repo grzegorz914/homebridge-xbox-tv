@@ -1,6 +1,4 @@
-'use strict';
-
-let Accessory, Service, Characteristic, UUIDGen;
+'use strict'
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const path = require('path');
@@ -9,6 +7,8 @@ const Smartglass = require('xbox-smartglass-core-node');
 const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/systeminput');
 const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
+
+let Accessory, Service, Characteristic, UUIDGen;
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
