@@ -129,11 +129,6 @@ class xboxTvDevice {
 					me.connectionStatus = false;
 				});
 
-				this.sgClient.once('_on_timeout', function (connect_client) {
-					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
-					me.connectionStatus = false;
-				}.bind(this, setInterval));
-
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
 					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 						me.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id;
