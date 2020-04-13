@@ -129,7 +129,7 @@ class xboxTvDevice {
 					me.connectionStatus = false;
 				});
 
-				this.sgClient.on('_on_timeout', function (connect_client) {
+				this.sgClient.once('_on_timeout', function (connect_client) {
 					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
 					me.connectionStatus = false;
 				}.bind(this, setInterval));
