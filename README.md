@@ -10,7 +10,7 @@
 
 ## This plugin is in development phase and some functions not working correct.
 
-Control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X.
+Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X.
 
 </span>
 
