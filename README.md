@@ -5,7 +5,7 @@
 <span align="center">
 
 # Homebridge Xbox TV
-[![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
+[![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
 Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X.
@@ -18,9 +18,12 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 2. Volume and Mute can be changed using hardware buttons on iPhone/iPad.
 3. RC/Media control function available from RC Control app on iPhone/iPad.
 4. Siri control using siri command.
+5. Power ON/OFF short press tile in HomeKit app.`Device must be in Instant Power Mode ON`
+6. Change Inputs/Apps after loong press tile in HomeKit app.
+
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/RC.png" height="140"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/homekit.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/inputs.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/RC.png" height="300"></a>
 </p>
 
 ## Package
@@ -37,7 +40,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 2. `xboxliveid` You can get this in the console settings.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="100"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="250"></a>
 </p>
 
 ```json
