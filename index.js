@@ -114,7 +114,7 @@ class xboxTvDevice {
 			var me = this;
 			if (this.sgClient._connection_status == false) {
 
-				this.sgClient.connect(this.host).then(function () {
+				this.sgClient.connect(me.host).then(function () {
 					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
 					me.connectionStatus = true;
 
@@ -128,6 +128,11 @@ class xboxTvDevice {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
 				});
+
+				this.sgClient.on('_on_timeout', function (setInterval) {
+					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
+					me.connectionStatus = false;
+				}.bind(this, setInterval));
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
 					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
@@ -144,41 +149,6 @@ class xboxTvDevice {
 	}
 
 
-	getDeviceInfo() {
-		var me = this;
-		setTimeout(() => {
-			//me.sgClient.getManager('tv_remote').getConfiguration().then(function (configuration) {
-			//	me.log('Device: %s, get getConfiguration: %s', me.host, configuration)
-			//}, function (error) {
-			//	me.log('Device: %s, failed to get getConfiguration, error: %s', me.host, error)
-			//});
-
-			//me.sgClient.getManager('tv_remote').getHeadendInfo().then(function (configuration) {
-			//	me.log('Device: %s, get getHeadendInfo: %s', me.host, configuration)
-			//}, function (error) {
-			//	me.log('Device: %s, failed to get getHeadendInfo, error: %s', me.host, error)
-			//});
-
-			//me.sgClient.getManager('tv_remote').getLiveTVInfo().then(function (configuration) {
-			//	me.log('Device: %s, get getLiveTVInfo: %s', me.host, configuration)
-			//}, function (error) {
-			//	me.log('Device: %s, failed to get getLiveTVInfo, error: %s', me.host, error)
-			//});
-
-			//me.sgClient.getManager('tv_remote').getTunerLineups().then(function (configuration) {
-			//	me.log('Device: %s, get getTunerLineups: %s', me.host, configuration)
-			//}, function (error) {
-			//	me.log('Device: %s, failed to get getTunerLineups, error: %s', me.host, error)
-			//});
-
-			//me.sgClient.getManager('tv_remote').getAppChannelLineups().then(function (configuration) {
-			//	me.log('Device: %s, get getAppChannelLineups: %s', me.host, configuration)
-			//}, function (error) {
-			//	me.log('Device: %s, failed to get getAppChannelLineups, error: %s', me.host, error)
-			//});
-		}, 300);
-	}
-
 	//Prepare TV service 
 	prepareTvService() {
 		this.log.debug('prepereTvService');
@@ -193,10 +163,10 @@ class xboxTvDevice {
 			.on('set', this.setPowerState.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
+			.on('get', this.getApp.bind(this))
 			.on('set', (inputIdentifier, callback) => {
 				this.setApp(callback, this.appReferences[inputIdentifier]);
-			})
-			.on('get', this.getApp.bind(this));
+			});
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.remoteKeyPress.bind(this));
@@ -396,7 +366,7 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (me.currentPowerState == false) {
+		if (!me.currentPowerState) {
 			me.tvService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
