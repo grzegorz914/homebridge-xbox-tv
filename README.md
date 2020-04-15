@@ -43,7 +43,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 2. `xboxliveid` You can get this in the console settings.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="250"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="150"></a>
 </p>
 
 ```json
