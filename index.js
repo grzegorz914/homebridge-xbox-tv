@@ -89,7 +89,7 @@ class xboxTvDevice {
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentAppReference = '';
+		this.currentAppReference = null;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.appsFile = this.prefDir + '/' + 'apps_' + this.host.split('.').join('');
@@ -248,7 +248,7 @@ class xboxTvDevice {
 			}
 
 			//if reference not null or empty add the app
-			if (appReference !== undefined && appReference !== null && appReference !== '') {
+			if (appReference !== undefined && appReference !== null) {
 				appReference = appReference.replace(/\s/g, ''); // remove all white spaces from the string
 
 				let tempInput = new Service.InputSource(appReference, 'app' + i);
@@ -276,7 +276,6 @@ class xboxTvDevice {
 				this.tvService.addLinkedService(tempInput);
 				this.appReferences.push(appReference);
 			}
-
 		});
 	}
 
@@ -367,7 +366,7 @@ class xboxTvDevice {
 		} else {
 			var appReference = me.currentAppReference;
 			for (let i = 0; i < me.appReferences.length; i++) {
-				if (appReference == me.appReferences[i]) {
+				if (appReference === me.appReferences[i]) {
 					me.tvService
 						.getCharacteristic(Characteristic.ActiveIdentifier)
 						.updateValue(i);
