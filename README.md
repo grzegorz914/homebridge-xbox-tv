@@ -33,7 +33,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 ## Installation
 1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
 2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
-3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv`.
+3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` or search for `Xbox TV` in Config UI X.
 
 ## Configuration console
 1. [Device must be in Instant Power-ON Mode](https://support-origin.xbox.com/en-ZA/xbox-one/console/learn-about-power-modes)
