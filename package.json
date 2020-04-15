@@ -1,7 +1,7 @@
 {
   "name": "homebridge-xbox-tv",
-  "version": "0.1.31",
-  "description": "Plugin for Homebridge (https://github.com/homebridge/homebridge) to controll Xbox game console.",
+  "version": "0.1.32",
+  "description": "Homebridge plugin (https://github.com/homebridge/homebridge) to control Xbox game consoles.",
   "license": "MIT",
   "author": "grzegorz914",
   "homepage": "https://github.com/grzegorz914/homebridge-xbox-tv#readme",

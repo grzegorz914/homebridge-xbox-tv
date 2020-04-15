@@ -34,7 +34,6 @@ class xboxTvPlatform {
 
 		if (api) {
 			this.api = api;
-
 			if (this.version < 2.1) {
 				throw new Error('Unexpected API version.');
 			}
@@ -61,7 +60,7 @@ class xboxTvPlatform {
 	}
 	removeAccessory(platformAccessory) {
 		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories('homebridge-openwebif-tv', 'OpenWebIfTv', [platformAccessory]);
+		this.api.unregisterPlatformAccessories('homebridge-xbox-tv', 'XboxTv', [platformAccessory]);
 	}
 }
 
