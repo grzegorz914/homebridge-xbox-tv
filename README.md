@@ -15,7 +15,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 ## Info
 0. This plugin is in development phase and some functions may be not working correct.
 1. Volume/Mute and RC/Media is possible after You go to RC Control app on iPhone/iPad.
-2. Power ON/OFF short press tile in HomeKit app.`Device must be in Instant Power Mode ON`
+2. Power ON/OFF short press tile in HomeKit app.
 3. Inputs/Apps can be changed after loong press tile in HomeKit app and select from the list.
 4. Volume/Mute can be changed using hardware buttons on iPhone/iPad.
 5. RC/Media control function available from RC Control app on iPhone/iPad.
@@ -35,7 +35,10 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
 3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv`.
 
-## Configuration
+## Configuration console
+1. [Device must be in Instant Power-ON Mode](https://support-origin.xbox.com/en-ZA/xbox-one/console/learn-about-power-modes)
+
+## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. `xboxliveid` You can get this in the console settings.
 
