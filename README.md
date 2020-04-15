@@ -19,7 +19,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 3. Inputs/Apps can be changed after loong press tile in HomeKit app and select from the list.
 4. Volume/Mute can be changed using hardware buttons on iPhone/iPad.
 5. RC/Media control function available from RC app on iPhone/iPad.
-6. Siri control using siri command.
+6. Siri control using Siri command.
 
 
 <p align="left">
