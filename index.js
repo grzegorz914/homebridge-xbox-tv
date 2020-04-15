@@ -68,9 +68,9 @@ class xboxTvDevice {
 	constructor(log, device, api) {
 		this.log = log;
 		this.api = api;
+		this.device = device;
 
 		// devices configuration
-		this.device = device;
 		this.name = device.name;
 		this.host = device.host;
 		this.xboxliveid = device.xboxliveid;
