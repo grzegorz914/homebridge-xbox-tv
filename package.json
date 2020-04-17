@@ -14,7 +14,7 @@
   },
   "main": "index.js",
   "engines": {
-    "node": ">=10.0.0",
+    "node": ">=10.17.0",
     "homebridge": ">=0.4.50",
     "hap-nodejs": ">=0.4.51"
   },
