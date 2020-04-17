@@ -374,7 +374,7 @@ class xboxTvDevice {
 					me.currentAppReference = appReference;
 				}
 			}
-			callback(null, appReference);
+			callback();
 		}
 	}
 
@@ -388,7 +388,7 @@ class xboxTvDevice {
 				if (appReference !== currentAppReference) {
 					me.log('Device: %s, set new App successfull, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
-					callback(null, appReference);
+					callback();
 				}
 			}
 		});
