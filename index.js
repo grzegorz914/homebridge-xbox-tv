@@ -374,7 +374,7 @@ class xboxTvDevice {
 					me.currentAppReference = appReference;
 				}
 			}
-			callback();
+			callback(null);
 		}
 	}
 
@@ -388,7 +388,7 @@ class xboxTvDevice {
 				if (appReference !== currentAppReference) {
 					me.log('Device: %s, set new App successfull, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
-					callback();
+					callback(null);
 				}
 			}
 		});
@@ -406,7 +406,7 @@ class xboxTvDevice {
 			type = 'system_input';
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDDEN' : 'SHOW', command);
+		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDE' : 'SHOW', command);
 		me.currentInfoMenuState = !me.currentInfoMenuState;
 		callback(null, state);
 	}
@@ -427,7 +427,7 @@ class xboxTvDevice {
 		}
 		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
 		me.log('Device: %s, send RC Command (Volume button) successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
-		callback(null, remoteKey);
+		callback(null);
 	}
 
 
@@ -491,6 +491,6 @@ class xboxTvDevice {
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
 		me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
-		callback(null, remoteKey);
+		callback(null);
 	}
 };
