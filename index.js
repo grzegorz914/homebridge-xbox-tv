@@ -123,11 +123,10 @@ class xboxTvDevice {
 					this.sgClient.addManager('tv_remote', TvRemoteChannel());
 				}.bind(this), function (error) {
 					if (error) {
-						me.log('Device: %s, name: %s, state: Offline, test error: %s', me.host, me.name, error);
+						me.log('Device: %s, name: %s, state: Offline, error: %s', me.host, me.name, error);
+						me.connectionStatus = false;
+						me.currentPowerState = false;
 					}
-					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
-					me.connectionStatus = false;
-					me.currentPowerState = false;
 				});
 
 				this.sgClient.on('_on_timeout', function (setInterval) {
