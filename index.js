@@ -405,8 +405,8 @@ class xboxTvDevice {
 			command = me.switchInfoMenu ? 'nexus' : 'menu';
 			type = 'system_input';
 		}
-		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDDEN' : 'SHOW', command);
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
+		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDDEN' : 'SHOW', command);
 		me.currentInfoMenuState = !me.currentInfoMenuState;
 		callback(null, state);
 	}
@@ -425,8 +425,8 @@ class xboxTvDevice {
 				type = 'tv_remote';
 				break;
 		}
-		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
 		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
+		me.log('Device: %s, send RC Command (Volume button) successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
 		callback(null, remoteKey);
 	}
 
@@ -489,8 +489,8 @@ class xboxTvDevice {
 				type = 'system_input';
 				break;
 		}
-		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
+		me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
 		callback(null, remoteKey);
 	}
 };
