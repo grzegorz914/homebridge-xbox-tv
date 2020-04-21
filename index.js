@@ -90,7 +90,6 @@ class xboxTvDevice {
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentAppReference = null;
-		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.appsFile = this.prefDir + '/' + 'apps_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
@@ -393,20 +392,22 @@ class xboxTvDevice {
 		});
 	}
 
-	setPowerModeSelection(state, callback) {
+	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
 		var command;
 		var type;
-		if (me.currentInfoMenuState) {
-			command = 'b';
+	        switch (remoteKey) {
+			case Characteristic.PowerModeSelection.SHOW:
+				command = me.switchInfoMenu ? 'nexus' : 'menu';
 			type = 'system_input';
-		} else {
-			command = me.switchInfoMenu ? 'nexus' : 'menu';
-			type = 'system_input';
+				break;
+			case Characteristic.PowerModeSelection.HIDE:
+				command = 'b';
+			type = 'system_input';;
+				break;
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDE' : 'SHOW', command);
-		me.currentInfoMenuState = !me.currentInfoMenuState;
+		me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, remoteKey, command);
 		callback(null, state);
 	}
 
@@ -426,7 +427,7 @@ class xboxTvDevice {
 		}
 		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
 		me.log('Device: %s, send RC Command (Volume button) successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
-		callback(null);
+		callback(null, remoteKey);
 	}
 
 
@@ -490,6 +491,6 @@ class xboxTvDevice {
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
 		me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
-		callback(null);
+		callback(null, remoteKey);
 	}
 };
