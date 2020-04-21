@@ -149,7 +149,7 @@ class xboxTvDevice {
 	//Prepare TV service 
 	prepareTvService() {
 		this.log.debug('prepereTvService');
-		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
+		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.name));
 
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
