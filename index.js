@@ -376,7 +376,7 @@ class xboxTvDevice {
 		}
 	}
 
-	setApp(callback, appReference) {
+	setApp(appReference, callback) {
 		var me = this;
 		me.getApp(function (error, currentAppReference) {
 			if (error) {
@@ -408,7 +408,7 @@ class xboxTvDevice {
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
 		me.log('Device: %s, setPowerModeSelection successful, state: %s, command: %s', me.host, remoteKey, command);
-		callback(null, state);
+		callback(null, remoteKey);
 	}
 
 	setVolumeSelector(remoteKey, callback) {
