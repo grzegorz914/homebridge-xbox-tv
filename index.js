@@ -268,7 +268,7 @@ class xboxTvDevice {
 								this.log('Device: %s, saved new App successful, name: %s reference: %s', this.host, newAppName, appReference);
 							}
 						});
-						callback();
+						callback(null, newAppName);
 					});
 				this.tvAccesory.addService(tempInput);
 				this.tvService.addLinkedService(tempInput);
