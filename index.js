@@ -162,7 +162,7 @@ class xboxTvDevice {
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getApp.bind(this))
 			.on('set', (inputIdentifier, callback) => {
-				this.setApp(callback, this.appReferences[inputIdentifier]);
+				this.setApp(this.appReferences[inputIdentifier], callback);
 			});
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
