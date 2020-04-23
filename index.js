@@ -356,12 +356,16 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		let appReference = me.currentAppReference;
-		for (let i = 0; i < me.appReferences.length; i++) {
-			if (appReference === me.appReferences[i]) {
-				me.log('Device: %s, get current App successful: %s', me.host, appReference);
-				me.currentAppReference = appReference;
-				callback(null, i);
+		if (!me.currentPowerState) {
+			callback(null, 0);
+		} else {
+			let appReference = me.currentAppReference;
+			for (let i = 0; i < me.appReferences.length; i++) {
+				if (appReference === me.appReferences[i]) {
+					me.log('Device: %s, get current App successful: %s', me.host, appReference);
+					me.currentAppReference = appReference;
+					callback(null, i);
+				}
 			}
 		}
 	}
