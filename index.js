@@ -362,8 +362,6 @@ class xboxTvDevice {
 				me.log('Device: %s, get current App successful: %s', me.host, appReference);
 				me.currentAppReference = appReference;
 				callback(null, i);
-			} else {
-				callback(null, 0);
 			}
 		}
 	}
