@@ -375,8 +375,8 @@ class xboxTvDevice {
 				me.log.debug('Device: %s, can not get current App. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
+				let appReference = me.inputReferences[inputIdentifier];
 				if (me.appReferences[inputIdentifier] !== currentAppReference) {
-					let appReference = me.inputReferences[inputIdentifier];
 					me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
 					callback(null, inputIdentifier);
