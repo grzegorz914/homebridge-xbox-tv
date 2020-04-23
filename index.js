@@ -83,7 +83,7 @@ class xboxTvDevice {
 		this.serialNumber = device.serialNumber || 'SN00000003';
 		this.firmwareRevision = device.firmwareRevision || 'FW00000003';
 
-		//setup variablee
+		//setup variables
 		this.appReferences = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
@@ -279,14 +279,14 @@ class xboxTvDevice {
 
 	getPowerState(callback) {
 		var me = this;
-		var state = me.currentPowerState;
+		let state = me.currentPowerState;
 		me.log('Device: %s, get current Power state successful, state: %s', me.host, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
 	setPowerState(state, callback) {
 		var me = this;
-		var smartglass = Smartglass();
+		let smartglass = Smartglass();
 		me.getPowerState(function (error, currentPowerState) {
 			if (error) {
 				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
@@ -321,7 +321,7 @@ class xboxTvDevice {
 
 	getMute(callback) {
 		var me = this;
-		var state = me.currentMuteState;
+		let state = me.currentMuteState;
 		me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
@@ -343,7 +343,7 @@ class xboxTvDevice {
 
 	getVolume(callback) {
 		var me = this;
-		var volume = me.currentVolume;
+		let volume = me.currentVolume;
 		me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
 		callback(null, volume);
 	}
@@ -356,23 +356,15 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (!me.currentPowerState) {
-			me.tvService
-				.getCharacteristic(Characteristic.ActiveIdentifier)
-				.updateValue(0);
-			callback(null);
-		} else {
-			var appReference = me.currentAppReference;
-			for (let i = 0; i < me.appReferences.length; i++) {
-				if (appReference === me.appReferences[i]) {
-					me.tvService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(i);
-					me.log('Device: %s, get current App successful: %s', me.host, appReference);
-					me.currentAppReference = appReference;
-				}
+		let appReference = me.currentAppReference;
+		for (let i = 0; i < me.appReferences.length; i++) {
+			if (appReference === me.appReferences[i]) {
+				me.log('Device: %s, get current App successful: %s', me.host, appReference);
+				me.currentAppReference = appReference;
+				callback(null, i);
+			} else {
+				callback(null, 0);
 			}
-			callback(null);
 		}
 	}
 
@@ -394,8 +386,8 @@ class xboxTvDevice {
 
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		var command;
-		var type;
+		let command;
+		let type;
 		switch (remoteKey) {
 			case Characteristic.PowerModeSelection.SHOW:
 				command = me.switchInfoMenu ? 'nexus' : 'menu';
@@ -413,8 +405,8 @@ class xboxTvDevice {
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
-		var command;
-		var type;
+		let command;
+		let type;
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
 				command = 'btn.vol_up';
@@ -433,8 +425,8 @@ class xboxTvDevice {
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
-		var command;
-		var type;
+		let command;
+		let type;
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.PLAY_PAUSE:
 				command = 'playpause';
