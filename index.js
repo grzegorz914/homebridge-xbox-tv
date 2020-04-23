@@ -161,9 +161,7 @@ class xboxTvDevice {
 
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getApp.bind(this))
-			.on('set', (inputIdentifier, callback) => {
-				this.setApp(this.appReferences[inputIdentifier], callback);
-			});
+			.on('set', this.setApp.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.setRemoteKey.bind(this));
@@ -370,17 +368,18 @@ class xboxTvDevice {
 		}
 	}
 
-	setApp(appReference, callback) {
+	setApp(inputIdentifier, callback) {
 		var me = this;
 		me.getApp(function (error, currentAppReference) {
 			if (error) {
 				me.log.debug('Device: %s, can not get current App. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				if (appReference !== currentAppReference) {
+				if (me.appReferences[inputIdentifier] !== currentAppReference) {
+					let appReference = me.inputReferences[inputIdentifier];
 					me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
-					callback(null);
+					callback(null, inputIdentifier);
 				}
 			}
 		});
