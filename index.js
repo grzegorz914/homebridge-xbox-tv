@@ -376,7 +376,7 @@ class xboxTvDevice {
 				callback(error);
 			} else {
 				let appReference = me.inputReferences[inputIdentifier];
-				if (appReferences !== currentAppReference) {
+				if (appReference !== currentAppReference) {
 					me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
 					callback(null, inputIdentifier);
