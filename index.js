@@ -354,7 +354,7 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (!me.connectionStatus || !me.currentPowerState) {
+		if (!me.connectionStatus) {
 			callback(null, 0);
 		} else {
 			let appReference = me.currentAppReference;
