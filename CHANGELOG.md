@@ -1,5 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.2.1 (27.04.2020)
+- add Siri volume control
+- add Slider (Brightness) volume control
+
 ## 0.1.39 (21.04.2020)
 - different fixes.
 

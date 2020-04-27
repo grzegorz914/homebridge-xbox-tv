@@ -8,13 +8,14 @@ const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/syste
 const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
 
-let Accessory, Service, Characteristic, UUIDGen;
+let Accessory, Service, Characteristic, UUIDGen, Categories;
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
+	Categories = homebridge.hap.Accessory.Categories;
 
 	homebridge.registerPlatform('homebridge-xbox-tv', 'XboxTv', xboxTvPlatform, true);
 };
@@ -142,72 +143,90 @@ class xboxTvDevice {
 		}.bind(this), 5000);
 
 		//Delay to wait for device info before publish
-		setTimeout(this.prepareTvService.bind(this), 1000);
+		setTimeout(this.prepareTelevisionService.bind(this), 1000);
 	}
 
 
 	//Prepare TV service 
-	prepareTvService() {
-		this.log.debug('prepareTvService');
-		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.name));
+	prepareTelevisionService() {
+		this.log.debug('prepareTelevisionService');
+		this.UUID = UUIDGen.generate(this.name)
+		this.accessory = new Accessory(this.name, this.UUID, Categories.TELEVISION);
 
-		this.tvService = new Service.Television(this.name, 'tvService');
-		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
-		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
+		this.televisionService = new Service.Television(this.name, 'televisionService');
+		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
+		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
-		this.tvService.getCharacteristic(Characteristic.Active)
+		this.televisionService.getCharacteristic(Characteristic.Active)
 			.on('get', this.getPowerState.bind(this))
 			.on('set', this.setPowerState.bind(this));
 
-		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
+		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getApp.bind(this))
 			.on('set', this.setApp.bind(this));
 
-		this.tvService.getCharacteristic(Characteristic.RemoteKey)
+		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.setRemoteKey.bind(this));
 
-		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
+		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.on('set', this.setPowerModeSelection.bind(this));
 
-
-		this.tvAccesory
+		this.accessory
 			.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
 			.setCharacteristic(Characteristic.Model, this.modelName)
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-		this.tvAccesory.addService(this.tvService);
-		this.prepareTvSpeakerService();
-		this.prepareInputServices();
+		this.accessory.addService(this.televisionService);
+		this.prepareSpeakerService();
+		this.prepareVolumeService();
+		this.prepareInputsService();
 
 		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
-		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.tvAccesory]);
+		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.accessory]);
 	}
 
 	//Prepare speaker service
-	prepareTvSpeakerService() {
-		this.log.debug('prepareTvSpeakerService');
-		this.tvSpeakerService = new Service.TelevisionSpeaker(this.name, 'tvSpeakerService');
-		this.tvSpeakerService
+	prepareSpeakerService() {
+		this.log.debug('prepareSpeakerService');
+		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Speaker', 'speakerService');
+		this.speakerService
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-		this.tvSpeakerService.getCharacteristic(Characteristic.VolumeSelector)
+		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
 			.on('set', this.setVolumeSelector.bind(this));
-		this.tvSpeakerService.getCharacteristic(Characteristic.Volume)
+		this.speakerService.getCharacteristic(Characteristic.Volume)
 			.on('get', this.getVolume.bind(this))
 			.on('set', this.setVolume.bind(this));
-		this.tvSpeakerService.getCharacteristic(Characteristic.Mute)
+		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.on('get', this.getMute.bind(this))
 			.on('set', this.setMute.bind(this));
 
-		this.tvAccesory.addService(this.tvSpeakerService);
-		this.tvService.addLinkedService(this.tvSpeakerService);
+		this.accessory.addService(this.speakerService);
+		this.televisionService.addLinkedService(this.speakerService);
 	}
 
-	//Prepare apps services
-	prepareInputServices() {
-		this.log.debug('prepareInputServices');
+	//Prepare volume service
+	prepareVolumeService() {
+		this.log.debug('prepareVolumeService');
+		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+		this.volumeService.getCharacteristic(Characteristic.On)
+			.on('get', function (callback) {
+				let mute = this.currentMuteState ? 0 : 1;
+				callback(null, mute);
+			});
+		this.volumeService.getCharacteristic(Characteristic.Brightness)
+			.on('get', this.getVolume.bind(this))
+			.on('set', this.setVolume.bind(this));
+
+		this.accessory.addService(this.volumeService);
+		this.televisionService.addLinkedService(this.volumeService);
+	}
+
+	//Prepare inputs services
+	prepareInputsService() {
+		this.log.debug('prepareInputsService');
 		if (this.apps === undefined || this.apps === null || this.apps.length <= 0) {
 			return;
 		}
@@ -268,8 +287,8 @@ class xboxTvDevice {
 						});
 						callback(null, newAppName);
 					});
-				this.tvAccesory.addService(tempInput);
-				this.tvService.addLinkedService(tempInput);
+				this.accessory.addService(tempInput);
+				this.televisionService.addLinkedService(tempInput);
 				this.appReferences.push(appReference);
 			}
 		});
@@ -321,6 +340,7 @@ class xboxTvDevice {
 		var me = this;
 		let state = me.currentMuteState;
 		me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+		me.currentMuteState = state;
 		callback(null, state);
 	}
 
@@ -333,6 +353,7 @@ class xboxTvDevice {
 			} else {
 				if (state !== currentMuteState) {
 					me.log('Device: %s, set new Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+					me.currentMuteState = state;
 					callback(null, state);
 				}
 			}
@@ -343,12 +364,14 @@ class xboxTvDevice {
 		var me = this;
 		let volume = me.currentVolume;
 		me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
+		me.currentVolume = volume;
 		callback(null, volume);
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
 		me.log('Device: %s, set new Volume level successful: %s', me.host, volume);
+		me.currentVolume = volume;
 		callback(null, volume);
 	}
 
