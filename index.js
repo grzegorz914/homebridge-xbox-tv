@@ -75,6 +75,7 @@ class xboxTvDevice {
 		this.name = device.name;
 		this.host = device.host;
 		this.xboxliveid = device.xboxliveid;
+		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
 		this.apps = device.apps;
 
@@ -178,10 +179,12 @@ class xboxTvDevice {
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-		this.accessory.addService(this.televisionService);
-		this.prepareSpeakerService();
-		this.prepareVolumeService();
-		this.prepareInputsService();
+			this.accessory.addService(this.televisionService);
+			this.prepareSpeakerService();
+			this.prepareInputsService();
+			if (this.volumeControl) {
+				this.prepareVolumeService();
+			}
 
 		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
 		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.accessory]);

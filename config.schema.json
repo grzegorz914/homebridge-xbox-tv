@@ -30,6 +30,12 @@
               "default": "FD0000000000",
               "required": true
             },
+            "volumeControl": {
+              "title": "Volume control",
+              "type": "boolean",
+              "default": false,
+              "required": false
+            },
             "switchInfoMenu": {
               "title": "Switch Info/Menu",
               "type": "boolean",
