@@ -108,6 +108,7 @@ class xboxTvDevice {
 
 		this.sgClient = Smartglass();
 
+
 		// Start Smartglass Client
 		setInterval(function () {
 			var me = this;
@@ -179,12 +180,12 @@ class xboxTvDevice {
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-			this.accessory.addService(this.televisionService);
-			this.prepareSpeakerService();
-			this.prepareInputsService();
-			if (this.volumeControl) {
-				this.prepareVolumeService();
-			}
+		this.accessory.addService(this.televisionService);
+		this.prepareSpeakerService();
+		this.prepareInputsService();
+		if (this.volumeControl) {
+			this.prepareVolumeService();
+		}
 
 		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
 		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.accessory]);
@@ -215,10 +216,7 @@ class xboxTvDevice {
 		this.log.debug('prepareVolumeService');
 		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', function (callback) {
-				let mute = this.currentMuteState ? 0 : 1;
-				callback(null, mute);
-			});
+			.on('get', this.getMuteSlider.bind(this));
 		this.volumeService.getCharacteristic(Characteristic.Brightness)
 			.on('get', this.getVolume.bind(this))
 			.on('set', this.setVolume.bind(this));
@@ -301,6 +299,7 @@ class xboxTvDevice {
 		var me = this;
 		let state = me.currentPowerState;
 		me.log('Device: %s, get current Power state successful, state: %s', me.host, state ? 'ON' : 'OFF');
+		me.currentPowerState = state;
 		callback(null, state);
 	}
 
@@ -347,6 +346,12 @@ class xboxTvDevice {
 		callback(null, state);
 	}
 
+	getMuteSlider(callback) {
+		var me = this;
+		let state = !me.currentMuteState;
+		callback(null, state);
+	}
+
 	setMute(state, callback) {
 		var me = this;
 		me.getMute(function (error, currentMuteState) {
@@ -380,17 +385,23 @@ class xboxTvDevice {
 
 	getApp(callback) {
 		var me = this;
-		if (!me.connectionStatus) {
-			callback(null, 0);
+		let appReference = me.currentAppReference;
+		if (!me.connectionStatus || appReference === undefined || appReference === null) {
+			me.televisionService
+				.getCharacteristic(Characteristic.ActiveIdentifier)
+				.updateValue(0);
+			callback(null);
 		} else {
-			let appReference = me.currentAppReference;
 			for (let i = 0; i < me.appReferences.length; i++) {
 				if (appReference === me.appReferences[i]) {
+					me.televisionService
+						.getCharacteristic(Characteristic.ActiveIdentifier)
+						.updateValue(i);
 					me.log('Device: %s, get current App successful: %s', me.host, appReference);
 					me.currentAppReference = appReference;
-					callback(null, i);
 				}
 			}
+			callback(null);
 		}
 	}
 
@@ -401,11 +412,11 @@ class xboxTvDevice {
 				me.log.debug('Device: %s, can not get current App. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				let appReference = me.inputReferences[inputIdentifier];
+				let appReference = me.appReferences[inputIdentifier];
 				if (appReference !== currentAppReference) {
 					me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
 					me.currentAppReference = appReference;
-					callback(null, inputIdentifier);
+					callback(null);
 				}
 			}
 		});
