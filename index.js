@@ -138,7 +138,13 @@ class xboxTvDevice {
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
 					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-						me.currentAppReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+						let appReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+						me.currentAppReference = appReference
+						if (me.televisionService && me.appReferences && me.appReferences.length > 0) {
+							let inputIdentifier = me.appReferences.indexOf(appReference);
+							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+							me.log('Device: %s, get current App successful: %s', me.host, appReference);
+						}
 					}
 				}.bind(this));
 			}
