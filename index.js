@@ -139,16 +139,16 @@ class xboxTvDevice {
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
 					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 						let appReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-						me.currentAppReference = appReference;
 						if (me.televisionService && me.appReferences && me.appReferences.length > 0) {
 							let inputIdentifier = me.appReferences.indexOf(appReference);
 							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
 							me.log('Device: %s, get current App successful: %s', me.host, appReference);
 						}
+						me.currentAppReference = appReference;
 					}
 				}.bind(this));
 			}
-		}.bind(this), 5000);
+		}.bind(this), 3000);
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
@@ -305,87 +305,68 @@ class xboxTvDevice {
 		var me = this;
 		let state = me.currentPowerState;
 		me.log('Device: %s, get current Power state successful, state: %s', me.host, state ? 'ON' : 'OFF');
-		me.currentPowerState = state;
 		callback(null, state);
 	}
 
 	setPowerState(state, callback) {
 		var me = this;
 		let smartglass = Smartglass();
-		me.getPowerState(function (error, currentPowerState) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
+		if (!me.currentPowerState) {
+			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(function (data) {
+				me.log('Device: %s booting, response: %s', me.host, data);
+				callback(null, true);
+			}, function (error) {
+				me.log.debug('Device: %s booting failed, error: %s', me.host, error);
 				callback(error);
+			});
+		} else {
+			if (!state) {
+				me.sgClient.powerOff().then(function (data) {
+					me.log('Device: %s, set new Power state successful, new state: OFF', me.host);
+					me.sgClient._connection_status = false;
+					callback(null, true);
+				}.bind(this), function (error) {
+					me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
+					callback(error);
+				});
 			} else {
-				if (!currentPowerState) {
-					smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(function (data) {
-						me.log('Device: %s booting, response: %s', me.host, data);
-						callback(null, true);
-					}, function (error) {
-						me.log.debug('Device: %s booting failed, error: %s', me.host, error);
-						callback(error);
-					});
-				} else {
-					if (!state) {
-						me.sgClient.powerOff().then(function (data) {
-							me.log('Device: %s, set new Power state successful, new state: OFF', me.host);
-							me.sgClient._connection_status = false;
-							callback(null, true);
-						}.bind(this), function (error) {
-							me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
-							callback(error);
-						});
-					} else {
-						callback(null, true);
-					}
-				}
+				callback(null, true);
 			}
-		});
+		}
 	}
-
 
 	getMute(callback) {
 		var me = this;
-		let state = me.currentMuteState;
+		let state = me.currentPowerState ? me.currentMuteState : true;
 		me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
-		me.currentMuteState = state;
 		callback(null, state);
 	}
 
 	getMuteSlider(callback) {
 		var me = this;
-		let state = !me.currentMuteState;
+		let state = me.currentPowerState ? !me.currentMuteState : false;
+		me.log('Device: %s, get current Mute state successful: %s', me.host, !state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
 	setMute(state, callback) {
 		var me = this;
-		me.getMute(function (error, currentMuteState) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Mute for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				if (state !== currentMuteState) {
-					me.log('Device: %s, set new Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
-					me.currentMuteState = state;
-					callback(null, state);
-				}
-			}
-		});
+		if (state !== me.currentMuteState) {
+			me.log('Device: %s, set new Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+			callback(null, state);
+		}
 	}
 
 	getVolume(callback) {
 		var me = this;
 		let volume = me.currentVolume;
 		me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
-		me.currentVolume = volume;
 		callback(null, volume);
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
 		me.log('Device: %s, set new Volume level successful: %s', me.host, volume);
-		me.currentVolume = volume;
 		callback(null, volume);
 	}
 
@@ -398,14 +379,12 @@ class xboxTvDevice {
 				.updateValue(0);
 			callback(null);
 		} else {
-			for (let i = 0; i < me.appReferences.length; i++) {
-				if (appReference === me.appReferences[i]) {
-					me.televisionService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(i);
-					me.log('Device: %s, get current App successful: %s', me.host, appReference);
-					me.currentAppReference = appReference;
-				}
+			let inputIdentifier = me.appReferences.indexOf(appReference);
+			if (appReference === me.appReferences[inputIdentifier]) {
+				me.televisionService
+					.getCharacteristic(Characteristic.ActiveIdentifier)
+					.updateValue(inputIdentifier);
+				me.log('Device: %s, get current App successful: %s', me.host, appReference);
 			}
 			callback(null);
 		}
@@ -413,19 +392,11 @@ class xboxTvDevice {
 
 	setApp(inputIdentifier, callback) {
 		var me = this;
-		me.getApp(function (error, currentAppReference) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current App. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let appReference = me.appReferences[inputIdentifier];
-				if (appReference !== currentAppReference) {
-					me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
-					me.currentAppReference = appReference;
-					callback(null);
-				}
-			}
-		});
+		let appReference = me.appReferences[inputIdentifier];
+		if (appReference !== me.currentAppReference) {
+			me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
+			callback(null);
+		}
 	}
 
 	setPowerModeSelection(remoteKey, callback) {

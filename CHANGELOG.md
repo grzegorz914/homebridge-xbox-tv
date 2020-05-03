@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.3.9 (05.05.2020)
+- added real time read and write data for (lightbulb slider volume cont
+
 ## 0.2.3 (27.04.2020)
 - added switch ON/OFF volume control (please update config.json)
 

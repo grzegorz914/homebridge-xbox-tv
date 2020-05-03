@@ -13,12 +13,11 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 </span>
 
 ## Info
-0. This plugin is in development phase and some functions may be not working correct.
-1. Volume/Mute and RC/Media control is possible after You go to RC app on iPhone/iPad.
-2. Power ON/OFF short press tile in HomeKit app.
-3. Inputs/Apps can be changed after loong press tile in HomeKit app and select from the list.
-4. Volume/Mute can be changed using hardware buttons on iPhone/iPad `Speaker Service` or after enable `volumeControl` throught extra `lightbulb` (slider) or using Siri.
-5. RC/Media control function available from RC app on iPhone/iPad.
+1. Power ON/OFF short press tile in HomeKit app.
+2. RC/Media control is possible after You go to the RC app on iPhone/iPad.
+3. Speaker control is possible after You go to RC app on iPhone/iPad `Speaker Service`.
+4. Legacy volume control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`, in current api not working.
+5. Apps can be only read from device.
 6. Siri control.
 
 
