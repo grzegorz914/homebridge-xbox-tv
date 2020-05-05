@@ -116,7 +116,7 @@ class xboxTvDevice {
 				this.sgClient = Smartglass();
 
 				this.sgClient.connect(me.host).then(function () {
-					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+					me.log('Device: %s %s, state: Online', me.host, me.name);
 					me.connectionStatus = true;
 					me.currentPowerState = true;
 
@@ -125,14 +125,14 @@ class xboxTvDevice {
 					this.sgClient.addManager('tv_remote', TvRemoteChannel());
 				}.bind(this), function (error) {
 					if (error) {
-						me.log('Device: %s, name: %s, state: Offline, error: %s', me.host, me.name, error);
+						me.log.debug('Device: %s %s, state: Offline, error: %s', me.host, me.name, error);
 						me.connectionStatus = false;
 						me.currentPowerState = false;
 					}
 				});
 
 				this.sgClient.on('_on_timeout', function (setInterval) {
-					me.log('Device: %s, name: %s, state: Time OUT', me.host, me.name);
+					me.log.debug('Device: %s %s, state: Time OUT', me.host, me.name);
 					me.connectionStatus = false;
 				}.bind(this, setInterval));
 
@@ -142,7 +142,7 @@ class xboxTvDevice {
 						if (me.televisionService && me.appReferences && me.appReferences.length > 0) {
 							let inputIdentifier = me.appReferences.indexOf(appReference);
 							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-							me.log('Device: %s, get current App successful: %s', me.host, appReference);
+							me.log('Device: %s %s, get current App successful: %s', me.host, me.name, appReference);
 						}
 						me.currentAppReference = appReference;
 					}
@@ -166,8 +166,8 @@ class xboxTvDevice {
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
-			.on('get', this.getPowerState.bind(this))
-			.on('set', this.setPowerState.bind(this));
+			.on('get', this.getPower.bind(this))
+			.on('set', this.setPower.bind(this));
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getApp.bind(this))
@@ -193,7 +193,7 @@ class xboxTvDevice {
 			this.prepareVolumeService();
 		}
 
-		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
 		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.accessory]);
 	}
 
@@ -246,7 +246,7 @@ class xboxTvDevice {
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.appsFile));
 		} catch (err) {
-			this.log.debug('Device: %s, apps file does not exist', this.host)
+			this.log.debug('Device: %s %s, apps file does not exist', this.host, this.name)
 		}
 
 		this.apps.forEach((app, i) => {
@@ -287,9 +287,9 @@ class xboxTvDevice {
 						this.apps[appReference] = newAppName;
 						fs.writeFile(this.appsFile, JSON.stringify(this.apps), (error) => {
 							if (error) {
-								this.log.debug('Device: %s, can not write new App name, error: %s', this.host, error);
+								this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
 							} else {
-								this.log('Device: %s, saved new App successful, name: %s reference: %s', this.host, newAppName, appReference);
+								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, appReference);
 							}
 						});
 						callback(null, newAppName);
@@ -301,32 +301,32 @@ class xboxTvDevice {
 		});
 	}
 
-	getPowerState(callback) {
+	getPower(callback) {
 		var me = this;
 		let state = me.currentPowerState;
-		me.log('Device: %s, get current Power state successful, state: %s', me.host, state ? 'ON' : 'OFF');
+		me.log('Device: %s %s, get current Power state successful, state: %s', me.host, me.name, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
-	setPowerState(state, callback) {
+	setPower(state, callback) {
 		var me = this;
 		let smartglass = Smartglass();
 		if (!me.currentPowerState) {
 			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(function (data) {
-				me.log('Device: %s booting, response: %s', me.host, data);
+				me.log('Device: %s %s, booting..., response: %s', me.host, me.name, data);
 				callback(null, true);
 			}, function (error) {
-				me.log.debug('Device: %s booting failed, error: %s', me.host, error);
+				me.log.debug('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
 				callback(error);
 			});
 		} else {
 			if (!state) {
 				me.sgClient.powerOff().then(function (data) {
-					me.log('Device: %s, set new Power state successful, new state: OFF', me.host);
+					me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
 					me.sgClient._connection_status = false;
 					callback(null, true);
 				}.bind(this), function (error) {
-					me.log.debug('Device: %s, set new Power state error: %s', me.host, error);
+					me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
 					callback(error);
 				});
 			} else {
@@ -338,21 +338,21 @@ class xboxTvDevice {
 	getMute(callback) {
 		var me = this;
 		let state = me.currentPowerState ? me.currentMuteState : true;
-		me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+		me.log('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
 	getMuteSlider(callback) {
 		var me = this;
 		let state = me.currentPowerState ? !me.currentMuteState : false;
-		me.log('Device: %s, get current Mute state successful: %s', me.host, !state ? 'ON' : 'OFF');
+		me.log('Device: %s %s, get current Mute state successful: %s', me.host, me.name, !state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
 	setMute(state, callback) {
 		var me = this;
 		if (state !== me.currentMuteState) {
-			me.log('Device: %s, set new Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+			me.log('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			callback(null, state);
 		}
 	}
@@ -360,13 +360,13 @@ class xboxTvDevice {
 	getVolume(callback) {
 		var me = this;
 		let volume = me.currentVolume;
-		me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
+		me.log('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
 		callback(null, volume);
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
-		me.log('Device: %s, set new Volume level successful: %s', me.host, volume);
+		me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 		callback(null, volume);
 	}
 
@@ -384,9 +384,9 @@ class xboxTvDevice {
 				me.televisionService
 					.getCharacteristic(Characteristic.ActiveIdentifier)
 					.updateValue(inputIdentifier);
-				me.log('Device: %s, get current App successful: %s', me.host, appReference);
+				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, appReference);
 			}
-			callback(null);
+			callback(null, inputIdentifier);
 		}
 	}
 
@@ -394,8 +394,8 @@ class xboxTvDevice {
 		var me = this;
 		let appReference = me.appReferences[inputIdentifier];
 		if (appReference !== me.currentAppReference) {
-			me.log('Device: %s, set new App successful, new App reference: %s', me.host, appReference);
-			callback(null);
+			me.log('Device: %s %s, set new App successful, new App reference: %s', me.host, me.name, appReference);
+			callback(null, inputIdentifier);
 		}
 	}
 
@@ -414,7 +414,7 @@ class xboxTvDevice {
 				break;
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s, setPowerModeSelection successful, state: %s, command: %s', me.host, remoteKey, command);
+		me.log('Device: %s %s, setPowerModeSelection successful, state: %s, command: %s', me.host, me.name, remoteKey, command);
 		callback(null, remoteKey);
 	}
 
@@ -433,7 +433,7 @@ class xboxTvDevice {
 				break;
 		}
 		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
-		me.log('Device: %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
+		me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
 		callback(null, remoteKey);
 	}
 
@@ -497,7 +497,7 @@ class xboxTvDevice {
 				break;
 		}
 		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
+		me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
 		callback(null, remoteKey);
 	}
 };
