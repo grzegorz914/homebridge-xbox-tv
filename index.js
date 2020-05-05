@@ -401,103 +401,109 @@ class xboxTvDevice {
 
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		let command;
-		let type;
-		switch (remoteKey) {
-			case Characteristic.PowerModeSelection.SHOW:
-				command = me.switchInfoMenu ? 'nexus' : 'menu';
-				type = 'system_input';
-				break;
-			case Characteristic.PowerModeSelection.HIDE:
-				command = 'b';
-				type = 'system_input';;
-				break;
+		if (me.currentPowerState) {
+			let command;
+			let type;
+			switch (remoteKey) {
+				case Characteristic.PowerModeSelection.SHOW:
+					command = me.switchInfoMenu ? 'nexus' : 'menu';
+					type = 'system_input';
+					break;
+				case Characteristic.PowerModeSelection.HIDE:
+					command = 'b';
+					type = 'system_input';;
+					break;
+			}
+			this.sgClient.getManager(type).sendCommand(command).then(function () { });
+			me.log('Device: %s %s, setPowerModeSelection successful, state: %s, command: %s', me.host, me.name, remoteKey, command);
+			callback(null, remoteKey);
 		}
-		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s %s, setPowerModeSelection successful, state: %s, command: %s', me.host, me.name, remoteKey, command);
-		callback(null, remoteKey);
 	}
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
-		let command;
-		let type;
-		switch (remoteKey) {
-			case Characteristic.VolumeSelector.INCREMENT:
-				command = 'btn.vol_up';
-				type = 'tv_remote';
-				break;
-			case Characteristic.VolumeSelector.DECREMENT:
-				command = 'btn.vol_down';
-				type = 'tv_remote';
-				break;
+		if (me.currentPowerState) {
+			let command;
+			let type;
+			switch (remoteKey) {
+				case Characteristic.VolumeSelector.INCREMENT:
+					command = 'btn.vol_up';
+					type = 'tv_remote';
+					break;
+				case Characteristic.VolumeSelector.DECREMENT:
+					command = 'btn.vol_down';
+					type = 'tv_remote';
+					break;
+			}
+			this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
+			me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
+			callback(null, remoteKey);
 		}
-		this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
-		me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-		callback(null, remoteKey);
 	}
 
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
-		let command;
-		let type;
-		switch (remoteKey) {
-			case Characteristic.RemoteKey.PLAY_PAUSE:
-				command = 'playpause';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.REWIND:
-				command = 'rewind';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.FAST_FORWARD:
-				command = 'fast_forward';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.NEXT_TRACK:
-				command = 'next_track';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-				command = 'prev_track';
-				type = 'system_media';
-				break;
-			case Characteristic.RemoteKey.ARROW_UP:
-				command = 'up';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_DOWN:
-				command = 'down';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_LEFT:
-				command = 'left';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.ARROW_RIGHT:
-				command = 'right';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.SELECT:
-				command = 'a';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.EXIT:
-				command = 'nexus';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.BACK:
-				command = 'b';
-				type = 'system_input';
-				break;
-			case Characteristic.RemoteKey.INFORMATION:
-				command = me.switchInfoMenu ? 'nexus' : 'view';
-				type = 'system_input';
-				break;
+		if (me.currentPowerState) {
+			let command;
+			let type;
+			switch (remoteKey) {
+				case Characteristic.RemoteKey.PLAY_PAUSE:
+					command = 'playpause';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.REWIND:
+					command = 'rewind';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.FAST_FORWARD:
+					command = 'fast_forward';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.NEXT_TRACK:
+					command = 'next_track';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.PREVIOUS_TRACK:
+					command = 'prev_track';
+					type = 'system_media';
+					break;
+				case Characteristic.RemoteKey.ARROW_UP:
+					command = 'up';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_DOWN:
+					command = 'down';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_LEFT:
+					command = 'left';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.ARROW_RIGHT:
+					command = 'right';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.SELECT:
+					command = 'a';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.EXIT:
+					command = 'nexus';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.BACK:
+					command = 'b';
+					type = 'system_input';
+					break;
+				case Characteristic.RemoteKey.INFORMATION:
+					command = me.switchInfoMenu ? 'nexus' : 'view';
+					type = 'system_input';
+					break;
+			}
+			this.sgClient.getManager(type).sendCommand(command).then(function () { });
+			me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
+			callback(null, remoteKey);
 		}
-		this.sgClient.getManager(type).sendCommand(command).then(function () { });
-		me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-		callback(null, remoteKey);
 	}
 };
