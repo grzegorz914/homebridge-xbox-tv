@@ -77,7 +77,7 @@ class xboxTvDevice {
 		this.xboxliveid = device.xboxliveid;
 		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
-		this.thisInputs = device.thisInputs;
+		this.inputs = device.thisInputs;
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'Microsoft';
@@ -138,7 +138,7 @@ class xboxTvDevice {
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
 					if (response.packet_decoded.protected_payload.thisInputs[0] !== undefined) {
-						let inputReference = response.packet_decoded.protected_payload.thisInputs[0].aum_id;
+						let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 						if (me.televisionService && me.inputReferences && me.inputReferences.length > 0) {
 							let inputIdentifier = me.inputReferences.indexOf(inputReference);
 							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
@@ -234,12 +234,12 @@ class xboxTvDevice {
 	//Prepare inputs services
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
-		if (this.thisInputs === undefined || this.thisInputs === null || this.thisInputs.length <= 0) {
+		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
 			return;
 		}
 
-		if (Array.isArray(this.thisInputs) === false) {
-			this.thisInputs = [this.thisInputs];
+		if (Array.isArray(this.inputs) === false) {
+			this.inputs = [this.inputs];
 		}
 
 		let savedNames = {};
@@ -249,7 +249,7 @@ class xboxTvDevice {
 			this.log.debug('Device: %s %s, thisInputs file does not exist', this.host, this.name)
 		}
 
-		this.thisInputs.forEach((input, i) => {
+		this.inputs.forEach((input, i) => {
 
 			//get input reference
 			let inputReference = null;
@@ -283,8 +283,8 @@ class xboxTvDevice {
 				this.inputsService
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.on('set', (newAppName, callback) => {
-						this.thisInputs[inputReference] = newAppName;
-						fs.writeFile(this.inputsFile, JSON.stringify(this.thisInputs), (error) => {
+						this.inputs[inputReference] = newAppName;
+						fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
 							if (error) {
 								this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
 							} else {
