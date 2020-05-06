@@ -42,7 +42,7 @@
               "default": false,
               "required": false
             },
-            "apps": {
+            "inputs": {
               "title": "Apps",
               "type": "array",
               "items": {
@@ -51,13 +51,13 @@
                   "name": {
                     "title": "App name",
                     "type": "string",
-                    "default": "Spotify",
+                    "default": "Dashboard",
                     "required": true
                   },
                   "reference": {
                     "title": "App reference",
                     "type": "string",
-                    "default": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+                    "default": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
                     "required": true
                   }
                 }

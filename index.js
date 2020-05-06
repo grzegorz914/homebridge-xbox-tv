@@ -77,7 +77,7 @@ class xboxTvDevice {
 		this.xboxliveid = device.xboxliveid;
 		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
-		this.apps = device.apps;
+		this.thisInputs = device.thisInputs;
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'Microsoft';
@@ -86,14 +86,14 @@ class xboxTvDevice {
 		this.firmwareRevision = device.firmwareRevision || 'FW00000003';
 
 		//setup variables
-		this.appReferences = new Array();
+		this.inputReferences = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentAppReference = null;
+		this.currentInputReference = null;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		this.appsFile = this.prefDir + '/' + 'apps_' + this.host.split('.').join('');
+		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
 
 		//check if prefs directory ends with a /, if not then add it
@@ -137,14 +137,14 @@ class xboxTvDevice {
 				}.bind(this, setInterval));
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-						let appReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-						if (me.televisionService && me.appReferences && me.appReferences.length > 0) {
-							let inputIdentifier = me.appReferences.indexOf(appReference);
+					if (response.packet_decoded.protected_payload.thisInputs[0] !== undefined) {
+						let inputReference = response.packet_decoded.protected_payload.thisInputs[0].aum_id;
+						if (me.televisionService && me.inputReferences && me.inputReferences.length > 0) {
+							let inputIdentifier = me.inputReferences.indexOf(inputReference);
 							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-							me.log('Device: %s %s, get current App successful: %s', me.host, me.name, appReference);
+							me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
 						}
-						me.currentAppReference = appReference;
+						me.currentInputReference = inputReference;
 					}
 				}.bind(this));
 			}
@@ -170,8 +170,8 @@ class xboxTvDevice {
 			.on('set', this.setPower.bind(this));
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-			.on('get', this.getApp.bind(this))
-			.on('set', this.setApp.bind(this));
+			.on('get', this.getInput.bind(this))
+			.on('set', this.setInput.bind(this));
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.setRemoteKey.bind(this));
@@ -234,69 +234,68 @@ class xboxTvDevice {
 	//Prepare inputs services
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
-		if (this.apps === undefined || this.apps === null || this.apps.length <= 0) {
+		if (this.thisInputs === undefined || this.thisInputs === null || this.thisInputs.length <= 0) {
 			return;
 		}
 
-		if (Array.isArray(this.apps) === false) {
-			this.apps = [this.apps];
+		if (Array.isArray(this.thisInputs) === false) {
+			this.thisInputs = [this.thisInputs];
 		}
 
 		let savedNames = {};
 		try {
-			savedNames = JSON.parse(fs.readFileSync(this.appsFile));
+			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
 		} catch (err) {
-			this.log.debug('Device: %s %s, apps file does not exist', this.host, this.name)
+			this.log.debug('Device: %s %s, thisInputs file does not exist', this.host, this.name)
 		}
 
-		this.apps.forEach((app, i) => {
+		this.thisInputs.forEach((input, i) => {
 
-			//get app reference
-			let appReference = null;
+			//get input reference
+			let inputReference = null;
 
-			if (app.reference !== undefined) {
-				appReference = app.reference;
+			if (input.reference !== undefined) {
+				inputReference = input.reference;
 			} else {
-				appReference = app;
+				inputReference = input;
 			}
 
-			//get app name		
-			let appName = appReference;
+			//get input name		
+			let inputName = inputReference;
 
-			if (savedNames && savedNames[appReference]) {
-				appName = savedNames[appReference];
-			} else if (app.name) {
-				appName = app.name;
+			if (savedNames && savedNames[inputReference]) {
+				inputName = savedNames[inputReference];
+			} else if (input.name) {
+				inputName = input.name;
 			}
 
-			//if reference not null or empty add the app
-			if (appReference !== undefined && appReference !== null) {
-				appReference = appReference.replace(/\s/g, ''); // remove all white spaces from the string
+			//if reference not null or empty add the input
+			if (inputReference !== undefined && inputReference !== null && inputReference !== '') {
 
-				let tempInput = new Service.InputSource(appReference, 'app' + i);
-				tempInput
+				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
+				this.inputsService
 					.setCharacteristic(Characteristic.Identifier, i)
-					.setCharacteristic(Characteristic.ConfiguredName, appName)
+					.setCharacteristic(Characteristic.ConfiguredName, inputName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
-				tempInput
+				this.inputsService
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.on('set', (newAppName, callback) => {
-						this.apps[appReference] = newAppName;
-						fs.writeFile(this.appsFile, JSON.stringify(this.apps), (error) => {
+						this.thisInputs[inputReference] = newAppName;
+						fs.writeFile(this.inputsFile, JSON.stringify(this.thisInputs), (error) => {
 							if (error) {
 								this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
 							} else {
-								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, appReference);
+								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, inputReference);
 							}
 						});
 						callback(null, newAppName);
 					});
-				this.accessory.addService(tempInput);
-				this.televisionService.addLinkedService(tempInput);
-				this.appReferences.push(appReference);
+				this.accessory.addService(this.inputsService);
+				this.televisionService.addLinkedService(this.inputsService);
+				this.inputReferences.push(inputReference);
 			}
 		});
 	}
@@ -370,31 +369,31 @@ class xboxTvDevice {
 		callback(null, volume);
 	}
 
-	getApp(callback) {
+	getInput(callback) {
 		var me = this;
-		let appReference = me.currentAppReference;
-		if (!me.connectionStatus || appReference === undefined || appReference === null) {
+		let inputReference = me.currentInputReference;
+		if (!me.connectionStatus || inputReference === undefined || inputReference === null) {
 			me.televisionService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
 			callback(null);
 		} else {
-			let inputIdentifier = me.appReferences.indexOf(appReference);
-			if (appReference === me.appReferences[inputIdentifier]) {
+			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			if (inputReference === me.inputReferences[inputIdentifier]) {
 				me.televisionService
 					.getCharacteristic(Characteristic.ActiveIdentifier)
 					.updateValue(inputIdentifier);
-				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, appReference);
+				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
 			}
 			callback(null, inputIdentifier);
 		}
 	}
 
-	setApp(inputIdentifier, callback) {
+	setInput(inputIdentifier, callback) {
 		var me = this;
-		let appReference = me.appReferences[inputIdentifier];
-		if (appReference !== me.currentAppReference) {
-			me.log('Device: %s %s, set new App successful, new App reference: %s', me.host, me.name, appReference);
+		let inputReference = me.inputReferences[inputIdentifier];
+		if (inputReference !== me.currentInputReference) {
+			me.log('Device: %s %s, set new App successful, new App reference: %s', me.host, me.name, inputReference);
 			callback(null, inputIdentifier);
 		}
 	}

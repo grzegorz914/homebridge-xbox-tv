@@ -55,7 +55,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
             "xboxliveid": "FD0000000000",
             "volumeControl": false,
             "switchInfoMenu": false,
-            "apps": [
+            "inputs": [
                 {
                     "name": "TV",
                     "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
@@ -79,7 +79,15 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
                 {
                     "name": "Airserver",
                     "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
-                }
+                },
+                {
+                     "name": "Fortnite",
+                     "reference": "Fortnite_d5xxtpggmzx6p!AppFortnite"
+                 },
+                 {
+                     "name": "Minecraft",
+                     "reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App"
+                 }
             ]
         }
     ]

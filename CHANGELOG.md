@@ -1,6 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 ## 0.3.12 (05.05.2020)
+- cleanup code
+- please updaje Your config.json (replace 'apps' with 'inputs')
+
+## 0.3.12 (05.05.2020)
 - fixes and performance inprovements
 - correted logging state
 
