@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.4.0 (06.05.2020) 
+- adapted to HAP-Node JS lib
+
 ## 0.3.12 (05.05.2020)
 - cleanup code
 - please updaje Your config.json (replace 'apps' with 'inputs')

@@ -1,4 +1,11 @@
-'use strict'
+const hap = require("hap-nodejs");
+
+const Characteristic = hap.Characteristic;
+const CharacteristicEventTypes = hap.CharacteristicEventTypes;
+const Service = hap.Service;
+const Categories = hap.Accessory.Categories;
+const accessoryUuid = hap.uuid;
+
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const path = require('path');
@@ -8,16 +15,14 @@ const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/syste
 const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
 
-let Accessory, Service, Characteristic, UUIDGen, Categories;
+const WEBSOCKET_PORT = 3000;
+
+const PLUGIN_NAME = 'homebridge-xbox-tv';
+const PLATFORM_NAME = 'XboxTv';
 
 module.exports = homebridge => {
-	Service = homebridge.hap.Service;
-	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
-	UUIDGen = homebridge.hap.uuid;
-	Categories = homebridge.hap.Accessory.Categories;
-
-	homebridge.registerPlatform('homebridge-xbox-tv', 'XboxTv', xboxTvPlatform, true);
+	homebridge.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
 
@@ -61,7 +66,7 @@ class xboxTvPlatform {
 	}
 	removeAccessory(platformAccessory) {
 		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories('homebridge-xbox-tv', 'XboxTv', [platformAccessory]);
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
 	}
 }
 
@@ -81,7 +86,7 @@ class xboxTvDevice {
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'Microsoft';
-		this.modelName = device.modelName || 'homebridge-xbox-tv';
+		this.modelName = device.modelName || PLUGIN_NAME;
 		this.serialNumber = device.serialNumber || 'SN00000003';
 		this.firmwareRevision = device.firmwareRevision || 'FW00000003';
 
@@ -158,7 +163,7 @@ class xboxTvDevice {
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.UUID = UUIDGen.generate(this.name)
+		this.UUID = accessoryUuid.generate(this.name)
 		this.accessory = new Accessory(this.name, this.UUID, Categories.TELEVISION);
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
@@ -194,7 +199,7 @@ class xboxTvDevice {
 		}
 
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
-		this.api.publishExternalAccessories('homebridge-xbox-tv', [this.accessory]);
+		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
 	}
 
 	//Prepare speaker service
