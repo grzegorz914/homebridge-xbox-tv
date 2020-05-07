@@ -57,37 +57,93 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
             "switchInfoMenu": false,
             "inputs": [
                 {
-                    "name": "TV",
-                    "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
-                },
-                {
-                    "name": "Dashboard",
-                    "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
-                },
-                {
-                    "name": "Spotify",
-                    "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
-                },
-                {
-                    "name": "Youtube",
-                    "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
-                },
-                {
-                    "name": "Netflix",
-                    "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
-                },
-                {
-                    "name": "Airserver",
-                    "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
-                },
-                {
-                     "name": "Fortnite",
-                     "reference": "Fortnite_d5xxtpggmzx6p!AppFortnite"
-                 },
-                 {
-                     "name": "Minecraft",
-                     "reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App"
-                 }
+                            "name": "Spotify",
+                            "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
+                        },
+                        {
+                            "name": "YouTube",
+                            "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
+                        },
+                        {
+                            "name": "Netflix",
+                            "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
+                        },
+                        {
+                            "name": "Telewizja",
+                            "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
+                        },
+                        {
+                            "name": "Dashboard",
+                            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
+                        },
+                        {
+                            "name": "Ustawienia",
+                            "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application"
+                        },
+                        {
+                            "name": "Sklep",
+                            "reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App"
+                        },
+                        {
+                            "name": "Akcesoria",
+                            "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App"
+                        },
+                        {
+                            "name": "Microsoft Edge",
+                            "reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge"
+                        },
+                        {
+                            "name": "Airserver",
+                            "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
+                        },
+                        {
+                            "name": "Gears of War 5",
+                            "reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip"
+                        },
+                        {
+                            "name": "Fortnite",
+                            "reference": "Fortnite_d5xxtpggmzx6p!AppFortnite"
+                        },
+                        {
+                            "name": "Minecraft",
+                            "reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App"
+                        },
+                        {
+                            "name": "Plex",
+                            "reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App"
+                        },
+                        {
+                            "name": "Bluray",
+                            "reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application"
+                        },
+                        {
+                            "name": "COD WII",
+                            "reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot"
+                        },
+                        {
+                            "name": "COD WZ",
+                            "reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8"
+                        },
+                        {
+                            "name": "GTA V",
+                            "reference": "GTA-V_vesz1v3mcwykm!GTAV"
+                        },
+                        {
+                            "name": "All4",
+                            "reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App"
+                        },
+                        {
+                            "name": "Amazon Prime",
+                            "reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App"
+                        },
+                        {
+                            "name": "Disney",
+                            "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App"
+                        },
+                        {
+                            "name": "BBC iPlayer",
+                            "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App"
+                        }
             ]
         }
     ]
