@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/xbox.png" height="140"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/xbox.png" height="140"></a>
 </p>
 
 <span align="center">
@@ -22,7 +22,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/homekit.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/inputs.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/RC.png" height="300"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/inputs.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" height="300"></a>
 </p>
 
 ## Package
@@ -42,7 +42,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 2. `xboxliveid` You can get this in the console settings.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/graphics/ustawienia.png" height="150"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
 </p>
 
 ```json
