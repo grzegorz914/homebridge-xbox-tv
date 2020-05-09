@@ -56,7 +56,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
             "volumeControl": false,
             "switchInfoMenu": false,
             "inputs": [
-                {
+               {
                             "name": "Spotify",
                             "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
                         },

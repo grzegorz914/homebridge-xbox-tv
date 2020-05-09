@@ -1,11 +1,6 @@
-const hap = require("hap-nodejs");
+'use strict';
 
-const Characteristic = hap.Characteristic;
-const CharacteristicEventTypes = hap.CharacteristicEventTypes;
-const Service = hap.Service;
-const Categories = hap.Accessory.Categories;
-const accessoryUuid = hap.uuid;
-
+const hap = require('hap-nodejs');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const path = require('path');
@@ -15,14 +10,19 @@ const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/syste
 const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
 
-const WEBSOCKET_PORT = 3000;
+const Characteristic = hap.Characteristic;
+const CharacteristicEventTypes = hap.CharacteristicEventTypes;
+const Service = hap.Service;
+const accessoryUuid = hap.uuid;
 
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
 
-module.exports = homebridge => {
-	Accessory = homebridge.platformAccessory;
-	homebridge.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
+let Accessory;
+
+module.exports = api => {
+	Accessory = api.platformAccessory;
+	api.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
 
@@ -36,7 +36,7 @@ class xboxTvPlatform {
 		this.log = log;
 		this.config = config;
 		this.devices = config.devices || [];
-		this.tvAccessories = [];
+		this.accessories = [];
 
 		if (api) {
 			this.api = api;
@@ -54,14 +54,14 @@ class xboxTvPlatform {
 			if (!deviceName.name) {
 				this.log.warn('Device Name Missing')
 			} else {
-				this.tvAccessories.push(new xboxTvDevice(this.log, deviceName, this.api));
+				this.accessories.push(new xboxTvDevice(this.log, deviceName, this.api));
 			}
 		}
 	}
 	configureAccessory(platformAccessory) {
 		this.log.debug('configureAccessory');
-		if (this.tvAccessories) {
-			this.tvAccessories.push(platformAccessory);
+		if (this.accessories) {
+			this.accessories.push(platformAccessory);
 		}
 	}
 	removeAccessory(platformAccessory) {
@@ -82,7 +82,7 @@ class xboxTvDevice {
 		this.xboxliveid = device.xboxliveid;
 		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
-		this.inputs = device.thisInputs;
+		this.inputs = device.inputs;
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'Microsoft';
@@ -142,16 +142,22 @@ class xboxTvDevice {
 				}.bind(this, setInterval));
 
 				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-					if (response.packet_decoded.protected_payload.thisInputs[0] !== undefined) {
+					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 						let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 						if (me.televisionService && me.inputReferences && me.inputReferences.length > 0) {
 							let inputIdentifier = me.inputReferences.indexOf(inputReference);
 							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
 							me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
+							me.currentInputReference = inputReference;
 						}
-						me.currentInputReference = inputReference;
 					}
 				}.bind(this));
+			}
+			if (me.televisionService) {
+				let powerState = me.currentPowerState;
+				me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+				me.log.debug('Device: %s  %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
+				me.currentPowerState = powerState;
 			}
 		}.bind(this), 3000);
 
@@ -164,7 +170,8 @@ class xboxTvDevice {
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
 		this.UUID = accessoryUuid.generate(this.name)
-		this.accessory = new Accessory(this.name, this.UUID, Categories.TELEVISION);
+		this.accessory = new Accessory(this.name, this.UUID);
+		this.accessory.category = 31;
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
 		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
@@ -251,7 +258,7 @@ class xboxTvDevice {
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
 		} catch (err) {
-			this.log.debug('Device: %s %s, thisInputs file does not exist', this.host, this.name)
+			this.log.debug('Device: %s %s, Inputs file does not exist', this.host, this.name)
 		}
 
 		this.inputs.forEach((input, i) => {
@@ -349,7 +356,7 @@ class xboxTvDevice {
 	getMuteSlider(callback) {
 		var me = this;
 		let state = me.currentPowerState ? !me.currentMuteState : false;
-		me.log('Device: %s %s, get current Mute state successful: %s', me.host, me.name, !state ? 'ON' : 'OFF');
+		me.log.debug('Device: %s %s, get current Mute state successful: %s', me.host, me.name, !state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
