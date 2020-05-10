@@ -1,5 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.5.0 (10.05.2020) 
+- code cleanup
+- some fixes and performance inprovements
+
 ## 0.4.0 (06.05.2020) 
 - adapted to HAP-Node JS lib
 

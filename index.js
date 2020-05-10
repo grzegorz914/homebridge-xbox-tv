@@ -2,7 +2,6 @@
 
 const hap = require('hap-nodejs');
 const fs = require('fs');
-const mkdirp = require('mkdirp');
 const path = require('path');
 
 const Smartglass = require('xbox-smartglass-core-node');
@@ -13,7 +12,7 @@ const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote
 const Characteristic = hap.Characteristic;
 const CharacteristicEventTypes = hap.CharacteristicEventTypes;
 const Service = hap.Service;
-const accessoryUuid = hap.uuid;
+const UUID = hap.uuid;
 
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
@@ -108,69 +107,93 @@ class xboxTvDevice {
 
 		//check if the directory exists, if not then create it
 		if (fs.existsSync(this.prefDir) === false) {
-			mkdirp(this.prefDir);
+			fs.mkdir(this.prefDir, { recursive: false }, (error) => {
+				if (error) {
+					this.log.debug('Device: %s %s, create directory: %s, error: %s', this.host, this.name, this.prefDir, error);
+				}
+			});
 		}
 
 		this.sgClient = Smartglass();
 
-
-		// Start Smartglass Client
+		//Check net state
 		setInterval(function () {
 			var me = this;
-			if (this.sgClient._connection_status == false) {
-				this.sgClient = Smartglass();
+			if (!me.sgClient._connection_status) {
+				me.sgClient = Smartglass();
 
-				this.sgClient.connect(me.host).then(function () {
+				me.sgClient.connect(me.host).then(response => {
 					me.log('Device: %s %s, state: Online', me.host, me.name);
-					me.connectionStatus = true;
-					me.currentPowerState = true;
-
-					this.sgClient.addManager('system_input', SystemInputChannel());
-					this.sgClient.addManager('system_media', SystemMediaChannel());
-					this.sgClient.addManager('tv_remote', TvRemoteChannel());
-				}.bind(this), function (error) {
+					me.sgClient.addManager('system_input', SystemInputChannel());
+					me.sgClient.addManager('system_media', SystemMediaChannel());
+					me.sgClient.addManager('tv_remote', TvRemoteChannel());
+					me.getDeviceState();
+				}).catch(error => {
 					if (error) {
-						me.log.debug('Device: %s %s, state: Offline, error: %s', me.host, me.name, error);
-						me.connectionStatus = false;
+						me.log.debug('Device: %s %s, error: %s', me.host, me.name, error);
 						me.currentPowerState = false;
+						return;
 					}
 				});
-
-				this.sgClient.on('_on_timeout', function (setInterval) {
-					me.log.debug('Device: %s %s, state: Time OUT', me.host, me.name);
-					me.connectionStatus = false;
-				}.bind(this, setInterval));
-
-				this.sgClient.on('_on_console_status', function (response, device, smartglass) {
-					if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-						let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-						if (me.televisionService && me.inputReferences && me.inputReferences.length > 0) {
-							let inputIdentifier = me.inputReferences.indexOf(inputReference);
-							me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-							me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
-							me.currentInputReference = inputReference;
-						}
+			} else {
+				if (me.sgClient._connection_status) {
+					if (me.televisionService) {
+						let powerState = me.currentPowerState;
+						me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+						me.log.debug('Device: %s  %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 					}
-				}.bind(this));
-			}
-			if (me.televisionService) {
-				let powerState = me.currentPowerState;
-				me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
-				me.log.debug('Device: %s  %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
-				me.currentPowerState = powerState;
+				}
 			}
 		}.bind(this), 3000);
+
+		this.sgClient.on('_on_timeout', (response) => {
+			this.log.debug('Device: %s %s, state: Time OUT', this.host, this.name);
+			this.sgClient._connection_status = false;
+			this.currentPowerState = false;
+		});
+
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
 	}
 
+	getDeviceState() {
+		var me = this;
+		me.sgClient.on('_on_console_status', (response, device, smartglass) => {
+			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
+				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+				if (me.televisionService && me.inputReferences !== null && me.inputReferences.length > 0) {
+					let inputIdentifier = me.inputReferences.indexOf(inputReference);
+					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+					me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
+					me.currentInputReference = inputReference;
+				}
+				let muteState = me.currentMuteState;
+				let volume = me.currentVolume;
+				if (me.speakerService && me.currentPowerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
+					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
+					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+					if (me.volumeControl && me.volumeService) {
+						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
+						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+					}
+					me.log('Device: %s %s %s, get current Mute state: %s', me.host, me.name, me.zoneName, muteState ? 'ON' : 'OFF');
+					me.log('Device: %s %s %s, get current Volume level: %s dB ', me.host, me.name, me.zoneName, (volume - 80));
+					me.currentMuteState = muteState;
+					me.currentVolume = volume;
+				}
+				me.currentPowerState = true;
+			} else {
+				me.currentPowerState = false;
+			}
+		});
+	}
 
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.UUID = accessoryUuid.generate(this.name)
-		this.accessory = new Accessory(this.name, this.UUID);
+		this.accessoryUUID = UUID.generate(this.name);
+		this.accessory = new Accessory(this.name, this.accessoryUUID);
 		this.accessory.category = 31;
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
@@ -322,26 +345,28 @@ class xboxTvDevice {
 	setPower(state, callback) {
 		var me = this;
 		let smartglass = Smartglass();
-		if (!me.currentPowerState) {
-			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(function (data) {
+		if (state && !me.currentPowerState) {
+			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(data => {
 				me.log('Device: %s %s, booting..., response: %s', me.host, me.name, data);
-				callback(null, true);
-			}, function (error) {
-				me.log.debug('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
-				callback(error);
+				callback(null, state);
+			}).catch(error => {
+				if (error) {
+					me.log.debug('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
+					callback(error);
+				}
 			});
 		} else {
-			if (!state) {
-				me.sgClient.powerOff().then(function (data) {
+			if (!state && me.currentPowerState) {
+				me.sgClient.powerOff().then(data => {
 					me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
-					me.sgClient._connection_status = false;
-					callback(null, true);
-				}.bind(this), function (error) {
-					me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
-					callback(error);
+					me.currentPowerState = false;
+					callback(null, state);
+				}).catch(error => {
+					if (error) {
+						me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
+						callback(error);
+					}
 				});
-			} else {
-				callback(null, true);
 			}
 		}
 	}
@@ -384,7 +409,7 @@ class xboxTvDevice {
 	getInput(callback) {
 		var me = this;
 		let inputReference = me.currentInputReference;
-		if (!me.connectionStatus || inputReference === undefined || inputReference === null) {
+		if (!me.currentPowerState || inputReference === undefined || inputReference === null) {
 			me.televisionService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
@@ -425,7 +450,7 @@ class xboxTvDevice {
 					type = 'system_input';;
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(function () { });
+			this.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log('Device: %s %s, setPowerModeSelection successful, state: %s, command: %s', me.host, me.name, remoteKey, command);
 			callback(null, remoteKey);
 		}
@@ -446,7 +471,7 @@ class xboxTvDevice {
 					type = 'tv_remote';
 					break;
 			}
-			this.sgClient.getManager(type).sendIrCommand(command).then(function () { });
+			this.sgClient.getManager(type).sendIrCommand(command).then(data => { });
 			me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
 			callback(null, remoteKey);
 		}
@@ -512,7 +537,7 @@ class xboxTvDevice {
 					type = 'system_input';
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(function () { });
+			this.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
 			callback(null, remoteKey);
 		}
