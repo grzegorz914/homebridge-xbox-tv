@@ -1,6 +1,5 @@
 'use strict';
 
-const hap = require('hap-nodejs');
 const fs = require('fs');
 const path = require('path');
 
@@ -9,19 +8,17 @@ const SystemInputChannel = require('xbox-smartglass-core-node/src/channels/syste
 const SystemMediaChannel = require('xbox-smartglass-core-node/src/channels/systemmedia');
 const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote');
 
-const Characteristic = hap.Characteristic;
-const CharacteristicEventTypes = hap.CharacteristicEventTypes;
-const Service = hap.Service;
-const UUID = hap.uuid;
-
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
 
-let Accessory;
+let Accessory, Characteristic, Service, UUID;
 
-module.exports = api => {
-	Accessory = api.platformAccessory;
-	api.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
+module.exports = homebridge => {
+	Accessory = homebridge.platformAccessory;
+	Characteristic = homebridge.hap.Characteristic;
+	Service = homebridge.hap.Service;
+	UUID = homebridge.hap.uuid;
+	homebridge.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
 
@@ -157,44 +154,17 @@ class xboxTvDevice {
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
 	}
 
-	getDeviceState() {
-		var me = this;
-		me.sgClient.on('_on_console_status', (response, device, smartglass) => {
-			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-				if (me.televisionService && me.inputReferences !== null && me.inputReferences.length > 0) {
-					let inputIdentifier = me.inputReferences.indexOf(inputReference);
-					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-					me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
-					me.currentInputReference = inputReference;
-				}
-				let muteState = me.currentMuteState;
-				let volume = me.currentVolume;
-				if (me.speakerService && me.currentPowerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
-					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
-					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
-					if (me.volumeControl && me.volumeService) {
-						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
-						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
-					}
-					me.log('Device: %s %s %s, get current Mute state: %s', me.host, me.name, me.zoneName, muteState ? 'ON' : 'OFF');
-					me.log('Device: %s %s %s, get current Volume level: %s dB ', me.host, me.name, me.zoneName, (volume - 80));
-					me.currentMuteState = muteState;
-					me.currentVolume = volume;
-				}
-				me.currentPowerState = true;
-			} else {
-				me.currentPowerState = false;
-			}
-		});
-	}
-
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
 		this.accessoryUUID = UUID.generate(this.name);
 		this.accessory = new Accessory(this.name, this.accessoryUUID);
 		this.accessory.category = 31;
+		this.accessory.getService(Service.AccessoryInformation)
+			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+			.setCharacteristic(Characteristic.Model, this.modelName)
+			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
 		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
@@ -213,13 +183,6 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.on('set', this.setPowerModeSelection.bind(this));
-
-		this.accessory
-			.getService(Service.AccessoryInformation)
-			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
-			.setCharacteristic(Characteristic.Model, this.modelName)
-			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
-			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
 		this.accessory.addService(this.televisionService);
 		this.prepareSpeakerService();
@@ -270,7 +233,8 @@ class xboxTvDevice {
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
 		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
-			return;
+			this.log.debug('Inputs are not defined, please add it in config.json');
+			this.inputs = [{ 'name': 'No apps defined', 'reference': 'No apps defined' }];
 		}
 
 		if (Array.isArray(this.inputs) === false) {
@@ -304,33 +268,61 @@ class xboxTvDevice {
 				inputName = input.name;
 			}
 
-			//if reference not null or empty add the input
-			if (inputReference !== undefined && inputReference !== null && inputReference !== '') {
+			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
+			this.inputsService
+				.setCharacteristic(Characteristic.Identifier, i)
+				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
-				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
-				this.inputsService
-					.setCharacteristic(Characteristic.Identifier, i)
-					.setCharacteristic(Characteristic.ConfiguredName, inputName)
-					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
-
-				this.inputsService
-					.getCharacteristic(Characteristic.ConfiguredName)
-					.on('set', (newAppName, callback) => {
-						this.inputs[inputReference] = newAppName;
-						fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
-							if (error) {
-								this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
-							} else {
-								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, inputReference);
-							}
-						});
-						callback(null, newAppName);
+			this.inputsService
+				.getCharacteristic(Characteristic.ConfiguredName)
+				.on('set', (newAppName, callback) => {
+					this.inputs[inputReference] = newAppName;
+					fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
+						if (error) {
+							this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
+						} else {
+							this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, inputReference);
+						}
 					});
-				this.accessory.addService(this.inputsService);
-				this.televisionService.addLinkedService(this.inputsService);
-				this.inputReferences.push(inputReference);
+					callback(null, newAppName);
+				});
+			this.accessory.addService(this.inputsService);
+			this.televisionService.addLinkedService(this.inputsService);
+			this.inputReferences.push(inputReference);
+		});
+	}
+
+	getDeviceState() {
+		var me = this;
+		me.sgClient.on('_on_console_status', (response, device, smartglass) => {
+			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
+				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+				if (me.televisionService && me.inputReferences !== null && me.inputReferences.length > 0) {
+					let inputIdentifier = me.inputReferences.indexOf(inputReference);
+					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+					me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
+					me.currentInputReference = inputReference;
+				}
+				let muteState = me.currentMuteState;
+				let volume = me.currentVolume;
+				if (me.speakerService && me.currentPowerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
+					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
+					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+					if (me.volumeControl && me.volumeService) {
+						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
+						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+					}
+					me.log('Device: %s %s %s, get current Mute state: %s', me.host, me.name, me.zoneName, muteState ? 'ON' : 'OFF');
+					me.log('Device: %s %s %s, get current Volume level: %s dB ', me.host, me.name, me.zoneName, (volume - 80));
+					me.currentMuteState = muteState;
+					me.currentVolume = volume;
+				}
+				me.currentPowerState = true;
+			} else {
+				me.currentPowerState = false;
 			}
 		});
 	}
