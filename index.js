@@ -88,11 +88,13 @@ class xboxTvDevice {
 
 		//setup variables
 		this.inputReferences = new Array();
+		this.inputNames = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputReference = null;
+		this.currentInputName = null;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
@@ -292,6 +294,7 @@ class xboxTvDevice {
 			this.accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
 			this.inputReferences.push(inputReference);
+			this.inputNames.push(inputName);
 		});
 	}
 
@@ -315,8 +318,8 @@ class xboxTvDevice {
 						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
 						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
 					}
-					me.log('Device: %s %s %s, get current Mute state: %s', me.host, me.name, me.zoneName, muteState ? 'ON' : 'OFF');
-					me.log('Device: %s %s %s, get current Volume level: %s dB ', me.host, me.name, me.zoneName, (volume - 80));
+					me.log('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+					me.log('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 					me.currentMuteState = muteState;
 					me.currentVolume = volume;
 				}
@@ -400,6 +403,7 @@ class xboxTvDevice {
 
 	getInput(callback) {
 		var me = this;
+		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
 		if (!me.currentPowerState || inputReference === undefined || inputReference === null) {
 			me.televisionService
@@ -412,7 +416,7 @@ class xboxTvDevice {
 				me.televisionService
 					.getCharacteristic(Characteristic.ActiveIdentifier)
 					.updateValue(inputIdentifier);
-				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
+				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, inputName, inputReference);
 			}
 			callback(null, inputIdentifier);
 		}
@@ -421,8 +425,9 @@ class xboxTvDevice {
 	setInput(inputIdentifier, callback) {
 		var me = this;
 		let inputReference = me.inputReferences[inputIdentifier];
+		let inputName = me.inputNames[inputIdentifier];
 		if (inputReference !== me.currentInputReference) {
-			me.log('Device: %s %s, set new App successful, new App reference: %s', me.host, me.name, inputReference);
+			me.log('Device: %s %s, set new App successful, new App reference: %s %s', me.host, me.name, inputName, inputReference);
 			callback(null, inputIdentifier);
 		}
 	}

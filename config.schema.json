@@ -8,6 +8,7 @@
     "properties": {
       "devices": {
         "title": "Devices",
+        "buttonText": "Add device",
         "type": "array",
         "items": {
           "type": "object",
@@ -45,6 +46,7 @@
             },
             "inputs": {
               "title": "Apps",
+              "buttonText": "Add app",
               "type": "array",
               "items": {
                 "type": "object",
