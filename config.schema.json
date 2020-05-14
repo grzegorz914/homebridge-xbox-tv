@@ -36,13 +36,15 @@
               "title": "Volume control",
               "type": "boolean",
               "default": false,
-              "required": false
+              "required": false,
+              "description": "This activate volume control slider."
             },
             "switchInfoMenu": {
               "title": "Switch Info/Menu",
               "type": "boolean",
               "default": false,
-              "required": false
+              "required": false,
+              "description": "This switch behaviour for 'I' button in RC app and 'PowerModeSelection'."
             },
             "inputs": {
               "title": "Apps",
@@ -67,6 +69,7 @@
                     "title": "Input type",
                     "type": "string",
                     "default": "APPLICATION",
+                    "description": "Here select source input type.",
                     "oneOf": [
                       {
                         "title": "Other",
