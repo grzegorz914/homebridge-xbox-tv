@@ -41,31 +41,6 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. `xboxliveid` You can get this in the console settings.
 3. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
-4. Please do not add or remove if exist from the config.json default inputs which are now contain in the code.
-
-# Default inputs.
-```json
-    {   
-    "name": "TV",
-    "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
-	"type": "HDMI"
-	},
-	{
-	"name": "Dashboard",
-	"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-	"type": "HOME_SCREEN"
-	},
-	{
-	"name": "Settings",
-	"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-	"type": "OTHER"
-	},
-	{
-	"name": "Akccessory",
-	"reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
-	"type": "OTHER"
-	}
-```
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
@@ -82,6 +57,21 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
             "volumeControl": false,
             "switchInfoMenu": false,
             "inputs": [
+                       {
+                            "name": "Dashboard",
+                            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+                            "type": "HOME_SCREEN"
+                        },
+                        {
+                            "name": "Settings",
+                            "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+                            "type": "OTHER"
+                        },
+                         {
+                            "name": "Accessory",
+                            "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+                            "type": "OTHER"
+                        },
                {
                             "name": "Spotify",
                             "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",

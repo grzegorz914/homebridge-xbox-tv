@@ -100,30 +100,17 @@ class xboxTvDevice {
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
 
-		this.defaultInputs = [
+		let defaultInputs = [
 			{
-				name: 'TV',
-				reference: 'Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application',
-				type: 'HDMI'
-			},
-			{
-				name: 'Dashboard',
-				reference: 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
-				type: 'HOME_SCREEN'
-			},
-			{
-				name: 'Settings',
-				reference: 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
-				type: 'OTHER'
-			},
-			{
-				name: 'Accessory',
-				reference: 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
-				type: 'OTHER'
+				name: 'No inputs configured',
+				reference: 'No references configured',
+				type: 'No types configured'
 			}
 		];
 
-		this.inputs = this.defaultInputs.concat(this.device.inputs);
+		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
+			this.inputs = defaultInputs;
+		}
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -270,18 +257,20 @@ class xboxTvDevice {
 
 		this.inputs.forEach((input, i) => {
 
+			//get input name		
+			let inputName = input.name;
+
 			//get input reference
 			let inputReference = input.reference;
 
-			//get input name		
-			let inputName = inputReference;
+			//get input type		
+			let inputType = input.type;
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
+			} else {
+				inputName = input.name;
 			}
-
-			//get input type		
-			let inputType = input.type;
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService

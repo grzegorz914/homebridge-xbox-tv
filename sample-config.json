@@ -26,6 +26,21 @@
                     "switchInfoMenu": false,
                     "inputs": [
                         {
+                            "name": "Dashboard",
+                            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+                            "type": "HOME_SCREEN"
+                        },
+                        {
+                            "name": "Settings",
+                            "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+                            "type": "OTHER"
+                        },
+                        {
+                            "name": "Accessory",
+                            "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+                            "type": "OTHER"
+                        },
+                        {
                             "name": "Spotify",
                             "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
                             "type": "APPLICATION"
