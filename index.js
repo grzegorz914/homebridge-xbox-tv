@@ -112,12 +112,12 @@ class xboxTvDevice {
 				type: 'HOME_SCREEN'
 			},
 			{
-				name: 'Ustawienia',
+				name: 'Settings',
 				reference: 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
 				type: 'OTHER'
 			},
 			{
-				name: 'Akcesoria',
+				name: 'Accessory',
 				reference: 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
 				type: 'OTHER'
 			},
