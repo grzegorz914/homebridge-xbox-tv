@@ -69,7 +69,7 @@
                     "default": "APPLICATION",
                     "oneOf": [
                       {
-                        "title": "Source input",
+                        "title": "Other",
                         "enum": [
                           "OTHER"
                         ]
