@@ -41,7 +41,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. `xboxliveid` You can get this in the console settings.
 3. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
-4. Please do not add or remove from the config.json default inputs which are now contain in the code.
+4. Please do not add or remove if exist from the config.json default inputs which are now contain in the code.
 
 # Default inputs.
 ```json

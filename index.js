@@ -87,8 +87,8 @@ class xboxTvDevice {
 		this.firmwareRevision = device.firmwareRevision || 'FW00000003';
 
 		//setup variables
-		this.inputReferences = new Array();
 		this.inputNames = new Array();
+		this.inputReferences = new Array();
 		this.inputTypes = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
@@ -120,10 +120,10 @@ class xboxTvDevice {
 				name: 'Accessory',
 				reference: 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
 				type: 'OTHER'
-			},
-		]
+			}
+		];
 
-		this.inputs = this.defaultInputs.concat(this.device.inputs)
+		this.inputs = this.defaultInputs.concat(this.device.inputs);
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -260,14 +260,6 @@ class xboxTvDevice {
 	//Prepare inputs services
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
-		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
-			this.log.debug('Inputs are not defined, please add it in config.json');
-			return;
-		}
-
-		if (Array.isArray(this.inputs) === false) {
-			this.inputs = [this.inputs];
-		}
 
 		let savedNames = {};
 		try {
@@ -279,25 +271,17 @@ class xboxTvDevice {
 		this.inputs.forEach((input, i) => {
 
 			//get input reference
-			let inputReference = null;
-
-			if (input.reference !== undefined) {
-				inputReference = input.reference;
-			} else {
-				inputReference = input;
-			}
+			let inputReference = input.reference;
 
 			//get input name		
 			let inputName = inputReference;
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			} else if (input.name) {
-				inputName = input.name;
 			}
 
 			//get input type		
-			let inputType = this.inputs[i].type;
+			let inputType = input.type;
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
