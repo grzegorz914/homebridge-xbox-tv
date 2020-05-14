@@ -54,13 +54,87 @@
                   "name": {
                     "title": "App name",
                     "type": "string",
-                    "default": "Dashboard",
+                    "default": "Spotify",
                     "required": true
                   },
                   "reference": {
                     "title": "App reference",
                     "type": "string",
-                    "default": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+                    "default": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+                    "required": true
+                  },
+                  "type": {
+                    "title": "Input type",
+                    "type": "string",
+                    "default": "APPLICATION",
+                    "oneOf": [
+                      {
+                        "title": "Source input",
+                        "enum": [
+                          "OTHER"
+                        ]
+                      },
+                      {
+                        "title": "Home screen",
+                        "enum": [
+                          "HOME_SCREEN"
+                        ]
+                      },
+                      {
+                        "title": "Tuner",
+                        "enum": [
+                          "TUNER"
+                        ]
+                      },
+                      {
+                        "title": "HDMI",
+                        "enum": [
+                          "HDMI"
+                        ]
+                      },
+                      {
+                        "title": "Composite video",
+                        "enum": [
+                          "COMPOSITE_VIDEO"
+                        ]
+                      },
+                      {
+                        "title": "S Video",
+                        "enum": [
+                          "S_VIDEO"
+                        ]
+                      },
+                      {
+                        "title": "Component video",
+                        "enum": [
+                          "COMPONENT_VIDEO"
+                        ]
+                      },
+                      {
+                        "title": "Digital video input",
+                        "enum": [
+                          "DVI"
+                        ]
+                      },
+                      {
+                        "title": "Airplay",
+                        "enum": [
+                          "AIRPLAY"
+                        ]
+                      },
+                      {
+                        "title": "USB",
+                        "enum": [
+                          "USB"
+                        ]
+                      },
+                      {
+                        "title": "Application",
+                        "enum": [
+                          "APPLICATION"
+                        ]
+                      }
+                    ],
                     "required": true
                   }
                 }

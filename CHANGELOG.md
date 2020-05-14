@@ -1,5 +1,29 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.6.0 (10.05.2020) 
+- added Types to the inputs references (please update Yours config.json)
+- do not add or remove from the config.json default inputs which are now contain in the code 
+    {   
+    name: 'TV',
+    reference: 'Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application',
+	type: 'HDMI'
+	},
+	{
+	name: 'Dashboard',
+	reference: 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
+	type: 'HOME_SCREEN'
+	},
+	{
+	name: 'Settings',
+	reference: 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
+	type: 'OTHER'
+	},
+	{
+	name: 'Akccessory',
+	reference: 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
+	type: 'OTHER'
+	}
+
 ## 0.5.0 (10.05.2020) 
 - code cleanup
 - some fixes and performance inprovements

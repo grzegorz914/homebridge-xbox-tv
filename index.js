@@ -89,6 +89,7 @@ class xboxTvDevice {
 		//setup variables
 		this.inputReferences = new Array();
 		this.inputNames = new Array();
+		this.inputTypes = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
@@ -98,6 +99,31 @@ class xboxTvDevice {
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'info_' + this.host.split('.').join('');
+
+		this.defaultInputs = [
+			{
+				name: 'TV',
+				reference: 'Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application',
+				type: 'HDMI'
+			},
+			{
+				name: 'Dashboard',
+				reference: 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
+				type: 'HOME_SCREEN'
+			},
+			{
+				name: 'Ustawienia',
+				reference: 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
+				type: 'OTHER'
+			},
+			{
+				name: 'Akcesoria',
+				reference: 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
+				type: 'OTHER'
+			},
+		]
+
+		this.inputs = this.defaultInputs.concat(this.device.inputs)
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -236,7 +262,7 @@ class xboxTvDevice {
 		this.log.debug('prepareInputsService');
 		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
 			this.log.debug('Inputs are not defined, please add it in config.json');
-			this.inputs = [{ 'name': 'No apps defined', 'reference': 'No apps defined' }];
+			return;
 		}
 
 		if (Array.isArray(this.inputs) === false) {
@@ -270,12 +296,15 @@ class xboxTvDevice {
 				inputName = input.name;
 			}
 
+			//get input type		
+			let inputType = this.inputs[i].type;
+
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType, inputType)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 			this.inputsService
@@ -295,6 +324,7 @@ class xboxTvDevice {
 			this.televisionService.addLinkedService(this.inputsService);
 			this.inputReferences.push(inputReference);
 			this.inputNames.push(inputName);
+			this.inputTypes.push(inputType);
 		});
 	}
 

@@ -41,6 +41,31 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. `xboxliveid` You can get this in the console settings.
 3. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
+4. Please do not add or remove from the config.json default inputs which are now contain in the code.
+
+# Default inputs.
+```json
+    {   
+    "name": "TV",
+    "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
+	"type": "HDMI"
+	},
+	{
+	"name": "Dashboard",
+	"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+	"type": "HOME_SCREEN"
+	},
+	{
+	"name": "Settings",
+	"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+	"type": "OTHER"
+	},
+	{
+	"name": "Akccessory",
+	"reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+	"type": "OTHER"
+	}
+```
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
@@ -59,91 +84,98 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
             "inputs": [
                {
                             "name": "Spotify",
-                            "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App"
+                            "reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "YouTube",
-                            "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App"
+                            "reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Netflix",
-                            "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App"
+                            "reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Telewizja",
-                            "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application"
-                        },
-                        {
-                            "name": "Dashboard",
-                            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"
-                        },
-                        {
-                            "name": "Ustawienia",
-                            "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application"
+                            "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
+                            "type": "HDMI"
                         },
                         {
                             "name": "Sklep",
-                            "reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App"
-                        },
-                        {
-                            "name": "Akcesoria",
-                            "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App"
+                            "reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Microsoft Edge",
-                            "reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge"
+                            "reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Airserver",
-                            "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
+                            "reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Gears of War 5",
-                            "reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip"
+                            "reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Fortnite",
-                            "reference": "Fortnite_d5xxtpggmzx6p!AppFortnite"
+                            "reference": "Fortnite_d5xxtpggmzx6p!AppFortnite",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Minecraft",
-                            "reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App"
+                            "reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Plex",
-                            "reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App"
+                            "reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Bluray",
-                            "reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application"
+                            "reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "COD WII",
-                            "reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot"
+                            "reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "COD WZ",
-                            "reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8"
+                            "reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "GTA V",
-                            "reference": "GTA-V_vesz1v3mcwykm!GTAV"
+                            "reference": "GTA-V_vesz1v3mcwykm!GTAV",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "All4",
-                            "reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App"
+                            "reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Amazon Prime",
-                            "reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App"
+                            "reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "Disney",
-                            "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App"
+                            "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+                            "type": "APPLICATION"
                         },
                         {
                             "name": "BBC iPlayer",
-                            "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App"
+                            "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+                            "type": "APPLICATION"
                         }
             ]
         }
