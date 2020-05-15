@@ -454,7 +454,7 @@ class xboxTvDevice {
 					type = "system_input";;
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(data => { });
+			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setPowerModeSelection successful, state: %s, command: %s", me.host, me.name, remoteKey, command);
 			callback(null);
 		}
@@ -475,7 +475,7 @@ class xboxTvDevice {
 					type = "tv_remote";
 					break;
 			}
-			this.sgClient.getManager(type).sendIrCommand(command).then(data => { });
+			me.sgClient.getManager(type).sendIrCommand(command).then(data => { });
 			me.log("Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
 			callback(null);
 		}
@@ -541,7 +541,7 @@ class xboxTvDevice {
 					type = "system_input";
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(data => { });
+			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
 			callback(null);
 		}
