@@ -11,14 +11,15 @@ const TvRemoteChannel = require('xbox-smartglass-core-node/src/channels/tvremote
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
 
-let Accessory, Characteristic, Service, UUID;
+let Accessory, Characteristic, Service, Categories, UUID;
 
-module.exports = homebridge => {
-	Accessory = homebridge.platformAccessory;
-	Characteristic = homebridge.hap.Characteristic;
-	Service = homebridge.hap.Service;
-	UUID = homebridge.hap.uuid;
-	homebridge.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
+module.exports = (api) => {
+	Accessory = api.platformAccessory;
+	Characteristic = api.hap.Characteristic;
+	Service = api.hap.Service;
+	Categories = api.hap.Categories;
+	UUID = api.hap.uuid;
+	api.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
 
@@ -174,7 +175,7 @@ class xboxTvDevice {
 		this.log.debug('prepareTelevisionService');
 		this.accessoryUUID = UUID.generate(this.name);
 		this.accessory = new Accessory(this.name, this.accessoryUUID);
-		this.accessory.category = 31;
+		this.accessory.category = Categories.TELEVISION;
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
 			.setCharacteristic(Characteristic.Model, this.modelName)
