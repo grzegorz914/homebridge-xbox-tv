@@ -39,8 +39,10 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. T
 
 ## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
-2. `xboxliveid` You can get this in the console settings.
-3. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
+2. To find `xboxliveid` go to the console settings.
+3. If `volumeControl` is enabled, volume can be control using slider(not working right now).
+4. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
+5. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
