@@ -343,7 +343,7 @@ class xboxTvDevice {
 	setPower(state, callback) {
 		var me = this;
 		let smartglass = Smartglass();
-		if (state && !me.currentPowerState) {
+		if (!me.currentPowerState && state) {
 			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(data => {
 				me.log('Device: %s %s, booting..., response: %s', me.host, me.name, data);
 				callback(null, state);
@@ -354,7 +354,7 @@ class xboxTvDevice {
 				}
 			});
 		} else {
-			if (!state && me.currentPowerState) {
+			if (me.currentPowerState && !state) {
 				me.sgClient.powerOff().then(data => {
 					me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
 					me.currentPowerState = false;
