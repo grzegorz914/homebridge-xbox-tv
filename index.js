@@ -309,7 +309,7 @@ class xboxTvDevice {
 				if (me.televisionService && !me.currentPowerState) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, true);
 					me.log("Device: %s %s, get current Power state successful: ON", me.host, me.name);
-					me.currentPowerState = powerState;
+					me.currentPowerState = true;
 				}
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				if (me.televisionService && me.inputReferences !== null && me.inputReferences.length > 0) {
@@ -332,7 +332,6 @@ class xboxTvDevice {
 					me.currentMuteState = muteState;
 					me.currentVolume = volume;
 				}
-				me.currentPowerState = true;
 			} else {
 				me.currentPowerState = false;
 			}
