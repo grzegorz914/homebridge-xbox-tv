@@ -153,7 +153,7 @@ class xboxTvDevice {
 					if (me.televisionService) {
 						let powerState = me.currentPowerState;
 						me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
-						me.log.debug("Device: %s  %s, get current Power state successful: %s", me.host, me.name, powerState ? "ON" : "OFF");
+						me.log.debug("Device: %s  %s, get current Power state successful: %s", me.host, me.name, powerState ? "ON" : "STANDBY");
 					}
 				}
 			}
@@ -341,7 +341,7 @@ class xboxTvDevice {
 	getPower(callback) {
 		var me = this;
 		let state = me.currentPowerState;
-		me.log("Device: %s %s, get current Power state successful, state: %s", me.host, me.name, state ? "ON" : "OFF");
+		me.log("Device: %s %s, get current Power state successful, state: %s", me.host, me.name, state ? "ON" : "STANDBY");
 		callback(null, state);
 	}
 
