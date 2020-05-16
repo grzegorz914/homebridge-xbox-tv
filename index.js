@@ -441,8 +441,8 @@ class xboxTvDevice {
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
 		if (me.currentPowerState) {
-			let command;
-			let type;
+			let command = "";
+			let type = "";
 			switch (remoteKey) {
 				case Characteristic.PowerModeSelection.SHOW:
 					command = me.switchInfoMenu ? "nexus" : "menu";
@@ -455,15 +455,15 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setPowerModeSelection successful, state: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null);
+			callback(null, remoteKey);
 		}
 	}
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
 		if (me.currentPowerState) {
-			let command;
-			let type;
+			let command = "";
+			let type = "";
 			switch (remoteKey) {
 				case Characteristic.VolumeSelector.INCREMENT:
 					command = "btn.vol_up";
@@ -476,7 +476,7 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendIrCommand(command).then(data => { });
 			me.log("Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null);
+			callback(null, remoteKey);
 		}
 	}
 
@@ -484,8 +484,8 @@ class xboxTvDevice {
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
 		if (me.currentPowerState) {
-			let command;
-			let type;
+			let command = "";
+			let type = "";
 			switch (remoteKey) {
 				case Characteristic.RemoteKey.PLAY_PAUSE:
 					command = "playpause";
@@ -542,7 +542,7 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null);
+			callback(null, remoteKey);
 		}
 	}
 };
