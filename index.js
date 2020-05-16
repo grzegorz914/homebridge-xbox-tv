@@ -150,8 +150,8 @@ class xboxTvDevice {
 				});
 			} else {
 				if (me.sgClient._connection_status) {
+					let powerState = me.currentPowerState;
 					if (me.televisionService) {
-						let powerState = me.currentPowerState;
 						me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
 						me.log.debug("Device: %s  %s, get current Power state successful: %s", me.host, me.name, powerState ? "ON" : "STANDBY");
 					}
@@ -306,13 +306,12 @@ class xboxTvDevice {
 		var me = this;
 		me.sgClient.on("_on_console_status", (response, device, smartglass) => {
 			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-				if (me.televisionService && !me.currentPowerState) {
+				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, true);
 					me.log("Device: %s %s, get current Power state successful: ON", me.host, me.name);
-					me.currentPowerState = true;
 				}
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-				if (me.televisionService && me.inputReferences !== null && me.inputReferences.length > 0) {
+				if (me.televisionService && (inputReference !== me.currentInputReference)) {
 					let inputIdentifier = me.inputReferences.indexOf(inputReference);
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					me.log("Device: %s %s, get current App successful: %s", me.host, me.name, inputReference);
@@ -320,7 +319,7 @@ class xboxTvDevice {
 				}
 				let muteState = me.currentMuteState;
 				let volume = me.currentVolume;
-				if (me.speakerService && me.currentPowerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
+				if (me.speakerService && (muteState !== me.currentMuteState || volume !== me.currentVolume)) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 					if (me.volumeControl && me.volumeService) {
@@ -332,6 +331,7 @@ class xboxTvDevice {
 					me.currentMuteState = muteState;
 					me.currentVolume = volume;
 				}
+				me.currentPowerState = true;
 			} else {
 				me.currentPowerState = false;
 			}
