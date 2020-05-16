@@ -317,7 +317,7 @@ class xboxTvDevice {
 					me.log("Device: %s %s, get current App successful: %s", me.host, me.name, inputReference);
 					me.currentInputReference = inputReference;
 				}
-				let muteState = me.currentMuteState;
+				let muteState = me.currentPowerState ? me.currentMuteState : true;
 				let volume = me.currentVolume;
 				if (me.speakerService && (muteState !== me.currentMuteState || volume !== me.currentVolume)) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
