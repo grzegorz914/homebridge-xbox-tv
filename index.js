@@ -131,29 +131,28 @@ class xboxTvDevice {
 
 		//Check net state
 		setInterval(function () {
-			var me = this;
-			if (!me.sgClient._connection_status) {
-				me.sgClient = Smartglass();
+			if (!this.sgClient._connection_status) {
+				this.sgClient = Smartglass();
 
-				me.sgClient.connect(me.host).then(response => {
-					me.log("Device: %s %s, state: Online", me.host, me.name);
-					me.sgClient.addManager("system_input", SystemInputChannel());
-					me.sgClient.addManager("system_media", SystemMediaChannel());
-					me.sgClient.addManager("tv_remote", TvRemoteChannel());
-					me.getDeviceState();
+				this.sgClient.connect(this.host).then(response => {
+					this.log("Device: %s %s, state: Online", this.host, this.name);
+					this.sgClient.addManager("system_input", SystemInputChannel());
+					this.sgClient.addManager("system_media", SystemMediaChannel());
+					this.sgClient.addManager("tv_remote", TvRemoteChannel());
+					this.connect();
 				}).catch(error => {
 					if (error) {
-						me.log.debug("Device: %s %s, error: %s", me.host, me.name, error);
-						me.currentPowerState = false;
+						this.log.debug("Device: %s %s, error: %s", this.host, this.name, error);
+						this.currentPowerState = false;
 						return;
 					}
 				});
 			} else {
-				if (me.sgClient._connection_status) {
-					let powerState = me.currentPowerState;
-					if (me.televisionService) {
-						me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
-						me.log.debug("Device: %s  %s, get current Power state successful: %s", me.host, me.name, powerState ? "ON" : "STANDBY");
+				if (this.sgClient._connection_status) {
+					let powerState = this.currentPowerState;
+					if (this.televisionService) {
+						this.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+						this.log.debug("Device: %s  %s, get current Power state successful: %s", this.host, this.name, powerState ? "ON" : "STANDBY");
 					}
 				}
 			}
@@ -168,6 +167,12 @@ class xboxTvDevice {
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
+	}
+
+	connect() {
+		this.log("Device: %s %s, connected.", this.host, this.name);
+		//this.getDeviceInfo();
+		this.getDeviceState();
 	}
 
 	//Prepare TV service 
@@ -453,9 +458,9 @@ class xboxTvDevice {
 					type = "system_input";;
 					break;
 			}
-			me.sgClient.getManager(type).sendCommand(command).then(data => { });
+			this.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setPowerModeSelection successful, state: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null, remoteKey);
+			callback(null);
 		}
 	}
 
@@ -474,9 +479,9 @@ class xboxTvDevice {
 					type = "tv_remote";
 					break;
 			}
-			me.sgClient.getManager(type).sendIrCommand(command).then(data => { });
+			this.sgClient.getManager(type).sendIrCommand(command).then(data => { });
 			me.log("Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null, remoteKey);
+			callback(null);
 		}
 	}
 
@@ -540,9 +545,9 @@ class xboxTvDevice {
 					type = "system_input";
 					break;
 			}
-			me.sgClient.getManager(type).sendCommand(command).then(data => { });
+			this.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log("Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-			callback(null, remoteKey);
+			callback(null);
 		}
 	}
 };
