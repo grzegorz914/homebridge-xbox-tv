@@ -313,7 +313,7 @@ class xboxTvDevice {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devConfigurationFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log('Device: %s %s, devConfigurationFile saved successful.', me.host, me.name);
+					me.log('Device: %s %s, devConfigurationFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
 		}, (error) => {
@@ -325,7 +325,7 @@ class xboxTvDevice {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devHeadendInfoFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log('Device: %s %s, devHeadendInfoFile saved successful.', me.host, me.name);
+					me.log('Device: %s %s, devHeadendInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
 		}, (error) => {
@@ -337,7 +337,7 @@ class xboxTvDevice {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devLiveTVInfoFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log('Device: %s %s, devLiveTVInfoFile saved successful.', me.host, me.name);
+					me.log('Device: %s %s, devLiveTVInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
 		}, (error) => {
@@ -349,7 +349,7 @@ class xboxTvDevice {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devTunerLineupsFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log('Device: %s %s, devTunerLineupsFile saved successful.', me.host, me.name);
+					me.log('Device: %s %s, devTunerLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
 		}, (error) => {
@@ -361,7 +361,7 @@ class xboxTvDevice {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log('Device: %s %s, devAppChannelLineupsFile saved successful.', me.host, me.name);
+					me.log('Device: %s %s, devAppChannelLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
 		}, (error) => {
