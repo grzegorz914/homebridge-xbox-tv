@@ -378,7 +378,7 @@ class xboxTvDevice {
 			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, true);
-					me.log('Device: %s %s, get current Power state successful: ON', me.host, me.name);
+					me.log.debug('Device: %s %s, get current Power state successful: ON', me.host, me.name);
 				}
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				if (me.televisionService && (inputReference !== me.currentInputReference)) {
