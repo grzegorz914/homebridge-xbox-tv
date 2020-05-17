@@ -414,7 +414,7 @@ class xboxTvDevice {
 	getPower(callback) {
 		var me = this;
 		let state = me.currentPowerState;
-		me.log('Device: %s %s, get current Power state successful, state: %s', me.host, me.name, state ? 'ON' : 'STANDBY');
+		me.log('Device: %s %s, get current Power state successful, state: %s', me.host, me.name, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
 
@@ -432,7 +432,7 @@ class xboxTvDevice {
 		} else {
 			if (me.currentPowerState && !state) {
 				me.sgClient.powerOff().then(data => {
-					me.log('Device: %s %s, set new Power state successful, new state: STANDBY', me.host, me.name);
+					me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
 					me.currentPowerState = false;
 					callback(null);
 				}).catch(error => {
