@@ -164,7 +164,7 @@ class xboxTvDevice {
 
 
 		//Delay to wait for device info before publish
-		setTimeout(this.prepareTelevisionService.bind(this), 1000);
+		setTimeout(this.prepareTelevisionService.bind(this), 1500);
 	}
 
 	connect() {
