@@ -364,7 +364,7 @@ class xboxTvDevice {
 		} else {
 			if (me.currentPowerState && !state) {
 				me.sgClient.powerOff().then(data => {
-					me.log("Device: %s %s, set new Power state successful, new state: OFF", me.host, me.name);
+					me.log("Device: %s %s, set new Power state successful, new state: STANDBY", me.host, me.name);
 					me.currentPowerState = false;
 					callback(null);
 				}).catch(error => {
