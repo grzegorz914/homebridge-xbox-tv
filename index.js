@@ -148,12 +148,10 @@ class xboxTvDevice {
 					}
 				});
 			} else {
-				if (this.sgClient._connection_status) {
-					let powerState = this.currentPowerState;
-					if (this.televisionService) {
-						this.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
-						this.log.debug("Device: %s  %s, get current Power state successful: %s", this.host, this.name, powerState ? "ON" : "STANDBY");
-					}
+				let powerState = this.currentPowerState;
+				if (this.televisionService) {
+					this.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+					this.log.debug("Device: %s  %s, get current Power state successful: %s", this.host, this.name, powerState ? "ON" : "STANDBY");
 				}
 			}
 		}.bind(this), 3000);
