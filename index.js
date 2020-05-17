@@ -556,14 +556,6 @@ class xboxTvDevice {
 			let command = '';
 			let type = '';
 			switch (remoteKey) {
-				case Characteristic.RemoteKey.PLAY_PAUSE:
-					if (me.mediaState) {
-						command = 'pause';
-					} else {
-						command = 'play';
-					}
-					type = 'system_media';
-					break;
 				case Characteristic.RemoteKey.REWIND:
 					command = 'rewind';
 					type = 'system_media';
@@ -600,13 +592,21 @@ class xboxTvDevice {
 					command = 'a';
 					type = 'system_input';
 					break;
+				case Characteristic.RemoteKey.BACK:
+					command = 'b';
+					type = 'system_input';
+					break;
 				case Characteristic.RemoteKey.EXIT:
 					command = 'nexus';
 					type = 'system_input';
 					break;
-				case Characteristic.RemoteKey.BACK:
-					command = 'b';
-					type = 'system_input';
+				case Characteristic.RemoteKey.PLAY_PAUSE:
+					if (me.mediaState) {
+						command = 'pause';
+					} else {
+						command = 'play';
+					}
+					type = 'system_media';
 					break;
 				case Characteristic.RemoteKey.INFORMATION:
 					command = me.switchInfoMenu ? 'nexus' : 'view';
