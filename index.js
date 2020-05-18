@@ -101,21 +101,21 @@ class xboxTvDevice {
 		this.deviceInfoState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
+		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
 		this.devConfigurationFile = this.prefDir + '/' + 'Configurationo_' + this.host.split('.').join('');
 		this.devHeadendInfoFile = this.prefDir + '/' + 'HeadendInfo_' + this.host.split('.').join('');
 		this.devLiveTVInfoFile = this.prefDir + '/' + 'LiveTVInfo_' + this.host.split('.').join('');
 		this.devTunerLineupsFile = this.prefDir + '/' + 'TunerLineups_' + this.host.split('.').join('');
 		this.devAppChannelLineupsFile = this.prefDir + '/' + 'AppChannelLineups_' + this.host.split('.').join('');
 
-		let defaultInputs = [
-			{
-				name: 'No inputs configured',
-				reference: 'No references configured',
-				type: 'No types configured'
-			}
-		];
-
 		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
+			let defaultInputs = [
+				{
+					name: 'No inputs configured',
+					reference: 'No references configured',
+					type: 'No types configured'
+				}
+			];
 			this.inputs = defaultInputs;
 		}
 
@@ -253,7 +253,7 @@ class xboxTvDevice {
 
 		let savedNames = {};
 		try {
-			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
+			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
 		} catch (err) {
 			this.log.debug('Device: %s %s, Inputs file does not exist', this.host, this.name)
 		}
@@ -285,13 +285,13 @@ class xboxTvDevice {
 
 			this.inputsService
 				.getCharacteristic(Characteristic.ConfiguredName)
-				.on('set', (newAppName, callback) => {
-					this.inputs[inputReference] = newAppName;
-					fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
+				.on('set', (name, callback) => {
+					savedNames[inputReference] = name;
+					fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
 						if (error) {
 							this.log.debug('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
 						} else {
-							this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, newAppName, inputReference);
+							this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, name, inputReference);
 						}
 					});
 					callback(null);
@@ -309,7 +309,7 @@ class xboxTvDevice {
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		me.sgClient.getManager('tv_remote').getConfiguration().then((configuration) => {
 			me.log.debug('Device: %s %s, getConfiguration successful: %s', me.host, me.name, configuration);
-			fs.writeFile(me.devConfigurationFile, JSON.stringify(configuration), (error) => {
+			fs.writeFile(me.devConfigurationFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devConfigurationFile, error: %s', me.host, me.name, error);
 				} else {
@@ -321,7 +321,7 @@ class xboxTvDevice {
 		});
 		me.sgClient.getManager('tv_remote').getHeadendInfo().then((configuration) => {
 			me.log.debug('Device: %s %s, getHeadendInfo configuration successful: %s', me.host, me.name, configuration);
-			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(configuration), (error) => {
+			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devHeadendInfoFile, error: %s', me.host, me.name, error);
 				} else {
@@ -333,7 +333,7 @@ class xboxTvDevice {
 		});
 		me.sgClient.getManager('tv_remote').getLiveTVInfo().then((configuration) => {
 			me.log.debug('Device: %s %s, getLinveTVInfo configuration successful: %s', me.host, me.name, configuration);
-			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(configuration), (error) => {
+			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devLiveTVInfoFile, error: %s', me.host, me.name, error);
 				} else {
@@ -345,7 +345,7 @@ class xboxTvDevice {
 		});
 		me.sgClient.getManager('tv_remote').getTunerLineups().then((configuration) => {
 			me.log.debug('Device: %s %s, getTunerLineups configuration successful: %s', me.host, me.name, configuration);
-			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(configuration), (error) => {
+			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devTunerLineupsFile, error: %s', me.host, me.name, error);
 				} else {
@@ -357,7 +357,7 @@ class xboxTvDevice {
 		});
 		me.sgClient.getManager('tv_remote').getAppChannelLineups().then((configuration) => {
 			me.log.debug('Device: %s %s, getAppChannelLineups configuration successful: %s', me.host, me.name, configuration);
-			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(configuration), (error) => {
+			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
 				} else {
