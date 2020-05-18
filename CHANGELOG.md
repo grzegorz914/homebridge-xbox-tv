@@ -1,7 +1,10 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.7.60 (18.05.2020)
+- fixed bug in RC control
+
 ## 0.7.35 (17.05.2020) 
-- added read console configuration after HB restart and store in to /homebridge_folder/xboxTv/ file.
+- added read console configuration after HB restart and save to /homebridge_folder/xboxTv/ file.
 
 ## 0.7.2 (14.05.2020) 
 - added descriptions in config.schema.json

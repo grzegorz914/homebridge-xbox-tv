@@ -522,9 +522,8 @@ class xboxTvDevice {
 					type = 'system_input';;
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(data => { });
-			me.log('Device: %s %s, setPowerModeSelection successful, state: %s, command: %s', me.host, me.name, remoteKey, command);
-			callback(null);
+			me.sendRemoteCommand(command, callback);
+			me.log('Device: %s %s, setPowerModeSelection successful, remoteKey: %s', me.host, me.name, remoteKey);
 		}
 	}
 
@@ -543,9 +542,8 @@ class xboxTvDevice {
 					type = 'tv_remote';
 					break;
 			}
-			this.sgClient.getManager(type).sendIrCommand(command).then(data => { });
-			me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-			callback(null);
+			me.sendRemoteCommand(command, callback);
+			me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s', me.host, me.name, remoteKey);
 		}
 	}
 
@@ -613,9 +611,19 @@ class xboxTvDevice {
 					type = 'system_input';
 					break;
 			}
-			this.sgClient.getManager(type).sendCommand(command).then(data => { });
-			me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-			callback(null);
+			me.sendRemoteCommand(command, type, callback);
+			me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s', me.host, me.name, remoteKey);
+		}
+	}
+
+	sendRemoteCommand(command, type, callback) {
+		var me = this;
+		if (me.currentPowerState) {
+			me.sgClient.getManager(type).sendCommand(command).then(data => { });
+			me.log('Device: %s %s, send RC command successful, type: %s, command: %s', me.host, me.name, type, command);
+			if (callback !== null) {
+				callback();
+			}
 		}
 	}
 };
