@@ -156,7 +156,7 @@ class xboxTvDevice {
 					this.log.debug('Device: %s  %s, get current Power state successful: %s', this.host, this.name, powerState ? 'ON' : 'STANDBY');
 				}
 				if (!this.deviceInfoState) {
-					this.getDeviceInfo();
+					setTimeout(this.getDeviceInfo.bind(this), 750);
 				}
 			}
 		}.bind(this), 3000);
@@ -486,12 +486,12 @@ class xboxTvDevice {
 		var me = this;
 		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
+		let inputIdentifier = me.inputReferences.indexOf(inputReference);
 		if (!me.currentPowerState || inputReference === undefined || inputReference === null) {
 			me.televisionService
 				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			callback(null);
+			callback(null, 0);
 		} else {
-			let inputIdentifier = me.inputReferences.indexOf(inputReference);
 			if (inputReference === me.inputReferences[inputIdentifier]) {
 				me.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -530,9 +530,7 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
-			if (callback !== null) {
-				callback();
-			}
+			callback(null);
 		}
 	}
 
@@ -553,9 +551,7 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
-			if (callback !== null) {
-				callback();
-			}
+			callback(null);
 		}
 	}
 
@@ -621,9 +617,7 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => { });
 			me.log('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
-			if (callback !== null) {
-				callback();
-			}
+			callback(null);
 		}
 	}
 };
