@@ -285,17 +285,19 @@ class xboxTvDevice {
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.accessoryUUID = UUID.generate(this.name);
-		this.accessory = new Accessory(this.name, this.accessoryUUID);
+		const accessoryName = this.name;
+		const accessoryUUID = UUID.generate(accessoryName);
+		this.accessory = new Accessory(accessoryName, accessoryUUID);
 		this.accessory.category = Categories.TELEVISION;
+
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
 			.setCharacteristic(Characteristic.Model, this.modelName)
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-		this.televisionService = new Service.Television(this.name, 'televisionService');
-		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
+		this.televisionService = new Service.Television(accessoryName, 'televisionService');
+		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
@@ -319,7 +321,7 @@ class xboxTvDevice {
 			this.prepareVolumeService();
 		}
 
-		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
 	}
 
