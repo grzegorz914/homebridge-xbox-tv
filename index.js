@@ -159,7 +159,7 @@ class xboxTvDevice {
 					setTimeout(this.getDeviceInfo.bind(this), 750);
 				}
 			}
-		}.bind(this), 3000);
+		}.bind(this), 2000);
 
 		this.sgClient.on('_on_timeout', (response) => {
 			this.log.debug('Device: %s %s, state: Time OUT', this.host, this.name);
@@ -175,7 +175,7 @@ class xboxTvDevice {
 	getDeviceInfo() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
-		me.sgClient.getManager('tv_remote').getConfiguration().then((configuration) => {
+		me.sgClient.getManager('tv_remote').getConfiguration().then(configuration => {
 			me.log.debug('Device: %s %s, getConfiguration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
 			fs.writeFile(me.devConfigurationFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
@@ -184,10 +184,10 @@ class xboxTvDevice {
 					me.log('Device: %s %s, devConfigurationFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
-		}, (error) => {
+		}).catch(error => {
 			me.log.debug('Device: %s %s, getConfiguration error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getHeadendInfo().then((configuration) => {
+		me.sgClient.getManager('tv_remote').getHeadendInfo().then(configuration => {
 			me.log.debug('Device: %s %s, getHeadendInfo configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
 			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
@@ -196,10 +196,10 @@ class xboxTvDevice {
 					me.log('Device: %s %s, devHeadendInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
-		}, (error) => {
+		}).catch(error => {
 			me.log.debug('Device: %s %s, getHeadendInfo configuration error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getLiveTVInfo().then((configuration) => {
+		me.sgClient.getManager('tv_remote').getLiveTVInfo().then(configuration => {
 			me.log.debug('Device: %s %s, getLinveTVInfo configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
 			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
@@ -208,10 +208,10 @@ class xboxTvDevice {
 					me.log('Device: %s %s, devLiveTVInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
-		}, (error) => {
+		}).catch(error => {
 			me.log.debug('Device: %s %s, getLiveTVInfo configuration error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getTunerLineups().then((configuration) => {
+		me.sgClient.getManager('tv_remote').getTunerLineups().then(configuration => {
 			me.log.debug('Device: %s %s, getTunerLineups configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
 			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
@@ -220,10 +220,10 @@ class xboxTvDevice {
 					me.log('Device: %s %s, devTunerLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
-		}, (error) => {
+		}).catch(error => {
 			me.log.debug('Device: %s %s, getTunerLineups configuration error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getAppChannelLineups().then((configuration) => {
+		me.sgClient.getManager('tv_remote').getAppChannelLineups().then(configuration => {
 			me.log.debug('Device: %s %s, getAppChannelLineups configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
 			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
 				if (error) {
@@ -232,7 +232,7 @@ class xboxTvDevice {
 					me.log('Device: %s %s, devAppChannelLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
 				}
 			});
-		}, (error) => {
+		}).catch(error => {
 			me.log.debug('Device: %s %s, getAppChannelLineups configuration error: %s', me.host, me.name, error);
 		});
 
@@ -278,7 +278,7 @@ class xboxTvDevice {
 
 			let mediaState = me.sgClient.getManager('system_media').getState();
 			me.mediaState = (mediaState.title_id !== 0);
-			me.log('Device: %s %s, get current media state: %s', me.host, me.name, me.mediaState ? 'PLAY' : 'STOP');
+			me.log.debug('Device: %s %s, get current media state: %s', me.host, me.name, me.mediaState);
 		});
 	}
 
@@ -350,7 +350,11 @@ class xboxTvDevice {
 		this.log.debug('prepareVolumeService');
 		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', this.getMuteSlider.bind(this));
+			.on('get', this.getMuteSlider.bind(this))
+			.on('set', (newValue, callback) => {
+				this.speakerService.setCharacteristic(Characteristic.Mute, !newValue);
+				callback(null);
+			});
 		this.volumeService.getCharacteristic(Characteristic.Brightness)
 			.on('get', this.getVolume.bind(this))
 			.on('set', this.setVolume.bind(this));
@@ -436,14 +440,15 @@ class xboxTvDevice {
 			});
 		} else {
 			if (me.currentPowerState && !state) {
-				me.sgClient.powerOff().then(data => {
-					me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
-					me.currentPowerState = false;
-					callback(null);
-				}).catch(error => {
-					me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
-					callback(error);
-				});
+				setTimeout(() => {
+					me.sgClient.powerOff().then(data => {
+						me.log('Device: %s %s, set new Power state successful, new state: OFF', me.host, me.name);
+						callback(null);
+					}).catch(error => {
+						me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
+						callback(error);
+					});
+				}, 500);
 			}
 		}
 	}
@@ -517,9 +522,9 @@ class xboxTvDevice {
 
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
+		let command;
+		let type;
 		if (me.currentPowerState) {
-			let command = '';
-			let type = '';
 			switch (remoteKey) {
 				case Characteristic.PowerModeSelection.SHOW:
 					command = me.switchInfoMenu ? 'nexus' : 'menu';
@@ -530,17 +535,20 @@ class xboxTvDevice {
 					type = 'system_input';;
 					break;
 			}
-			me.sgClient.getManager(type).sendCommand(command).then(data => { });
-			me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
+			me.sgClient.getManager(type).sendCommand(command).then(data => {
+				me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
+			}).catch(error => {
+				me.log.debug('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+			});
 			callback(null);
 		}
 	}
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
+		let command;
+		let type;
 		if (me.currentPowerState) {
-			let command = '';
-			let type = '';
 			switch (remoteKey) {
 				case Characteristic.VolumeSelector.INCREMENT:
 					command = 'btn.vol_up';
@@ -551,8 +559,11 @@ class xboxTvDevice {
 					type = 'tv_remote';
 					break;
 			}
-			me.sgClient.getManager(type).sendCommand(command).then(data => { });
-			me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
+			me.sgClient.getManager(type).sendIrCommand(command).then(data => {
+				me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
+			}).catch(error => {
+				me.log.debug('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+			});
 			callback(null);
 		}
 	}
@@ -560,9 +571,9 @@ class xboxTvDevice {
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
+		let command;
+		let type;
 		if (me.currentPowerState) {
-			let command = '';
-			let type = '';
 			switch (remoteKey) {
 				case Characteristic.RemoteKey.REWIND:
 					command = 'rewind';
@@ -609,7 +620,7 @@ class xboxTvDevice {
 					type = 'system_input';
 					break;
 				case Characteristic.RemoteKey.PLAY_PAUSE:
-					command = me.mediaState ? 'pause' : 'play';
+					command = 'playpause';
 					type = 'system_media';
 					break;
 				case Characteristic.RemoteKey.INFORMATION:
@@ -617,8 +628,11 @@ class xboxTvDevice {
 					type = 'system_input';
 					break;
 			}
-			me.sgClient.getManager(type).sendCommand(command).then(data => { });
-			me.log('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
+			me.sgClient.getManager(type).sendCommand(command).then(data => {
+				me.log('Device: %s %s, setRemoteKey successful,  command: %s', me.host, me.name, command);
+			}).catch(error => {
+				me.log.debug('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+			});
 			callback(null);
 		}
 	}
