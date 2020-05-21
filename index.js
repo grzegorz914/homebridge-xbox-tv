@@ -244,14 +244,15 @@ class xboxTvDevice {
 		me.log.debug('Device: %s %s, requesting Device state.', me.host, me.name);
 		me.sgClient.on('_on_console_status', (response, config, smartglass) => {
 			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
-				if (me.televisionService) {
+				if (me.televisionService && !me.currentPowerState) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, true);
-					me.log.debug('Device: %s %s, get current Power state successful: ON', me.host, me.name);
+					me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'ON');
+					me.currentPowerState = true;
 				}
 
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				let inputIdentifier = me.inputReferences.indexOf(inputReference);
-				if (me.televisionService) {
+				if (me.televisionService && inputReference !== me.currentInputReference) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
 					me.currentInputReference = inputReference;
@@ -259,7 +260,7 @@ class xboxTvDevice {
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
 				let volume = me.currentVolume;
-				if (me.speakerService) {
+				if (me.speakerService && (muteState !== me.currentMuteState || volume !== me.currentVolume)) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 					if (me.volumeControl && me.volumeService) {
@@ -271,8 +272,12 @@ class xboxTvDevice {
 					me.currentMuteState = muteState;
 					me.currentVolume = volume;
 				}
-				me.currentPowerState = true;
 			} else {
+				if (me.televisionService && me.currentPowerState) {
+					me.televisionService.updateCharacteristic(Characteristic.Active, false);
+					me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'OFF');
+					me.currentPowerState = false;
+				}
 				me.currentPowerState = false;
 			}
 
@@ -432,7 +437,7 @@ class xboxTvDevice {
 		let smartglass = Smartglass();
 		if (!me.currentPowerState && state) {
 			smartglass.powerOn({ live_id: me.xboxliveid, tries: 4, ip: me.host }).then(data => {
-				me.log('Device: %s %s, booting..., response: %s', me.host, me.name, data);
+				me.log('Device: %s %s, set new Power state successful: %s, %s', me.host, me.name, 'ON', data);
 				callback(null);
 			}).catch(error => {
 				me.log.debug('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
@@ -448,7 +453,7 @@ class xboxTvDevice {
 						me.log.debug('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
 						callback(error);
 					});
-				}, 500);
+				}, 350);
 			}
 		}
 	}
@@ -502,7 +507,7 @@ class xboxTvDevice {
 			if (inputReference === me.inputReferences[inputIdentifier]) {
 				me.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputName, inputReference);
+				me.log('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
 			}
 			callback(null, inputIdentifier);
 		}
