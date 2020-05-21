@@ -50,6 +50,7 @@
               "title": "Apps",
               "buttonText": "Add app",
               "type": "array",
+              "expandable": true,
               "items": {
                 "type": "object",
                 "properties": {
