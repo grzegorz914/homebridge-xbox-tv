@@ -14,13 +14,13 @@
           "type": "object",
           "properties": {
             "name": {
-              "title": "Name",
+              "title": "Device name",
               "type": "string",
               "default": "Game console",
               "required": true
             },
             "host": {
-              "title": "IP Address",
+              "title": "Address IP",
               "type": "string",
               "default": "192.168.1.6",
               "required": true,
@@ -33,7 +33,7 @@
               "required": true
             },
             "volumeControl": {
-              "title": "Slider volume control",
+              "title": "Volume control",
               "type": "boolean",
               "default": false,
               "required": false,
@@ -47,7 +47,7 @@
               "description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings."
             },
             "inputs": {
-              "title": "Apps",
+              "title": "Inputs",
               "buttonText": "Add app",
               "type": "array",
               "expandable": true,
@@ -55,13 +55,13 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "title": "App name",
+                    "title": "Input name",
                     "type": "string",
                     "default": "Spotify",
                     "required": true
                   },
                   "reference": {
-                    "title": "App reference",
+                    "title": "Input reference",
                     "type": "string",
                     "default": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
                     "required": true
