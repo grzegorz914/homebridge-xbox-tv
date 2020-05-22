@@ -477,10 +477,16 @@ class xboxTvDevice {
 
 	setMute(state, callback) {
 		var me = this;
+		let command = 'btn.vol_mute';
+		let type = 'tv_remote';
 		if (me.currentPowerState) {
-			let newState = state ? true : false;
-			me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, newState ? 'ON' : 'OFF');
-			callback(null);
+			me.sgClient.getManager(type).sendIrCommand(command).then(data => {
+				me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
+				callback(null);
+			}).catch(error => {
+				me.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
+			});
 		}
 	}
 
@@ -576,7 +582,6 @@ class xboxTvDevice {
 			callback(null);
 		}
 	}
-
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
