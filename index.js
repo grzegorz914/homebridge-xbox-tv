@@ -27,7 +27,7 @@ class xboxTvPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log('No configuration found for homebridge-xbox-tv');
+			log('No data found for homebridge-xbox-tv');
 			return;
 		}
 		this.log = log;
@@ -88,17 +88,17 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'FW00000003';
 
 		//setup variables
+		this.connectionStatus = false;
+		this.currentPowerState = false;
+		this.deviceInfoState = false;
 		this.inputNames = new Array();
 		this.inputReferences = new Array();
 		this.inputTypes = new Array();
-		this.connectionStatus = false;
-		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputReference = null;
 		this.currentInputName = null;
-		this.mediaState = false;
-		this.deviceInfoState = false;
+		this.currentMediaState = false; //play/pause
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
@@ -143,13 +143,13 @@ class xboxTvDevice {
 				this.sgClient = Smartglass();
 
 				this.sgClient.connect(this.host).then(response => {
-					this.log.info('Device: %s %s, state: Online', this.host, this.name);
+					this.log.info('Device: %s %s, state: Online.', this.host, this.name);
 					this.sgClient.addManager('system_input', SystemInputChannel());
 					this.sgClient.addManager('system_media', SystemMediaChannel());
 					this.sgClient.addManager('tv_remote', TvRemoteChannel());
 					this.getDeviceState();
 				}).catch(error => {
-					this.log.debug('Device: %s %s, state Offline and error: %s', this.host, this.name, error);
+					this.log.debug('Device: %s %s, state Offline.', this.host, this.name);
 					this.currentPowerState = false;
 					return;
 				});
@@ -179,65 +179,60 @@ class xboxTvDevice {
 	getDeviceInfo() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
-		me.sgClient.getManager('tv_remote').getConfiguration().then(configuration => {
-			me.log.debug('Device: %s %s, getConfiguration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
-			fs.writeFile(me.devConfigurationFile, JSON.stringify(configuration, null, 2), (error) => {
+		me.sgClient.getManager('tv_remote').getConfiguration().then(data => {
+			fs.writeFile(me.devConfigurationFile, JSON.stringify(data, null, 2), (error) => {
 				if (error) {
 					me.log.error('Device: %s %s, could not write devConfigurationFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, devConfigurationFile saved successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, devConfigurationFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
 				}
 			});
 		}).catch(error => {
 			me.log.debug('Device: %s %s, getConfiguration error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getHeadendInfo().then(configuration => {
-			me.log.debug('Device: %s %s, getHeadendInfo configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
-			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(configuration, null, 2), (error) => {
+		me.sgClient.getManager('tv_remote').getHeadendInfo().then(data => {
+			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(data, null, 2), (error) => {
 				if (error) {
 					me.log.error('Device: %s %s, could not write devHeadendInfoFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, devHeadendInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, devHeadendInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
 				}
 			});
 		}).catch(error => {
-			me.log.debug('Device: %s %s, getHeadendInfo configuration error: %s', me.host, me.name, error);
+			me.log.debug('Device: %s %s, getHeadendInfo data error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getLiveTVInfo().then(configuration => {
-			me.log.debug('Device: %s %s, getLinveTVInfo configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
-			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(configuration, null, 2), (error) => {
+		me.sgClient.getManager('tv_remote').getLiveTVInfo().then(data => {
+			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(data, null, 2), (error) => {
 				if (error) {
 					me.log.error('Device: %s %s, could not write devLiveTVInfoFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, devLiveTVInfoFile saved successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, devLiveTVInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
 				}
 			});
 		}).catch(error => {
-			me.log.debug('Device: %s %s, getLiveTVInfo configuration error: %s', me.host, me.name, error);
+			me.log.debug('Device: %s %s, getLiveTVInfo data error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getTunerLineups().then(configuration => {
-			me.log.debug('Device: %s %s, getTunerLineups configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
-			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
+		me.sgClient.getManager('tv_remote').getTunerLineups().then(data => {
+			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(data, null, 2), (error) => {
 				if (error) {
 					me.log.error('Device: %s %s, could not write devTunerLineupsFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, devTunerLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, devTunerLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
 				}
 			});
 		}).catch(error => {
-			me.log.debug('Device: %s %s, getTunerLineups configuration error: %s', me.host, me.name, error);
+			me.log.debug('Device: %s %s, getTunerLineups data error: %s', me.host, me.name, error);
 		});
-		me.sgClient.getManager('tv_remote').getAppChannelLineups().then(configuration => {
-			me.log.debug('Device: %s %s, getAppChannelLineups configuration successful: %s', me.host, me.name, JSON.stringify(configuration, null, 2));
-			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(configuration, null, 2), (error) => {
+		me.sgClient.getManager('tv_remote').getAppChannelLineups().then(data => {
+			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(data, null, 2), (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
 				}
 			});
 		}).catch(error => {
-			me.log.error('Device: %s %s, getAppChannelLineups configuration error: %s', me.host, me.name, error);
+			me.log.error('Device: %s %s, getAppChannelLineups data error: %s', me.host, me.name, error);
 		});
 
 		me.deviceInfoState = true;
@@ -254,14 +249,15 @@ class xboxTvDevice {
 					me.currentPowerState = true;
 				}
 
+				let inputName = me.inputNames[inputIdentifier];
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				let inputIdentifier = me.inputReferences.indexOf(inputReference);
 				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 				}
-				me.log.debug('Device: %s %s, get current App successful: %s', me.host, me.name, inputReference);
+				me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
 				me.currentInputReference = inputReference;
-				me.currentInputName = me.inputNames[inputIdentifier];
+				me.currentInputName = me.inputName;
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
 				let volume = me.currentVolume;
@@ -285,9 +281,9 @@ class xboxTvDevice {
 				me.currentPowerState = false;
 			}
 
-			let mediaState = me.sgClient.getManager('system_media').getState();
-			me.mediaState = (mediaState.title_id !== 0);
-			me.log.debug('Device: %s %s, get current media state: %s', me.host, me.name, me.mediaState);
+			let currentMediaState = me.sgClient.getManager('system_media').getState();
+			me.currentMediaState = (currentMediaState.title_id !== 0);
+			me.log.debug('Device: %s %s, get current media state: %s', me.host, me.name, me.currentMediaState);
 		});
 	}
 
