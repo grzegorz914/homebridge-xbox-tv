@@ -249,15 +249,15 @@ class xboxTvDevice {
 					me.currentPowerState = true;
 				}
 
-				let inputName = me.inputNames[inputIdentifier];
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				let inputIdentifier = me.inputReferences.indexOf(inputReference);
+				let inputName = me.inputNames[inputIdentifier];
 				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+					me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
+					me.currentInputReference = inputReference;
+					me.currentInputName = me.inputName;
 				}
-				me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
-				me.currentInputReference = inputReference;
-				me.currentInputName = me.inputName;
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
 				let volume = me.currentVolume;
@@ -268,11 +268,11 @@ class xboxTvDevice {
 						me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
 						me.volumeService.updateCharacteristic(Characteristic.Brightnes, volumes);
 					}
+					me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+					me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+					me.currentMuteState = muteState;
+					me.currentVolume = volume;
 				}
-				me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-				me.currentMuteState = muteState;
-				me.currentVolume = volume;
 			} else {
 				if (me.televisionService && me.currentPowerState) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, false);
