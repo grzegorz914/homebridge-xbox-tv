@@ -255,8 +255,8 @@ class xboxTvDevice {
 				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
-					me.currentInputReference = inputReference;
 					me.currentInputName = me.inputName;
+					me.currentInputReference = inputReference;
 				}
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
@@ -513,7 +513,7 @@ class xboxTvDevice {
 		} else {
 			me.televisionService
 				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			me.log.debug('Device: %s %s, get current App default: %s %s', me.host, me.name, inputName, inputReference);
+			me.log.info('Device: %s %s, get current App default: %s %s', me.host, me.name, inputName, inputReference);
 			callback(null, 0);
 		}
 	}
