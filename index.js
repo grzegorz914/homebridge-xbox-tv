@@ -181,57 +181,67 @@ class xboxTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		me.sgClient.getManager('tv_remote').getConfiguration().then(data => {
-			fs.writeFile(me.devConfigurationFile, JSON.stringify(data, null, 2), (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write devConfigurationFile, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, devConfigurationFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
-				}
-			});
+			if (fs.existsSync(me.devConfigurationFile) === false) {
+				fs.writeFile(me.devConfigurationFile, JSON.stringify(data, null, 2), (error) => {
+					if (error) {
+						me.log.error('Device: %s %s, could not write devConfigurationFile, error: %s', me.host, me.name, error);
+					} else {
+						me.log.debug('Device: %s %s, devConfigurationFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
+					}
+				});
+			}
 		}).catch(error => {
 			me.log.debug('Device: %s %s, getConfiguration error: %s', me.host, me.name, error);
 		});
 		me.sgClient.getManager('tv_remote').getHeadendInfo().then(data => {
-			fs.writeFile(me.devHeadendInfoFile, JSON.stringify(data, null, 2), (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write devHeadendInfoFile, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, devHeadendInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
-				}
-			});
+			if (fs.existsSync(me.devHeadendInfoFile) === false) {
+				fs.writeFile(me.devHeadendInfoFile, JSON.stringify(data, null, 2), (error) => {
+					if (error) {
+						me.log.error('Device: %s %s, could not write devHeadendInfoFile, error: %s', me.host, me.name, error);
+					} else {
+						me.log.debug('Device: %s %s, devHeadendInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
+					}
+				});
+			}
 		}).catch(error => {
 			me.log.debug('Device: %s %s, getHeadendInfo data error: %s', me.host, me.name, error);
 		});
 		me.sgClient.getManager('tv_remote').getLiveTVInfo().then(data => {
-			fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(data, null, 2), (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write devLiveTVInfoFile, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, devLiveTVInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
-				}
-			});
+			if (fs.existsSync(me.devLiveTVInfoFile) === false) {
+				fs.writeFile(me.devLiveTVInfoFile, JSON.stringify(data, null, 2), (error) => {
+					if (error) {
+						me.log.error('Device: %s %s, could not write devLiveTVInfoFile, error: %s', me.host, me.name, error);
+					} else {
+						me.log.debug('Device: %s %s, devLiveTVInfoFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
+					}
+				});
+			}
 		}).catch(error => {
 			me.log.debug('Device: %s %s, getLiveTVInfo data error: %s', me.host, me.name, error);
 		});
 		me.sgClient.getManager('tv_remote').getTunerLineups().then(data => {
-			fs.writeFile(me.devTunerLineupsFile, JSON.stringify(data, null, 2), (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write devTunerLineupsFile, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, devTunerLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
-				}
-			});
+			if (fs.existsSync(me.devTunerLineupsFile) === false) {
+				fs.writeFile(me.devTunerLineupsFile, JSON.stringify(data, null, 2), (error) => {
+					if (error) {
+						me.log.error('Device: %s %s, could not write devTunerLineupsFile, error: %s', me.host, me.name, error);
+					} else {
+						me.log.debug('Device: %s %s, devTunerLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
+					}
+				});
+			}
 		}).catch(error => {
 			me.log.debug('Device: %s %s, getTunerLineups data error: %s', me.host, me.name, error);
 		});
 		me.sgClient.getManager('tv_remote').getAppChannelLineups().then(data => {
-			fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(data, null, 2), (error) => {
-				if (error) {
-					me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
-				}
-			});
+			if (fs.existsSync(me.devAppChannelLineupsFile) === false) {
+				fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(data, null, 2), (error) => {
+					if (error) {
+						me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
+					} else {
+						me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(data, null, 2));
+					}
+				});
+			}
 		}).catch(error => {
 			me.log.error('Device: %s %s, getAppChannelLineups data error: %s', me.host, me.name, error);
 		});
@@ -275,10 +285,10 @@ class xboxTvDevice {
 				let volume = me.currentVolume;
 				if (me.speakerService) {
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-					if (me.volumeService && me.volumeControl === 1) {
+					if (me.volumeService && me.volumeControl == 1) {
 						me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
 					}
-					if (me.volumeService && me.volumeControl === 2) {
+					if (me.volumeService && me.volumeControl == 2) {
 						me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 					}
 				}
@@ -364,18 +374,17 @@ class xboxTvDevice {
 	//Prepare volume service
 	prepareVolumeService() {
 		this.log.debug('prepareVolumeService');
-		if (this.volumeControl === 1) {
+		if (this.volumeControl == 1) {
 			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.Brightness)
 				.on('get', this.getVolume.bind(this))
 				.on('set', this.setVolume.bind(this));
-		} else {
-			if (this.volumeControl === 2) {
-				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', this.getVolume.bind(this))
-					.on('set', this.setVolume.bind(this));
-			}
+		}
+		if (this.volumeControl == 2) {
+			this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
+				.on('get', this.getVolume.bind(this))
+				.on('set', this.setVolume.bind(this));
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', this.getMuteSlider.bind(this))
@@ -516,6 +525,10 @@ class xboxTvDevice {
 
 	setVolume(volume, callback) {
 		var me = this;
+		var targetVolume = volume;
+		if (volume == 0 || volume == 100) {
+			targetVolume = me.currentVolume;
+		}
 		me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 		callback(null);
 	}
