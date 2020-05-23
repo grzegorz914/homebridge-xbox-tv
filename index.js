@@ -96,8 +96,9 @@ class xboxTvDevice {
 		this.inputTypes = new Array();
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentInputReference = '';
 		this.currentInputName = '';
+		this.currentInputReference = '';
+		this.currentInputIdentifier = 0;
 		this.currentMediaState = false; //play/pause
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
@@ -259,11 +260,12 @@ class xboxTvDevice {
 				me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
 				me.currentInputName = inputName;
 				me.currentInputReference = inputReference;
+				me.currentInputIdentifier = inputIdentifier;
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
 				if (me.speakerService) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-					if (me.volumeControl) {
+					if (me.volumeService && me.volumeControl >= 1) {
 						me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
 					}
 				}
@@ -273,8 +275,11 @@ class xboxTvDevice {
 				let volume = me.currentVolume;
 				if (me.speakerService) {
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-					if (me.volumeControl) {
+					if (me.volumeService && me.volumeControl === 1) {
 						me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
+					}
+					if (me.volumeService && me.volumeControl === 2) {
+						me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 					}
 				}
 				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
@@ -328,7 +333,7 @@ class xboxTvDevice {
 		this.accessory.addService(this.televisionService);
 		this.prepareSpeakerService();
 		this.prepareInputsService();
-		if (this.volumeControl) {
+		if (this.volumeControl >= 1) {
 			this.prepareVolumeService();
 		}
 
@@ -359,16 +364,25 @@ class xboxTvDevice {
 	//Prepare volume service
 	prepareVolumeService() {
 		this.log.debug('prepareVolumeService');
-		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+		if (this.volumeControl === 1) {
+			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.Brightness)
+				.on('get', this.getVolume.bind(this))
+				.on('set', this.setVolume.bind(this));
+		} else {
+			if (this.volumeControl === 2) {
+				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
+				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
+					.on('get', this.getVolume.bind(this))
+					.on('set', this.setVolume.bind(this));
+			}
+		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', this.getMuteSlider.bind(this))
 			.on('set', (newValue, callback) => {
 				this.speakerService.setCharacteristic(Characteristic.Mute, !newValue);
 				callback(null);
 			});
-		this.volumeService.getCharacteristic(Characteristic.Brightness)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
 
 		this.accessory.addService(this.volumeService);
 		this.televisionService.addLinkedService(this.volumeService);
@@ -510,18 +524,9 @@ class xboxTvDevice {
 		var me = this;
 		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
-		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		if (inputReference === me.inputReferences[inputIdentifier]) {
-			me.televisionService
-				.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			me.log.info('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
-			callback(null, inputIdentifier);
-		} else {
-			me.televisionService
-				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			me.log.info('Device: %s %s, get current App default: %s %s', me.host, me.name, inputName, inputReference);
-			callback(null, 0);
-		}
+		let inputIdentifier = me.currentInputIdentifier;
+		me.log.info('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
+		callback(null, inputIdentifier);
 	}
 
 	setInput(inputIdentifier, callback) {

@@ -33,11 +33,32 @@
               "required": true
             },
             "volumeControl": {
-              "title": "Volume control",
-              "type": "boolean",
-              "default": false,
-              "required": false,
-              "description": "This activate extra tile present as slider volume control and mute ON/OFF."
+              "title": "Volume control mode",
+              "type": "integer",
+              "default": 0,
+              "maximum": 2,
+              "description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
+              "oneOf": [
+                {
+                  "title": "None",
+                  "enum": [
+                    0
+                  ]
+                },
+                {
+                  "title": "Slider",
+                  "enum": [
+                    1
+                  ]
+                },
+                {
+                  "title": "Fan",
+                  "enum": [
+                    2
+                  ]
+                }
+              ],
+              "required": true
             },
             "switchInfoMenu": {
               "title": "Switch Info/Menu",

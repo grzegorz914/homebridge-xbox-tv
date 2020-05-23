@@ -43,7 +43,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 ## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. To find `xboxliveid` go to the console settings.
-3. If `volumeControl` is enabled, volume can be control using slider and mute ON/OFF if button press, in current api not working.
+3. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 4. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
 5. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
 
@@ -59,7 +59,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
             "name": "Xbox One",
             "host": "192.168.1.6",
             "xboxliveid": "FD0000000000",
-            "volumeControl": false,
+            "volumeControl": 0,
             "switchInfoMenu": false,
             "inputs": [
                        {

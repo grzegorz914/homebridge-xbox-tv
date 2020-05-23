@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 0.9.0 (23.05.2020)
+- added possibility to select what a type of extra volume control You want to use (None, Slider, Fan).
+
 ## 0.8.0 (20.05.2020)
 - added mute ON/OFF to the slider volume
 
