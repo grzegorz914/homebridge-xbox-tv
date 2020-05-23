@@ -96,8 +96,8 @@ class xboxTvDevice {
 		this.inputTypes = new Array();
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentInputReference = null;
-		this.currentInputName = null;
+		this.currentInputReference = '';
+		this.currentInputName = '';
 		this.currentMediaState = false; //play/pause
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
@@ -242,6 +242,7 @@ class xboxTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device state.', me.host, me.name);
 		me.sgClient.on('_on_console_status', (response, config, smartglass) => {
+			this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response);
 			if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 				if (me.televisionService && !me.currentPowerState) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, true);
@@ -254,25 +255,30 @@ class xboxTvDevice {
 				let inputName = me.inputNames[inputIdentifier];
 				if (me.televisionService) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-					me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
-					me.currentInputName = me.inputName;
-					me.currentInputReference = inputReference;
 				}
+				me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
+				me.currentInputName = inputName;
+				me.currentInputReference = inputReference;
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
-				let volume = me.currentVolume;
 				if (me.speakerService) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-					if (me.volumeControl && me.volumeService) {
+					if (me.volumeControl) {
 						me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
-						me.volumeService.updateCharacteristic(Characteristic.Brightnes, volumes);
 					}
-					me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-					me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-					me.currentMuteState = muteState;
-					me.currentVolume = volume;
 				}
+				me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+				me.currentMuteState = muteState;
+
+				let volume = me.currentVolume;
+				if (me.speakerService) {
+					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+					if (me.volumeControl) {
+						me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
+					}
+				}
+				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+				me.currentVolume = volume;
 			} else {
 				if (me.televisionService && me.currentPowerState) {
 					me.televisionService.updateCharacteristic(Characteristic.Active, false);
@@ -381,20 +387,20 @@ class xboxTvDevice {
 
 		this.inputs.forEach((input, i) => {
 
-			//get input name		
-			let inputName = input.name;
-
 			//get input reference
 			let inputReference = input.reference;
 
-			//get input type		
-			let inputType = input.type;
+			//get input name		
+			let inputName = input.name;
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
 			} else {
 				inputName = input.name;
 			}
+
+			//get input type		
+			let inputType = input.type;
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
