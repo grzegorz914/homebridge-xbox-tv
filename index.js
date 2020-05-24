@@ -164,7 +164,7 @@ class xboxTvDevice {
 					setTimeout(this.getDeviceInfo.bind(this), 750);
 				}
 			}
-		}.bind(this), 2000);
+		}.bind(this), 2500);
 
 		this.sgClient.on('_on_timeout', (response) => {
 			this.log.debug('Device: %s %s, state: Time OUT', this.host, this.name);
@@ -387,9 +387,12 @@ class xboxTvDevice {
 				.on('set', this.setVolume.bind(this));
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', this.getMuteSlider.bind(this))
-			.on('set', (newValue, callback) => {
-				this.speakerService.setCharacteristic(Characteristic.Mute, !newValue);
+			.on('get', (callback) => {
+				let state = !this.currentMuteState;
+				callback(null, state);
+			})
+			.on('set', (state, callback) => {
+				this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 				callback(null);
 			});
 
@@ -494,18 +497,11 @@ class xboxTvDevice {
 		callback(null, state);
 	}
 
-	getMuteSlider(callback) {
-		var me = this;
-		let state = me.currentPowerState ? !me.currentMuteState : false;
-		me.log.debug('Device: %s %s, get current Mute state successful: %s', me.host, me.name, !state ? 'ON' : 'OFF');
-		callback(null, state);
-	}
-
 	setMute(state, callback) {
 		var me = this;
 		let command = 'btn.vol_mute';
 		let type = 'tv_remote';
-		if (me.currentPowerState) {
+		if (me.currentPowerState && state !== me.currentMuteState) {
 			me.sgClient.getManager(type).sendIrCommand(command).then(data => {
 				me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
@@ -525,9 +521,8 @@ class xboxTvDevice {
 
 	setVolume(volume, callback) {
 		var me = this;
-		var targetVolume = volume;
 		if (volume == 0 || volume == 100) {
-			targetVolume = me.currentVolume;
+			volume = me.currentVolume;
 		}
 		me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 		callback(null);
