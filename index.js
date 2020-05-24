@@ -264,7 +264,7 @@ class xboxTvDevice {
 				let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 				let inputIdentifier = me.inputReferences.indexOf(inputReference);
 				let inputName = me.inputNames[inputIdentifier];
-				if (me.televisionService) {
+				if (me.televisionService && (inputReference !== me.currentInputReference)) {
 					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 				}
 				me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
@@ -273,7 +273,7 @@ class xboxTvDevice {
 				me.currentInputIdentifier = inputIdentifier;
 
 				let muteState = me.currentPowerState ? me.currentMuteState : true;
-				if (me.speakerService) {
+				if (me.speakerService && (muteState !== me.currentMuteState)) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
 					if (me.volumeService && me.volumeControl >= 1) {
 						me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
@@ -283,7 +283,7 @@ class xboxTvDevice {
 				me.currentMuteState = muteState;
 
 				let volume = me.currentVolume;
-				if (me.speakerService) {
+				if (me.speakerService && (volume !== me.currentVolume)) {
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 					if (me.volumeService && me.volumeControl == 1) {
 						me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
@@ -378,13 +378,19 @@ class xboxTvDevice {
 			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.Brightness)
 				.on('get', this.getVolume.bind(this))
-				.on('set', this.setVolume.bind(this));
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+					callback(null);
+				});
 		}
 		if (this.volumeControl == 2) {
 			this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
 				.on('get', this.getVolume.bind(this))
-				.on('set', this.setVolume.bind(this));
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+					callback(null);
+				});
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', (callback) => {
