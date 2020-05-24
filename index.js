@@ -546,8 +546,8 @@ class xboxTvDevice {
 	setInput(inputIdentifier, callback) {
 		var me = this;
 		setTimeout(() => {
-			let inputReference = me.inputReferences[inputIdentifier];
 			let inputName = me.inputNames[inputIdentifier];
+			let inputReference = me.inputReferences[inputIdentifier];
 			if (inputReference !== me.currentInputReference) {
 				me.log.info('Device: %s %s, set new App successful, new App reference: %s %s', me.host, me.name, inputName, inputReference);
 				callback(null);
