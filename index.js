@@ -32,38 +32,31 @@ class xboxTvPlatform {
 		}
 		this.log = log;
 		this.config = config;
+		this.api = api;
 		this.devices = config.devices || [];
 		this.accessories = [];
 
-		if (api) {
-			this.api = api;
-			if (api.version < 2.1) {
-				throw new Error('Unexpected API version.');
+		this.api.on('didFinishLaunching', () => {
+			this.log.debug('didFinishLaunching');
+			for (let i = 0, len = this.devices.length; i < len; i++) {
+				let deviceName = this.devices[i];
+				if (!deviceName.name) {
+					this.log.warn('Device Name Missing')
+				} else {
+					this.accessories.push(new xboxTvDevice(this.log, deviceName, this.api));
+				}
 			}
-			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
-		}
+		});
 	}
 
-	didFinishLaunching() {
-		this.log.debug('didFinishLaunching');
-		for (let i = 0, len = this.devices.length; i < len; i++) {
-			let deviceName = this.devices[i];
-			if (!deviceName.name) {
-				this.log.warn('Device Name Missing')
-			} else {
-				this.accessories.push(new xboxTvDevice(this.log, deviceName, this.api));
-			}
-		}
-	}
-	configureAccessory(platformAccessory) {
+	configureAccessory(accessory) {
 		this.log.debug('configureAccessory');
-		if (this.accessories) {
-			this.accessories.push(platformAccessory);
-		}
+		this.accessories.push(accessory);
 	}
-	removeAccessory(platformAccessory) {
+
+	removeAccessory(accessory) {
 		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
 
