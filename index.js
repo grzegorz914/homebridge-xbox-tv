@@ -265,19 +265,14 @@ class xboxTvDevice {
 				me.currentInputReference = inputReference;
 				me.currentInputIdentifier = inputIdentifier;
 
-				let muteState = me.currentPowerState ? me.currentMuteState : true;
-				if (me.speakerService && (muteState !== me.currentMuteState)) {
-					me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-					if (me.volumeService && me.volumeControl >= 1) {
-						me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
-					}
-				}
-				me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-				me.currentMuteState = muteState;
-
+				let mute = me.currentPowerState ? me.currentMuteState : true;
 				let volume = me.currentVolume;
-				if (me.speakerService && (volume !== me.currentVolume)) {
+				if (me.speakerService) {
+					me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
 					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+					if (me.volumeService && me.volumeControl >= 1) {
+						me.volumeService.updateCharacteristic(Characteristic.On, !mute);
+					}
 					if (me.volumeService && me.volumeControl == 1) {
 						me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
 					}
@@ -285,7 +280,9 @@ class xboxTvDevice {
 						me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 					}
 				}
+				me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
 				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+				me.currentMuteState = mute;
 				me.currentVolume = volume;
 			} else {
 				if (me.televisionService && me.currentPowerState) {
