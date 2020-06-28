@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - (23.05.2020)
+### Added
+- release version.
+
 ## [0.9.0] - (23.05.2020)
 ### Added
 - added possibility to select what a type of extra volume control You want to use] - (None, Slider, Fan).
