@@ -12,6 +12,10 @@
   "bugs": {
     "url": "https://github.com/grzegorz914/homebridge-xbox-tv/issues"
   },
+  "funding": {
+    "type" : "paypal",
+    "url" : "https://paypal.me/GrzegorzKaczor"
+    },
   "main": "index.js",
   "files": [
     "index.js",
