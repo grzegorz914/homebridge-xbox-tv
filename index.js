@@ -654,10 +654,11 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => {
 				me.log.info('Device: %s %s, setRemoteKey successful,  command: %s', me.host, me.name, command);
+				callback(null);
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
-			callback(null);
 		}
 	}
 };
