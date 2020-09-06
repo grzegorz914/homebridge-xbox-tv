@@ -208,7 +208,7 @@
           "key": "devices",
           "type": "array",
           "orderable": false,
-          "buttonText": "Add app/input",
+          "buttonText": "Add device",
           "items": [
             "devices[].name",
             "devices[].host",
@@ -224,7 +224,7 @@
                   "key": "devices[].inputs",
                   "type": "array",
                   "orderable": false,
-                  "buttonText": "Add input",
+                  "buttonText": "Add app/input",
                   "items": [
                     "devices[].inputs[].name",
                     "devices[].inputs[].reference",
