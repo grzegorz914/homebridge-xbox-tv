@@ -135,7 +135,11 @@
                             "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
                             "type": "APPLICATION"
                         }
-                    ]
+                    ],
+                    "manufacturer": "Manufacturer",
+                    "modelName": "Model",
+                    "serialNumber": "Serial Number",
+                    "firmwareRevision": "Firmware Revision"
                 }
             ]
         }

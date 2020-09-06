@@ -76,9 +76,9 @@ class xboxTvDevice {
 
 		//device info
 		this.manufacturer = config.manufacturer || 'Microsoft';
-		this.modelName = config.modelName || PLUGIN_NAME;
-		this.serialNumber = config.serialNumber || 'SN00000003';
-		this.firmwareRevision = config.firmwareRevision || 'FW00000003';
+		this.modelName = config.modelName || 'Model Name';
+		this.serialNumber = config.serialNumber || 'Serial Number';
+		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
 		this.connectionStatus = false;
