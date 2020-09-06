@@ -165,9 +165,7 @@ class xboxTvDevice {
 			this.currentPowerState = false;
 		});
 
-
-		//Delay to wait for device info before publish
-		setTimeout(this.prepareTelevisionService.bind(this), 1500);
+		this.prepareTelevisionService();
 	}
 
 	getDeviceInfo() {
@@ -331,11 +329,12 @@ class xboxTvDevice {
 			.on('set', this.setPowerModeSelection.bind(this));
 
 		this.accessory.addService(this.televisionService);
+
 		this.prepareSpeakerService();
-		this.prepareInputsService();
 		if (this.volumeControl >= 1) {
 			this.prepareVolumeService();
 		}
+		this.prepareInputsService();
 
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
@@ -445,11 +444,12 @@ class xboxTvDevice {
 					});
 					callback(null);
 				});
-			this.accessory.addService(this.inputsService);
-			this.televisionService.addLinkedService(this.inputsService);
 			this.inputReferences.push(inputReference);
 			this.inputNames.push(inputName);
 			this.inputTypes.push(inputType);
+
+			this.accessory.addService(this.inputsService);
+			this.televisionService.addLinkedService(this.inputsService);
 		});
 	}
 
