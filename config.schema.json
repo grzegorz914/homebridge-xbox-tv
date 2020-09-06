@@ -162,35 +162,35 @@
                     "required": true
                   }
                 }
-              },
-              "manufacturer": {
-                "name": "Manufacturer",
-                "type": "string",
-                "placeholder": "Manufacturer",
-                "description": "Set the manufacturer name.",
-                "required": false
-              },
-              "modelName": {
-                "name": "Model",
-                "type": "string",
-                "placeholder": "Model",
-                "description": "Set the model name.",
-                "required": false
-              },
-              "serialNumber": {
-                "name": "Serial Number",
-                "type": "string",
-                "placeholder": "SerialNumber",
-                "description": "Set the serial number.",
-                "required": false
-              },
-              "firmwareRevision": {
-                "name": "Firmware Revision",
-                "type": "string",
-                "placeholder": "Firmware Revision",
-                "description": "Set the firmware revision.",
-                "required": false
               }
+            },
+            "manufacturer": {
+              "name": "Manufacturer",
+              "type": "string",
+              "placeholder": "Manufacturer",
+              "description": "Set the manufacturer name.",
+              "required": false
+            },
+            "modelName": {
+              "name": "Model",
+              "type": "string",
+              "placeholder": "Model",
+              "description": "Set the model name.",
+              "required": false
+            },
+            "serialNumber": {
+              "name": "Serial Number",
+              "type": "string",
+              "placeholder": "SerialNumber",
+              "description": "Set the serial number.",
+              "required": false
+            },
+            "firmwareRevision": {
+              "name": "Firmware Revision",
+              "type": "string",
+              "placeholder": "Firmware Revision",
+              "description": "Set the firmware revision.",
+              "required": false
             }
           }
         }
