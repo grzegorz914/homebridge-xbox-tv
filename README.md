@@ -8,16 +8,16 @@
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins) [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv) [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Homebridge plugin to control Microsoft game consoles in HomeKit as TV service. Tested with Xbox One X.
+Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service. Tested with Xbox One X.
 
 </span>
 
 ## Info
 1. Power ON/OFF short press tile in HomeKit app.
-2. RC/Media control is possible after You go to the RC app on iPhone/iPad.
-3. Speaker control is possible after You go to RC app on iPhone/iPad `Speaker Service`.
-4. Legacy volume and mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`, in current api not working.
-5. Apps/Games can be only read from device, switch apps/games in current api not working.
+2. RC/Media control is possible after you go to the RC app on iPhone/iPad.
+3. Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
+4. Legacy volume and mute control is possible through extra `lightbulb` (slider) or using Siri `Volume Service`, not working with the current API.
+5. Apps/Games can only be read from the device, switching apps/games does not work with the current API.
 6. Siri control.
 
 
@@ -42,7 +42,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 
 ## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
-2. To find `xboxliveid` go to the console settings.
+2. To find `xboxliveid`, on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number.*
 3. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 4. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
 5. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
