@@ -58,7 +58,7 @@
                   ]
                 }
               ],
-              "required": true
+              "required": false
             },
             "switchInfoMenu": {
               "title": "Switch Info/Menu",

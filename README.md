@@ -49,6 +49,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 3. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 4. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
 5. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
+6. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
