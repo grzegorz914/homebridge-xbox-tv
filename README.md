@@ -42,6 +42,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 
 ## Configuration console
 1. [Device must be in Instant Power-ON Mode](https://support-origin.xbox.com/en-ZA/xbox-one/console/learn-about-power-modes)
+2. Console need to allow connect from any 3rd app - Settings > Devices & Connections > Remote Features > xBox app Preferences > xBox App should be set to "Allow Connections from any device".
 
 ## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
