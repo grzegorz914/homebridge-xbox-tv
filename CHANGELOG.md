@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - (17.09.2020)
+## Changs
+- fixed send power on until successful #38
+- fixed remote control function #28
+- added refreshInterval, default 5sec
+- updated config layout
+
 ## [1.1.0] - (06.09.2020)
 ## Changs
 - completely reconfigured layout of config schema

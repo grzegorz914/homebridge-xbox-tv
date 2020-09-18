@@ -22,6 +22,7 @@
                     "name": "Game Console",
                     "host": "192.168.1.6",
                     "xboxliveid": "FD0000000000",
+                    "refreshInterval": 5,
                     "volumeControl": 0,
                     "switchInfoMenu": false,
                     "inputs": [

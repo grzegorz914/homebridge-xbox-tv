@@ -47,10 +47,11 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 ## Configuration plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. To find `xboxliveid`, on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number.*
-3. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
-4. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
-5. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
-6. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
+3. In `refreshInterval` set the data refresh time in seconds, default 5sec.
+4. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
+5. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
+6. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
+7. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" height="150"></a>
@@ -64,6 +65,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
             "name": "Xbox One",
             "host": "192.168.1.6",
             "xboxliveid": "FD0000000000",
+            "refreshInterval": 5,
             "volumeControl": 0,
             "switchInfoMenu": false,
             "inputs": [
