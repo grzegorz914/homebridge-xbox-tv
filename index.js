@@ -173,8 +173,8 @@ class xboxTvDevice {
 		this.log.debug('prepareTelevisionService');
 		const accessoryName = this.name;
 		const accessoryUUID = UUID.generate(accessoryName);
-		this.accessory = new Accessory(accessoryName, accessoryUUID);
-		this.accessory.category = Categories.TELEVISION;
+		const accessoryCategory = Categories.TELEVISION;
+		this.accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
@@ -577,8 +577,8 @@ class xboxTvDevice {
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 			});
-			callback(null);
 		}
+		callback(null);
 	}
 
 	setVolumeSelector(state, callback) {
@@ -601,8 +601,8 @@ class xboxTvDevice {
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 			});
-			callback(null);
 		}
+		callback(null);
 	}
 
 	setRemoteKey(remoteKey, callback) {
@@ -666,11 +666,10 @@ class xboxTvDevice {
 			}
 			me.sgClient.getManager(type).sendCommand(command).then(data => {
 				me.log.info('Device: %s %s, setRemoteKey successful,  command: %s', me.host, me.name, command);
-				callback(null);
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			});
 		}
+		callback(null);
 	}
 };
