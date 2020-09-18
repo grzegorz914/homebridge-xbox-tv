@@ -168,7 +168,7 @@ class xboxTvDevice {
 		this.log.debug('prepareTelevisionService');
 		const accessoryName = this.name;
 		const accessoryUUID = UUID.generate(accessoryName);
-		const accessoryCategory = Categories.TELEVISION;
+		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		this.accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
 		this.accessory.getService(Service.AccessoryInformation)
