@@ -1,6 +1,6 @@
 {
   "name": "homebridge-xbox-tv",
-  "version": "1.2.1",
+  "version": "1.2.21",
   "description": "Homebridge plugin (https://github.com/homebridge/homebridge) to control Xbox game consoles.",
   "license": "MIT",
   "author": "grzegorz914",
@@ -13,9 +13,9 @@
     "url": "https://github.com/grzegorz914/homebridge-xbox-tv/issues"
   },
   "funding": {
-    "type" : "paypal",
-    "url" : "https://paypal.me/GrzegorzKaczor"
-    },
+    "type": "paypal",
+    "url": "https://paypal.me/GrzegorzKaczor"
+  },
   "main": "index.js",
   "files": [
     "index.js",
@@ -30,7 +30,7 @@
     "homebridge": ">=1.1.0"
   },
   "dependencies": {
-    "xbox-smartglass-core-node": "^0.6.4"
+    "xbox-smartglass-core-node": "^0.6.5"
   },
   "keywords": [
     "homebridge",
