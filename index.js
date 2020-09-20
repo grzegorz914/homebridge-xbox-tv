@@ -34,7 +34,6 @@ class xboxTvPlatform {
 		this.config = config;
 		this.api = api;
 		this.devices = config.devices || [];
-		this.accessories = [];
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
@@ -43,20 +42,19 @@ class xboxTvPlatform {
 				if (!deviceName.name) {
 					this.log.warn('Device Name Missing')
 				} else {
-					this.accessories.push(new xboxTvDevice(this.log, deviceName, this.api));
+					new xboxTvDevice(this.log, deviceName, this.api);
 				}
 			}
 		});
 	}
 
-	configureAccessory(accessory) {
-		this.log.debug('configureAccessory');
-		this.accessories.push(accessory);
+	configureAccessory(platformAccessory) {
+		this.log.debug('configurePlatformAccessory');
 	}
 
-	removeAccessory(accessory) {
-		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+	removeAccessory(platformAccessory) {
+		this.log.debug('removePlatformAccessory');
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
 	}
 }
 
@@ -155,23 +153,57 @@ class xboxTvDevice {
 			}
 		}.bind(this), this.refreshInterval * 1000);
 
-		//Prepare accessory 
+		this.prepareAccessory();
+	}
+
+	//Prepare accessory
+	prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
 		const accessoryUUID = UUID.generate(accessoryName);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
-		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
+		this.accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
-		accessory.getService(Service.AccessoryInformation)
-			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
-			.setCharacteristic(Characteristic.Model, this.modelName)
-			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
-			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+		this.prepareInformationService();
+		this.prepareTelevisionService();
+		this.prepareSpeakerService();
+		if (this.volumeControl >= 1) {
+			this.prepareVolumeService();
+		}
+		this.prepareInputsService();
 
-		//Prepare TV service 
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
+		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
+	}
+
+	//Prepare information service
+	prepareInformationService() {
+		this.log.debug('prepareInformationService');
+		this.getDeviceInfo();
+
+		let manufacturer = this.manufacturer;
+		let modelName = this.modelName;
+		let serialNumber = this.serialNumber;
+		let firmwareRevision = this.firmwareRevision;
+
+		this.accessory.removeService(this.accessory.getService(Service.AccessoryInformation));
+		const informationService = new Service.AccessoryInformation();
+		informationService
+			.setCharacteristic(Characteristic.Name, this.name)
+			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+			.setCharacteristic(Characteristic.Model, modelName)
+			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+
+		this.accessory.addService(informationService);
+	}
+
+
+	//Prepare television service
+	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.televisionService = new Service.Television(accessoryName, 'televisionService');
-		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
+		this.televisionService = new Service.Television(this.name, 'televisionService');
+		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
@@ -188,11 +220,13 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.on('set', this.setPowerModeSelection.bind(this));
 
-		accessory.addService(this.televisionService);
+		this.accessory.addService(this.televisionService);
+	}
 
-		//Prepare speaker service
+	//Prepare speaker service
+	prepareSpeakerService() {
 		this.log.debug('prepareSpeakerService');
-		this.speakerService = new Service.TelevisionSpeaker(accessoryName + ' Speaker', 'speakerService');
+		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Speaker', 'speakerService');
 		this.speakerService
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
@@ -205,14 +239,16 @@ class xboxTvDevice {
 			.on('get', this.getMute.bind(this))
 			.on('set', this.setMute.bind(this));
 
-		accessory.addService(this.speakerService);
+		this.accessory.addService(this.speakerService);
 		this.televisionService.addLinkedService(this.speakerService);
+	}
 
-		//Prepare volume service
+	//Prepare volume service
+	prepareVolumeService() {
+		this.log.debug('prepareVolumeService');
 		if (this.volumeControl >= 1) {
-			this.log.debug('prepareVolumeService');
 			if (this.volumeControl == 1) {
-				this.volumeService = new Service.Lightbulb(accessoryName + ' Volume', 'volumeService');
+				this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
 					.on('get', this.getVolume.bind(this))
 					.on('set', (volume, callback) => {
@@ -221,7 +257,7 @@ class xboxTvDevice {
 					});
 			}
 			if (this.volumeControl == 2) {
-				this.volumeService = new Service.Fan(accessoryName + ' Volume', 'volumeService');
+				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
 				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
 					.on('get', this.getVolume.bind(this))
 					.on('set', (volume, callback) => {
@@ -239,17 +275,18 @@ class xboxTvDevice {
 					callback(null);
 				});
 
-			accessory.addService(this.volumeService);
+			this.accessory.addService(this.volumeService);
 			this.televisionService.addLinkedService(this.volumeService);
 		}
+	}
 
-		//Prepare inputs services
+	prepareInputsService() {
 		this.log.debug('prepareInputsService');
 		let savedNames = {};
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
 		} catch (error) {
-			this.log.debug('Device: %s %s, Inputs file does not exist', this.host, accessoryName)
+			this.log.debug('Device: %s %s, Inputs file does not exist', this.host, this.name)
 		}
 
 		this.inputs.forEach((input, i) => {
@@ -283,9 +320,9 @@ class xboxTvDevice {
 					savedNames[inputReference] = name;
 					fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
 						if (error) {
-							this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
+							this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, this.name, error);
 						} else {
-							this.log.info('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+							this.log.info('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, this.name, name, inputReference);
 						}
 					});
 					callback(null);
@@ -294,12 +331,9 @@ class xboxTvDevice {
 			this.inputNames.push(inputName);
 			this.inputTypes.push(inputType);
 
-			accessory.addService(this.inputsService);
+			this.accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
 		});
-
-		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
-		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
 
 	getDeviceInfo() {
