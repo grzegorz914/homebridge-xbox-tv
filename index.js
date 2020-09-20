@@ -442,8 +442,9 @@ class xboxTvDevice {
 
 	setPower(state, callback) {
 		var me = this;
+		let xbox = Smartglass();
 		if (state && !me.currentPowerState) {
-			me.xbox.powerOn({ live_id: me.xboxliveid, tries: 10, ip: me.host }).then(response => {
+			xbox.powerOn({ live_id: me.xboxliveid, tries: 10, ip: me.host }).then(response => {
 				me.log.info('Device: %s %s, set new Power state successful: %s, %s', me.host, me.name, 'ON', response);
 			}).catch(error => {
 				me.log.error('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
