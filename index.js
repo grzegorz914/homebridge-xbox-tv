@@ -311,7 +311,7 @@ class xboxTvDevice {
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType, inputType)
+				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 			this.inputsService
@@ -429,7 +429,10 @@ class xboxTvDevice {
 				me.log.debug('Device %s %s, get device status data: %s', me.host, me.name, response);
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 					let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					let inputIdentifier = me.inputReferences.indexOf(inputReference);
+					let inputIdentifier = 0;
+					if (me.inputReferences.indexOf(inputReference) >= 0) {
+						inputIdentifier = me.inputReferences.indexOf(inputReference);
+					}
 					let inputName = me.inputNames[inputIdentifier];
 					if (me.televisionService && (inputReference !== me.currentInputReference)) {
 						me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -547,7 +550,10 @@ class xboxTvDevice {
 		var me = this;
 		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
-		let inputIdentifier = me.currentInputIdentifier;
+		let inputIdentifier = 0;
+		if (me.currentInputIdentifier >= 0) {
+			inputIdentifier = me.currentInputIdentifier;
+		}
 		me.log.info('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
 		callback(null, inputIdentifier);
 	}
