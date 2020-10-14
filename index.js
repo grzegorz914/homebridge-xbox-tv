@@ -299,9 +299,7 @@ class xboxTvDevice {
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			} else {
-				inputName = input.name;
-			}
+			};
 
 			//get input type		
 			let inputType = input.type;
@@ -311,7 +309,7 @@ class xboxTvDevice {
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
+				//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 			this.inputsService
