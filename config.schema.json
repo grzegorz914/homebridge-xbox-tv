@@ -217,6 +217,17 @@
         {
           "key": "devices[]",
           "type": "section",
+          "title": "Advanced Settings",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            "devices[].switchInfoMenu",
+            "devices[].volumeControl"
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
           "title": "Inputs",
           "expandable": true,
           "expanded": false,
@@ -232,17 +243,6 @@
                 "devices[].inputs[].type"
               ]
             }
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "Advanced Settings",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "devices[].switchInfoMenu",
-            "devices[].volumeControl"
           ]
         },
         {
