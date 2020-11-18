@@ -246,38 +246,36 @@ class xboxTvDevice {
 	//Prepare volume service
 	prepareVolumeService() {
 		this.log.debug('prepareVolumeService');
-		if (this.volumeControl >= 1) {
-			if (this.volumeControl == 1) {
-				this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.Brightness)
-					.on('get', this.getVolume.bind(this))
-					.on('set', (volume, callback) => {
-						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-						callback(null);
-					});
-			}
-			if (this.volumeControl == 2) {
-				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', this.getVolume.bind(this))
-					.on('set', (volume, callback) => {
-						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-						callback(null);
-					});
-			}
-			this.volumeService.getCharacteristic(Characteristic.On)
-				.on('get', (callback) => {
-					let state = !this.currentMuteState;
-					callback(null, state);
-				})
-				.on('set', (state, callback) => {
-					this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+		if (this.volumeControl == 1) {
+			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.Brightness)
+				.on('get', this.getVolume.bind(this))
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
 					callback(null);
 				});
-
-			this.accessory.addService(this.volumeService);
-			this.televisionService.addLinkedService(this.volumeService);
 		}
+		if (this.volumeControl == 2) {
+			this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
+				.on('get', this.getVolume.bind(this))
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+					callback(null);
+				});
+		}
+		this.volumeService.getCharacteristic(Characteristic.On)
+			.on('get', (callback) => {
+				let state = !this.currentMuteState;
+				callback(null, state);
+			})
+			.on('set', (state, callback) => {
+				this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+				callback(null);
+			});
+
+		this.accessory.addService(this.volumeService);
+		this.televisionService.addLinkedService(this.volumeService);
 	}
 
 	prepareInputsService() {
@@ -515,9 +513,9 @@ class xboxTvDevice {
 
 	setMute(state, callback) {
 		var me = this;
-		let command = 'btn.vol_mute';
-		let type = 'tv_remote';
 		if (me.currentPowerState && state !== me.currentMuteState) {
+			let command = 'btn.vol_mute';
+			let type = 'tv_remote';
 			me.xbox.getManager(type).sendIrCommand(command).then(response => {
 				me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
