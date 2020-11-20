@@ -475,8 +475,8 @@ class xboxTvDevice {
 
 	setPower(state, callback) {
 		var me = this;
-		let xbox = Smartglass();
 		if (state && !me.currentPowerState) {
+			let xbox = Smartglass();
 			xbox.powerOn({ live_id: me.xboxliveid, tries: 10, ip: me.host }).then(response => {
 				me.log.info('Device: %s %s, set new Power state successful: %s, %s', me.host, me.name, 'ON', response);
 			}).catch(error => {
@@ -485,7 +485,6 @@ class xboxTvDevice {
 					me.televisionService.updateCharacteristic(Characteristic.Active, 0);
 				}
 			});
-			callback(null);
 		} else {
 			if (!state && me.currentPowerState) {
 				me.xbox.powerOff().then(response => {
@@ -500,8 +499,8 @@ class xboxTvDevice {
 					}
 				});
 			}
-			callback(null);
 		}
+		callback(null);
 	}
 
 	getMute(callback) {
@@ -518,12 +517,12 @@ class xboxTvDevice {
 			let type = 'tv_remote';
 			me.xbox.getManager(type).sendIrCommand(command).then(response => {
 				me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				callback(null);
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
 			});
 		}
+		callback(null);
 	}
 
 	getVolume(callback) {
@@ -556,21 +555,19 @@ class xboxTvDevice {
 
 	setInput(inputIdentifier, callback) {
 		var me = this;
-		setTimeout(() => {
-			let inputName = me.inputNames[inputIdentifier];
-			let inputReference = me.inputReferences[inputIdentifier];
-			if (inputReference !== me.currentInputReference) {
-				me.log.info('Device: %s %s, set new App successful, new App reference: %s %s', me.host, me.name, inputName, inputReference);
-				callback(null);
-			}
-		}, 250);
+		let inputName = me.inputNames[inputIdentifier];
+		let inputReference = me.inputReferences[inputIdentifier];
+		if (inputReference !== me.currentInputReference) {
+			me.log.info('Device: %s %s, set new App successful, new App reference: %s %s', me.host, me.name, inputName, inputReference);
+		}
+		callback(null);
 	}
 
 	setPowerModeSelection(mode, callback) {
 		var me = this;
-		let command = null;
-		let type = null;
 		if (me.currentPowerState) {
+			let command;
+			let type;
 			switch (mode) {
 				case Characteristic.PowerModeSelection.SHOW:
 					command = me.switchInfoMenu ? 'nexus' : 'menu';
@@ -592,9 +589,9 @@ class xboxTvDevice {
 
 	setVolumeSelector(state, callback) {
 		var me = this;
-		let command = null;
-		let type = null;
 		if (me.currentPowerState) {
+			let command;
+			let type;
 			switch (state) {
 				case Characteristic.VolumeSelector.INCREMENT:
 					command = 'btn.vol_up';
@@ -616,9 +613,9 @@ class xboxTvDevice {
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
-		let command = null;
-		let type = null;
 		if (me.currentPowerState) {
+			let command;
+			let type;
 			switch (remoteKey) {
 				case Characteristic.RemoteKey.REWIND:
 					command = 'rewind';
