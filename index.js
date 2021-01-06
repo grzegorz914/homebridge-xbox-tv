@@ -388,19 +388,19 @@ class xboxTvDevice {
 			}).catch(error => {
 				me.log.debug('Device: %s %s, getTunerLineups data error: %s', me.host, me.name, error);
 			});
-			me.xbox.getManager('tv_remote').getAppChannelLineups().then(response => {
-				if (fs.existsSync(me.devAppChannelLineupsFile) === false) {
-					fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(response, null, 2), (error) => {
-						if (error) {
-							me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
-						} else {
-							me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(response, null, 2));
-						}
-					});
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, getAppChannelLineups data error: %s', me.host, me.name, error);
-			});
+			//me.xbox.getManager('tv_remote').getAppChannelLineups().then(response => {
+			//	if (fs.existsSync(me.devAppChannelLineupsFile) === false) {
+			//		fs.writeFile(me.devAppChannelLineupsFile, JSON.stringify(response, null, 2), (error) => {
+			//			if (error) {
+			//				me.log.debug('Device: %s %s, could not write devAppChannelLineupsFile, error: %s', me.host, me.name, error);
+			//			} else {
+			//				me.log.debug('Device: %s %s, devAppChannelLineupsFile saved successful in: %s %s', me.host, me.name, me.prefDir, JSON.stringify(response, null, 2));
+			//			}
+			//		});
+			//	}
+			//}).catch(error => {
+			//	me.log.error('Device: %s %s, getAppChannelLineups data error: %s', me.host, me.name, error);
+			//});
 
 			me.log.info('Device: %s %s, state: Online.', me.host, me.name);
 			let manufacturer = me.manufacturer;
