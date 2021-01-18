@@ -433,7 +433,7 @@ class xboxTvDevice {
 					if (me.televisionService && (inputReference !== me.currentInputReference)) {
 						me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					}
-					me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
+					me.log.info('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
 					me.currentInputName = inputName;
 					me.currentInputReference = inputReference;
 					me.currentInputIdentifier = inputIdentifier;
