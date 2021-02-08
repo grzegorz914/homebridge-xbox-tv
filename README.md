@@ -68,7 +68,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 7. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` — Optional branding data displayed in Home.app. *Not populated automatically*.
 
 <p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin_settings.png" height="150"></a>
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="150"></a>
 </p>
 
 ```json
