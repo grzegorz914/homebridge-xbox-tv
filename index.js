@@ -143,9 +143,15 @@ class xboxTvDevice {
 				}).catch(error => {
 					this.log.debug('Device: %s %s, state Offline.', this.host, this.name);
 					this.currentPowerState = false;
+					if (this.televisionService) {
+						this.televisionService.updateCharacteristic(Characteristic.Active, this.currentPowerState ? 1 : 0);
+					}
 				});
 			} else {
 				this.currentPowerState = true;
+				if (this.televisionService) {
+					this.televisionService.updateCharacteristic(Characteristic.Active, this.currentPowerState ? 1 : 0);
+				}
 				if (!this.checkDeviceInfo) {
 					this.getDeviceInfo();
 				}
@@ -307,7 +313,7 @@ class xboxTvDevice {
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
+				.setCharacteristic(Characteristic.InputSourceType, inputType)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 			this.inputsService
@@ -424,6 +430,10 @@ class xboxTvDevice {
 			me.xbox.on('_on_console_status', (response, config, smartglass) => {
 				me.log.debug('Device %s %s, get device status data: %s', me.host, me.name, response);
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
+					let powerState = me.currentPowerState;
+					if (me.televisionService) {
+						me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+					}
 					let inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 					let inputIdentifier = 0;
 					if (me.inputReferences.indexOf(inputReference) >= 0) {
@@ -433,12 +443,12 @@ class xboxTvDevice {
 					if (me.televisionService && (inputReference !== me.currentInputReference)) {
 						me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					}
-					me.log.info('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
+					me.log.debug('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
 					me.currentInputName = inputName;
 					me.currentInputReference = inputReference;
 					me.currentInputIdentifier = inputIdentifier;
 
-					let mute = me.currentPowerState ? me.currentMuteState : true;
+					let mute = powerState ? me.currentMuteState : true;
 					let volume = me.currentVolume;
 					if (me.speakerService) {
 						me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
@@ -519,7 +529,6 @@ class xboxTvDevice {
 				me.log.info('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			});
 		}
 		callback(null);
