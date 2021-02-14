@@ -72,7 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.6.0] - 2020-05-14
 ### Breaking Changes
-* Update yor config.json: Add types to the inputs.
+* Update your config.json: Add types to the inputs.
 
 ### Default Inputs
 ```json
@@ -114,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Cleanup code.
 
 ### Breaking Changes
-* Update yor config.json: replace `apps` with `inputs`.
+* Update your config.json: replace `apps` with `inputs`.
 
 ## [0.3.12] - 2020-05-05
 ### Changes
