@@ -62,10 +62,11 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. To find `xboxliveid`, on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number*.
 3. In `refreshInterval` set the data refresh time in seconds, default 5sec.
-4. In `volumeControl` you can select what a additional volume control mode You want to use (None, Slider, Fan).
-5. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
-6. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
-7. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` — Optional branding data displayed in Home.app. *Not populated automatically*.
+4. If `disableLogInfo` is enabled, disable log info, all values and state will not be displayed in Homebridge log console.
+5. In `volumeControl` you can select what a additional volume control mode You want to use (None, Slider, Fan).
+6. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
+7. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
+8. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` — Optional branding data displayed in Home.app. *Not populated automatically*.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="150"></a>
@@ -80,6 +81,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 			"host": "192.168.1.6",
 			"xboxliveid": "FD0000000000",
 			"refreshInterval": 5,
+			"disableLogInfo": false,
 			"volumeControl": 0,
 			"switchInfoMenu": false,
 			"inputs": [

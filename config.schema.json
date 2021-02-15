@@ -41,6 +41,13 @@
 							"maximum": 3600,
 							"required": true
 						},
+						"disableLogInfo": {
+							"title": "Disable log info",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This disable log info, all values and state will not be displayed in Homebridge log console."
+						},
 						"volumeControl": {
 							"title": "Volume control mode",
 							"type": "integer",
@@ -50,15 +57,21 @@
 							"oneOf": [
 								{
 									"title": "None",
-									"enum": [0]
+									"enum": [
+										0
+									]
 								},
 								{
 									"title": "Slider",
-									"enum": [1]
+									"enum": [
+										1
+									]
 								},
 								{
 									"title": "Fan",
-									"enum": [2]
+									"enum": [
+										2
+									]
 								}
 							],
 							"required": false
@@ -97,47 +110,69 @@
 										"oneOf": [
 											{
 												"title": "Other",
-												"enum": ["OTHER"]
+												"enum": [
+													"OTHER"
+												]
 											},
 											{
 												"title": "Home screen",
-												"enum": ["HOME_SCREEN"]
+												"enum": [
+													"HOME_SCREEN"
+												]
 											},
 											{
 												"title": "Tuner",
-												"enum": ["TUNER"]
+												"enum": [
+													"TUNER"
+												]
 											},
 											{
 												"title": "HDMI",
-												"enum": ["HDMI"]
+												"enum": [
+													"HDMI"
+												]
 											},
 											{
 												"title": "Composite video",
-												"enum": ["COMPOSITE_VIDEO"]
+												"enum": [
+													"COMPOSITE_VIDEO"
+												]
 											},
 											{
 												"title": "S Video",
-												"enum": ["S_VIDEO"]
+												"enum": [
+													"S_VIDEO"
+												]
 											},
 											{
 												"title": "Component video",
-												"enum": ["COMPONENT_VIDEO"]
+												"enum": [
+													"COMPONENT_VIDEO"
+												]
 											},
 											{
 												"title": "Digital video input",
-												"enum": ["DVI"]
+												"enum": [
+													"DVI"
+												]
 											},
 											{
 												"title": "Airplay",
-												"enum": ["AIRPLAY"]
+												"enum": [
+													"AIRPLAY"
+												]
 											},
 											{
 												"title": "USB",
-												"enum": ["USB"]
+												"enum": [
+													"USB"
+												]
 											},
 											{
 												"title": "Application",
-												"enum": ["APPLICATION"]
+												"enum": [
+													"APPLICATION"
+												]
 											}
 										],
 										"required": true
@@ -188,14 +223,18 @@
 				"devices[].name",
 				"devices[].host",
 				"devices[].xboxliveid",
-				"devices[].refreshInterval",
 				{
 					"key": "devices[]",
 					"type": "section",
 					"title": "Advanced Settings",
 					"expandable": true,
 					"expanded": false,
-					"items": ["devices[].switchInfoMenu", "devices[].volumeControl"]
+					"items": [
+						"devices[].disableLogInfo",
+						"devices[].refreshInterval",
+						"devices[].switchInfoMenu",
+						"devices[].volumeControl"
+					]
 				},
 				{
 					"key": "devices[]",
