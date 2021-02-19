@@ -24,7 +24,7 @@
 							"type": "string",
 							"default": "192.168.1.6",
 							"required": true,
-							"format": "ipv4"
+							"format": "hostname"
 						},
 						"xboxliveid": {
 							"title": "Xbox Live ID",
@@ -38,7 +38,7 @@
 							"type": "integer",
 							"default": 5,
 							"minimum": 0,
-							"maximum": 300,
+							"maximum": 100,
 							"required": true
 						},
 						"disableLogInfo": {

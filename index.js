@@ -19,7 +19,7 @@ module.exports = (api) => {
 	Service = api.hap.Service;
 	Categories = api.hap.Categories;
 	UUID = api.hap.uuid;
-	api.registerPlatform(PLATFORM_NAME, PLATFORM_NAME, xboxTvPlatform, true);
+	api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
 
@@ -37,7 +37,7 @@ class xboxTvPlatform {
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
-			for (let i = 0, len = this.devices.length; i < len; i++) {
+			for (let i = 0; i < this.devices.length; i++) {
 				let deviceName = this.devices[i];
 				if (!deviceName.name) {
 					this.log.warn('Device Name Missing')
@@ -81,9 +81,8 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.checkDeviceInfo = false;
+		this.checkDeviceInfo = true;
 		this.startPrepareAccessory = true;
-		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.inputNames = new Array();
 		this.inputReferences = new Array();
@@ -136,29 +135,29 @@ class xboxTvDevice {
 		setInterval(function () {
 			if (!this.xbox._connection_status) {
 				this.xbox = Smartglass();
-
 				this.xbox.connect(this.host).then(response => {
 					this.xbox.addManager('system_input', SystemInputChannel());
 					this.xbox.addManager('system_media', SystemMediaChannel());
 					this.xbox.addManager('tv_remote', TvRemoteChannel());
 					this.currentPowerState = true;
-					this.getDeviceInfo();
+					this.checkDeviceInfo = true;
 				}).catch(error => {
 					this.log.debug('Device: %s %s, state Offline.', this.host, this.name);
 					this.currentPowerState = false;
 					if (this.televisionService) {
-						this.televisionService.updateCharacteristic(Characteristic.Active, this.currentPowerState ? 1 : 0);
+						this.televisionService.updateCharacteristic(Characteristic.Active, 0);
 					}
 				});
 			} else {
 				this.currentPowerState = true;
 				if (this.televisionService) {
-					this.televisionService.updateCharacteristic(Characteristic.Active, this.currentPowerState ? 1 : 0);
+					this.televisionService.updateCharacteristic(Characteristic.Active, 1);
 				}
 			}
+			if (this.checkDeviceInfo) {
+				this.getDeviceInfo();
+			}
 		}.bind(this), this.refreshInterval * 1000);
-
-		this.getDeviceInfo();
 	}
 
 	getDeviceInfo() {
@@ -241,8 +240,10 @@ class xboxTvDevice {
 			me.log('Serialnr: %s', serialNumber);
 			me.log('Firmware: %s', firmwareRevision);
 			me.log('----------------------------------');
+
+			me.checkDeviceInfo = false;
+			me.updateDeviceState();
 		}
-		me.updateDeviceState();
 	}
 
 	updateDeviceState() {
@@ -275,14 +276,13 @@ class xboxTvDevice {
 					if (me.speakerService) {
 						me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
 						me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-						if (me.volumeService && me.volumeControl >= 1) {
-							me.volumeService.updateCharacteristic(Characteristic.On, !mute);
-						}
 						if (me.volumeService && me.volumeControl == 1) {
 							me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
+							me.volumeService.updateCharacteristic(Characteristic.On, !mute);
 						}
-						if (me.volumeService && me.volumeControl == 2) {
-							me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
+						if (me.volumeServiceFan && me.volumeControl == 2) {
+							me.volumeServiceFan.updateCharacteristic(Characteristic.RotationSpeed, volume);
+							me.volumeServiceFan.updateCharacteristic(Characteristic.On, !mute);
 						}
 					}
 					me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
@@ -340,19 +340,160 @@ class xboxTvDevice {
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
-			.on('get', this.getPower.bind(this))
-			.on('set', this.setPower.bind(this));
+			.on('get', (callback) => {
+				let state = this.currentPowerState ? 1 : 0;
+				if (!this.disableLogInfo) {
+					this.log('Device: %s %s, get current Power state successfull, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+				}
+				callback(null, state);
+			})
+			.onSet(async (state) => {
+				if (state && !this.currentPowerState) {
+					let xbox = Smartglass();
+					xbox.powerOn({ live_id: this.xboxliveid, tries: 10, ip: this.host }).then(response => {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, set new Power state successful: %s, %s', this.host, accessoryName, 'ON', response);
+						}
+					}).catch(error => {
+						this.log.error('Device: %s %s, booting failed, error: %s', this.host, accessoryName, error);
+					});
+				} else {
+					if (!state && this.currentPowerState) {
+						this.xbox.powerOff().then(response => {
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, set new Power state successful, new state: %s, %s', this.host, accessoryName, 'OFF', response);
+							}
+							this.currentPowerState = false;
+							this.checkDeviceInfo = true;
+						}).catch(error => {
+							this.log.error('Device: %s %s, set new Power state error: %s', this.host, accessoryName, error);
+						});
+					}
+				}
+			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-			.on('get', this.getInput.bind(this))
-			.on('set', this.setInput.bind(this));
+			.on('get', (callback) => {
+				let inputIdentifier = 0;
+				let inputReference = this.currentInputReference;
+				if (this.inputReferences.indexOf(inputReference) !== -1) {
+					inputIdentifier = this.inputReferences.indexOf(inputReference);
+				}
+				let inputName = this.inputNames[inputIdentifier];
+				if (!this.disableLogInfo) {
+					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
+				}
+				callback(null, inputIdentifier);
+			})
+			.onSet(async (inputIdentifier) => {
+				try {
+					let inputName = this.inputNames[inputIdentifier];
+					let inputReference = this.inputReferences[inputIdentifier];
+					if (inputReference !== this.currentInputReference) {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
+						}
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set new Input. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
-			.on('set', this.setRemoteKey.bind(this));
+			.onSet(async (command) => {
+				try {
+					let type;
+					switch (command) {
+						case Characteristic.RemoteKey.REWIND:
+							command = 'rewind';
+							type = 'system_media';
+							break;
+						case Characteristic.RemoteKey.FAST_FORWARD:
+							command = 'fast_forward';
+							type = 'system_media';
+							break;
+						case Characteristic.RemoteKey.NEXT_TRACK:
+							command = 'next_track';
+							type = 'system_media';
+							break;
+						case Characteristic.RemoteKey.PREVIOUS_TRACK:
+							command = 'prev_track';
+							type = 'system_media';
+							break;
+						case Characteristic.RemoteKey.ARROW_UP:
+							command = 'up';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.ARROW_DOWN:
+							command = 'down';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.ARROW_LEFT:
+							command = 'left';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.ARROW_RIGHT:
+							command = 'right';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.SELECT:
+							command = 'a';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.BACK:
+							command = 'b';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.EXIT:
+							command = 'nexus';
+							type = 'system_input';
+							break;
+						case Characteristic.RemoteKey.PLAY_PAUSE:
+							command = 'playpause';
+							type = 'system_media';
+							break;
+						case Characteristic.RemoteKey.INFORMATION:
+							command = this.switchInfoMenu ? 'nexus' : 'view';
+							type = 'system_input';
+							break;
+					}
+					this.xbox.getManager(type).sendCommand(command).then(response => {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, setRemoteKey successful,  command: %s', this.host, accessoryName, command);
+						}
+					}).catch(error => {
+						this.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					});
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
-			.on('set', this.setPowerModeSelection.bind(this));
-
+			.onSet(async (command) => {
+				try {
+					let type;
+					switch (command) {
+						case Characteristic.PowerModeSelection.SHOW:
+							command = this.switchInfoMenu ? 'nexus' : 'menu';
+							type = 'system_input';
+							break;
+						case Characteristic.PowerModeSelection.HIDE:
+							command = 'b';
+							type = 'system_input';;
+							break;
+					}
+					this.xbox.getManager(type).sendCommand(command).then(response => {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, setPowerModeSelection successful, command: %s', this.host, accessoryName, command);
+						}
+					}).catch(error => {
+						this.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					});
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		accessory.addService(this.televisionService);
 
 		//Prepare speaker service
@@ -362,13 +503,75 @@ class xboxTvDevice {
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-			.on('set', this.setVolumeSelector.bind(this));
+			.onSet(async (command) => {
+				try {
+					let type;
+					switch (command) {
+						case Characteristic.VolumeSelector.INCREMENT:
+							command = 'btn.vol_up';
+							type = 'tv_remote';
+							break;
+						case Characteristic.VolumeSelector.DECREMENT:
+							command = 'btn.vol_down';
+							type = 'tv_remote';
+							break;
+					}
+					this.xbox.getManager(type).sendIrCommand(command).then(response => {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, setVolumeSelector successful, command: %s', this.host, accessoryName, command);
+						}
+					}).catch(error => {
+						this.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					});
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		this.speakerService.getCharacteristic(Characteristic.Volume)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
+			.on('get', (callback) => {
+				let volume = this.currentVolume;
+				if (!this.disableLogInfo) {
+					this.log('Device: %s %s, get current Volume level successful: %s', this.host, accessoryName, volume);
+				}
+				callback(null, volume);
+			})
+			.onSet(async (volume) => {
+				try {
+					if (volume == 0 || volume == 100) {
+						volume = this.currentVolume;
+					}
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set new Volume level successful: %s', this.host, accessoryName, volume);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		this.speakerService.getCharacteristic(Characteristic.Mute)
-			.on('get', this.getMute.bind(this))
-			.on('set', this.setMute.bind(this));
+			.on('get', (callback) => {
+				let state = this.currentMuteState;
+				if (!this.disableLogInfo) {
+					this.log('Device: %s %s, get current Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+				}
+				callback(null, state);
+			})
+			.onSet(async (state) => {
+				if (this.currentPowerState && state !== this.currentMuteState) {
+					try {
+						let command = 'btn.vol_mute';
+						let type = 'tv_remote';
+						this.xbox.getManager(type).sendIrCommand(command).then(response => {
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, set new Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+							}
+						}).catch(error => {
+							this.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+						});
+					} catch (error) {
+						this.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					};
+				};
+			});
 
 		accessory.addService(this.speakerService);
 		this.televisionService.addLinkedService(this.speakerService);
@@ -379,58 +582,79 @@ class xboxTvDevice {
 			if (this.volumeControl == 1) {
 				this.volumeService = new Service.Lightbulb(accessoryName + ' Volume', 'volumeService');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
-					.on('get', this.getVolume.bind(this))
+					.on('get', (callback) => {
+						let volume = this.currentVolume;
+						callback(null, volume);
+					})
 					.on('set', (volume, callback) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
 						callback(null);
 					});
+				this.volumeService.getCharacteristic(Characteristic.On)
+					.on('get', (callback) => {
+						let state = this.currentPowerState ? this.currentMuteState : true;
+						callback(null, !state);
+					})
+					.on('set', (state, callback) => {
+						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						callback(null);
+					});
+				accessory.addService(this.volumeService);
+				this.volumeService.addLinkedService(this.volumeService);
 			}
 			if (this.volumeControl == 2) {
-				this.volumeService = new Service.Fan(accessoryName + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', this.getVolume.bind(this))
+				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'volumeServiceFan');
+				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+					.on('get', (callback) => {
+						let volume = this.currentVolume;
+						callback(null, volume);
+					})
 					.on('set', (volume, callback) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
 						callback(null);
 					});
+				this.volumeServiceFan.getCharacteristic(Characteristic.On)
+					.on('get', (callback) => {
+						let state = this.currentPowerState ? this.currentMuteState : true;
+						callback(null, !state);
+					})
+					.on('set', (state, callback) => {
+						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						callback(null);
+					});
+				accessory.addService(this.volumeServiceFan);
+				this.televisionService.addLinkedService(this.volumeServiceFan);
 			}
-			this.volumeService.getCharacteristic(Characteristic.On)
-				.on('get', (callback) => {
-					let state = !this.currentMuteState;
-					callback(null, state);
-				})
-				.on('set', (state, callback) => {
-					this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-					callback(null);
-				});
-
-			accessory.addService(this.volumeService);
-			this.televisionService.addLinkedService(this.volumeService);
 		}
 
-		//prepare Inputs Service
-		this.log.debug('prepareInputsService');
+		let inputs = this.inputs;
+		let inputsLength = inputs.length;
+		if (inputsLength > 94) {
+			inputsLength = 94
+		}
+
 		let savedNames = {};
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
 		} catch (error) {
-			this.log.debug('Device: %s %s, Inputs file does not exist', this.host, accessoryName)
+			this.log.debug('Device: %s %s, customInputs file does not exist', this.host, accessoryName)
 		}
 
-		this.inputs.forEach((input, i) => {
+		for (let i = 0; i < inputsLength; i++) {
 
 			//get input reference
-			let inputReference = input.reference;
+			let inputReference = inputs[i].reference;
 
 			//get input name		
-			let inputName = input.name;
-
+			let inputName = inputs[i].name;
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			};
+			} else {
+				inputName = inputs[i].name;
+			}
 
-			//get input type		
-			let inputType = input.type;
+			//get input type
+			let inputType = inputs[i].type;
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
@@ -438,7 +662,8 @@ class xboxTvDevice {
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 				.setCharacteristic(Characteristic.InputSourceType, inputType)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
+				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+				.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
 
 			this.inputsService
 				.getCharacteristic(Characteristic.ConfiguredName)
@@ -449,7 +674,7 @@ class xboxTvDevice {
 							this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
 						} else {
 							if (!this.disableLogInfo) {
-								me.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 							}
 						}
 					});
@@ -461,246 +686,10 @@ class xboxTvDevice {
 
 			accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
-		});
+		};
 
 		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-	}
-
-	getPower(callback) {
-		var me = this;
-		let state = me.currentPowerState;
-		if (!me.disableLogInfo) {
-			me.log('Device: %s %s, get current Power state successful, state: %s', me.host, me.name, state ? 'ON' : 'OFF');
-		}
-		callback(null, state);
-	}
-
-	setPower(state, callback) {
-		var me = this;
-		if (state && !me.currentPowerState) {
-			let xbox = Smartglass();
-			xbox.powerOn({ live_id: me.xboxliveid, tries: 10, ip: me.host }).then(response => {
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, set new Power state successful: %s, %s', me.host, me.name, 'ON', response);
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, booting failed, error: %s', me.host, me.name, error);
-				if (me.televisionService) {
-					me.televisionService.updateCharacteristic(Characteristic.Active, 0);
-				}
-			});
-		} else {
-			if (!state && me.currentPowerState) {
-				me.xbox.powerOff().then(response => {
-					if (!me.disableLogInfo) {
-						me.log('Device: %s %s, set new Power state successful, new state: %s, %s', me.host, me.name, 'OFF', response);
-					}
-					if (me.televisionService) {
-						me.televisionService.updateCharacteristic(Characteristic.Active, 0);
-					}
-				}).catch(error => {
-					me.log.error('Device: %s %s, set new Power state error: %s', me.host, me.name, error);
-					if (me.televisionService) {
-						me.televisionService.updateCharacteristic(Characteristic.Active, 1);
-					}
-				});
-			}
-		}
-		callback(null);
-	}
-
-	getMute(callback) {
-		var me = this;
-		let state = me.currentPowerState ? me.currentMuteState : true;
-		if (!me.disableLogInfo) {
-			me.log('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-		}
-		callback(null, state);
-	}
-
-	setMute(state, callback) {
-		var me = this;
-		if (me.currentPowerState && state !== me.currentMuteState) {
-			let command = 'btn.vol_mute';
-			let type = 'tv_remote';
-			me.xbox.getManager(type).sendIrCommand(command).then(response => {
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, set new Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, can not set new Mute state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			});
-		}
-		callback(null);
-	}
-
-	getVolume(callback) {
-		var me = this;
-		let volume = me.currentVolume;
-		if (!me.disableLogInfo) {
-			me.log('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
-		}
-		callback(null, volume);
-	}
-
-	setVolume(volume, callback) {
-		var me = this;
-		if (volume == 0 || volume == 100) {
-			volume = me.currentVolume;
-		}
-		if (!me.disableLogInfo) {
-			me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
-		}
-		callback(null);
-	}
-
-	getInput(callback) {
-		var me = this;
-		let inputName = me.currentInputName;
-		let inputReference = me.currentInputReference;
-		let inputIdentifier = 0;
-		if (me.currentInputIdentifier >= 0) {
-			inputIdentifier = me.currentInputIdentifier;
-		}
-		if (!me.disableLogInfo) {
-			me.log('Device: %s %s, get current App successful: %s %s', me.host, me.name, inputName, inputReference);
-		}
-		callback(null, inputIdentifier);
-	}
-
-	setInput(inputIdentifier, callback) {
-		var me = this;
-		let inputName = me.inputNames[inputIdentifier];
-		let inputReference = me.inputReferences[inputIdentifier];
-		if (inputReference !== me.currentInputReference) {
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, set new App successful, new App reference: %s %s', me.host, me.name, inputName, inputReference);
-			}
-		}
-		callback(null);
-	}
-
-	setPowerModeSelection(mode, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			let command;
-			let type;
-			switch (mode) {
-				case Characteristic.PowerModeSelection.SHOW:
-					command = me.switchInfoMenu ? 'nexus' : 'menu';
-					type = 'system_input';
-					break;
-				case Characteristic.PowerModeSelection.HIDE:
-					command = 'b';
-					type = 'system_input';;
-					break;
-			}
-			me.xbox.getManager(type).sendCommand(command).then(response => {
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			});
-		}
-		callback(null);
-	}
-
-	setVolumeSelector(state, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			let command;
-			let type;
-			switch (state) {
-				case Characteristic.VolumeSelector.INCREMENT:
-					command = 'btn.vol_up';
-					type = 'tv_remote';
-					break;
-				case Characteristic.VolumeSelector.DECREMENT:
-					command = 'btn.vol_down';
-					type = 'tv_remote';
-					break;
-			}
-			me.xbox.getManager(type).sendIrCommand(command).then(response => {
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			});
-		}
-		callback(null);
-	}
-
-	setRemoteKey(remoteKey, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			let command;
-			let type;
-			switch (remoteKey) {
-				case Characteristic.RemoteKey.REWIND:
-					command = 'rewind';
-					type = 'system_media';
-					break;
-				case Characteristic.RemoteKey.FAST_FORWARD:
-					command = 'fast_forward';
-					type = 'system_media';
-					break;
-				case Characteristic.RemoteKey.NEXT_TRACK:
-					command = 'next_track';
-					type = 'system_media';
-					break;
-				case Characteristic.RemoteKey.PREVIOUS_TRACK:
-					command = 'prev_track';
-					type = 'system_media';
-					break;
-				case Characteristic.RemoteKey.ARROW_UP:
-					command = 'up';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.ARROW_DOWN:
-					command = 'down';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.ARROW_LEFT:
-					command = 'left';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.ARROW_RIGHT:
-					command = 'right';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.SELECT:
-					command = 'a';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.BACK:
-					command = 'b';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.EXIT:
-					command = 'nexus';
-					type = 'system_input';
-					break;
-				case Characteristic.RemoteKey.PLAY_PAUSE:
-					command = 'playpause';
-					type = 'system_media';
-					break;
-				case Characteristic.RemoteKey.INFORMATION:
-					command = me.switchInfoMenu ? 'nexus' : 'view';
-					type = 'system_input';
-					break;
-			}
-			me.xbox.getManager(type).sendCommand(command).then(response => {
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setRemoteKey successful,  command: %s', me.host, me.name, command);
-				}
-			}).catch(error => {
-				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			});
-		}
-		callback(null);
 	}
 };
