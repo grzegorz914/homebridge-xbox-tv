@@ -35,7 +35,7 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
 ## Note
-1. Versin 1.4.0 and abowe need to be used with Homebridge min. v1.3.x.
+1. Versin 1.4.0 and above need to be used with Homebridge min. v1.3.x.
 
 ## Information
 * Power ON/OFF short press tile in HomeKit app.
