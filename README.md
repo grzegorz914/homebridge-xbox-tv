@@ -11,7 +11,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service. Tested with XboxOne X and Xbox Series X.
+A Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service. Tested with Xbox One X and Xbox Series X.
 
 </span>
 
@@ -24,18 +24,19 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
 3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` or search for `Xbox TV` in Config UI X.
 
-## Know issues
+## Known Issues
 * Configuration incompatibilty when used with Hoobs.
 
-## HomeKit pairing
+## HomeKit Pairing
 1. Each accessories needs to be manually paired.
 2. Open the Home <img alt="" src="https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png" height="16.42px" /> app on your device.
 3. Tap the Home tab, then tap <img alt="plus button" src="https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png" height="16.42px" />.
 4. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*.
-5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+5. You should now see your Xbox, select it
+6. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
 ## Note
-1. Versin 1.4.0 and above need to be used with Homebridge min. v1.3.x.
+1. Version 1.4.0 and above need to be used with Homebridge min. v1.3.x.
 
 ## Information
 * Power ON/OFF short press tile in HomeKit app.
@@ -55,13 +56,13 @@ Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service.
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" height="300" /></a>
 </p>
 
-## Configuration console
+## Configure console
 1. [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
   * Profile & system > Settings > General > Power mode & startup
 2. Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & system > Settings > Devices & connections > Remote features > Xbox app preferences.
 
-## Configuration plugin
+## Configure plugin
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. To find `xboxliveid`, on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number*.
 3. In `refreshInterval` set the data refresh time in seconds, default 5sec.
