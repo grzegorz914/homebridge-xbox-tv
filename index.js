@@ -327,7 +327,6 @@ class xboxTvDevice {
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
-
 		if (devInfo === undefined) {
 			devInfo = { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
 		}
@@ -345,7 +344,6 @@ class xboxTvDevice {
 			.setCharacteristic(Characteristic.Model, modelName)
 			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-
 		accessory.addService(informationService);
 
 
