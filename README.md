@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/homebridge-xbox-tv.png" height="300"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/homebridge-xbox-tv.png" height="280"></a>
 </p>
 
 <span align="center">
@@ -11,7 +11,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-A Homebridge plugin to control Microsoft game consoles in HomeKit as a TV service. Tested with Xbox One X and Xbox Series X.
+A Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox Series X.
 
 </span>
 
