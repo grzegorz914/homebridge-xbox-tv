@@ -272,10 +272,7 @@ class xboxTvDevice {
 						this.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 					}
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					let inputIdentifier = this.inputReferences.indexOf(inputReference);
-					if (inputIdentifier === -1) {
-						inputIdentifier = 0;
-					}
+					const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
 					const inputName = this.inputNames[inputIdentifier];
 					if (this.televisionService && (inputReference !== this.currentInputReference)) {
 						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -394,10 +391,7 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputReference = this.currentInputReference;
-				let inputIdentifier = this.inputReferences.indexOf(inputReference);
-				if (inputIdentifier === -1) {
-					inputIdentifier = 0;
-				}
+				const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
 				const inputName = this.inputNames[inputIdentifier];
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
