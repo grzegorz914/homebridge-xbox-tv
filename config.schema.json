@@ -51,7 +51,7 @@
 						"volumeControl": {
 							"title": "Volume control mode",
 							"type": "integer",
-							"default": 0,
+							"minimum": 0,
 							"maximum": 2,
 							"description": "Here select what a volume control mode You want to use. If select \"None\" only hardware buttons in RC app can be used to control volume.",
 							"oneOf": [
@@ -93,19 +93,16 @@
 									"name": {
 										"title": "Input name",
 										"type": "string",
-										"default": "Spotify",
 										"required": true
 									},
 									"reference": {
 										"title": "Input reference",
 										"type": "string",
-										"default": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
 										"required": true
 									},
 									"type": {
 										"title": "Input type",
 										"type": "string",
-										"default": "APPLICATION",
 										"description": "Here select source input type.",
 										"oneOf": [
 											{

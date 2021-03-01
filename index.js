@@ -71,9 +71,9 @@ class xboxTvDevice {
 		this.xboxliveid = config.xboxliveid;
 		this.refreshInterval = config.refreshInterval || 5;
 		this.disableLogInfo = config.disableLogInfo;
-		this.volumeControl = config.volumeControl;
+		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu;
-		this.inputs = config.inputs;
+		this.inputs = config.inputs || [];
 
 		//device info
 		this.manufacturer = config.manufacturer || 'Microsoft';
@@ -104,16 +104,6 @@ class xboxTvDevice {
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
 		this.xbox = Smartglass();
-
-		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
-			this.inputs = [
-				{
-					'name': 'No inputs configured',
-					'reference': 'No references configured',
-					'type': 'APPLICATION'
-				}
-			];
-		}
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -635,65 +625,67 @@ class xboxTvDevice {
 		}
 
 		//Prepare inputs services
-		const inputs = this.inputs;
-		let savedNames = {};
-		try {
-			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
-		} catch (error) {
-			this.log.debug('Device: %s %s, customInputs file does not exist', this.host, accessoryName)
-		}
-
-		let inputsLength = inputs.length;
-		if (inputsLength > 94) {
-			inputsLength = 94
-		}
-
-		for (let i = 0; i < inputsLength; i++) {
-
-			//get input reference
-			const inputReference = inputs[i].reference;
-
-			//get input name		
-			let inputName = inputs[i].name;
-			if (savedNames && savedNames[inputReference]) {
-				inputName = savedNames[inputReference];
-			} else {
-				inputName = inputs[i].name;
+		if (this.inputs.length > 0) {
+			const inputs = this.inputs;
+			let savedNames = {};
+			try {
+				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
+			} catch (error) {
+				this.log.debug('Device: %s %s, customInputs file does not exist', this.host, accessoryName)
 			}
 
-			//get input type
-			const inputType = inputs[i].type;
+			let inputsLength = inputs.length;
+			if (inputsLength > 94) {
+				inputsLength = 94
+			}
 
-			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
-			this.inputsService
-				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, inputName)
-				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, inputType)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
-				.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
+			for (let i = 0; i < inputsLength; i++) {
 
-			this.inputsService
-				.getCharacteristic(Characteristic.ConfiguredName)
-				.onSet(async (name) => {
-					savedNames[inputReference] = name;
-					fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
-						if (error) {
-							this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
-						} else {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+				//get input reference
+				const inputReference = inputs[i].reference;
+
+				//get input name		
+				let inputName = inputs[i].name;
+				if (savedNames && savedNames[inputReference]) {
+					inputName = savedNames[inputReference];
+				} else {
+					inputName = inputs[i].name;
+				}
+
+				//get input type
+				const inputType = inputs[i].type;
+
+				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
+				this.inputsService
+					.setCharacteristic(Characteristic.Identifier, i)
+					.setCharacteristic(Characteristic.ConfiguredName, inputName)
+					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+					.setCharacteristic(Characteristic.InputSourceType, inputType)
+					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+					.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
+
+				this.inputsService
+					.getCharacteristic(Characteristic.ConfiguredName)
+					.onSet(async (name) => {
+						savedNames[inputReference] = name;
+						fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
+							if (error) {
+								this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
+							} else {
+								if (!this.disableLogInfo) {
+									this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+								}
 							}
-						}
+						});
 					});
-				});
-			this.inputReferences.push(inputReference);
-			this.inputNames.push(inputName);
-			this.inputTypes.push(inputType);
+				this.inputReferences.push(inputReference);
+				this.inputNames.push(inputName);
+				this.inputTypes.push(inputType);
 
-			accessory.addService(this.inputsService);
-			this.televisionService.addLinkedService(this.inputsService);
-		};
+				accessory.addService(this.inputsService);
+				this.televisionService.addLinkedService(this.inputsService);
+			};
+		}
 
 		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
