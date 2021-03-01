@@ -311,14 +311,11 @@ class xboxTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		let devInfo = {};
+		let devInfo = { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
 		try {
 			devInfo = fs.readFileSync(JSON.parse(this.devInfoFile));
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
-		}
-		if (devInfo === undefined) {
-			devInfo = { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
 		}
 
 		const manufacturer = this.manufacturer;
