@@ -259,31 +259,36 @@ class xboxTvDevice {
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 					const powerState = this.currentPowerState;
 					if (this.televisionService) {
-						this.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+						this.televisionService
+							.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 					}
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 					const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
 					const inputName = this.inputNames[inputIdentifier];
 					if (this.televisionService && (inputReference !== this.currentInputReference)) {
-						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+						this.televisionService
+							.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					}
 					this.log.debug('Device: %s %s, get current App successful: %s %s', this.host, this.name, inputName, inputReference);
 					this.currentInputReference = inputReference;
 					this.currentInputIdentifier = inputIdentifier;
 					this.currentInputName = inputName;
 
-					const mute = powerState ? this.currentMuteState : true;
 					const volume = this.currentVolume;
+					const mute = powerState ? this.currentMuteState : true;
 					if (this.speakerService) {
-						this.speakerService.updateCharacteristic(Characteristic.Mute, mute);
-						this.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+						this.speakerService
+							.updateCharacteristic(Characteristic.Volume, volume)
+							.updateCharacteristic(Characteristic.Mute, mute);
 						if (this.volumeService && this.volumeControl == 1) {
-							this.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
-							this.volumeService.updateCharacteristic(Characteristic.On, !mute);
+							this.volumeService
+								.updateCharacteristic(Characteristic.Brightness, volume)
+								.updateCharacteristic(Characteristic.On, !mute);
 						}
 						if (this.volumeServiceFan && this.volumeControl == 2) {
-							this.volumeServiceFan.updateCharacteristic(Characteristic.RotationSpeed, volume);
-							this.volumeServiceFan.updateCharacteristic(Characteristic.On, !mute);
+							this.volumeServiceFan
+								.updateCharacteristic(Characteristic.RotationSpeed, volume)
+								.updateCharacteristic(Characteristic.On, !mute);
 						}
 					}
 					this.log.debug('Device: %s %s, get current Mute state: %s', this.host, this.name, mute ? 'ON' : 'OFF');

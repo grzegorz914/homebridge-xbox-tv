@@ -38,7 +38,7 @@
 							"type": "integer",
 							"default": 5,
 							"minimum": 0,
-							"maximum": 100,
+							"maximum": 60,
 							"required": true
 						},
 						"disableLogInfo": {
