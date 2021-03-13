@@ -82,12 +82,12 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
+		this.inputsName = new Array();
+		this.inputsReference = new Array();
+		this.inputsType = new Array();
 		this.checkDeviceInfo = true;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
-		this.inputNames = new Array();
-		this.inputReferences = new Array();
-		this.inputTypes = new Array();
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputName = '';
@@ -180,39 +180,43 @@ class xboxTvDevice {
 	}
 
 	getDeviceInfo() {
-		this.log.debug('Device: %s %s, requesting config information.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
 		try {
 			this.xbox.getManager('tv_remote').getConfiguration().then(response => {
+				this.log.debug('Device: %s %s, debug getConfiguration response: %s', this.host, this.name, response);
 				if (fs.existsSync(this.devConfigurationFile) === false) {
 					const data = JSON.stringify(response, null, 2);
 					fsPromises.writeFile(this.devConfigurationFile, data);
 				}
 			}).catch(error => {
-				this.log.debug('Device: %s %s, getConfiguration error: %s', this.host, this.name, error);
+				this.log.error('Device: %s %s, getConfiguration error: %s', this.host, this.name, error);
 			});
 			this.xbox.getManager('tv_remote').getHeadendInfo().then(response => {
+				this.log.debug('Device: %s %s, debug getHeadendInfo response: %s', this.host, this.name, response);
 				if (fs.existsSync(this.devHeadendInfoFile) === false) {
 					const data = JSON.stringify(response, null, 2);
 					fsPromises.writeFile(this.devHeadendInfoFile, data);
 				}
 			}).catch(error => {
-				this.log.debug('Device: %s %s, getHeadendInfo data error: %s', this.host, this.name, error);
+				this.log.error('Device: %s %s, getHeadendInfo data error: %s', this.host, this.name, error);
 			});
 			this.xbox.getManager('tv_remote').getLiveTVInfo().then(response => {
+				this.log.debug('Device: %s %s, debug getLiveTVInfo response: %s', this.host, this.name, response);
 				if (fs.existsSync(this.devLiveTVInfoFile) === false) {
 					const data = JSON.stringify(response, null, 2);
 					fsPromises.writeFile(this.devLiveTVInfoFile, data);
 				}
 			}).catch(error => {
-				this.log.debug('Device: %s %s, getLiveTVInfo data error: %s', this.host, this.name, error);
+				this.log.error('Device: %s %s, getLiveTVInfo data error: %s', this.host, this.name, error);
 			});
 			this.xbox.getManager('tv_remote').getTunerLineups().then(response => {
+				this.log.debug('Device: %s %s, debug getTunerLineups response: %s', this.host, this.name, response);
 				if (fs.existsSync(this.devTunerLineupsFile) === false) {
 					const data = JSON.stringify(response, null, 2);
 					fsPromises.writeFile(this.devTunerLineupsFile, data);
 				}
 			}).catch(error => {
-				this.log.debug('Device: %s %s, getTunerLineups data error: %s', this.host, this.name, error);
+				this.log.error('Device: %s %s, getTunerLineups data error: %s', this.host, this.name, error);
 			});
 			//this.xbox.getManager('tv_remote').getAppChannelLineups().then(response => {
 			//	if (fs.existsSync(this.devAppChannelLineupsFile) === false) {
@@ -251,9 +255,8 @@ class xboxTvDevice {
 	}
 
 	updateDeviceState() {
-		this.log.debug('Device: %s %s, requesting Device information.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting Device state.', this.host, this.name);
 		if (this.currentPowerState) {
-			this.log.debug('Device: %s %s, requesting Device state.', this.host, this.name);
 			this.xbox.on('_on_console_status', (response, config, smartglass) => {
 				this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response);
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
@@ -263,13 +266,12 @@ class xboxTvDevice {
 							.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 					}
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
-					const inputName = this.inputNames[inputIdentifier];
-					if (this.televisionService && (inputReference !== this.currentInputReference)) {
+					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+					const inputName = this.inpusName[inputIdentifier];
+					if (this.televisionService) {
 						this.televisionService
 							.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					}
-					this.log.debug('Device: %s %s, get current App successful: %s %s', this.host, this.name, inputName, inputReference);
 					this.currentInputReference = inputReference;
 					this.currentInputIdentifier = inputIdentifier;
 					this.currentInputName = inputName;
@@ -280,19 +282,17 @@ class xboxTvDevice {
 						this.speakerService
 							.updateCharacteristic(Characteristic.Volume, volume)
 							.updateCharacteristic(Characteristic.Mute, mute);
-						if (this.volumeService && this.volumeControl == 1) {
+						if (this.volumeService && this.volumeControl === 1) {
 							this.volumeService
 								.updateCharacteristic(Characteristic.Brightness, volume)
 								.updateCharacteristic(Characteristic.On, !mute);
 						}
-						if (this.volumeServiceFan && this.volumeControl == 2) {
+						if (this.volumeServiceFan && this.volumeControl === 2) {
 							this.volumeServiceFan
 								.updateCharacteristic(Characteristic.RotationSpeed, volume)
 								.updateCharacteristic(Characteristic.On, !mute);
 						}
 					}
-					this.log.debug('Device: %s %s, get current Mute state: %s', this.host, this.name, mute ? 'ON' : 'OFF');
-					this.log.debug('Device: %s %s, get current Volume level: %s', this.host, this.name, volume);
 					this.currentMuteState = mute;
 					this.currentVolume = volume;
 				}
@@ -319,6 +319,7 @@ class xboxTvDevice {
 		let devInfo = { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
 		try {
 			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
+			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
@@ -381,8 +382,8 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputReference = this.currentInputReference;
-				const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
-				const inputName = this.inputNames[inputIdentifier];
+				const inputIdentifier = (this.inputsReference.indexOf(inputReference) > 0) ? this.inputsReference.indexOf(inputReference) : 0;
+				const inputName = this.inputsName[inputIdentifier];
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
 				}
@@ -390,8 +391,8 @@ class xboxTvDevice {
 			})
 			.onSet(async (inputIdentifier) => {
 				try {
-					const inputName = this.inputNames[inputIdentifier];
-					const inputReference = this.inputReferences[inputIdentifier];
+					const inputName = this.inputsName[inputIdentifier];
+					const inputReference = this.inputsReference[inputIdentifier];
 					if (inputReference !== this.currentInputReference) {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
@@ -628,14 +629,18 @@ class xboxTvDevice {
 
 		//Prepare inputs services
 		if (this.inputs.length > 0) {
-			const inputs = this.inputs;
+			this.log.debug('prepareInputsService');
+			this.inputsService = new Array();
+
 			let savedNames = {};
 			try {
 				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
+				this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, savedNames)
 			} catch (error) {
 				this.log.debug('Device: %s %s, customInputs file does not exist', this.host, accessoryName)
 			}
 
+			const inputs = this.inputs;
 			let inputsLength = inputs.length;
 			if (inputsLength > 94) {
 				inputsLength = 94
@@ -657,8 +662,8 @@ class xboxTvDevice {
 				//get input type
 				const inputType = inputs[i].type;
 
-				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
-				this.inputsService
+				const inputService = new Service.InputSource(inputReference, 'input' + i);
+				inputService
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, inputName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
@@ -666,11 +671,12 @@ class xboxTvDevice {
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
 					.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
 
-				this.inputsService
+				inputService
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.onSet(async (name) => {
 						savedNames[inputReference] = name;
 						fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
+							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(savedNames, null, 2));
 							if (error) {
 								this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
 							} else {
@@ -680,12 +686,13 @@ class xboxTvDevice {
 							}
 						});
 					});
-				this.inputReferences.push(inputReference);
-				this.inputNames.push(inputName);
-				this.inputTypes.push(inputType);
+				this.inputsReference.push(inputReference);
+				this.inputsName.push(inputName);
+				this.inputsType.push(inputType);
 
-				accessory.addService(this.inputsService);
-				this.televisionService.addLinkedService(this.inputsService);
+				this.inputsService.push(inputService);
+				accessory.addService(this.inputsService[i]);
+				this.televisionService.addLinkedService(this.inputsService[i]);
 			};
 		}
 
