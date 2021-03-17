@@ -22,7 +22,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox S
 | [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) | Highly Recommended |
 
 ## Note
-- For homebridge-denon-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
+- For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know issues
 - If used with Hoobs, there is a possible configuration incompatibilty.
