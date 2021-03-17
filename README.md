@@ -11,21 +11,26 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-A Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox Series X.
+Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox Series X.
 
 </span>
 
-## Package
-1. [Homebridge](https://github.com/homebridge/homebridge)
-2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
+## Package Requirements
+| Package Link | Required |
+| --- | --- |
+| [Homebridge](https://github.com/homebridge/homebridge) | Required | 
+| [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) | Highly Recommended |
 
-## Installation
-1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
-3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` or search for `Xbox TV` in Config UI X.
+## Note
+- For homebridge-denon-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
-## Known Issues
-* Configuration incompatibilty when used with Hoobs.
+## Know issues
+- If used with Hoobs, there is a possible configuration incompatibilty.
+
+## Installation Instructions
+1. Follow the step-by-step instructions at [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
+2. Follow the step-by-step instructions at [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
+3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` or search for `Xbox Tv` in Config UI X.
 
 ## HomeKit Pairing
 1. Each accessories needs to be manually paired.
@@ -35,10 +40,7 @@ A Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox
 5. You should now see your Xbox, select it
 6. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
-## Note
-1. Version 1.4.0 and above need to be used with Homebridge min. v1.3.x.
-
-## Information
+## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
 * Remote/media control is possible after you go to the RC app on iOS or iPadOS.
 * Speaker control is possible after you go to RC app on iOS or iPadOS as a `Speaker Service`.
@@ -56,21 +58,27 @@ A Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" height="300" /></a>
 </p>
 
-## Configure console
+## Configuration console
 1. [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
   * Profile & system > Settings > General > Power mode & startup
 2. Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & system > Settings > Devices & connections > Remote features > Xbox app preferences.
 
-## Configure plugin
-1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
-2. To find `xboxliveid`, on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number*.
-3. In `refreshInterval` set the data refresh time in seconds, default 5sec.
-4. If `disableLogInfo` is enabled, disable log info, all values and state will not be displayed in Homebridge log console.
-5. In `volumeControl` you can select what a additional volume control mode You want to use (None, Slider, Fan).
-6. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
-7. To find more inputs `reference` open log in homebridge, open app on console and look in the log.
-8. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` — Optional branding data displayed in Home.app. *Not populated automatically*.
+Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+| Key | Description | 
+| --- | --- |
+| `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
+| `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds |
+| `volumeControl`| Select what a additional volume control mode You want to use (None, Slider, Fan) |
+| `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
+| `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
+| `inputs` | Configure apps/inputs which will be published to and appear in HomeKit app in the device tile as inputs list |
+| `buttons` | same as inputs but appear in HomeKit.app as extra tile |
+| `reference` | open log in homebridge, open app on console and look in the log |
+| `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
+| `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
+| `serialNumber` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
+| `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="150"></a>
@@ -200,6 +208,16 @@ A Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox
 					"type": "APPLICATION"
 				}
 			],
+			"buttons": [
+                {
+                    "name": "Disney",
+                    "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+                },
+                {
+                    "name": "BBC iPlayer",
+                    "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+                },
+            ],
 			"manufacturer": "Microsoft Corporation",
 			"modelName": "Model",
 			"serialNumber": "Serial Number",

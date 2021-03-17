@@ -93,11 +93,13 @@
 									"name": {
 										"title": "Input name",
 										"type": "string",
+										"description": "Here set Your own name.",
 										"required": true
 									},
 									"reference": {
 										"title": "Input reference",
 										"type": "string",
+										"description": "Here set reference.",
 										"required": true
 									},
 									"type": {
@@ -177,6 +179,28 @@
 								}
 							}
 						},
+						"buttons": {
+							"title": "Buttons",
+							"buttonText": "Add button",
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"title": "Name",
+										"type": "string",
+										"description": "Here set Your own name.",
+										"required": false
+									},
+									"reference": {
+										"title": "Reference",
+										"type": "string",
+										"description": "Here set the reference.",
+										"required": true
+									}
+								}
+							}
+						},
 						"manufacturer": {
 							"name": "Manufacturer",
 							"type": "string",
@@ -223,19 +247,6 @@
 				{
 					"key": "devices[]",
 					"type": "section",
-					"title": "Advanced Settings",
-					"expandable": true,
-					"expanded": false,
-					"items": [
-						"devices[].disableLogInfo",
-						"devices[].refreshInterval",
-						"devices[].switchInfoMenu",
-						"devices[].volumeControl"
-					]
-				},
-				{
-					"key": "devices[]",
-					"type": "section",
 					"title": "Inputs",
 					"expandable": true,
 					"expanded": false,
@@ -244,13 +255,45 @@
 							"key": "devices[].inputs",
 							"type": "array",
 							"orderable": false,
-							"buttonText": "Add app/input",
+							"buttonText": "Add input",
 							"items": [
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
 								"devices[].inputs[].type"
 							]
 						}
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Buttons",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						{
+							"key": "devices[].buttons",
+							"type": "array",
+							"orderable": false,
+							"buttonText": "Add button",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].reference"
+							]
+						}
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Advanced Settings",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].disableLogInfo",
+						"devices[].refreshInterval",
+						"devices[].switchInfoMenu",
+						"devices[].volumeControl"
 					]
 				},
 				{

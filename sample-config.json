@@ -138,6 +138,16 @@
 							"type": "APPLICATION"
 						}
 					],
+					"buttons": [
+						{
+							"name": "Disney",
+							"reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+						},
+						{
+							"name": "BBC iPlayer",
+							"reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+						}
+					],
 					"manufacturer": "Microsoft Corporation",
 					"modelName": "Model",
 					"serialNumber": "Serial Number",
