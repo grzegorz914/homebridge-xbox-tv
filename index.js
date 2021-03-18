@@ -266,8 +266,8 @@ class xboxTvDevice {
 							.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 					}
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-					const inputName = this.inputsName[inputIdentifier];
+					const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
+					const inputName = this.inputs[inputIdentifier].name;
 					if (this.televisionService) {
 						this.televisionService
 							.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -382,8 +382,8 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputReference = this.currentInputReference;
-				const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-				const inputName = this.inputsName[inputIdentifier];
+				const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
+				const inputName = this.inputs[inputIdentifier].name;
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
 				}
@@ -391,8 +391,8 @@ class xboxTvDevice {
 			})
 			.onSet(async (inputIdentifier) => {
 				try {
-					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = this.inputsReference[inputIdentifier];
+					const inputName = this.inputs[inputIdentifier].name;
+					const inputReference = this.inputs[inputIdentifier].reference;
 					if (inputReference !== this.currentInputReference) {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
