@@ -83,8 +83,6 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.inputsLength = this.inputs.length;
-		this.buttonsLength = this.buttons.length;
 		this.inputsName = new Array();
 		this.inputsReference = new Array();
 		this.inputsType = new Array();
@@ -96,7 +94,9 @@ class xboxTvDevice {
 		this.currentInputName = '';
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
-		this.currentMediaState = false; //play/pause
+		this.currentMediaState = false;
+		this.inputsLength = this.inputs.length;
+		this.buttonsLength = this.buttons.length;
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.devConfigurationFile = this.prefDir + '/' + 'Configurationo_' + this.host.split('.').join('');
 		this.devHeadendInfoFile = this.prefDir + '/' + 'HeadendInfo_' + this.host.split('.').join('');
@@ -636,27 +636,17 @@ class xboxTvDevice {
 			this.inputsService = new Array();
 			const inputs = this.inputs;
 
-			let savedNames = {};
-			try {
-				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
-				this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, savedNames)
-			} catch (error) {
-				this.log.debug('Device: %s %s, customInputs file does not exist', this.host, accessoryName)
-			}
+			const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
+			this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
 
-			let savedTargetVisibility = {};
-			try {
-				savedTargetVisibility = JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile));
-				this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility)
-			} catch (error) {
-				this.log.debug('Device: %s %s, read savedTargetVisibility error: %s', this.host, accessoryName)
-			}
+			const savedTargetVisibility = (fs.readFileSync(this.targetVisibilityInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+			this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
 
 			//check possible inputs count
 			let inputsLength = this.inputsLength;
-			if (inputsLength > 97) {
-				inputsLength = 97;
+			if (inputsLength > 96) {
+				inputsLength = 96;
 				this.log('Inputs count reduced to: %s, because excedded maximum of services', inputsLength)
 			}
 			for (let i = 0; i < inputsLength; i++) {
@@ -667,18 +657,21 @@ class xboxTvDevice {
 				//get input name		
 				const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
 
-				//get visibility state
+				//get input type
+				const inputType = 0;
+
+				//get input configured
+				const isConfigured = 1;
+
+				//get input visibility state
 				const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
 				const currentVisibility = targetVisibility;
-
-				//get input type
-				const inputType = inputs[i].type;
 
 				const inputService = new Service.InputSource(inputReference, 'input' + i);
 				inputService
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, inputName)
-					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+					.setCharacteristic(Characteristic.IsConfigured, isConfigured)
 					.setCharacteristic(Characteristic.InputSourceType, inputType)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 					.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
@@ -686,29 +679,38 @@ class xboxTvDevice {
 				inputService
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.onSet(async (name) => {
-						savedNames[inputReference] = name;
-						fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
-							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(savedNames, null, 2));
-							if (error) {
-								this.log.error('Device: %s %s, can not write new App name, error: %s', this.host, accessoryName, error);
-							} else {
-								if (!this.disableLogInfo) {
-									this.log('Device: %s %s, saved new App successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
-								}
+						try {
+							let newName = savedNames;
+							newName[inputReference] = name;
+							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(newName, null, 2));
+							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 							}
-						});
+						} catch (error) {
+							this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
+						}
 					});
 
 				inputService
 					.getCharacteristic(Characteristic.TargetVisibilityState)
+					.onGet(async () => {
+						const state = targetVisibility;
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, Input: %s, get target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+						}
+						return state;
+					})
 					.onSet(async (state) => {
-						savedTargetVisibility[inputReference] = state;
 						try {
-							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(savedTargetVisibility, null, 2));
-							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(savedTargetVisibility, null, 2));
+							let newState = savedTargetVisibility;
+							newState[inputReference] = state;
+							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(newState, null, 2));
+							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(newState, null, 2));
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 							}
+							inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 						} catch (error) {
 							this.log.error('Device: %s %s, Input: %s, saved target visibility state error: %s', this.host, accessoryName, error);
 						}
@@ -734,8 +736,8 @@ class xboxTvDevice {
 
 			//check possible buttons count
 			let buttonsLength = this.buttonsLength;
-			if ((this.inputsLength + buttonsLength) > 97) {
-				buttonsLength = 97 - this.inputsLength;
+			if ((this.inputsLength + buttonsLength) > 96) {
+				buttonsLength = 96 - this.inputsLength;
 				this.log('Buttons count reduced to: %s, because excedded maximum of services', buttonsLength)
 			}
 			for (let i = 0; i < buttonsLength; i++) {
