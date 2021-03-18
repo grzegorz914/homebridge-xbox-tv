@@ -83,9 +83,6 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.inputsName = new Array();
-		this.inputsReference = new Array();
-		this.inputsType = new Array();
 		this.checkDeviceInfo = true;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
@@ -634,6 +631,9 @@ class xboxTvDevice {
 		if (this.inputsLength > 0) {
 			this.log.debug('prepareInputsService');
 			this.inputsService = new Array();
+			this.inputsReference = new Array();
+			this.inputsName = new Array();
+			this.inputsType = new Array();
 			const inputs = this.inputs;
 
 			const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
@@ -730,8 +730,8 @@ class xboxTvDevice {
 		if (this.buttonsLength > 0) {
 			this.log.debug('prepareInputsButtonService');
 			this.buttonsService = new Array();
-			this.buttonsName = new Array();
 			this.buttonsReference = new Array();
+			this.buttonsName = new Array();
 			const buttons = this.buttons;
 
 			//check possible buttons count
@@ -741,8 +741,8 @@ class xboxTvDevice {
 				this.log('Buttons count reduced to: %s, because excedded maximum of services', buttonsLength)
 			}
 			for (let i = 0; i < buttonsLength; i++) {
-				const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
 				const buttonReference = buttons[i].reference;
+				const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
 				const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
 				buttonService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
