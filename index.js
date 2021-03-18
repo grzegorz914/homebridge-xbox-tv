@@ -556,7 +556,7 @@ class xboxTvDevice {
 			});
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.onGet(async () => {
-				const state = this.currentMuteState;
+				const state = this.currentPowerState ? this.currentMuteState : true;
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				}
