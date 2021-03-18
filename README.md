@@ -81,7 +81,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 
 <p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="150"></a>
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="170"></a>
 </p>
 
 ```json
