@@ -83,6 +83,9 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
+		this.inputsReference = new Array();
+		this.inputsName = new Array();
+		this.inputsType = new Array();
 		this.checkDeviceInfo = true;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
@@ -266,8 +269,8 @@ class xboxTvDevice {
 							.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 					}
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
-					const inputName = this.inputs[inputIdentifier].name;
+					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+					const inputName = this.inputsName[inputIdentifier];
 					if (this.televisionService) {
 						this.televisionService
 							.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -382,8 +385,8 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputReference = this.currentInputReference;
-				const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
-				const inputName = this.inputs[inputIdentifier].name;
+				const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+				const inputName = this.inputsName[inputIdentifier];
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
 				}
@@ -391,8 +394,8 @@ class xboxTvDevice {
 			})
 			.onSet(async (inputIdentifier) => {
 				try {
-					const inputName = this.inputs[inputIdentifier].name;
-					const inputReference = this.inputs[inputIdentifier].reference;
+					const inputName = this.inputsName[inputIdentifier];
+					const inputReference = this.inputsReference[inputIdentifier];
 					if (inputReference !== this.currentInputReference) {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
@@ -631,9 +634,6 @@ class xboxTvDevice {
 		if (this.inputsLength > 0) {
 			this.log.debug('prepareInputsService');
 			this.inputsService = new Array();
-			this.inputsReference = new Array();
-			this.inputsName = new Array();
-			this.inputsType = new Array();
 			const inputs = this.inputs;
 
 			const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
