@@ -94,6 +94,7 @@ class xboxTvDevice {
 		this.currentInputName = '';
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
+		this.startInputIdentifier = 0;
 		this.currentMediaState = false;
 		this.inputsLength = this.inputs.length;
 		this.buttonsLength = this.buttons.length;
@@ -264,10 +265,22 @@ class xboxTvDevice {
 				this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response);
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 					const powerState = this.currentPowerState;
-					if (this.televisionService) {
+					if (this.televisionService && powerState) {
 						this.televisionService
-							.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+							.updateCharacteristic(Characteristic.Active, true);
+						if (!this.currentPowerState) {
+							this.currentPowerState = true;
+							this.televisionService
+								.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
+						}
+						this.currentPowerState = true;
 					}
+					if (this.televisionService && !powerState) {
+						this.televisionService
+							.updateCharacteristic(Characteristic.Active, false);
+						this.currentPowerState = false;
+					}
+
 					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
 					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 					const inputName = this.inputsName[inputIdentifier];
@@ -395,12 +408,14 @@ class xboxTvDevice {
 			.onSet(async (inputIdentifier) => {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = this.inputsReference[inputIdentifier];
-					if (inputReference !== this.currentInputReference) {
+					const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0; er];
+					if (this.currentPowerState) {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
 						}
 					}
+					this.currentInputReference = inputReference;
+					this.startInputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Input. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
