@@ -244,6 +244,7 @@
 				"devices[].name",
 				"devices[].host",
 				"devices[].xboxliveid",
+				"devices[].volumeControl",
 				{
 					"key": "devices[]",
 					"type": "section",
@@ -292,8 +293,7 @@
 					"items": [
 						"devices[].disableLogInfo",
 						"devices[].refreshInterval",
-						"devices[].switchInfoMenu",
-						"devices[].volumeControl"
+						"devices[].switchInfoMenu"
 					]
 				},
 				{
