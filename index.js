@@ -553,6 +553,7 @@ class xboxTvDevice {
 					this.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
+
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 			.onGet(async () => {
 				const volume = this.currentVolume;
@@ -573,6 +574,7 @@ class xboxTvDevice {
 					this.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
+
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.onGet(async () => {
 				const state = this.currentPowerState ? this.currentMuteState : true;
@@ -599,8 +601,8 @@ class xboxTvDevice {
 				};
 			});
 
-		accessory.addService(this.speakerService);
 		this.televisionService.addLinkedService(this.speakerService);
+		accessory.addService(this.speakerService);
 
 		//Prepare volume service
 		if (this.volumeControl >= 1) {
@@ -623,8 +625,8 @@ class xboxTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeService);
-				this.volumeService.addLinkedService(this.volumeService);
 			}
 			if (this.volumeControl == 2) {
 				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'volumeServiceFan');
@@ -644,8 +646,8 @@ class xboxTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeServiceFan);
-				this.televisionService.addLinkedService(this.volumeServiceFan);
 			}
 		}
 
@@ -797,7 +799,6 @@ class xboxTvDevice {
 
 				this.buttonsService.push(buttonService)
 				accessory.addService(this.buttonsService[i]);
-				this.televisionService.addLinkedService(this.buttonsService[i]);
 			}
 		}
 
