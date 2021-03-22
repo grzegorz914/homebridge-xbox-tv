@@ -35,27 +35,29 @@ class xboxTvPlatform {
 		this.config = config;
 		this.api = api;
 		this.devices = config.devices || [];
+		this.accessories = [];
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
-				const deviceName = this.devices[i];
-				if (!deviceName.name) {
+				const device = this.devices[i];
+				if (!device.name) {
 					this.log.warn('Device Name Missing')
 				} else {
-					new xboxTvDevice(this.log, deviceName, this.api);
+					new xboxTvDevice(this.log, device, this.api);
 				}
 			}
 		});
 	}
 
-	configureAccessory(platformAccessory) {
-		this.log.debug('configurePlatformAccessory');
+	configureAccessory(accessory) {
+		this.log.debug('configureAccessory');
+		this.accessories.push(accessory);
 	}
 
-	removeAccessory(platformAccessory) {
-		this.log.debug('removePlatformAccessory');
-		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
+	removeAccessory(accessory) {
+		this.log.debug('removeAccessory');
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
 
@@ -652,154 +654,142 @@ class xboxTvDevice {
 		}
 
 		//Prepare inputs services
-		if (this.inputsLength > 0) {
-			this.log.debug('prepareInputsService');
-			const inputs = this.inputs;
+		this.log.debug('prepareInputsService');
 
-			const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
-			this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
+		const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
+		this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
 
-			const savedTargetVisibility = (fs.readFileSync(this.targetVisibilityInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
-			this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
+		const savedTargetVisibility = (fs.readFileSync(this.targetVisibilityInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
+		const inputs = this.inputs;
 
-			//check possible inputs count
-			let inputsLength = this.inputsLength;
-			if (inputsLength > 96) {
-				inputsLength = 96;
-				this.log('Inputs count reduced to: %s, because excedded maximum of services', inputsLength)
-			}
-			for (let i = 0; i < inputsLength; i++) {
+		//check possible inputs count
+		const inputsLength = (inputs.length > 96) ? 96 : inputs.length;
+		for (let i = 0; i < inputsLength; i++) {
 
-				//get input reference
-				const inputReference = inputs[i].reference;
+			//get input reference
+			const inputReference = inputs[i].reference;
 
-				//get input name		
-				const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
+			//get input name		
+			const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
 
-				//get input type
-				const inputType = 0;
+			//get input type
+			const inputType = 0;
 
-				//get input configured
-				const isConfigured = 1;
+			//get input configured
+			const isConfigured = 1;
 
-				//get input visibility state
-				const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
-				const currentVisibility = targetVisibility;
+			//get input visibility state
+			const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
+			const currentVisibility = targetVisibility;
 
-				const inputService = new Service.InputSource(inputReference, 'input' + i);
-				inputService
-					.setCharacteristic(Characteristic.Identifier, i)
-					.setCharacteristic(Characteristic.ConfiguredName, inputName)
-					.setCharacteristic(Characteristic.IsConfigured, isConfigured)
-					.setCharacteristic(Characteristic.InputSourceType, inputType)
-					.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
-					.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
+			const inputService = new Service.InputSource(inputReference, 'input' + i);
+			inputService
+				.setCharacteristic(Characteristic.Identifier, i)
+				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
+				.setCharacteristic(Characteristic.InputSourceType, inputType)
+				.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+				.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
-				inputService
-					.getCharacteristic(Characteristic.ConfiguredName)
-					.onSet(async (name) => {
-						try {
-							let newName = savedNames;
-							newName[inputReference] = name;
-							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(newName, null, 2));
-							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
-							}
-						} catch (error) {
-							this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
-						}
-					});
-
-				inputService
-					.getCharacteristic(Characteristic.TargetVisibilityState)
-					.onGet(async () => {
-						const state = targetVisibility;
+			inputService
+				.getCharacteristic(Characteristic.ConfiguredName)
+				.onSet(async (name) => {
+					try {
+						let newName = savedNames;
+						newName[inputReference] = name;
+						await fsPromises.writeFile(this.customInputsFile, JSON.stringify(newName, null, 2));
+						this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, Input: %s, get target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+							this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 						}
-						return state;
-					})
-					.onSet(async (state) => {
-						try {
-							let newState = savedTargetVisibility;
-							newState[inputReference] = state;
-							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(newState, null, 2));
-							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(newState, null, 2));
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
-							}
-							inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
-						} catch (error) {
-							this.log.error('Device: %s %s, Input: %s, saved target visibility state error: %s', this.host, accessoryName, error);
+					} catch (error) {
+						this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
+					}
+				});
+
+			inputService
+				.getCharacteristic(Characteristic.TargetVisibilityState)
+				.onGet(async () => {
+					const state = targetVisibility;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, Input: %s, get target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+					}
+					return state;
+				})
+				.onSet(async (state) => {
+					try {
+						let newState = savedTargetVisibility;
+						newState[inputReference] = state;
+						await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(newState, null, 2));
+						this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(newState, null, 2));
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 						}
-					});
+						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
+					} catch (error) {
+						this.log.error('Device: %s %s, Input: %s, saved target visibility state error: %s', this.host, accessoryName, error);
+					}
+				});
 
-				this.inputsReference.push(inputReference);
-				this.inputsName.push(inputName);
-				this.inputsType.push(inputType);
+			this.inputsReference.push(inputReference);
+			this.inputsName.push(inputName);
+			this.inputsType.push(inputType);
 
-				this.inputsService.push(inputService);
-				accessory.addService(this.inputsService[i]);
-				this.televisionService.addLinkedService(this.inputsService[i]);
-			};
+			this.inputsService.push(inputService);
+			accessory.addService(this.inputsService[i]);
+			this.televisionService.addLinkedService(this.inputsService[i]);
 		}
 
 		//Prepare inputs button services
-		if (this.buttonsLength > 0) {
-			this.log.debug('prepareInputsButtonService');
-			const buttons = this.buttons;
+		this.log.debug('prepareInputsButtonService');
+		const buttons = this.buttons;
 
-			//check possible buttons count
-			let buttonsLength = this.buttonsLength;
-			if ((this.inputsLength + buttonsLength) > 96) {
-				buttonsLength = 96 - this.inputsLength;
-				this.log('Buttons count reduced to: %s, because excedded maximum of services', buttonsLength)
-			}
-			for (let i = 0; i < buttonsLength; i++) {
-				const buttonReference = buttons[i].reference;
-				const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
-				const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
-				buttonService.getCharacteristic(Characteristic.On)
-					.onGet(async () => {
-						const state = false;
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, get current state successful: %s', this.host, accessoryName, state);
-						}
-						return state;
-					})
-					.onSet(async (state) => {
-						if (state && this.currentPowerState) {
-							try {
-								const response = await axios.get(this.url + '/api/zap?sRef=' + buttonReference);
-								if (!this.disableLogInfo) {
-									this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, buttonName, buttonReference);
-								}
-								setTimeout(() => {
-									buttonService
-										.updateCharacteristic(Characteristic.On, false);
-								}, 350);
-							} catch (error) {
-								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
-								setTimeout(() => {
-									buttonService
-										.updateCharacteristic(Characteristic.On, false);
-								}, 350);
-							};
-						} else {
+		//check possible buttons count
+		const buttonsLength = ((inputs.length + buttons.length) > 96) ? 96 - inputs.length : buttons.length;
+		for (let i = 0; i < buttonsLength; i++) {
+			const buttonReference = buttons[i].reference;
+			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
+			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
+			buttonService.getCharacteristic(Characteristic.On)
+				.onGet(async () => {
+					const state = false;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current state successful: %s', this.host, accessoryName, state);
+					}
+					return state;
+				})
+				.onSet(async (state) => {
+					if (state && this.currentPowerState) {
+						try {
+							const response = await axios.get(this.url + '/api/zap?sRef=' + buttonReference);
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, buttonName, buttonReference);
+							}
 							setTimeout(() => {
 								buttonService
 									.updateCharacteristic(Characteristic.On, false);
 							}, 350);
-						}
-					});
-				this.buttonsReference.push(buttonReference);
-				this.buttonsName.push(buttonName);
+						} catch (error) {
+							this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+							setTimeout(() => {
+								buttonService
+									.updateCharacteristic(Characteristic.On, false);
+							}, 350);
+						};
+					} else {
+						setTimeout(() => {
+							buttonService
+								.updateCharacteristic(Characteristic.On, false);
+						}, 350);
+					}
+				});
+			this.buttonsReference.push(buttonReference);
+			this.buttonsName.push(buttonName);
 
-				this.buttonsService.push(buttonService)
-				accessory.addService(this.buttonsService[i]);
-			}
+			this.buttonsService.push(buttonService)
+			accessory.addService(this.buttonsService[i]);
 		}
 
 		this.startPrepareAccessory = false;
