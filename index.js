@@ -125,35 +125,35 @@ class xboxTvDevice {
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devConfigurationFile) === false) {
-			fsPromises.writeFile(this.devConfigurationFile, '{}');
+			fsPromises.writeFile(this.devConfigurationFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devHeadendInfoFile) === false) {
-			fsPromises.writeFile(this.devHeadendInfoFile, '{}');
+			fsPromises.writeFile(this.devHeadendInfoFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devTunerLineupsFile) === false) {
-			fsPromises.writeFile(this.devTunerLineupsFile, '{}');
+			fsPromises.writeFile(this.devTunerLineupsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devTunerLineupsFile) === false) {
-			fsPromises.writeFile(this.devTunerLineupsFile, '{}');
+			fsPromises.writeFile(this.devTunerLineupsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devAppChannelLineupsFile) === false) {
-			fsPromises.writeFile(this.devAppChannelLineupsFile, '{}');
+			fsPromises.writeFile(this.devAppChannelLineupsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.customInputsFile) === false) {
-			fsPromises.writeFile(this.customInputsFile, '{}');
+			fsPromises.writeFile(this.customInputsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.targetVisibilityInputsFile) === false) {
-			fsPromises.writeFile(this.targetVisibilityInputsFile, '{}');
+			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devInfoFile) === false) {
-			fsPromises.writeFile(this.devInfoFile, '{}');
+			fsPromises.writeFile(this.devInfoFile, '');
 		}
 
 		//Check net state
@@ -655,14 +655,14 @@ class xboxTvDevice {
 
 		//Prepare inputs services
 		this.log.debug('prepareInputsService');
+		const inputs = this.inputs;
 
-		const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
+		const savedNames = ((fs.readFileSync(this.customInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
 		this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
 
-		const savedTargetVisibility = (fs.readFileSync(this.targetVisibilityInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+		const savedTargetVisibility = ((fs.readFileSync(this.targetVisibilityInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
 		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
-		const inputs = this.inputs;
 
 		//check possible inputs count
 		const inputsLength = (inputs.length > 96) ? 96 : inputs.length;
