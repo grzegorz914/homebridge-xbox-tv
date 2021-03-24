@@ -338,13 +338,8 @@ class xboxTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		let devInfo = { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
-		try {
-			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
-			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
-		} catch (error) {
-			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
-		}
+		const devInfo = ((fs.readFileSync(this.devInfoFile)).length > 0) ? JSON.parse(fs.readFileSync(this.devInfoFile)) : { 'manufacturer': 'Manufacturer', 'modelName': 'Model name', 'serialNumber': 'Serial number', 'firmwareRevision': 'Firmware' };
+		this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo);
 
 		const manufacturer = this.manufacturer;
 		const modelName = devInfo.modelName;
