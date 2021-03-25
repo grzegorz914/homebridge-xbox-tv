@@ -274,11 +274,6 @@ class xboxTvDevice {
 					if (this.televisionService && powerState) {
 						this.televisionService
 							.updateCharacteristic(Characteristic.Active, true);
-						if (!this.currentPowerState) {
-							this.currentPowerState = true;
-							this.televisionService
-								.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
-						}
 						this.currentPowerState = true;
 					}
 					if (this.televisionService && !powerState) {
@@ -287,36 +282,42 @@ class xboxTvDevice {
 						this.currentPowerState = false;
 					}
 
-					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-					const inputName = this.inputsName[inputIdentifier];
-					if (this.televisionService) {
-						this.televisionService
-							.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-					}
-					this.currentInputReference = inputReference;
-					this.currentInputIdentifier = inputIdentifier;
-					this.currentInputName = inputName;
+					if (this.currentPowerState) {
+						const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+						const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+						const inputName = this.inputsName[inputIdentifier];
+						if (this.televisionService) {
+							this.televisionService
+								.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+						}
 
-					const volume = this.currentVolume;
-					const mute = powerState ? this.currentMuteState : true;
-					if (this.speakerService) {
-						this.speakerService
-							.updateCharacteristic(Characteristic.Volume, volume)
-							.updateCharacteristic(Characteristic.Mute, mute);
-						if (this.volumeService && this.volumeControl === 1) {
-							this.volumeService
-								.updateCharacteristic(Characteristic.Brightness, volume)
-								.updateCharacteristic(Characteristic.On, !mute);
+						const volume = this.currentVolume;
+						const mute = powerState ? this.currentMuteState : true;
+						if (this.speakerService) {
+							this.speakerService
+								.updateCharacteristic(Characteristic.Volume, volume)
+								.updateCharacteristic(Characteristic.Mute, mute);
+							if (this.volumeService && this.volumeControl === 1) {
+								this.volumeService
+									.updateCharacteristic(Characteristic.Brightness, volume)
+									.updateCharacteristic(Characteristic.On, !mute);
+							}
+							if (this.volumeServiceFan && this.volumeControl === 2) {
+								this.volumeServiceFan
+									.updateCharacteristic(Characteristic.RotationSpeed, volume)
+									.updateCharacteristic(Characteristic.On, !mute);
+							}
 						}
-						if (this.volumeServiceFan && this.volumeControl === 2) {
-							this.volumeServiceFan
-								.updateCharacteristic(Characteristic.RotationSpeed, volume)
-								.updateCharacteristic(Characteristic.On, !mute);
+						if (powerState && (powerState !== this.currentPowerState)) {
+							this.televisionService
+								.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
 						}
+						this.currentInputReference = inputReference;
+						this.currentInputIdentifier = inputIdentifier;
+						this.currentInputName = inputName;
+						this.currentVolume = volume;
+						this.currentMuteState = mute;
 					}
-					this.currentMuteState = mute;
-					this.currentVolume = volume;
 				}
 
 				const currentMediaState = this.xbox.getManager('system_media').getState();
@@ -616,7 +617,7 @@ class xboxTvDevice {
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = !this.currentMuteState;
+						const state = this.currentPowerState ? !this.currentMuteState : false;
 						return state;
 					})
 					.onSet(async (state) => {
@@ -637,7 +638,7 @@ class xboxTvDevice {
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = !this.currentMuteState;
+						const state = this.currentPowerState ? !this.currentMuteState : false;
 						return state;
 					})
 					.onSet(async (state) => {
