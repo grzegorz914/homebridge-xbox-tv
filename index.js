@@ -93,7 +93,6 @@ class xboxTvDevice {
 		this.buttonsReference = new Array();
 		this.buttonsName = new Array();
 		this.checkDeviceInfo = true;
-		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
@@ -101,6 +100,7 @@ class xboxTvDevice {
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
 		this.startInputIdentifier = 0;
+		this.setStartInput = false;
 		this.currentMediaState = false;
 		this.inputsLength = this.inputs.length;
 		this.buttonsLength = this.buttons.length;
@@ -184,58 +184,12 @@ class xboxTvDevice {
 			}
 		}.bind(this), this.refreshInterval * 1000);
 
-		if (this.startPrepareAccessory) {
-			this.prepareAccessory();
-		}
+		this.prepareAccessory();
 	}
 
 	getDeviceInfo() {
 		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
 		try {
-			this.xbox.getManager('tv_remote').getConfiguration().then(response => {
-				this.log.debug('Device: %s %s, debug getConfiguration response: %s', this.host, this.name, response);
-				if (fs.existsSync(this.devConfigurationFile) === false) {
-					const data = JSON.stringify(response, null, 2);
-					fsPromises.writeFile(this.devConfigurationFile, data);
-				}
-			}).catch(error => {
-				this.log.error('Device: %s %s, getConfiguration error: %s', this.host, this.name, error);
-			});
-			this.xbox.getManager('tv_remote').getHeadendInfo().then(response => {
-				this.log.debug('Device: %s %s, debug getHeadendInfo response: %s', this.host, this.name, response);
-				if (fs.existsSync(this.devHeadendInfoFile) === false) {
-					const data = JSON.stringify(response, null, 2);
-					fsPromises.writeFile(this.devHeadendInfoFile, data);
-				}
-			}).catch(error => {
-				this.log.error('Device: %s %s, getHeadendInfo data error: %s', this.host, this.name, error);
-			});
-			this.xbox.getManager('tv_remote').getLiveTVInfo().then(response => {
-				this.log.debug('Device: %s %s, debug getLiveTVInfo response: %s', this.host, this.name, response);
-				if (fs.existsSync(this.devLiveTVInfoFile) === false) {
-					const data = JSON.stringify(response, null, 2);
-					fsPromises.writeFile(this.devLiveTVInfoFile, data);
-				}
-			}).catch(error => {
-				this.log.error('Device: %s %s, getLiveTVInfo data error: %s', this.host, this.name, error);
-			});
-			this.xbox.getManager('tv_remote').getTunerLineups().then(response => {
-				this.log.debug('Device: %s %s, debug getTunerLineups response: %s', this.host, this.name, response);
-				if (fs.existsSync(this.devTunerLineupsFile) === false) {
-					const data = JSON.stringify(response, null, 2);
-					fsPromises.writeFile(this.devTunerLineupsFile, data);
-				}
-			}).catch(error => {
-				this.log.error('Device: %s %s, getTunerLineups data error: %s', this.host, this.name, error);
-			});
-			//this.xbox.getManager('tv_remote').getAppChannelLineups().then(response => {
-			//	if (fs.existsSync(this.devAppChannelLineupsFile) === false) {
-			//		const data = JSON.stringify(response, null, 2);
-			//		fsPromises.writeFile(this.getAppChannelLineups, data);
-			//	}
-			//}).catch(error => {
-			//	this.log.error('Device: %s %s, getAppChannelLineups data error: %s', this.host, this.name, error);
-			//});
 			const manufacturer = this.manufacturer;
 			const modelName = this.modelName;
 			const serialNumber = this.serialNumber;
@@ -424,6 +378,7 @@ class xboxTvDevice {
 					}
 					this.currentInputReference = inputReference;
 					this.startInputIdentifier = inputIdentifier;
+					this.setStartInput = true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Input. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -794,7 +749,6 @@ class xboxTvDevice {
 			accessory.addService(this.buttonsService[i]);
 		}
 
-		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
