@@ -93,14 +93,14 @@ class xboxTvDevice {
 		this.buttonsReference = new Array();
 		this.buttonsName = new Array();
 		this.checkDeviceInfo = true;
+		this.setStartInput = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputName = '';
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
-		this.startInputIdentifier = 0;
-		this.setStartInput = false;
+		this.setStartInputIdentifier = 0;
 		this.currentMediaState = false;
 		this.inputsLength = this.inputs.length;
 		this.buttonsLength = this.buttons.length;
@@ -195,7 +195,7 @@ class xboxTvDevice {
 			const serialNumber = this.serialNumber;
 			const firmwareRevision = this.firmwareRevision;
 
-			const obj = { 'modelName': modelName, 'serialNumber': serialNumber, 'firmwareRevision': firmwareRevision };
+			const obj = { 'manufacturer': manufacturer, 'modelName': modelName, 'serialNumber': serialNumber, 'firmwareRevision': firmwareRevision };
 			const devInfo = JSON.stringify(obj, null, 2);
 			const writeDevInfoFile = fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved Device Info successful: %s', this.host, this.name, devInfo);
@@ -213,7 +213,7 @@ class xboxTvDevice {
 			this.checkDeviceInfo = false;
 			this.updateDeviceState();
 		} catch (error) {
-			this.log.error('Device: %s %s, Device Info eror: %s, state: Offline, trying to reconnect', this.host, this.name, error);
+			this.log.error('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
 			this.checkDeviceInfo = true;
 		}
 	}
@@ -225,60 +225,63 @@ class xboxTvDevice {
 				this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response);
 				if (response.packet_decoded.protected_payload.apps[0] !== undefined) {
 					const powerState = this.currentPowerState;
-					if (this.televisionService && powerState) {
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, true);
-						this.currentPowerState = true;
-					}
-					if (this.televisionService && !powerState) {
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, false);
-						this.currentPowerState = false;
-					}
+					const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
+					const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+					const inputName = this.inputsName[inputIdentifier];
+					const volume = this.currentVolume;
+					const mute = powerState ? this.currentMuteState : true;
 
-					if (this.currentPowerState) {
-						const inputReference = response.packet_decoded.protected_payload.apps[0].aum_id;
-						const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-						const inputName = this.inputsName[inputIdentifier];
-						if (this.televisionService) {
+					if (this.televisionService) {
+						if (powerState) {
 							this.televisionService
+								.updateCharacteristic(Characteristic.Active, true)
 								.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+
 						}
 
-						const volume = this.currentVolume;
-						const mute = powerState ? this.currentMuteState : true;
-						if (this.speakerService) {
-							this.speakerService
-								.updateCharacteristic(Characteristic.Volume, volume)
-								.updateCharacteristic(Characteristic.Mute, mute);
-							if (this.volumeService && this.volumeControl === 1) {
-								this.volumeService
-									.updateCharacteristic(Characteristic.Brightness, volume)
-									.updateCharacteristic(Characteristic.On, !mute);
-							}
-							if (this.volumeServiceFan && this.volumeControl === 2) {
-								this.volumeServiceFan
-									.updateCharacteristic(Characteristic.RotationSpeed, volume)
-									.updateCharacteristic(Characteristic.On, !mute);
-							}
-						}
-						if (powerState && (powerState !== this.currentPowerState)) {
+						if (!powerState) {
 							this.televisionService
-								.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
+								.updateCharacteristic(Characteristic.Active, false);
 						}
-						this.currentInputReference = inputReference;
-						this.currentInputIdentifier = inputIdentifier;
-						this.currentInputName = inputName;
-						this.currentVolume = volume;
-						this.currentMuteState = mute;
+
+						if (this.setStartInput) {
+							this.televisionService
+								.setCharacteristic(Characteristic.ActiveIdentifier, this.setStartInputIdentifier);
+							if (this.setStartInputIdentifier === inputIdentifier) {
+								this.setStartInput = false;
+							}
+						}
 					}
+
+					if (this.speakerService) {
+						this.speakerService
+							.updateCharacteristic(Characteristic.Volume, volume)
+							.updateCharacteristic(Characteristic.Mute, mute);
+						if (this.volumeService && this.volumeControl == 1) {
+							this.volumeService
+								.updateCharacteristic(Characteristic.Brightness, volume)
+								.updateCharacteristic(Characteristic.On, !mute);
+						}
+						if (this.volumeServiceFan && this.volumeControl == 2) {
+							this.volumeServiceFan
+								.updateCharacteristic(Characteristic.RotationSpeed, volume)
+								.updateCharacteristic(Characteristic.On, !mute);
+						}
+					}
+
+					this.currentPowerState = powerState;
+					this.currentInputName = inputName;
+					this.currentInputReference = inputReference;
+					this.currentInputIdentifier = inputIdentifier;
+					this.currentVolume = volume;
+					this.currentMuteState = mute;
 				}
 
 				const currentMediaState = this.xbox.getManager('system_media').getState();
 				this.currentMediaState = (currentMediaState.title_id !== 0);
 				this.log.debug('Device: %s %s, get current media state: %s', this.host, this.name, this.currentMediaState);
 			}, function (error) {
-				this.log.error('Device: %s %s, update Device state error: %s, state: Offline', this.host, this.name, error);
+				this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
 			});
 		}
 	}
@@ -295,10 +298,10 @@ class xboxTvDevice {
 		this.log.debug('prepareInformationService');
 		try {
 			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = (readDevInfo.modelName !== undefined) ? JSON.parse(readDevInfo) : { 'modelName': this.modelName, 'serialNumber': this.serialNumber, 'firmwareRevision': this.firmwareRevision };
+			const devInfo = (readDevInfo.modelName !== undefined) ? JSON.parse(readDevInfo) : { 'manufacturer': this.manufacturer, 'modelName': this.modelName, 'serialNumber': this.serialNumber, 'firmwareRevision': this.firmwareRevision };
 			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo);
 
-			const manufacturer = 'Microsoft'
+			const manufacturer = devInfo.manufacturer;
 			const modelName = devInfo.modelName;
 			const serialNumber = devInfo.serialNumber;
 			const firmwareRevision = devInfo.firmwareRevision;
@@ -314,7 +317,6 @@ class xboxTvDevice {
 			accessory.addService(informationService);
 		} catch (error) {
 			this.log.error('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
-			this.checkDeviceInfo = true;
 		};
 
 
@@ -359,9 +361,9 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
+				const inputName = this.currentInputName;
 				const inputReference = this.currentInputReference;
-				const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-				const inputName = this.inputsName[inputIdentifier];
+				const inputIdentifier = this.currentInputIdentifier;
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Input successful: %s %s', this.host, accessoryName, inputName, inputReference);
 				}
@@ -371,14 +373,11 @@ class xboxTvDevice {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
 					const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0;
-					if (this.currentPowerState) {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
-						}
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set new App successful, new App reference: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
-					this.currentInputReference = inputReference;
-					this.startInputIdentifier = inputIdentifier;
-					this.setStartInput = true;
+					this.setStartInputIdentifier = this.currentPowerState ? this.currentInputIdentifier : inputIdentifier;
+					this.setStartInput = this.currentPowerState ? false : true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Input. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
