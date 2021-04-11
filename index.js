@@ -173,11 +173,6 @@ class xboxTvDevice {
 					this.xbox.addManager('tv_remote', TvRemoteChannel());
 					this.checkDeviceInfo = true;
 					this.checkDeviceInfo1 = true;
-					if (this.televisionService) {
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, true);
-					}
-					this.currentPowerState = true;
 
 					this.log('Device: %s %s, connected.', this.host, this.name);
 				}).catch(error => {
@@ -476,46 +471,52 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
 			.onGet(async () => {
-				const state = this.currentPowerState ? true : false;
+				const state = this.currentPowerState;
 				if (!this.disableLogInfo) {
 					this.log('Device: %s %s, get current Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				}
 				return state;
 			})
 			.onSet(async (state) => {
-				if (state && (state !== !this.currentPowerState)) {
+				if (state && (state !== this.currentPowerState)) {
 					const xbox = Smartglass();
 					const setPowerOn = this.xboxWebApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxliveid).then(() => {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, web api set power ON state successful', this.host, accessoryName);
 						}
+						this.televisionService
+							.updateCharacteristic(Characteristic.Active, true)
+						this.currentPowerState = true;
 					}).catch((error) => {
 						this.log.error('Device: %s %s, web api set power ON, error: %s', this.host, accessoryName, error);
-						this.currentPowerState = false;
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, false);
 					}) : xbox.powerOn({ live_id: this.xboxliveid, tries: 15, ip: this.host }).then(() => {
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set power ON successful', this.host, accessoryName);
 						}
+						this.televisionService
+							.updateCharacteristic(Characteristic.Active, true)
+						this.currentPowerState = true;
 					}).catch(error => {
 						this.log.error('Device: %s %s, set power ON, error: %s', this.host, accessoryName, error);
-						this.currentPowerState = false;
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, false);
 					});
 				} else {
-					if (!state && (state !== this.currentPowerState)) {
+					if (!state && (!state !== this.currentPowerState)) {
 						const setPowerOff = this.xboxWebApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, web api set power OFF successful', this.host, accessoryName);
 							}
+							this.televisionService
+								.updateCharacteristic(Characteristic.Active, false)
+							this.currentPowerState = false;
 						}).catch((error) => {
 							this.log.error('Device: %s %s, set power OFF error: %s', this.host, accessoryName, error);
 						}) : this.xbox.powerOff().then(() => {
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, set power OFF successful', this.host, accessoryName);
 							}
+							this.televisionService
+								.updateCharacteristic(Characteristic.Active, false)
+							this.currentPowerState = false;
 						}).catch(error => {
 							this.log.error('Device: %s %s, set power OFF error: %s', this.host, accessoryName, error);
 						});
@@ -820,7 +821,7 @@ class xboxTvDevice {
 						const writeNewCustomName = await fsPromises.writeFile(this.customInputsNameFile, newCustomName);
 						this.log.debug('Device: %s %s, saved new App name successful, name: %s', this.host, accessoryName, newCustomName);
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, new App name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+							this.log('Device: %s %s, new App name saved successful, name: %s reference: %s', this.host, accessoryName, newCustomName, inputReference);
 						}
 					} catch (error) {
 						this.log.error('Device: %s %s, new App name saved error: %s', this.host, accessoryName, error);
@@ -831,9 +832,7 @@ class xboxTvDevice {
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onGet(async () => {
 					const state = targetVisibility;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, App: %s, target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
-					}
+					this.log.debug('Device: %s %s, App: %s, target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 					return state;
 				})
 				.onSet(async (state) => {
