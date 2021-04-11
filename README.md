@@ -72,6 +72,8 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 | Key | Description | 
 | --- | --- |
+| `name` | Name of Your console |
+| `host` | Address II of Your console |
 | `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
 | `clientID` | Optional free-form for future use |
 | `clientSecret` | Optional free-form for future use |
