@@ -66,8 +66,8 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 
 ## Configuration and enable web API control
 1. After enable `xboxWebApiEnabled` option, restart the plugin and go to Homebridge console log.
-2. Open the authentication URL and login to Your XboxLive account, next accept permision for this app.
-3. After accept permiosion for this app copy the part after `?code=` from the response URL and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again, done.
+2. Open the authentication URL and copy the part after `?code=` from the response URL and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again.
+3. Again open the authentication URL and login to Your XboxLive account, next accept the permision for this app, done.
 
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 | Key | Description | 
