@@ -11,7 +11,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox Series X.
+Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox Series X.
 
 </span>
 
@@ -45,7 +45,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox S
 * Remote/media control is possible after you go to the RC app on iOS or iPadOS.
 * Speaker control is possible after you go to RC app on iOS or iPadOS as a `Speaker Service`.
 * Legacy volume and mute control is possible through extra `lightbulb` dimmer slider or using Siri `Volume Service`, not working with the current API.
-* Applications and games can only be read from the device, switching apps or games does not work with the current API.
+* Apps, inputs and games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case the current apps, inputs, games can be displayed.
 * Siri control.
 
 <p align="left">
@@ -64,17 +64,28 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X and Xbox S
 2. Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & system > Settings > Devices & connections > Remote features > Xbox app preferences.
 
+## Configuration and enable web API control
+1. After enable `xboxWebApiEnabled` option, restart the plugin and go to Homebridge console log.
+2. Open the authentication URL and login to Your XboxLive account, next accept permision for this app.
+3. After accept permiosion for this app copy the part after `?code=` from the response URL and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again, done.
+
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 | Key | Description | 
 | --- | --- |
 | `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
+| `clientID` | Optional free-form for future use |
+| `clientSecret` | Optional free-form for future use |
+| `xboxWebApiToken` | Required if `xboxWebApiEnabled` enabled.|
+| `xboxWebApiEnabled` | Optional, if enabled the console can be controlled using Web Api |
 | `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds |
 | `volumeControl`| Select what a additional volume control mode You want to use (None, Slider, Fan) |
 | `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
 | `inputs` | Configure apps/inputs which will be published to and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
-| `reference` | open log in homebridge, open app on console and look in the log |
+| `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
+| `referenceId` | Optiona, required if U want to use web api and switch inputs/apps, all available data in `/var/lib/homebridge/xboxTv/installedApps` file. |
+| `type` | Optional choice from available options |
 | `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `serialNumber` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
@@ -92,7 +103,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"name": "Xbox One",
 			"host": "192.168.1.6",
 			"xboxliveid": "FD0000000000",
+			"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
+			"clientID": "",
+			"clientSecret": "",
 			"refreshInterval": 5,
+			"xboxWebApiEnabled": false,
 			"disableLogInfo": false,
 			"volumeControl": 0,
 			"switchInfoMenu": false,
@@ -100,111 +115,133 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 				{
 					"name": "Dashboard",
 					"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+					"referenceId": "",
 					"type": "HOME_SCREEN"
 				},
 				{
 					"name": "Settings",
 					"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+					"referenceId": "",
 					"type": "OTHER"
 				},
 				{
 					"name": "Accessory",
 					"reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+					"referenceId": "",
 					"type": "OTHER"
 				},
 				{
 					"name": "Spotify",
 					"reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "YouTube",
 					"reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Netflix",
 					"reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Telewizja",
 					"reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
+					"referenceId": "",
 					"type": "HDMI"
 				},
 				{
 					"name": "Sklep",
 					"reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Microsoft Edge",
 					"reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Airserver",
 					"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Gears of War 5",
 					"reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Fortnite",
 					"reference": "Fortnite_d5xxtpggmzx6p!AppFortnite",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Minecraft",
 					"reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Plex",
 					"reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Bluray",
 					"reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "COD WII",
 					"reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "COD WZ",
 					"reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "GTA V",
 					"reference": "GTA-V_vesz1v3mcwykm!GTAV",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "All4",
 					"reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Amazon Prime",
 					"reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "Disney",
 					"reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				},
 				{
 					"name": "BBC iPlayer",
 					"reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+					"referenceId": "",
 					"type": "APPLICATION"
 				}
 			],
@@ -212,10 +249,12 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
                 {
                     "name": "Disney",
                     "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+					"referenceId": ""
                 },
                 {
                     "name": "BBC iPlayer",
                     "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+					"referenceId": ""
                 },
             ],
 			"manufacturer": "Microsoft Corporation",

@@ -22,7 +22,11 @@
 					"name": "Game Console",
 					"host": "192.168.1.6",
 					"xboxliveid": "FD0000000000",
+					"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
+					"clientID": "",
+					"clientSecret": "",
 					"refreshInterval": 5,
+					"xboxWebApiEnabled": false,
 					"disableLogInfo": false,
 					"volumeControl": 0,
 					"switchInfoMenu": false,
@@ -30,111 +34,133 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+							"referenceId": "",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+							"referenceId": "",
 							"type": "OTHER"
 						},
 						{
 							"name": "Accessory",
 							"reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+							"referenceId": "",
 							"type": "OTHER"
 						},
 						{
 							"name": "Spotify",
 							"reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "YouTube",
 							"reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Netflix",
 							"reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Telewizja",
 							"reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
+							"referenceId": "",
 							"type": "HDMI"
 						},
 						{
 							"name": "Sklep",
 							"reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Microsoft Edge",
 							"reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Airserver",
 							"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Gears of War 5",
 							"reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Fortnite",
 							"reference": "Fortnite_d5xxtpggmzx6p!AppFortnite",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Minecraft",
 							"reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Plex",
 							"reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Bluray",
 							"reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "COD WII",
 							"reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "COD WZ",
 							"reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "GTA V",
 							"reference": "GTA-V_vesz1v3mcwykm!GTAV",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "All4",
 							"reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Amazon Prime",
 							"reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Disney",
 							"reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "BBC iPlayer",
 							"reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+							"referenceId": "",
 							"type": "APPLICATION"
 						}
 					],
@@ -142,10 +168,12 @@
 						{
 							"name": "Disney",
 							"reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
+							"referenceId": ""
 						},
 						{
 							"name": "BBC iPlayer",
 							"reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
+							"referenceId": ""
 						}
 					],
 					"manufacturer": "Microsoft Corporation",
