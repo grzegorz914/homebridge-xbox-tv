@@ -107,6 +107,7 @@ class xboxTvDevice {
 		this.buttonsReference = new Array();
 		this.buttonsReferenceId = new Array();
 		this.webApiEnabled = this.xboxWebApiEnabled ? this.webApiEnabled : false;
+		this.xboxConnected = false;
 		this.checkDeviceInfo = false;
 		this.checkInstalledApps = false;
 		this.checkDeviceInfo1 = false;
@@ -166,45 +167,73 @@ class xboxTvDevice {
 
 		//Check net state
 		setInterval(function () {
-			if (!this.xbox._connection_status) {
+			if (!this.xboxConnected) {
 				this.xbox = Smartglass();
-				this.xbox.connect(this.host).then(() => {
-					this.xbox.addManager('system_input', SystemInputChannel());
-					this.xbox.addManager('system_media', SystemMediaChannel());
-					this.xbox.addManager('tv_remote', TvRemoteChannel());
-					this.checkDeviceInfo = true;
-					this.checkInstalledApps = true;
-					this.checkDeviceInfo1 = true;
-					if (this.televisionService) {
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, true);
-					}
-
-					this.log('Device: %s %s, connected.', this.host, this.name);
-				}).catch(error => {
+				this.xbox.discovery(this.ip).then(() => {
+					this.log.debug('Device: %s %s, discovered.', this.host, this.name);
+					this.connectToXbox();
+				}).catch(() => {
+					this.log.debug('Device: %s %s, discovering error: %s', this.host, this.name, error);
 					this.currentPowerState = false;
 				});
-				if (this.checkDeviceState) {
-					this.log('Device: %s %s, disconnected.', this.host, this.name);
+
+			} else {
+				if (this.checkDeviceInfo && this.checkDeviceInfo1) {
+					this.getDeviceInfo();
 				}
-				this.currentPowerState = false;
-				this.checkDeviceState = false;
-				if (this.televisionService) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, false);
+				if (!this.checkDeviceInfo1 && this.checkDeviceState) {
+					this.updateDeviceState();
 				}
-			}
-			if (this.checkDeviceInfo && this.checkDeviceInfo1) {
-				this.getDeviceInfo();
-			}
-			if (!this.checkDeviceInfo1 && this.checkDeviceState) {
-				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
 
 		const getWebApiToken = this.xboxWebApiEnabled ? this.getWebApiToken() : false;
 		this.prepareAccessory();
 	}
+
+	connectToXbox() {
+		this.xbox = Smartglass();
+		this.xbox.connect(this.host).then(() => {
+			this.log('Device: %s %s, connected.', this.host, this.name);
+			this.xbox.addManager('system_input', SystemInputChannel());
+			this.xbox.addManager('system_media', SystemMediaChannel());
+			this.xbox.addManager('tv_remote', TvRemoteChannel());
+			this.xboxConnected = true;
+			this.currentPowerState = true;
+			this.checkDeviceInfo = true;
+			this.checkInstalledApps = true;
+			this.checkDeviceInfo1 = true;
+			if (this.televisionService) {
+				this.televisionService
+					.updateCharacteristic(Characteristic.Active, true);
+			}
+
+			this.xbox.on('_on_timeout', () => {
+				this.log('Device: %s %s, connection timeout. Trying to reconnect', this.host, this.name);
+				this.xboxConnected = false;
+				this.currentPowerState = false;
+				this.checkDeviceInfo = false;
+				this.checkInstalledApps = false;
+				this.checkDeviceInfo1 = false;
+				if (this.televisionService) {
+					this.televisionService
+						.updateCharacteristic(Characteristic.Active, false);
+				}
+				this.connectToXbox();
+			});
+		}).catch(error => {
+			this.log.debug('Device: %s %s, connection error: %s', this.host, this.name, error);
+			this.xboxConnected = false;
+			this.currentPowerState = false;
+			this.checkDeviceInfo = false;
+			this.checkInstalledApps = false;
+			this.checkDeviceInfo1 = false;
+			if (this.televisionService) {
+				this.televisionService
+					.updateCharacteristic(Characteristic.Active, false);
+			}
+		});
+	};
 
 	getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
