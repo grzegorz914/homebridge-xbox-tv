@@ -175,7 +175,6 @@ class xboxTvDevice {
 					this.checkDeviceInfo = true;
 					this.checkInstalledApps = true;
 					this.checkDeviceInfo1 = true;
-					this.currentPowerState = true;
 					if (this.televisionService) {
 						this.televisionService
 							.updateCharacteristic(Characteristic.Active, true);
@@ -553,7 +552,13 @@ class xboxTvDevice {
 				const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
 				const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[inputInstalledAppsIdentifier] : this.inputsReferenceId[inputIdentifier];
 				const inputName = (inputInstalledAppsIdentifier !== false) ? this.installedAppsName[inputInstalledAppsIdentifier] : this.inputsName[inputIdentifier];
-				const setInput = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputReferenceId).then(() => {
+				const setInput = this.webApiEnabled ? (inputReference === 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application') ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set Dashboard successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
+					}
+				}).catch((error) => {
+					this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
+				}) : this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputReferenceId).then(() => {
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new App successful, name: %s, reference: %s, referenceId: %s', this.host, accessoryName, inputName, inputReference, inputReferenceId);
 					}
@@ -713,20 +718,26 @@ class xboxTvDevice {
 			})
 			.onSet(async (state) => {
 				if (this.currentPowerState && (state !== this.currentMuteState)) {
-					const command = 'btn.vol_mute';
 					const type = 'tv_remote';
-					const setMute = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid).then(() => {
+					const command = 'btn.vol_mute';
+					const toggleMute = this.webApiEnabled ? (state === true) ? this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid).then(() => {
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set new Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+							this.log('Device: %s %s, toggle Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
 					}).catch((error) => {
-						this.log.error('Device: %s %s, can not set new Mute state, error: %s', this.host, accessoryName, error);
+						this.log.error('Device: %s %s, toggle Mute, error: %s', this.host, accessoryName, error);
+					}) : this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid).then(() => {
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, toggle Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+						}
+					}).catch((error) => {
+						this.log.error('Device: %s %s, toggle Mute, error: %s', this.host, accessoryName, error);
 					}) : this.xbox.getManager(type).sendIrCommand(command).then(() => {
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set new Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+							this.log('Device: %s %s, toggle Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
 					}).catch(error => {
-						this.log.error('Device: %s %s, can not set new Mute state, error: %s', this.host, accessoryName, error);
+						this.log.error('Device: %s %s, toggle Mute, error: %s', this.host, accessoryName, error);
 					});
 				};
 			});
