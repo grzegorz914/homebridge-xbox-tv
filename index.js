@@ -221,7 +221,7 @@ class xboxTvDevice {
 				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
 				this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken).then((data) => {
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);
-					this.log('Device: %s %s, get oauth Web Api Token:', this.host, this.name, data);
+					this.log.debug('Device: %s %s, get oauth Web Api Token:', this.host, this.name, data);
 
 					this.xboxWebApi._authentication._tokens.oauth = data;
 					this.xboxWebApi._authentication.saveTokens();
@@ -244,21 +244,21 @@ class xboxTvDevice {
 		//get device info from xbox live account
 		if (this.webApiEnabled) {
 			if (this.checkDeviceInfo) {
-				this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((result) => {
-					this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, result);
+				this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((response) => {
+					this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, response);
 
-					const id = result.id;
-					const name = result.name;
-					const locale = result.locale;
-					const consoleType = CONSOLES_NAME[result.consoleType];
-					const powerState = (result.powerState === 'On');
-					const playback = (result.playbackState !== 'Stopped');
-					const loginState = result.loginState;
-					const focusAppAumid = result.focusAppAumid;
-					const isTvConfigured = (result.isTvConfigured === true);
-					const digitalAssistantRemoteControlEnabled = (result.digitalAssistantRemoteControlEnabled === true);
-					const consoleStreamingEnabled = (result.consoleStreamingEnabled === true);
-					const remoteManagementEnabled = (result.remoteManagementEnabled === true);
+					const id = response.id;
+					const name = response.name;
+					const locale = response.locale;
+					const consoleType = CONSOLES_NAME[response.consoleType];
+					const powerState = (response.powerState === 'On');
+					const playback = (response.playbackState !== 'Stopped');
+					const loginState = response.loginState;
+					const focusAppAumid = response.focusAppAumid;
+					const isTvConfigured = (response.isTvConfigured === true);
+					const digitalAssistantRemoteControlEnabled = (response.digitalAssistantRemoteControlEnabled === true);
+					const consoleStreamingEnabled = (response.consoleStreamingEnabled === true);
+					const remoteManagementEnabled = (response.remoteManagementEnabled === true);
 
 					const manufacturer = this.manufacturer;
 					const modelName = consoleType;
@@ -882,7 +882,7 @@ class xboxTvDevice {
 		const buttonsLength = ((inputs.length + buttons.length) > 96) ? 96 - inputs.length : buttons.length;
 		for (let i = 0; i < buttonsLength; i++) {
 			const buttonReference = buttons[i].reference;
-			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) !== undefined)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
+			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
 			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[buttonInstalledAppsIdentifier] : buttons[i].referenceId;
 			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
 			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
