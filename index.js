@@ -169,7 +169,7 @@ class xboxTvDevice {
 		setInterval(function () {
 			if (!this.xboxConnected) {
 				this.xbox = Smartglass();
-				this.xbox.discovery(this.ip).then(() => {
+				this.xbox.discovery(this.host).then(() => {
 					this.log.debug('Device: %s %s, discovered.', this.host, this.name);
 					this.connectToXbox();
 				}).catch(() => {
@@ -402,7 +402,7 @@ class xboxTvDevice {
 				this.checkDeviceInfo1 = false;
 				this.updateDeviceState();
 			}
-		}, function (error) {
+		}).catch((error) => {
 			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
 		});
 	}
