@@ -402,7 +402,7 @@ class xboxTvDevice {
 				this.checkDeviceInfo1 = false;
 				this.updateDeviceState();
 			}
-		}).catch((error) => {
+		}, function (error) {
 			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
 		});
 	}
