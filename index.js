@@ -587,7 +587,7 @@ class xboxTvDevice {
 					}
 				}).catch((error) => {
 					this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
-				}) : this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputReferenceId).then(() => {
+				}) : (inputReferenceId === undefined || inputReferenceId === '') ? false : this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputReferenceId).then(() => {
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new App successful, name: %s, reference: %s, referenceId: %s', this.host, accessoryName, inputName, inputReference, inputReferenceId);
 					}
