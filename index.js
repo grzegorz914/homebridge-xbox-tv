@@ -219,7 +219,6 @@ class xboxTvDevice {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, false);
 				}
-				this.connectToXbox();
 			});
 		}).catch(error => {
 			this.log.debug('Device: %s %s, connection error: %s', this.host, this.name, error);
@@ -256,7 +255,7 @@ class xboxTvDevice {
 					this.webApiEnabled = true;
 
 				}).catch((error) => {
-					this.log('Device: %s %s, web api disabled, error: %s:', this.host, this.name, error);
+					this.log('Device: %s %s, getTokenRequest error: %s:', this.host, this.name, error);
 					this.webApiEnabled = false;
 				});
 			} else {
@@ -297,9 +296,7 @@ class xboxTvDevice {
 					this.xboxInfo.push(obj);
 					this.checkDeviceInfo = false;
 				}).catch((error) => {
-					if (error.errorCode === 'XboxDataNotFound') {
-						this.log.error('Device: %s %s, with liveid: %s, getConsoleStatus error: %s.', this.host, this.name, this.xboxliveid, error);
-					}
+					this.log.debug('Device: %s %s, with liveid: %s, getConsoleStatus error: %s.', this.host, this.name, this.xboxliveid, error);
 				});
 			}
 
@@ -342,7 +339,7 @@ class xboxTvDevice {
 
 					this.checkInstalledApps = false;
 				}).catch((error) => {
-					this.log.error('Device: %s %s, getInstalledApps error: %s', this.host, this.name, error);
+					this.log.debug('Device: %s %s, getInstalledApps error: %s', this.host, this.name, error);
 				});
 			}
 		}
@@ -403,17 +400,17 @@ class xboxTvDevice {
 				this.updateDeviceState();
 			}
 		}, function (error) {
-			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
+			this.log.debug('Device: %s %s, _on_console_status error: %s', this.host, this.name, error);
 		});
 	}
 
 	updateDeviceState() {
 		this.log.debug('Device: %s %s, update device state.', this.host, this.name);
-		const devInfoAndApps = this.devInfoAndApps;
-		const devConfig = this.devConfig;
-		this.log.debug('Device: %s %s, debug devInfoAndApps: %s, apps: %s, devConfig: %s', this.host, this.name, devInfoAndApps, devInfoAndApps.apps[0], devConfig);
-
 		if (devInfoAndApps.apps[0] !== undefined) {
+			const devInfoAndApps = this.devInfoAndApps;
+			const devConfig = this.devConfig;
+			this.log.debug('Device: %s %s, debug devInfoAndApps: %s, apps: %s, devConfig: %s', this.host, this.name, devInfoAndApps, devInfoAndApps.apps[0], devConfig);
+
 			const mediaState = this.xbox.getManager('system_media').getState();
 			this.log.debug('Device: %s %s, debug currentMediaState: %s', this.host, this.name, mediaState);
 			const currentMediaState = (mediaState.title_id === 1);
