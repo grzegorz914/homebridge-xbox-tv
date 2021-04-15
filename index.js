@@ -209,7 +209,7 @@ class xboxTvDevice {
 			}
 
 			this.xbox.on('_on_timeout', () => {
-				this.log('Device: %s %s, connection timeout. Trying to reconnect', this.host, this.name);
+				this.log('Device: %s %s, disconnected.', this.host, this.name);
 				this.xboxConnected = false;
 				this.currentPowerState = false;
 				this.checkDeviceInfo = false;
@@ -406,11 +406,11 @@ class xboxTvDevice {
 
 	updateDeviceState() {
 		this.log.debug('Device: %s %s, update device state.', this.host, this.name);
-		if (devInfoAndApps.apps[0] !== undefined) {
-			const devInfoAndApps = this.devInfoAndApps;
-			const devConfig = this.devConfig;
-			this.log.debug('Device: %s %s, debug devInfoAndApps: %s, apps: %s, devConfig: %s', this.host, this.name, devInfoAndApps, devInfoAndApps.apps[0], devConfig);
+		const devInfoAndApps = this.devInfoAndApps;
+		const devConfig = this.devConfig;
+		this.log.debug('Device: %s %s, debug devInfoAndApps: %s, apps: %s, devConfig: %s', this.host, this.name, devInfoAndApps, devInfoAndApps.apps[0], devConfig);
 
+		if (devInfoAndApps.apps[0] !== undefined) {
 			const mediaState = this.xbox.getManager('system_media').getState();
 			this.log.debug('Device: %s %s, debug currentMediaState: %s', this.host, this.name, mediaState);
 			const currentMediaState = (mediaState.title_id === 1);
@@ -516,7 +516,7 @@ class xboxTvDevice {
 				return state;
 			})
 			.onSet(async (state) => {
-				if (state && (state !== this.currentPowerState)) {
+				if (state && !this.currentPowerState) {
 					const xbox = Smartglass();
 					const setPowerOn = this.xboxWebApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxliveid).then(() => {
 						if (!this.disableLogInfo) {
@@ -538,7 +538,7 @@ class xboxTvDevice {
 						this.log.error('Device: %s %s, set power ON, error: %s', this.host, accessoryName, error);
 					});
 				} else {
-					if (!state && (!state !== this.currentPowerState)) {
+					if (!state && this.currentPowerState) {
 						const setPowerOff = this.xboxWebApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, web api set power OFF successful', this.host, accessoryName);
