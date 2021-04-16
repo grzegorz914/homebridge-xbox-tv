@@ -45,7 +45,7 @@ class xboxTvPlatform {
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
 				const deviceName = device.name;
-				if (!device.name) {
+				if (!deviceName) {
 					this.log.warn('Device Name Missing')
 				} else {
 					this.log.info('Adding new accessory:', deviceName);
