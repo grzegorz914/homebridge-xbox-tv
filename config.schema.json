@@ -131,12 +131,6 @@
 										"description": "Here set reference.",
 										"required": true
 									},
-									"referenceId": {
-										"title": "Reference ID",
-										"type": "string",
-										"description": "Here set reference ID if You use web api and want to switch apps",
-										"required": false
-									},
 									"type": {
 										"title": "Input type",
 										"type": "string",
@@ -232,12 +226,6 @@
 										"type": "string",
 										"description": "Here set the reference.",
 										"required": true
-									},
-									"referenceId": {
-										"title": "Reference ID",
-										"type": "string",
-										"description": "Here set reference ID if You use web api and want to switch apps.",
-										"required": false
 									}
 								}
 							}
@@ -299,7 +287,6 @@
 							"items": [
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
-								"devices[].inputs[].referenceId",
 								"devices[].inputs[].type"
 							]
 						}
@@ -319,8 +306,7 @@
 							"buttonText": "Add button",
 							"items": [
 								"devices[].buttons[].name",
-								"devices[].buttons[].reference",
-								"devices[].buttons[].referenceId"
+								"devices[].buttons[].reference"
 							]
 						}
 					]

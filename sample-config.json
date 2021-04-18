@@ -34,31 +34,26 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"referenceId": "",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-							"referenceId": "",
 							"type": "OTHER"
 						},
 						{
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"referenceId": "BWVBNCMF22ZK",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"referenceId": "9MW0ZWQFH0M2",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Battlefield 4",
 							"reference": "BFX_8s70symrha4j2!BF.App",
-							"referenceId": "BP15SF17LH13",
 							"type": "APPLICATION"
 						},
 						{
@@ -71,23 +66,19 @@
 					"buttons": [
 						{
 							"name": "Don't Starve Together",
-							"reference": "DontStarveTogether_dv1ec5mkwsb48!App",
-							"referenceId": "BQ7NMRJT1NQ4"
+							"reference": "DontStarveTogether_dv1ec5mkwsb48!App"
 						},
 						{
 							"name": "EA Play Hub",
-							"reference": "ElectronicArtsMobile.EAAccessHubApp_q5ha1ztykcgvj!App",
-							"referenceId": "9NBLGGH40D9R"
+							"reference": "ElectronicArtsMobile.EAAccessHubApp_q5ha1ztykcgvj!App"
 						},
 						{
 							"name": "AirServer Xbox Edition",
-							"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
-							"referenceId": "9NBLGGH52NB8"
+							"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer"
 						},
 						{
 							"name": "Gears of War 4",
-							"reference": "GOW4_n8p1nce9y4t28!GearGameNShipping",
-							"referenceId": "9NBLGGH4PBBM"
+							"reference": "GOW4_n8p1nce9y4t28!GearGameNShipping"
 						}
 					],
 					"manufacturer": "Microsoft Corporation",

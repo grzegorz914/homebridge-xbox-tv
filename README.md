@@ -86,7 +86,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `inputs` | Configure apps/inputs which will be published to and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
 | `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
-| `referenceId` | Optional, required if U want to use web api and switch inputs/apps, all available data in `/var/lib/homebridge/xboxTv/installedApps` file. |
 | `type` | Optional choice from available options |
 | `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
@@ -117,37 +116,31 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"referenceId": "",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-							"referenceId": "",
 							"type": "OTHER"
 						},
 						{
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"referenceId": "BWVBNCMF22ZK",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"referenceId": "9MW0ZWQFH0M2",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Battlefield 4",
 							"reference": "BFX_8s70symrha4j2!BF.App",
-							"referenceId": "BP15SF17LH13",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Cities: Skylines",
 							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
-							"referenceId": "C4GH8N6ZXG5L",
 							"type": "APPLICATION"
 						}
 					],
@@ -155,22 +148,18 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 						{
 							"name": "Don't Starve Together",
 							"reference": "DontStarveTogether_dv1ec5mkwsb48!App",
-							"referenceId": "BQ7NMRJT1NQ4"
 						},
 						{
 							"name": "EA Play Hub",
 							"reference": "ElectronicArtsMobile.EAAccessHubApp_q5ha1ztykcgvj!App",
-							"referenceId": "9NBLGGH40D9R"
 						},
 						{
 							"name": "AirServer Xbox Edition",
 							"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
-							"referenceId": "9NBLGGH52NB8"
 						},
 						{
 							"name": "Gears of War 4",
 							"reference": "GOW4_n8p1nce9y4t28!GearGameNShipping",
-							"referenceId": "9NBLGGH4PBBM"
 						}
 					],
 			"manufacturer": "Microsoft Corporation",
