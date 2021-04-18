@@ -114,151 +114,65 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"volumeControl": 0,
 			"switchInfoMenu": false,
 			"inputs": [
-				{
-					"name": "Dashboard",
-					"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-					"referenceId": "",
-					"type": "HOME_SCREEN"
-				},
-				{
-					"name": "Settings",
-					"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-					"referenceId": "",
-					"type": "OTHER"
-				},
-				{
-					"name": "Accessory",
-					"reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
-					"referenceId": "",
-					"type": "OTHER"
-				},
-				{
-					"name": "Spotify",
-					"reference": "SpotifyAB.SpotifyMusic-forXbox_zpdnekdrzrea0!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "YouTube",
-					"reference": "GoogleInc.YouTube_yfg5n0ztvskxp!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Netflix",
-					"reference": "4DF9E0F8.Netflix_mcm4njqhnhss8!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Telewizja",
-					"reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
-					"referenceId": "",
-					"type": "HDMI"
-				},
-				{
-					"name": "Sklep",
-					"reference": "Microsoft.WindowsStore_8wekyb3d8bbwe!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Microsoft Edge",
-					"reference": "Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Airserver",
-					"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Gears of War 5",
-					"reference": "Microsoft.HalifaxBaseGame_8wekyb3d8bbwe!HalifaxGameShip",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Fortnite",
-					"reference": "Fortnite_d5xxtpggmzx6p!AppFortnite",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Minecraft",
-					"reference": "Microsoft.MinecraftUWPConsole_8wekyb3d8bbwe!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Plex",
-					"reference": "CAF9E577.PlexforXbox_aam28m9va5cke!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Bluray",
-					"reference": "Microsoft.BlurayPlayer_8wekyb3d8bbwe!Xbox.BlurayPlayer.Application",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "COD WII",
-					"reference": "shg2SubmissionENFR_ht1qfjb0gaftw!S2Boot",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "COD WZ",
-					"reference": "iw8Submission-EN-FR_ht1qfjb0gaftw!iw8",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "GTA V",
-					"reference": "GTA-V_vesz1v3mcwykm!GTAV",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "All4",
-					"reference": "CHANNELFOURTELEVISIONCOMP.All4_e1252dwpj85a4!vstest.executionengine.universal.App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Amazon Prime",
-					"reference": "AmazonVideo.AmazonVideoUK_pwbj9vvecjh7j!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "Disney",
-					"reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				},
-				{
-					"name": "BBC iPlayer",
-					"reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
-					"referenceId": "",
-					"type": "APPLICATION"
-				}
-			],
-			"buttons": [
-                {
-                    "name": "Disney",
-                    "reference": "Disney.37853FC22B2CE_6rarf9sa4v8jt!App",
-					"referenceId": ""
-                },
-                {
-                    "name": "BBC iPlayer",
-                    "reference": "BBCMobileApps.BBCIPLAYER_wzgfedwv7gft2!App",
-					"referenceId": ""
-                },
-            ],
+						{
+							"name": "Dashboard",
+							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+							"referenceId": "",
+							"type": "HOME_SCREEN"
+						},
+						{
+							"name": "Settings",
+							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+							"referenceId": "",
+							"type": "OTHER"
+						},
+						{
+							"name": "A Way Out",
+							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
+							"referenceId": "BWVBNCMF22ZK",
+							"type": "APPLICATION"
+						},
+						{
+							"name": "Apple TV",
+							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
+							"referenceId": "9MW0ZWQFH0M2",
+							"type": "APPLICATION"
+						},
+						{
+							"name": "Battlefield 4",
+							"reference": "BFX_8s70symrha4j2!BF.App",
+							"referenceId": "BP15SF17LH13",
+							"type": "APPLICATION"
+						},
+						{
+							"name": "Cities: Skylines",
+							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
+							"referenceId": "C4GH8N6ZXG5L",
+							"type": "APPLICATION"
+						}
+					],
+					"buttons": [
+						{
+							"name": "Don't Starve Together",
+							"reference": "DontStarveTogether_dv1ec5mkwsb48!App",
+							"referenceId": "BQ7NMRJT1NQ4"
+						},
+						{
+							"name": "EA Play Hub",
+							"reference": "ElectronicArtsMobile.EAAccessHubApp_q5ha1ztykcgvj!App",
+							"referenceId": "9NBLGGH40D9R"
+						},
+						{
+							"name": "AirServer Xbox Edition",
+							"reference": "F3F176BD.53203526D8F6C_p8qzvses5c8me!AirServer",
+							"referenceId": "9NBLGGH52NB8"
+						},
+						{
+							"name": "Gears of War 4",
+							"reference": "GOW4_n8p1nce9y4t28!GearGameNShipping",
+							"referenceId": "9NBLGGH4PBBM"
+						}
+					],
 			"manufacturer": "Microsoft Corporation",
 			"modelName": "Model",
 			"serialNumber": "Serial Number",
