@@ -101,7 +101,7 @@ class xboxTvDevice {
 		this.inputsType = new Array();
 		this.installedAppsName = new Array();
 		this.installedAppsAumId = new Array();
-		this.installedAppsTitleId = new Array();
+		this.installedAppsOneStoreProductId = new Array();
 		this.buttonsService = new Array();
 		this.buttonsName = new Array();
 		this.buttonsReference = new Array();
@@ -333,7 +333,7 @@ class xboxTvDevice {
 						const parentId = installedApps[i].parentId;
 						const obj = { 'name': name, 'reference': aumid, 'referenceId': oneStoreProductId };
 
-						this.installedAppsTitleId.push(oneStoreProductId);
+						this.installedAppsOneStoreProductId.push(oneStoreProductId);
 						this.installedAppsAumId.push(aumid);
 						this.installedAppsName.push(name);
 						this.installedAppsArr.push(obj);
@@ -432,7 +432,7 @@ class xboxTvDevice {
 		const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 		const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 		const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
-		const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[inputInstalledAppsIdentifier] : this.inputsReferenceId[inputIdentifier];
+		const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : this.inputsReferenceId[inputIdentifier];
 		const inputName = (inputInstalledAppsIdentifier !== false) ? this.installedAppsName[inputInstalledAppsIdentifier] : this.inputsName[inputIdentifier];
 		const volume = this.currentVolume;
 		const mute = powerState ? this.currentMuteState : true;
@@ -588,9 +588,9 @@ class xboxTvDevice {
 			.onSet(async (inputIdentifier) => {
 				const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0;
 				const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
-				const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[inputInstalledAppsIdentifier] : this.inputsReferenceId[inputIdentifier];
+				const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : this.inputsReferenceId[inputIdentifier];
 				const inputName = (inputInstalledAppsIdentifier !== false) ? this.installedAppsName[inputInstalledAppsIdentifier] : this.inputsName[inputIdentifier];
-				const setInput = this.webApiEnabled ? (inputReference === ('Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application' || 'Microsoft.XboxDevices_8wekyb3d8bbwe!App' || 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
+				const setInput = this.webApiEnabled ? ((inputReference === 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application') || (inputReference === 'Microsoft.XboxDevices_8wekyb3d8bbwe!App') || (inputReference === 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Dashboard successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
 					}
@@ -849,7 +849,7 @@ class xboxTvDevice {
 
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
-			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[inputInstalledAppsIdentifier] : inputs[i].referenceId;
+			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : inputs[i].referenceId;
 
 			//get input name		
 			const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
@@ -932,7 +932,7 @@ class xboxTvDevice {
 		for (let i = 0; i < buttonsLength; i++) {
 			const buttonReference = buttons[i].reference;
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
-			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsTitleId[buttonInstalledAppsIdentifier] : buttons[i].referenceId;
+			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : buttons[i].referenceId;
 			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
 			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
 			buttonService.getCharacteristic(Characteristic.On)
@@ -945,17 +945,23 @@ class xboxTvDevice {
 				})
 				.onSet(async (state) => {
 					if (state && this.currentPowerState) {
-						const setInput = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, buttonReferenceId).then(() => {
+						const setInput = this.webApiEnabled ? ((buttonReferenceId === 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application') || (buttonReferenceId === 'Microsoft.XboxDevices_8wekyb3d8bbwe!App') || (buttonReferenceId === 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set new App successful, name: %s reference: %s', this.host, accessoryName, buttonName, buttonReference);
+								this.log('Device: %s %s, set Dashboard successful, name: %s, reference: %s', this.host, accessoryName, buttonName, buttonReferenceId);
 							}
 						}).catch((error) => {
-							this.log.error('Device: %s %s, set new App error: %s', this.host, accessoryName, error);
-							setTimeout(() => {
-								buttonService
-									.updateCharacteristic(Characteristic.On, false);
-							}, 350);
+							this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
+						}) : (buttonReferenceId === undefined || buttonReferenceId === '' || buttonReferenceId === null) ? false : this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, buttonReferenceId).then(() => {
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, set new App successful, name: %s, reference: %s, referenceId: %s', this.host, accessoryName, buttonName, buttonReference, buttonReferenceId);
+							}
+						}).catch((error) => {
+							this.log.error('Device: %s %s, set new App error:', this.host, accessoryName, error);
 						}) : false;
+						setTimeout(() => {
+							buttonService
+								.updateCharacteristic(Characteristic.On, false);
+						}, 350);
 					} else {
 						setTimeout(() => {
 							buttonService
