@@ -605,7 +605,7 @@ class xboxTvDevice {
 				}).catch((error) => {
 					this.log.error('Device: %s %s, set new App error:', this.host, accessoryName, error);
 				}) : false;
-				this.setStartInputIdentifier = this.currentPowerState ? this.currentInputIdentifier : inputIdentifier;
+				this.setStartInputIdentifier = inputIdentifier;
 				this.setStartInput = this.currentPowerState ? false : true;
 			});
 
