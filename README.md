@@ -86,7 +86,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `inputs` | Configure apps/inputs which will be published to and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
 | `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
-| `referenceId` | Required to switch app if web Api enabled, all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
+| `referenceId` | Optional to switch app, if web Api enabled the plugin check its referenceId itselt, also all available in `/var/lib/homebridge/xboxTv/installedApps` `oneStoreProductId` file. |
 | `type` | Optional choice from available options |
 | `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
