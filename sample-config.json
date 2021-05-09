@@ -34,11 +34,13 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+							"referenceId": "xxxxxxxx",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+							"referenceId": "xxxxxxxx",
 							"type": "OTHER"
 						},
 						{
