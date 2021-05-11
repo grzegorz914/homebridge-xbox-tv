@@ -136,7 +136,7 @@
 										"type": "string",
 										"description": "Here set the reference ID.",
 										"required": false
-									}
+									},
 									"type": {
 										"title": "Input type",
 										"type": "string",
