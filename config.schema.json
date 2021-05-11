@@ -131,6 +131,12 @@
 										"description": "Here set reference.",
 										"required": true
 									},
+									"referenceId": {
+										"title": "Reference ID",
+										"type": "string",
+										"description": "Here set the reference ID.",
+										"required": false
+									}
 									"type": {
 										"title": "Input type",
 										"type": "string",
@@ -226,6 +232,12 @@
 										"type": "string",
 										"description": "Here set the reference.",
 										"required": true
+									},
+									"referenceId": {
+										"title": "Reference ID",
+										"type": "string",
+										"description": "Here set the reference ID.",
+										"required": false
 									}
 								}
 							}
@@ -287,6 +299,7 @@
 							"items": [
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
+								"devices[].inputs[].referenceId",
 								"devices[].inputs[].type"
 							]
 						}
@@ -306,7 +319,8 @@
 							"buttonText": "Add button",
 							"items": [
 								"devices[].buttons[].name",
-								"devices[].buttons[].reference"
+								"devices[].buttons[].reference",
+								"devices[].inputs[].referenceId"
 							]
 						}
 					]
