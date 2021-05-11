@@ -849,7 +849,7 @@ class xboxTvDevice {
 
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
-			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
+			const inputReferenceId = (inputs[i].referenceId !== undefined) ? inputs[i].referenceId : (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
 
 			//get input name		
 			const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
@@ -933,8 +933,10 @@ class xboxTvDevice {
 
 			//get button reference
 			const buttonReference = buttons[i].reference;
+			
+			//get button reference Id
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
-			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
+			const buttonReferenceId = (buttons[i].referenceId !== undefined) ? buttons[i].referenceId :(buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
 
 			//get button name
 			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
