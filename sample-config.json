@@ -71,19 +71,23 @@
 					"buttons": [
 						{
 							"name": "Don't Starve Together",
-							"referenceId": "xxxxxxxx",
+							"reference": "xxxxxxxxxx",
+							"referenceId": "xxxxxxxxxx"
 						},
 						{
 							"name": "EA Play Hub",
-							"referenceId": "xxxxxxxx",
+							"reference": "xxxxxxxxxx",
+							"referenceId": "xxxxxxxxxx"
 						},
 						{
 							"name": "AirServer Xbox Edition",
-							"referenceId": "xxxxxxxx",
+							"reference": "xxxxxxxxxx",
+							"referenceId": "xxxxxxxxxx"
 						},
 						{
 							"name": "Gears of War 4",
-							"referenceId": "xxxxxxxx",
+							"reference": "xxxxxxxxxx",
+							"referenceId": "xxxxxxxxxx"
 						}
 					],
 					"manufacturer": "Microsoft Corporation",
