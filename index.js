@@ -586,9 +586,10 @@ class xboxTvDevice {
 				return inputIdentifier;
 			})
 			.onSet(async (inputIdentifier) => {
-				const inputReference = this.inputsReference[inputIdentifier];
-				const inputReferenceId = this.inputsReferenceId[inputIdentifier];
-				const inputName = this.inputsName[inputIdentifier];
+				const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0;
+				const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
+				const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
+				const inputName = (inputInstalledAppsIdentifier !== false) ? this.installedAppsName[inputInstalledAppsIdentifier] : this.inputsName[inputIdentifier];
 				const setInput = this.webApiEnabled ? ((inputReference === 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application') || (inputReference === 'Microsoft.XboxDevices_8wekyb3d8bbwe!App') || (inputReference === 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Dashboard successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
@@ -848,19 +849,7 @@ class xboxTvDevice {
 
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-			const inputReferenceId = (inputs[i].referenceId === undefined || inputs[i].referenceId === null || inputs[i].referenceId === '') ? (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined : inputs[i].referenceId;
-=======
 			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
-=======
-			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
-=======
-			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
 
 			//get input name		
 			const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
@@ -944,25 +933,10 @@ class xboxTvDevice {
 
 			//get button reference
 			const buttonReference = buttons[i].reference;
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 
-			//get button reference Id
-			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
-			const buttonReferenceId = (buttons[i].referenceId === undefined || buttons[i].referenceId === null || buttons[i].referenceId === '') ? (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined : buttons[i].referenceId;
-=======
+			//get button referenceId
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
 			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
-=======
-			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
-			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
-=======
-			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
-			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
->>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
 
 			//get button name
 			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
