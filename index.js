@@ -849,7 +849,11 @@ class xboxTvDevice {
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
 <<<<<<< HEAD
+<<<<<<< HEAD
 			const inputReferenceId = (inputs[i].referenceId === undefined || inputs[i].referenceId === null || inputs[i].referenceId === '') ? (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined : inputs[i].referenceId;
+=======
+			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
+>>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
 =======
 			const inputReferenceId = (inputInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[inputInstalledAppsIdentifier] : undefined;
 >>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
@@ -937,10 +941,15 @@ class xboxTvDevice {
 			//get button reference
 			const buttonReference = buttons[i].reference;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 			//get button reference Id
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
 			const buttonReferenceId = (buttons[i].referenceId === undefined || buttons[i].referenceId === null || buttons[i].referenceId === '') ? (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined : buttons[i].referenceId;
+=======
+			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
+			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
+>>>>>>> parent of 595d893 (add possibility to set custom referenceId for app switch)
 =======
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;
 			const buttonReferenceId = (buttonInstalledAppsIdentifier !== false) ? this.installedAppsOneStoreProductId[buttonInstalledAppsIdentifier] : undefined;
