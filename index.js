@@ -428,7 +428,7 @@ class xboxTvDevice {
 		const currentMediaState = (mediaState.title_id === 1);
 
 		const powerState = this.xbox._connection_status;
-		const inputReference = devInfoAndApps.apps[0].aum_id;
+		const inputReference = (devInfoAndApps.apps[0].aum_id !== undefined) ? devInfoAndApps.apps[0].aum_id : 0;
 		const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 		const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 		const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
@@ -592,7 +592,7 @@ class xboxTvDevice {
 				const inputName = (inputInstalledAppsIdentifier !== false) ? this.installedAppsName[inputInstalledAppsIdentifier] : this.inputsName[inputIdentifier];
 				const setInput = this.webApiEnabled ? ((inputReference === 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application') || (inputReference === 'Microsoft.XboxDevices_8wekyb3d8bbwe!App') || (inputReference === 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
 					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Dashboard successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
+						this.log('Device: %s %s, set new App successful, name: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputReferenceId);
 					}
 				}).catch((error) => {
 					this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
@@ -845,7 +845,7 @@ class xboxTvDevice {
 		for (let i = 0; i < inputsLength; i++) {
 
 			//get input reference
-			const inputReference = (inputs[i].reference !== undefined) ? inputs[i].reference : 'undefined';
+			const inputReference = (inputs[i].reference !== undefined) ? inputs[i].reference : 0;
 
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
@@ -932,7 +932,7 @@ class xboxTvDevice {
 		for (let i = 0; i < buttonsLength; i++) {
 
 			//get button reference
-			const buttonReference = buttons[i].reference;
+			const buttonReference = (buttons[i].reference !== undefined) ? buttons[i].reference : 0;
 
 			//get button referenceId
 			const buttonInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(buttonReference) >= 0)) ? this.installedAppsAumId.indexOf(buttonReference) : false;

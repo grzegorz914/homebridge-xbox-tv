@@ -34,31 +34,26 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"referenceId": "xxxxxxxx",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-							"referenceId": "xxxxxxxx",
 							"type": "OTHER"
 						},
 						{
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"referenceId": "xxxxxxxx",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"referenceId": "xxxxxxxx",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Battlefield 4",
 							"reference": "BFX_8s70symrha4j2!BF.App",
-							"referenceId": "xxxxxxxx",
 							"type": "APPLICATION"
 						},
 						{
@@ -71,23 +66,19 @@
 					"buttons": [
 						{
 							"name": "Don't Starve Together",
-							"reference": "xxxxxxxxxx",
-							"referenceId": "xxxxxxxxxx"
+							"reference": "xxxxxxxxxx"
 						},
 						{
 							"name": "EA Play Hub",
-							"reference": "xxxxxxxxxx",
-							"referenceId": "xxxxxxxxxx"
+							"reference": "xxxxxxxxxx"
 						},
 						{
 							"name": "AirServer Xbox Edition",
-							"reference": "xxxxxxxxxx",
-							"referenceId": "xxxxxxxxxx"
+							"reference": "xxxxxxxxxx"
 						},
 						{
 							"name": "Gears of War 4",
-							"reference": "xxxxxxxxxx",
-							"referenceId": "xxxxxxxxxx"
+							"reference": "xxxxxxxxxx"
 						}
 					],
 					"manufacturer": "Microsoft Corporation",
