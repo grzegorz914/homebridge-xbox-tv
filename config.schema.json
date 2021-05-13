@@ -320,7 +320,7 @@
 							"items": [
 								"devices[].buttons[].name",
 								"devices[].buttons[].reference",
-								"devices[].inputs[].referenceId"
+								"devices[].buttons[].referenceId"
 							]
 						}
 					]
