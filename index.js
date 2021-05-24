@@ -272,10 +272,10 @@ class xboxTvDevice {
 		this.log.debug('Device: %s %s, requesting web api device info.', this.host, this.name);
 		//get device info from xbox live account
 		if (this.checkWebApiDeviceInfo) {
+			this.xboxInfo = new Array();
 			this.xboxWebApi.isAuthenticated().then(() => {
 				this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((response) => {
 					this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, response);
-					this.xboxInfo = new Array();
 
 					const id = response.id;
 					const name = response.name;
@@ -308,10 +308,11 @@ class xboxTvDevice {
 
 		//get installed apps from xbox live account
 		if (this.checkWebApiInstalledApps) {
+			this.installedAppsArr = new Array();
 			this.xboxWebApi.isAuthenticated().then(() => {
 				this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxliveid).then((response) => {
 					this.log.debug('Device: %s %s, debug status: %s, result: %s', this.host, this.name, response.status, response.result);
-					this.installedAppsArr = new Array();
+
 					const installedApps = response.result;
 					const installedAppsLength = installedApps.length;
 					for (let i = 0; i < installedAppsLength; i++) {

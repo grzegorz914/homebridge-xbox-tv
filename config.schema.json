@@ -309,7 +309,10 @@
 								"devices[].buttons[].reference"
 							]
 						}
-					]
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].xboxWebApiEnabled === true;"
+					}
 				},
 				{
 					"key": "devices[]",
@@ -322,7 +325,10 @@
 						"devices[].clientID",
 						"devices[].clientSecret",
 						"devices[].xboxWebApiToken"
-					]
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].xboxWebApiEnabled === true;"
+					}
 				},
 				{
 					"key": "devices[]",
