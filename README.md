@@ -115,32 +115,32 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"inputs": [
 						{
 							"name": "Dashboard",
-							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",,
+							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
-							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",,
+							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
 							"type": "OTHER"
 						},
 						{
 							"name": "A Way Out",
-							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",,
+							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Apple TV",
-							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",,
+							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Battlefield 4",
-							"reference": "BFX_8s70symrha4j2!BF.App",,
+							"reference": "BFX_8s70symrha4j2!BF.App",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Cities: Skylines",
-							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",,
+							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
 							"type": "APPLICATION"
 						}
 					],
