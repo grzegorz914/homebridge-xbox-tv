@@ -387,7 +387,7 @@ class xboxTvDevice {
 				const port = devNetConfig.port;
 				const size = devNetConfig.size;
 
-				const manufacturer = this.webApiEnabled ? this.xboxInfo[0].manufacturer : this.manufacturer;
+				const manufacturer = (this.webApiEnabled && this.xboxInfo[0].manufacturer !== undefined) ? this.xboxInfo[0].manufacturer : this.manufacturer;
 				const modelName = this.webApiEnabled ? this.xboxInfo[0].modelName : this.modelName;
 				const serialNumber = this.webApiEnabled ? this.xboxInfo[0].serialNumber : liveid;
 				const firmwareRevision = major_version + '.' + minor_version + '.' + build_number;
