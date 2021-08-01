@@ -84,7 +84,7 @@ class xboxTvDevice {
 		this.disableLogInfo = config.disableLogInfo;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu;
-		this.getIputsFromDevice = config.getIputsFromDevice;
+		this.getInputsFromDevice = config.getInputsFromDevice;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
@@ -122,13 +122,14 @@ class xboxTvDevice {
 		this.currentInputIdentifier = 0;
 		this.setStartInputIdentifier = 0;
 		this.currentMediaState = false;
+		this.pictureMode = 0;
 
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('') + '.json';
 		this.authTokenFile = this.prefDir + '/' + 'ApiToken_' + this.host.split('.').join('') + '.json';
-		this.installedAppsFile = this.prefDir + '/' + 'installedApps_' + this.host.split('.').join('') + '.json';
-		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('') + '.json';
+		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('') + '.json';
 		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('') + '.json';
+		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('') + '.json';
 
 		this.xbox = Smartglass();
 
@@ -154,8 +155,8 @@ class xboxTvDevice {
 			fsPromises.writeFile(this.authTokenFile, '');
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.installedAppsFile) === false) {
-			fsPromises.writeFile(this.installedAppsFile, '');
+		if (fs.existsSync(this.inputsFile) === false) {
+			fsPromises.writeFile(this.inputsFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsNamesFile) === false) {
@@ -333,7 +334,7 @@ class xboxTvDevice {
 				}
 
 				const objApps = JSON.stringify(this.installedAppsArr, null, 2);
-				const writeInstalledApps = fs.writeFileSync(this.installedAppsFile, objApps);
+				const writeInstalledApps = fs.writeFileSync(this.inputsFile, objApps);
 				this.log.debug('Device: %s %s, debug writeInstalledApps: %s', this.host, this.name, objApps);
 
 				this.installedApps = installedApps;
@@ -380,9 +381,9 @@ class xboxTvDevice {
 				const port = devNetConfig.port;
 				const size = devNetConfig.size;
 
-				const manufacturer = (this.webApiEnabled && !this.checkWebApiDeviceInfo) ? this.xboxInfo[0].manufacturer : this.manufacturer;
-				const modelName = (this.webApiEnabled && !this.checkWebApiDeviceInfo) ? this.xboxInfo[0].modelName : this.modelName;
-				const serialNumber = (this.webApiEnabled && !this.checkWebApiDeviceInfo) ? this.xboxInfo[0].serialNumber : liveid;
+				const manufacturer = (this.webApiEnabled) ? this.xboxInfo[0].manufacturer : this.manufacturer;
+				const modelName = (this.webApiEnabled) ? this.xboxInfo[0].modelName : this.modelName;
+				const serialNumber = (this.webApiEnabled) ? this.xboxInfo[0].serialNumber : liveid;
 				const firmwareRevision = major_version + '.' + minor_version + '.' + build_number;
 
 				if (this.checkDeviceInfo) {
@@ -427,7 +428,7 @@ class xboxTvDevice {
 			const currentMediaState = (mediaState.title_id === 1);
 
 			const powerState = this.xbox._connection_status;
-			const inputReference = (devInfoAndApps.apps[0].aum_id !== undefined) ? devInfoAndApps.apps[0].aum_id : 0;
+			const inputReference = devInfoAndApps.apps[0].aum_id;
 			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
@@ -708,6 +709,51 @@ class xboxTvDevice {
 					});
 				}
 			});
+
+		this.televisionService.getCharacteristic(Characteristic.PictureMode)
+			.onGet(async () => {
+				const pictureMode = this.pictureMode;
+				if (!this.disableLogInfo) {
+					this.log('Device: %s %s, get current Picture mode: %s', this.host, accessoryName, pictureMode);
+				}
+				return pictureMode;
+			})
+			.onSet(async (command) => {
+				try {
+					switch (command) {
+						case Characteristic.PictureMode.OTHER:
+							command = 'PVMOV';
+							break;
+						case Characteristic.PictureMode.STANDARD:
+							command = 'PVSTD';
+							break;
+						case Characteristic.PictureMode.CALIBRATED:
+							command = 'PVDAY';
+							break;
+						case Characteristic.PictureMode.CALIBRATED_DARK:
+							command = 'PVNGT';
+							break;
+						case Characteristic.PictureMode.VIVID:
+							command = 'PVVVD';
+							break;
+						case Characteristic.PictureMode.GAME:
+							command = 'PVSTM';
+							break;
+						case Characteristic.PictureMode.COMPUTER:
+							command = 'PVSTM';
+							break;
+						case Characteristic.PictureMode.CUSTOM:
+							command = 'PVCTM';
+							break;
+					}
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, setPictureMode successful, command: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s %s, can not setPictureMode command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
+
 		accessory.addService(this.televisionService);
 
 		//Prepare speaker service
@@ -847,8 +893,8 @@ class xboxTvDevice {
 		//Prepare inputs services
 		this.log.debug('prepareInputsService');
 
-		const savedInstalledApps = ((fs.readFileSync(this.installedAppsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.installedAppsFile)) : [];
-		this.log.debug('Device: %s %s, read saved installed Apps: %s', this.host, accessoryName, savedInstalledApps)
+		const savedInputs = ((fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : [];
+		this.log.debug('Device: %s %s, read saved installed Apps: %s', this.host, accessoryName, savedInputs)
 
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		this.log.debug('Device: %s %s, read saved Apps name: %s', this.host, accessoryName, savedInputsNames)
@@ -857,13 +903,13 @@ class xboxTvDevice {
 		this.log.debug('Device: %s %s, read target  state successful: %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check available inputs and possible inputs count (max 95)
-		const inputs = (this.webApiEnabled && this.getIputsFromDevice) ? savedInstalledApps : this.inputs;
+		const inputs = (this.webApiEnabled && this.getInputsFromDevice) ? savedInputs : this.inputs;
 		const inputsCount = inputs.length;
 		const maxInputsCount = (inputsCount > 95) ? 95 : inputsCount;
 		for (let i = 0; i < maxInputsCount; i++) {
 
 			//get input reference
-			const inputReference = (inputs[i].reference !== undefined) ? inputs[i].reference : 0;
+			const inputReference = inputs[i].reference;
 
 			//get input reference Id
 			const inputInstalledAppsIdentifier = (this.webApiEnabled && (this.installedAppsAumId.indexOf(inputReference) >= 0)) ? this.installedAppsAumId.indexOf(inputReference) : false;
@@ -937,8 +983,8 @@ class xboxTvDevice {
 			this.inputsType.push(inputType);
 
 			this.inputsService.push(inputService);
-			accessory.addService(this.inputsService[i]);
 			this.televisionService.addLinkedService(this.inputsService[i]);
+			accessory.addService(this.inputsService[i]);
 		}
 
 		//Prepare inputs button services
