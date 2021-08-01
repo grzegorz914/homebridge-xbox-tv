@@ -125,11 +125,11 @@ class xboxTvDevice {
 		this.pictureMode = 0;
 
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('') + '.json';
-		this.authTokenFile = this.prefDir + '/' + 'ApiToken_' + this.host.split('.').join('') + '.json';
-		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('') + '.json';
-		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('') + '.json';
-		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('') + '.json';
+		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
+		this.authTokenFile = this.prefDir + '/' + 'authToken_' + this.host.split('.').join('');
+		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
+		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
+		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
 
 		this.xbox = Smartglass();
 
