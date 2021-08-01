@@ -279,6 +279,7 @@
 				"devices[].name",
 				"devices[].host",
 				"devices[].xboxWebApiEnabled",
+				"devices[].getIputsFromDevice",
 				{
 					"key": "devices[]",
 					"type": "section",
@@ -347,7 +348,6 @@
 					"expandable": true,
 					"expanded": false,
 					"items": [
-						"devices[].getIputsFromDevice",
 						"devices[].disableLogInfo",
 						"devices[].switchInfoMenu",
 						"devices[].refreshInterval",
