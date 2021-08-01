@@ -82,8 +82,9 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds |
 | `volumeControl`| Select what a additional volume control mode You want to use (None, Slider, Fan) |
 | `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
+| `getInputsFromDevice`| If `true` then the inputs and apps wil be get direct from device. |
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
-| `inputs` | Configure apps/inputs which will be published to and appear in HomeKit app in the device tile as inputs list |
+| `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
 | `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
 | `type` | Optional choice from available options |
@@ -112,6 +113,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"disableLogInfo": false,
 			"volumeControl": 0,
 			"switchInfoMenu": false,
+			"getInputsFromDevice": false,
 			"inputs": [
 						{
 							"name": "Dashboard",
@@ -173,12 +175,14 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 
 ## Limitations
 * Due to a HomeKit limitation, that maximum services for 1 accessory is 100. Acessories containing services above this value in the HomeKit app will not respond.
-* If all services are enabled possible inputs to use is 96. The services in this accessory are:
+* If all services are enabled possible inputs to use is 95. The services in this accessory are:
   * Information service.
   * Speaker service.
   * Lightbulb service.
+  * Fan service.
   * Television service.
-  * Inputs service which may range from 5 to 100 as each input is 1 service.
+  * Inputs service which may range from 6 to 100 as each input is 1 service.
+  * Buttons service which may range from 6 to 100 as each input is 1 service.
 
 ## Whats new
 https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md

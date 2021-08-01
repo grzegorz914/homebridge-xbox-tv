@@ -30,6 +30,7 @@
 					"disableLogInfo": false,
 					"volumeControl": 0,
 					"switchInfoMenu": false,
+					"getInputsFromDevice": false,
 					"inputs": [
 						{
 							"name": "Dashboard",
