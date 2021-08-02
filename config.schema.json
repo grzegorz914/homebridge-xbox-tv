@@ -138,6 +138,12 @@
 										"description": "Here set reference.",
 										"required": true
 									},
+									"onStoreProductId": {
+										"title": "",
+										"type": "string",
+										"description": "Here set on store product Id. If web api is enable switch app will be possible, all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file.",
+										"required": false
+									},
 									"type": {
 										"title": "Input type",
 										"type": "string",
@@ -233,6 +239,12 @@
 										"type": "string",
 										"description": "Here set the reference.",
 										"required": true
+									},
+									"oneStoreProductId": {
+										"title": "",
+										"type": "string",
+										"description": "Here set on store product Id. If web api is enable switch app will be possible, all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file.",
+										"required": false
 									}
 								}
 							}
@@ -295,6 +307,7 @@
 							"items": [
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
+								"devices[].inputs[].oneStoreProductId",
 								"devices[].inputs[].type"
 							]
 						}
@@ -317,7 +330,8 @@
 							"buttonText": "Add button",
 							"items": [
 								"devices[].buttons[].name",
-								"devices[].buttons[].reference"
+								"devices[].buttons[].reference",
+								"devices[].buttons[].oneStoreProductId"
 							]
 						}
 					],

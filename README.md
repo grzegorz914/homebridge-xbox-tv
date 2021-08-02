@@ -45,7 +45,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Remote/media control is possible after you go to the RC app on iOS or iPadOS.
 * Speaker control is possible after you go to RC app on iOS or iPadOS as a `Speaker Service`.
 * Legacy volume and mute control is possible through extra `lightbulb` dimmer slider or using Siri `Volume Service`, not working with the current API.
-* Apps, inputs and games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case the current apps, inputs, games can be displayed.
+* Apps, inputs and games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case the current apps, inputs, games can be only displayed.
 * Siri control.
 
 <p align="left">
@@ -86,7 +86,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
 | `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
-| `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/installedApps` file. |
+| `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+| `oneStoreProductId` | Optional to switch apps, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 | `type` | Optional choice from available options |
 | `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
@@ -118,31 +119,37 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+							"oneStoreProductId": "",
 							"type": "HOME_SCREEN"
 						},
 						{
 							"name": "Settings",
 							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+							"oneStoreProductId": "",
 							"type": "OTHER"
 						},
 						{
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
+							"oneStoreProductId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
+							"oneStoreProductId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Battlefield 4",
 							"reference": "BFX_8s70symrha4j2!BF.App",
+							"oneStoreProductId": "",
 							"type": "APPLICATION"
 						},
 						{
 							"name": "Cities: Skylines",
 							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
+							"oneStoreProductId": "C4GH8N6ZXG5L",
 							"type": "APPLICATION"
 						}
 					],
@@ -150,18 +157,22 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 						{
 							"name": "Don't Starve Together",
 							"reference": "xxxxxxxxxx",
+							"oneStoreProductId": ""
 						},
 						{
 							"name": "EA Play Hub",
 							"reference": "xxxxxxxxxx",
+							"oneStoreProductId": ""
 						},
 						{
 							"name": "AirServer Xbox Edition",
 							"reference": "xxxxxxxxxx",
+							"oneStoreProductId": ""
 						},
 						{
 							"name": "Gears of War 4",
 							"reference": "xxxxxxxxxx",
+							"oneStoreProductId": ""
 						}
 					],
 			"manufacturer": "Microsoft Corporation",
