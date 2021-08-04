@@ -179,10 +179,6 @@ class xboxTvDevice {
 				}).catch(() => {
 					this.log.debug('Device: %s %s, discovering error: %s', this.host, this.name, error);
 				});
-			} else {
-				if (this.checkDeviceInfo) {
-					const getWebApiTokenOrDeviceInfo = this.xboxWebApiEnabled ? this.getWebApiToken() : this.getDeviceInfo();
-				}
 			}
 		}.bind(this), this.refreshInterval * 1000);
 	}
@@ -202,6 +198,8 @@ class xboxTvDevice {
 				this.televisionService
 					.updateCharacteristic(Characteristic.Active, true);
 			}
+
+			const getWebApiTokenOrDeviceInfo = this.xboxWebApiEnabled ? this.getWebApiToken() : this.getDeviceInfo();
 		}).catch(error => {
 			this.log.debug('Device: %s %s, connection error: %s', this.host, this.name, error);
 		});
@@ -470,7 +468,6 @@ class xboxTvDevice {
 			this.checkDeviceInfo = false;
 		} catch (error) {
 			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
-			this.checkDeviceInfo = false;
 		};
 	}
 
