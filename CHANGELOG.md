@@ -3,6 +3,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.6.0] - 2021-08-04
+## Changes
+- added possibility load inputs list direct from device
+- chenged config properties, please adapted config to latest one
+- changed stored files names, may be need authenticate console again or just copy authentication Token to the new created file(authToken_xxxx)
+- update dependencies
+- code rebuild
+
 ## [1.5.0] - 2021-04-11
 ## Changes
 - added control over Web Api
