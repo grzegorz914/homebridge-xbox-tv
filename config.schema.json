@@ -27,31 +27,45 @@
 							"required": true,
 							"format": "hostname"
 						},
-						"clientID": {
-							"title": "Web Api ID",
-							"type": "string",
-							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
-							"description": "Optional free-form for future use.",
-							"required": false
-						},
-						"clientSecret": {
-							"title": "Web Api Secret",
-							"type": "string",
-							"placeholder": "Web Api Secret",
-							"description": "Optional free-form for future use.",
-							"required": false
-						},
 						"xboxliveid": {
 							"title": "Live ID",
 							"type": "string",
 							"placeholder": "FD00000000000000",
-							"description": "Here put the Xbox Live ID",
+							"description": "Xbox Live ID",
 							"required": true
+						},
+						"clientID": {
+							"title": "Web Api Client ID",
+							"type": "string",
+							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
+							"description": "Optional for future use.",
+							"required": false
+						},
+						"clientSecret": {
+							"title": "Web Api Client Secret",
+							"type": "string",
+							"placeholder": "Client Secret",
+							"description": "Optional for future use.",
+							"required": false
+						},
+						"userToken": {
+							"title": "Web Api User Token",
+							"type": "string",
+							"placeholder": "User Token",
+							"description": "Optional alternative authentication method.",
+							"required": false
+						},
+						"uhs": {
+							"title": "Web Api UHS",
+							"type": "string",
+							"placeholder": "UHS",
+							"description": "Optional alternative authentication method.",
+							"required": false
 						},
 						"xboxWebApiToken": {
 							"title": "Web Api Token",
 							"type": "string",
-							"placeholder": "",
+							"placeholder": "Web Api Token",
 							"description": "Here put the reponse Token (value after ?code=) from the authentication URL.",
 							"required": true
 						},
@@ -70,7 +84,7 @@
 							"required": false,
 							"description": "This disable log info, all values and state will not be displayed in Homebridge log console."
 						},
-						"xboxWebApiEnabled": {
+						"webApiControl": {
 							"title": "Enable Web Api",
 							"type": "boolean",
 							"default": false,
@@ -117,8 +131,21 @@
 							"type": "boolean",
 							"default": false,
 							"required": false,
-							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped."
-						  },
+							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"rebootControl": {
+							"title": "Enable reboot control",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable possibility reboot console if web api is enabled.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"inputs": {
 							"title": "Inputs",
 							"buttonText": "Add app/input",
@@ -135,13 +162,13 @@
 									"reference": {
 										"title": "Reference",
 										"type": "string",
-										"description": "Here set reference.",
+										"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": true
 									},
 									"onStoreProductId": {
 										"title": "",
 										"type": "string",
-										"description": "Here set on store product Id. If web api is enable switch app will be possible, all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file.",
+										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
 									},
 									"type": {
@@ -237,13 +264,13 @@
 									"reference": {
 										"title": "Reference",
 										"type": "string",
-										"description": "Here set the reference.",
+										"description": "Here set the reference.  If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": true
 									},
 									"oneStoreProductId": {
 										"title": "",
 										"type": "string",
-										"description": "Here set on store product Id. If web api is enable switch app will be possible, all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file.",
+										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
 									}
 								}
@@ -252,29 +279,29 @@
 						"manufacturer": {
 							"name": "Manufacturer",
 							"type": "string",
-							"placeholder": "Manufacturer",
-							"description": "Set the manufacturer name.",
+							"placeholder": "Microsoft",
+							"description": "Optional - Set the manufacturer.",
 							"required": false
 						},
 						"modelName": {
 							"name": "Model",
 							"type": "string",
 							"placeholder": "Xbox One",
-							"description": "Set the model name.",
+							"description": "Optional - Set the model name.",
 							"required": false
 						},
 						"serialNumber": {
 							"name": "Serial Number",
 							"type": "string",
 							"placeholder": "000000000000",
-							"description": "Set the serial number.",
+							"description": "Optionel - Set the serial number.",
 							"required": false
 						},
 						"firmwareRevision": {
 							"name": "Firmware Revision",
 							"type": "string",
 							"placeholder": "00.0.00000.0000",
-							"description": "Set the firmware revision.",
+							"description": "Optional - Set the firmware revision.",
 							"required": false
 						}
 					}
@@ -290,8 +317,7 @@
 			"items": [
 				"devices[].name",
 				"devices[].host",
-				"devices[].xboxWebApiEnabled",
-				"devices[].getInputsFromDevice",
+				"devices[].webApiControl",
 				{
 					"key": "devices[]",
 					"type": "section",
@@ -349,7 +375,9 @@
 						"devices[].xboxliveid",
 						"devices[].clientID",
 						"devices[].clientSecret",
-						"devices[].xboxWebApiToken"
+						"devices[].xboxWebApiToken",
+						"devices[].userToken",
+						"devices[].uhs"
 					],
 					"condition": {
 						"functionBody": "return model.devices[arrayIndices].xboxWebApiEnabled === true;"
@@ -364,6 +392,8 @@
 					"items": [
 						"devices[].disableLogInfo",
 						"devices[].switchInfoMenu",
+						"devices[].rebootControl",
+						"devices[].getInputsFromDevice",
 						"devices[].refreshInterval",
 						"devices[].volumeControl"
 					]

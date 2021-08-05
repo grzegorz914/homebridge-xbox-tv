@@ -77,13 +77,16 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
 | `clientID` | Optional free-form for future use |
 | `clientSecret` | Optional free-form for future use |
+| `userToken` | Optional alternate authentication method. |
+| `uhs` | Optional alternate authentication method. |
 | `xboxWebApiToken` | Required if `xboxWebApiEnabled` enabled.|
-| `xboxWebApiEnabled` | Optional, if enabled the console can be controlled using Web Api |
+| `webApiControl` | Optional, if `true` the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section |
 | `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds |
 | `volumeControl`| Select what a additional volume control mode You want to use (None, Slider, Fan) |
 | `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
-| `getInputsFromDevice`| If `true` then the inputs and apps wil be get direct from device. |
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
+| `getInputsFromDevice`| If `true` then enable possibility get apps direct from device, only available if `webApiControl` is enabled |
+| `rebootControl`| If `true` then enable possibility reboot console, only available if `webApiControl` is enabled |
 | `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
 | `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
@@ -106,15 +109,18 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"name": "Xbox One",
 			"host": "192.168.1.6",
 			"xboxliveid": "FD0000000000",
-			"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
 			"clientID": "",
 			"clientSecret": "",
+			"userToken": "",
+			"uhs": "",
+			"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
 			"refreshInterval": 5,
-			"xboxWebApiEnabled": false,
+			"webApiControl": false,
 			"disableLogInfo": false,
 			"volumeControl": 0,
 			"switchInfoMenu": false,
 			"getInputsFromDevice": false,
+			"rebootControl": false,
 			"inputs": [
 						{
 							"name": "Dashboard",
