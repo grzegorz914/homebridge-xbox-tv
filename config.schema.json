@@ -339,7 +339,7 @@
 						}
 					],
 					"condition": {
-						"functionBody": "return model.devices[arrayIndices].getInputsFromDevice == false;"
+						"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
 					}
 				},
 				{
@@ -359,10 +359,7 @@
 								"devices[].buttons[].oneStoreProductId"
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].xboxWebApiEnabled === true;"
-					}
+					]
 				},
 				{
 					"key": "devices[]",
@@ -379,7 +376,7 @@
 						"devices[].uhs"
 					],
 					"condition": {
-						"functionBody": "return model.devices[arrayIndices].xboxWebApiEnabled === true;"
+						"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 					}
 				},
 				{
