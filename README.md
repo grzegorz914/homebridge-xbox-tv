@@ -162,22 +162,18 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 					"buttons": [
 						{
 							"name": "Don't Starve Together",
-							"reference": "xxxxxxxxxx",
 							"oneStoreProductId": ""
 						},
 						{
 							"name": "EA Play Hub",
-							"reference": "xxxxxxxxxx",
 							"oneStoreProductId": ""
 						},
 						{
 							"name": "AirServer Xbox Edition",
-							"reference": "xxxxxxxxxx",
 							"oneStoreProductId": ""
 						},
 						{
 							"name": "Gears of War 4",
-							"reference": "xxxxxxxxxx",
 							"oneStoreProductId": ""
 						}
 					],

@@ -159,6 +159,12 @@
 										"description": "Here set Your own name.",
 										"required": true
 									},
+									"titleId": {
+										"title": "Title Id",
+										"type": "string",
+										"description": "Here set title Id. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
+										"required": true
+									},
 									"reference": {
 										"title": "Reference",
 										"type": "string",
@@ -261,12 +267,6 @@
 										"description": "Here set Your own name.",
 										"required": false
 									},
-									"reference": {
-										"title": "Reference",
-										"type": "string",
-										"description": "Here set the reference.  If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": true
-									},
 									"oneStoreProductId": {
 										"title": "",
 										"type": "string",
@@ -356,7 +356,6 @@
 							"buttonText": "Add button",
 							"items": [
 								"devices[].buttons[].name",
-								"devices[].buttons[].reference",
 								"devices[].buttons[].oneStoreProductId"
 							]
 						}
