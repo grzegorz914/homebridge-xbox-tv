@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added possibility reboot console
 - added possibility switch to Television input
 - code and config reconfigured
+- update config schema
 
 ## [1.6.0] - 2021-08-04
 ## Changes
