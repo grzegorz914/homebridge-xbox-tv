@@ -37,7 +37,7 @@ const DEFAULT_INPUTS = [{
 		'name': 'Television',
 		'titleId': 'Television',
 		'reference': 'Xbox.Television',
-		'inputOneStoreProductId': 'Television',
+		'oneStoreProductId': 'Television',
 		'type': 'HDMI',
 		'isGame': false,
 		'contentType': 'HDMI'
@@ -46,7 +46,7 @@ const DEFAULT_INPUTS = [{
 		'name': 'Dashboard',
 		'titleId': 'Dashboard',
 		'reference': 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
-		'inputOneStoreProductId': 'Dashboard',
+		'oneStoreProductId': 'Dashboard',
 		'type': 'HOME_SCREEN',
 		'isGame': false,
 		'contentType': 'Application'
@@ -55,7 +55,7 @@ const DEFAULT_INPUTS = [{
 		'name': 'Settings',
 		'titleId': 'Settings',
 		'reference': 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
-		'inputOneStoreProductId': 'Settings',
+		'oneStoreProductId': 'Settings',
 		'type': 'HOME_SCREEN',
 		'isGame': false,
 		'contentType': 'Application'
@@ -64,7 +64,7 @@ const DEFAULT_INPUTS = [{
 		'name': 'Accessory',
 		'titleId': 'Accessory',
 		'reference': 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
-		'inputOneStoreProductId': 'Accessory',
+		'oneStoreProductId': 'Accessory',
 		'type': 'HOME_SCREEN',
 		'isGame': false,
 		'contentType': 'Application'
