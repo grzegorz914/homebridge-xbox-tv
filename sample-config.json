@@ -14,88 +14,82 @@
 		"comment": "In this section set the port for Homebridge accessories."
 	},
 	"accessories": [],
-	"platforms": [
-		{
-			"platform": "XboxTv",
-			"devices": [
+	"platforms": [{
+		"platform": "XboxTv",
+		"devices": [{
+			"name": "Game Console",
+			"host": "192.168.1.6",
+			"xboxliveid": "FD0000000000",
+			"clientID": "",
+			"clientSecret": "",
+			"userToken": "",
+			"uhs": "",
+			"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
+			"refreshInterval": 5,
+			"webApiControl": false,
+			"disableLogInfo": false,
+			"volumeControl": 0,
+			"switchInfoMenu": false,
+			"getInputsFromDevice": false,
+			"rebootControl": false,
+			"inputs": [{
+					"name": "Dashboard",
+					"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+					"oneStoreProductId": "",
+					"type": "HOME_SCREEN"
+				},
 				{
-					"name": "Game Console",
-					"host": "192.168.1.6",
-					"xboxliveid": "FD0000000000",
-					"clientID": "",
-					"clientSecret": "",
-					"userToken": "",
-					"uhs": "",
-					"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
-					"refreshInterval": 5,
-					"webApiControl": false,
-					"disableLogInfo": false,
-					"volumeControl": 0,
-					"switchInfoMenu": false,
-					"getInputsFromDevice": false,
-					"rebootControl": false,
-					"inputs": [
-						{
-							"name": "Dashboard",
-							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"oneStoreProductId": "",
-							"type": "HOME_SCREEN"
-						},
-						{
-							"name": "Settings",
-							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-							"oneStoreProductId": "",
-							"type": "OTHER"
-						},
-						{
-							"name": "A Way Out",
-							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Apple TV",
-							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Battlefield 4",
-							"reference": "BFX_8s70symrha4j2!BF.App",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Cities: Skylines",
-							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
-							"oneStoreProductId": "C4GH8N6ZXG5L",
-							"type": "APPLICATION"
-						}
-					],
-					"buttons": [
-						{
-							"name": "Don't Starve Together",
-							"oneStoreProductId": "C4GH8N6ZXG5L"
-						},
-						{
-							"name": "EA Play Hub",
-							"oneStoreProductId": "C4GH8N6ZXG5L"
-						},
-						{
-							"name": "AirServer Xbox Edition",
-							"oneStoreProductId": "C4GH8N6ZXG5L"
-						},
-						{
-							"name": "Gears of War 4",
-							"oneStoreProductId": "C4GH8N6ZXG5L"
-						}
-					],
-					"manufacturer": "Microsoft Corporation",
-					"modelName": "Model",
-					"serialNumber": "Serial Number",
-					"firmwareRevision": "Firmware Revision"
+					"name": "Settings",
+					"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+					"oneStoreProductId": "",
+					"type": "OTHER"
+				},
+				{
+					"name": "A Way Out",
+					"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
+					"oneStoreProductId": "",
+					"type": "APPLICATION"
+				},
+				{
+					"name": "Apple TV",
+					"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
+					"oneStoreProductId": "",
+					"type": "APPLICATION"
+				},
+				{
+					"name": "Battlefield 4",
+					"reference": "BFX_8s70symrha4j2!BF.App",
+					"oneStoreProductId": "",
+					"type": "APPLICATION"
+				},
+				{
+					"name": "Cities: Skylines",
+					"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
+					"oneStoreProductId": "C4GH8N6ZXG5L",
+					"type": "APPLICATION"
 				}
-			]
-		}
-	]
+			],
+			"buttons": [{
+					"name": "Don't Starve Together",
+					"oneStoreProductId": "C4GH8N6ZXG5L"
+				},
+				{
+					"name": "EA Play Hub",
+					"oneStoreProductId": "C4GH8N6ZXG5L"
+				},
+				{
+					"name": "AirServer Xbox Edition",
+					"oneStoreProductId": "C4GH8N6ZXG5L"
+				},
+				{
+					"name": "Gears of War 4",
+					"oneStoreProductId": "C4GH8N6ZXG5L"
+				}
+			],
+			"manufacturer": "Microsoft Corporation",
+			"modelName": "Model",
+			"serialNumber": "Serial Number",
+			"firmwareRevision": "Firmware Revision"
+		}]
+	}]
 }
