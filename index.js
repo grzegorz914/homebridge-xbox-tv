@@ -1287,7 +1287,7 @@ class xboxTvDevice {
 		for (let i = 0; i < maxButtonsCount; i++) {
 
 			//get button inputOneStoreProductId
-			const buttonOneStoreProductId = (buttons[i].inputOneStoreProductId != undefined) ? buttons[i].inputOneStoreProductId : '0';
+			const buttonOneStoreProductId = (buttons[i].oneStoreProductId != undefined) ? buttons[i].oneStoreProductId : '0';
 
 			//get button name
 			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : 'undefinded';
@@ -1305,19 +1305,19 @@ class xboxTvDevice {
 					if (state && this.powerState) {
 						const setInput = this.webApiEnabled ? ((buttonOneStoreProductId == 'Dashboard') || (buttonOneStoreProductId == 'Settings') || (buttonOneStoreProductId == 'Accessory')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Dashboard successful, name: %s, inputOneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
+								this.log('Device: %s %s, set Dashboard successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
 							}
 						}).catch((error) => {
 							this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
 						}) : (buttonOneStoreProductId == 'Television') ? this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Television successful, name: %s, inputOneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
+								this.log('Device: %s %s, set Television successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
 							}
 						}).catch((error) => {
 							this.log.error('Device: %s %s, set Television error:', this.host, accessoryName, error);
 						}) : (buttonOneStoreProductId != undefined || buttonOneStoreProductId != '0') ? this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, buttonOneStoreProductId).then(() => {
 							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set new App successful, name: %s, inputOneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
+								this.log('Device: %s %s, set new App successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
 							}
 						}).catch((error) => {
 							this.log.error('Device: %s %s, set new App error:', this.host, accessoryName, error);
