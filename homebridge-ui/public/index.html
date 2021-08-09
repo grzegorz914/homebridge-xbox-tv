@@ -1,0 +1,181 @@
+<div>
+  <img src="./homebridge-xbox-tv.png" style="text-align: center;" height="150" />
+</div>
+
+<div class="card card-body">
+  <form id="configForm">
+    <div class="form-group">
+      <label for="deviceNameInput">Name</label>
+      <input type="text" class="form-control" id="deviceNameInput" readonly><br>
+      <label for="deviceHostInput">Host</label>
+      <input type="text" class="form-control" id="deviceHostInput" readonly><br>
+      <label for="deviceTokenInput">Web Api Token</label>
+      <input type="text" class="form-control" id="deviceTokenInput">
+    </div>
+    <div class="text-center">
+      <button id="getTokenButton" type="button" class="btn btn-primary">Get Token</button>
+      <button id="authorizationButton" type="button" class="btn btn-primary">Authorize this console</button>
+      <button id="configButton" type="button" class="btn btn-primary">Show Config</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  (async () => {
+    // get the initial config - this is an array potentially containing multiple config blocks
+    const pluginConfig = await homebridge.getPluginConfig();
+    const devicesCount = pluginConfig[0].devices.length;
+
+    // get the intial from the config and add it to the form
+    if (pluginConfig.length) {
+      for (let i = 0; i < devicesCount; i++) {
+        const deviceName = pluginConfig[0].devices[i].name;
+        const button = document.createElement("button");
+        button.setAttribute("type", "button");
+        button.setAttribute("id", "button" + i);
+        button.setAttribute("class", "btn btn-primary");
+        button.innerText = deviceName;
+        button.style.width = '150px';
+        button.style.height = '38x';
+        document.body.appendChild(button);
+
+        //load on first run
+        document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[0].name;
+        document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[0].host;
+        //document.querySelector('#deviceClientIdInput').value = pluginConfig[0].devices[0].clientID;
+        //document.querySelector('#deviceClientSecretInput').value = pluginConfig[0].devices[0].clientSecret;
+        document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
+
+        //get on console select
+        document.getElementById('button' + i).addEventListener('click', async () => {
+          document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
+          document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
+          //document.querySelector('#deviceClientIdInput').value = pluginConfig[0].devices[i].clientID;
+          //document.querySelector('#deviceClientSecretInput').value = pluginConfig[0].devices[i].clientSecret;
+          document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
+          this.deviceIndex = i;
+        });
+        this.deviceIndex = 0;
+      }
+      //document.getElementById('getTokenButton').setAttribute('disabled', 'disabled');
+      document.getElementById('authorizationButton').setAttribute('disabled', 'disabled');
+    } else {
+      showSetup(pluginConfig);
+      document.getElementById('getTokenButton').setAttribute('disabled', 'disabled');
+      document.getElementById('authorizationButton').setAttribute('disabled', 'disabled');
+    }
+
+    // watch for changes to the form and update the config
+    document.getElementById('configForm').addEventListener('input', () => {
+      // get the current values from the form
+      pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
+      pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
+      //pluginConfig[0].devices[this.deviceIndex].clientID = document.querySelector('#deviceClientIdInput').value;
+      //pluginConfig[0].devices[this.deviceIndex].clientSecret = document.querySelector('#deviceClientSecretInput').value;
+      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
+        .value;
+
+      // update the config
+      homebridge.updatePluginConfig(pluginConfig);
+    });
+
+    const configButton = document.getElementById('configButton');
+    document.querySelector('#configButton').addEventListener('click', async () => {
+      if (this.configButtonState) {
+        configButton.innerText = "Show Config";
+        homebridge.hideSchemaForm();
+        this.configButtonState = false;
+      } else {
+        configButton.innerText = "Hide Config";
+        homebridge.showSchemaForm();
+        this.configButtonState = true;
+      }
+    });
+
+
+    // watch for click events on the getTokenButton
+    document.querySelector('#getTokenButton').addEventListener('click', async () => {
+      // validate a token was provided
+      const webApiToken = document.querySelector('#deviceTokenInput').value;
+      const host = document.querySelector('#deviceHostInput').value;
+
+      // starting the request, show the loading spinner
+      homebridge.showSpinner();
+
+      // request a token from the server
+      try {
+        const response = await homebridge.request('/data', {
+          token: webApiToken,
+          host: host
+        });
+
+        const data = response.data;
+        const status = response.status;
+        const authorizationButton = document.getElementById('authorizationButton');
+
+        if (status == 0) {
+          authorizationButton.setAttribute('disabled', 'disabled');
+
+          // update the plugin config
+          document.querySelector('#deviceTokenInput').value = webApiToken;
+
+          pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = webApiToken;
+          homebridge.updatePluginConfig(pluginConfig);
+
+          homebridge.toast.info('Console already authenticated.', 'Info!');
+        }
+
+        if (status == 1) {
+          authorizationButton.removeAttribute('disabled');
+          authorizationButton.innerText = "Authorize this console";
+          homebridge.toast.info('Authorization activ!', 'Info!');
+          document.querySelector('#authorizationButton').addEventListener('click', async () => {
+            await open(data);
+            authorizationButton.setAttribute('disabled', 'disabled');
+            homebridge.toast.success('Authorization page requested!', 'Success!');
+          });
+        }
+
+        if (status == 2) {
+          authorizationButton.setAttribute('disabled', 'disabled');
+          homebridge.toast.warning('Authorization link empty, check authToken file.', 'Warning!');
+        }
+
+        if (status == 3) {
+          authorizationButton.setAttribute('disabled', 'disabled');
+          homebridge.toast.info('Authenticated and Token file saved.', 'Info!');
+        }
+
+        if (status == 4) {
+          authorizationButton.setAttribute('disabled', 'disabled');
+          homebridge.toast.error('Authenticated and gsaved Token file failed.', 'Error!');
+        }
+
+        if (webApiToken.length > 0) {
+          // update the plugin config
+          document.querySelector('#deviceTokenInput').value = webApiToken;
+
+          pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = webApiToken;
+          homebridge.updatePluginConfig(pluginConfig);
+
+          authorizationButton.removeAttribute('disabled');
+          authorizationButton.innerText = "Save data";
+          document.querySelector('#authorizationButton').addEventListener('click', async () => {
+            authorizationButton.setAttribute('disabled', 'disabled');
+            authorizationButton.innerText = "Authorize this console";
+            homebridge.updatePluginConfig(pluginConfig);
+            homebridge.toast.success('Web Api Token saved!', 'Success!');
+          });
+        } else {
+          authorizationButton.setAttribute('disabled', 'disabled');
+          authorizationButton.innerText = "Authorize this console";
+        }
+      } catch (e) {
+        homebridge.toast.error(e.error, e.message);
+      } finally {
+        // remember to un-hide the spinner
+        homebridge.hideSpinner();
+      }
+    });
+  })();
+</script>
