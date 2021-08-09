@@ -75,8 +75,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `name` | Name of Your console |
 | `host` | Address IP of Your console |
 | `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
-| `clientID` | Optional free-form for future use |
-| `clientSecret` | Optional free-form for future use |
+| `clientID` | Optional, If You create app on Azure AD then You can use Your own ClientID |
+| `clientSecret` | Optional, If You create app on Azure AD then You can use Your own ClientSecret |
 | `userToken` | Optional alternate authentication method. |
 | `uhs` | Optional alternate authentication method. |
 | `xboxWebApiToken` | Required if `xboxWebApiEnabled` enabled.|
