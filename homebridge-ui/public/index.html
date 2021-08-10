@@ -4,9 +4,10 @@
 
 <div class="card card-body">
   <form id="configForm">
+    <div class="text-center">
+      <label id="info">Authorization Manager</label><br><br>
+      </div>
     <div class="form-group">
-      <label id="info">First open config menu and set *Device Name*, *Address IP*, *Live ID*, save config and start
-        authorization process. Do not enable *Web Api Control* now.</label><br><br>
       <label for="deviceNameInput">Name</label>
       <input type="text" class="form-control" id="deviceNameInput" readonly><br>
       <label for="deviceHostInput">Host</label>
@@ -64,9 +65,12 @@
           document.querySelector('#deviceTokenInput').value = deviceWebApiToken;
 
           const startAuthorizationButton = document.getElementById('startAuthorizationButton');
+          const activationStepByStep = document.getElementById('info');
           if (deviceWebApiToken.length > 0 || deviceWebApiControl) {
+            activationStepByStep.innerHTML = 'Authorization Manager';
             startAuthorizationButton.setAttribute('disabled', 'disabled');
           } else {
+            activationStepByStep.innerHTML = 'First open config menu and set *Device Name*, *Address IP*, *Live ID*, do not enable *Web Api Control* now. Save config and start authorization process.';
             startAuthorizationButton.removeAttribute('disabled');
           }
 
@@ -75,10 +79,12 @@
         this.deviceIndex = 0;
       }
       // disable start authorization
+      const deviceTokenInput = document.getElementById('deviceTokenInput');
       const webApiTokenStartLength = pluginConfig[0].devices[0].xboxWebApiToken.length;
       if (webApiTokenStartLength > 0) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
       }
+      deviceTokenInput.setAttribute('readonly', true);
       document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
     } else {
       document.getElementById('configButton').setAttribute('disabled', 'disabled');
@@ -139,6 +145,7 @@
         const startAuthorizationButton = document.getElementById('startAuthorizationButton');
         const authorizeConsoleButton = document.getElementById('authorizeConsoleButton');
         const activationStepByStep = document.getElementById('info');
+        const deviceTokenInput = document.getElementById('deviceTokenInput');
 
         if (status == 0) {
           startAuthorizationButton.setAttribute('disabled', 'disabled');
@@ -163,18 +170,18 @@
               pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
               homebridge.updatePluginConfig(pluginConfig);
               homebridge.savePluginConfig(pluginConfig);
+              deviceTokenInput.setAttribute('readonly', true);
               authorizeConsoleButton.setAttribute('disabled', 'disabled');
               startAuthorizationButton.removeAttribute('disabled');
               startAuthorizationButton.innerText = "Activate console";
-              activationStepByStep.innerHTML =
-                'Token saved successful, now please press *Activate Console* button.';
+              activationStepByStep.innerHTML ='Token saved successful, now please press *Activate Console* button.';
               homebridge.toast.info('Token saved successful!.', 'Info!');
               this.authorizeConsole = false;
             } else {
               await open(data);
+              deviceTokenInput.setAttribute('readonly', false);
               authorizeConsoleButton.innerText = "Save token";
-              activationStepByStep.innerHTML =
-                'Now please go to the opened window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
+              activationStepByStep.innerHTML = 'Now please go to the opened window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
             }

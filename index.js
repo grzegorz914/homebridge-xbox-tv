@@ -253,7 +253,7 @@ class xboxTvDevice {
 		}.bind(this), this.refreshInterval * 1000);
 
 		setInterval(function () {
-			const getWebApiConsoleStatus = this.webApiControl && this.webApiEnabled ? this.getWebApiInstalledApps() : false;
+			const getWebApiInstalledApps = this.webApiControl && this.webApiEnabled ? this.getWebApiInstalledApps() : false;
 		}.bind(this), this.refreshInterval * 5000);
 
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
@@ -787,7 +787,7 @@ class xboxTvDevice {
 				return state;
 			})
 			.onSet(async (state) => {
-				if (state && !this.powerState && this.connectedToDevice) {
+				if (state && !this.powerState) {
 					const xbox = Smartglass();
 					const setPowerOn = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxliveid).then(() => {
 						if (!this.disableLogInfo) {
@@ -813,7 +813,7 @@ class xboxTvDevice {
 						this.log.error('Device: %s %s, set power ON, error: %s', this.host, accessoryName, error);
 					});
 				} else {
-					if (!state && this.powerState && this.connectedToDevice) {
+					if (!state && this.powerState) {
 						const setPowerOff = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxliveid).then(() => {
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, web api set power OFF successful', this.host, accessoryName);
