@@ -252,6 +252,10 @@ class xboxTvDevice {
 			const getWebApiConsoleStatus = this.webApiControl && this.webApiEnabled ? this.getWebApiConsoleStatus() : false;
 		}.bind(this), this.refreshInterval * 1000);
 
+		setInterval(function () {
+			const getWebApiConsoleStatus = this.webApiControl && this.webApiEnabled ? this.getWebApiInstalledApps() : false;
+		}.bind(this), this.refreshInterval * 5000);
+
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
 
 		//start prepare accessory
@@ -438,45 +442,9 @@ class xboxTvDevice {
 
 			this.userProfileData = userProfileData;
 
-			this.getWebApiConsoleStatus();
-		}).catch((error) => {
-			this.log.error('Device: %s %s, getUserProfile error: %s.', this.host, this.name, error);
-		});
-	}
-
-	getWebApiConsoleStatus() {
-		this.log.debug('Device: %s %s, requesting web api device info.', this.host, this.name);
-		this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((response) => {
-			this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, response);
-			const consoleStatusData = response;
-
-			const id = consoleStatusData.id;
-			const name = consoleStatusData.name;
-			const locale = consoleStatusData.locale;
-			const region = consoleStatusData.region;
-			const consoleType = CONSOLES_NAME[consoleStatusData.consoleType];
-			const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] == 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
-			const playbackState = (CONSOLE_PLAYBACK_STATE[consoleStatusData.playbackState] == 1); // 0 - Stopped, 1 - Playng, 2 - Paused
-			const loginState = consoleStatusData.loginState;
-			const focusAppAumid = consoleStatusData.focusAppAumid;
-			const isTvConfigured = (consoleStatusData.isTvConfigured == true);
-			const digitalAssistantRemoteControlEnabled = (consoleStatusData.digitalAssistantRemoteControlEnabled == true);
-			const consoleStreamingEnabled = (consoleStatusData.consoleStreamingEnabled == true);
-			const remoteManagementEnabled = (consoleStatusData.remoteManagementEnabled == true);
-
-			this.serialNumber = id;
-			this.modelName = consoleType;
-			this.powerState = powerState;
-			this.mediaState = playbackState;
-			this.consoleStatusData = consoleStatusData;
-
 			this.getWebApiInstalledApps();
 		}).catch((error) => {
-			if (error.status == 401) {
-				this.getWebApiToken();
-				this.log('Device: %s %s, with liveid: %s, trying to reauthenticate.', this.host, this.name, this.xboxliveid);
-			}
-			this.log.error('Device: %s %s, with liveid: %s, getConsoleStatus error: %s.', this.host, this.name, this.xboxliveid, error);
+			this.log.error('Device: %s %s, getUserProfile error: %s.', this.host, this.name, error);
 		});
 	}
 
@@ -568,10 +536,44 @@ class xboxTvDevice {
 				this.isGen9Compatible.push(isGen9Compatible);
 			}
 			this.storageDevicesData = storageDeviceData;
+		}).catch((error) => {
+			this.log.error('Device: %s %s, with liveid: %s, storageDevices error: %s.', this.host, this.name, this.xboxliveid, error);
+		});
+	}
+
+	getWebApiConsoleStatus() {
+		this.log.debug('Device: %s %s, requesting web api device info.', this.host, this.name);
+		this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((response) => {
+			this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, response);
+			const consoleStatusData = response;
+
+			const id = consoleStatusData.id;
+			const name = consoleStatusData.name;
+			const locale = consoleStatusData.locale;
+			const region = consoleStatusData.region;
+			const consoleType = CONSOLES_NAME[consoleStatusData.consoleType];
+			const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] == 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+			const playbackState = (CONSOLE_PLAYBACK_STATE[consoleStatusData.playbackState] == 1); // 0 - Stopped, 1 - Playng, 2 - Paused
+			const loginState = consoleStatusData.loginState;
+			const focusAppAumid = consoleStatusData.focusAppAumid;
+			const isTvConfigured = (consoleStatusData.isTvConfigured == true);
+			const digitalAssistantRemoteControlEnabled = (consoleStatusData.digitalAssistantRemoteControlEnabled == true);
+			const consoleStreamingEnabled = (consoleStatusData.consoleStreamingEnabled == true);
+			const remoteManagementEnabled = (consoleStatusData.remoteManagementEnabled == true);
+
+			this.serialNumber = id;
+			this.modelName = consoleType;
+			this.powerState = powerState;
+			this.mediaState = playbackState;
+			this.consoleStatusData = consoleStatusData;
 
 			const getDeviceInfo = this.checkDeviceInfo ? this.getDeviceInfo() : this.updateDeviceState();
 		}).catch((error) => {
-			this.log.error('Device: %s %s, with liveid: %s, storageDevices error: %s.', this.host, this.name, this.xboxliveid, error);
+			if (error.status == 401) {
+				this.getWebApiToken();
+				this.log('Device: %s %s, with liveid: %s, trying to reauthenticate.', this.host, this.name, this.xboxliveid);
+			}
+			this.log.error('Device: %s %s, with liveid: %s, getConsoleStatus error: %s.', this.host, this.name, this.xboxliveid, error);
 		});
 	}
 
