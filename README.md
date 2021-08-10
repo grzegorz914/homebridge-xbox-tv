@@ -23,6 +23,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 
 ## Note
 - For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
+- Authorization console from Config Menu still in Test Phase.
 
 ## Know issues
 - If used with Hoobs, there is a possible configuration incompatibilty.
