@@ -71,7 +71,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 3. Open the authentication URI and login to Your Xbox Live account, next accept permission for this app.
 4. After accept permiossion for this app copy the part after `?code=` from the response URI and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again, done.
 
-<p align="center">
+<p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" height="500"></a>
 </p>
 
