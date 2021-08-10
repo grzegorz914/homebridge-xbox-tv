@@ -74,6 +74,9 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" height="500"></a>
 </p>
+<p align="left">
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="170"></a>
+</p>
 
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 | Key | Description | 
@@ -102,10 +105,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `serialNumber` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
 | `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
-
-<p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="170"></a>
-</p>
 
 ```json
 {
