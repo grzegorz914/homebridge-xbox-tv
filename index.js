@@ -147,7 +147,7 @@ class xboxTvDevice {
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
-		//add inputs to the default inputs
+		//add configured inputs to the default inputs
 		const defaultInputsArr = DEFAULT_INPUTS;
 		const inputsCount = this.inputs.length;
 		for (let i = 0; i < inputsCount; i++) {
@@ -155,7 +155,7 @@ class xboxTvDevice {
 			const reference = this.inputs[i].reference;
 			const oneStoreProductId = this.inputs[i].oneStoreProductId;
 			const type = this.inputs[i].type;
-			const appsObj = {
+			const obj = {
 				'name': name,
 				'titleId': '',
 				'reference': reference,
@@ -164,7 +164,7 @@ class xboxTvDevice {
 				'isGame': true,
 				'contentType': 'Application'
 			};
-			defaultInputsArr.push(appsObj);
+			defaultInputsArr.push(obj);
 		}
 		this.inputs = defaultInputsArr;
 
@@ -475,11 +475,8 @@ class xboxTvDevice {
 			this.log.debug('Device: %s %s, debug getInstalledApps: %s', this.host, this.name, response.result);
 			const installedAppsData = response.result;
 
-			const defaultInputsArr = new Array();
-			const defaultInputsCount = DEFAULT_INPUTS.length;
-			for (let i = 0; i < defaultInputsCount; i++) {
-				defaultInputsArr.push(DEFAULT_INPUTS[i]);
-			}
+			//add configured inputs to the default inputs
+			const defaultInputsArr = DEFAULT_INPUTS;
 			const installedAppsCount = installedAppsData.length;
 			for (let j = 0; j < installedAppsCount; j++) {
 				const oneStoreProductId = installedAppsData[j].oneStoreProductId;
@@ -1213,7 +1210,7 @@ class xboxTvDevice {
 		this.log.debug('Device: %s %s, read saved Target Visibility successful, states %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check available inputs and possible inputs count (max 93)
-		const inputs = (this.getInputsFromDevice && this.webApiEnabled) ? savedInputs : this.inputs;
+		const inputs = (this.getInputsFromDevice && this.webApiEnabled) ? (savedInputs.length > 0) ? savedInputs : this.inputs : this.inputs;
 		const inputsCount = inputs.length;
 		const maxInputsCount = (inputsCount > 93) ? 93 : inputsCount;
 		for (let i = 0; i < maxInputsCount; i++) {
