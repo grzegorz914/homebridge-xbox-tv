@@ -475,7 +475,7 @@ class xboxTvDevice {
 			this.log.debug('Device: %s %s, debug getInstalledApps: %s', this.host, this.name, response.result);
 			const installedAppsData = response.result;
 
-			//add configured inputs to the default inputs
+			//add installed inputs apps to the default inputs
 			const defaultInputsArr = DEFAULT_INPUTS;
 			const installedAppsCount = installedAppsData.length;
 			for (let j = 0; j < installedAppsCount; j++) {

@@ -1,7 +1,4 @@
-const {
-  HomebridgePluginUiServer,
-  RequestError
-} = require('@homebridge/plugin-ui-utils');
+const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-ui-utils');
 const XboxWebApi = require('xbox-webapi');
 
 class PluginUiServer extends HomebridgePluginUiServer {
@@ -24,7 +21,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
       const host = payload.host;
       const clientId = payload.clientId;
       const clientSecret = payload.clientSecret;
-      const authTokenFile = '/var/lib/homebridge/xboxTv/authToken_' + host.split('.').join('');
+      const authTokenFile = this.homebridgeStoragePath + '/xboxTv/authToken_' + host.split('.').join('');
 
       this.xboxWebApi = XboxWebApi({
         clientId: clientId,

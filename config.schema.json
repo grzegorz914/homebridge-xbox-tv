@@ -170,7 +170,7 @@
 										"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": true
 									},
-									"onStoreProductId": {
+									"oneStoreProductId": {
 										"title": "",
 										"type": "string",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",

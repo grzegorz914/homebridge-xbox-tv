@@ -13,7 +13,7 @@
       <label for="deviceHostInput">Host</label>
       <input type="text" class="form-control" id="deviceHostInput" readonly><br>
       <label for="deviceTokenInput">Web Api Token</label>
-      <input type="text" class="form-control" id="deviceTokenInput">
+      <input type="text" class="form-control" id="deviceTokenInput" readonly>
     </div>
     <div class="text-center">
       <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start authorization</button>
@@ -27,10 +27,10 @@
   (async () => {
     // get the initial config - this is an array potentially containing multiple config blocks
     const pluginConfig = await homebridge.getPluginConfig();
-    const devicesCount = pluginConfig[0].devices.length;
 
     // get the intial from the config and add it to the form
     if (pluginConfig.length) {
+      const devicesCount = pluginConfig[0].devices.length;
       for (let i = 0; i < devicesCount; i++) {
         const deviceName = pluginConfig[0].devices[i].name;
         const deviceHost = pluginConfig[0].devices[i].host;
@@ -79,18 +79,13 @@
         this.deviceIndex = 0;
       }
       // disable start authorization
-      const deviceTokenInput = document.getElementById('deviceTokenInput');
       const webApiTokenStartLength = pluginConfig[0].devices[0].xboxWebApiToken.length;
       if (webApiTokenStartLength > 0) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
       }
-      deviceTokenInput.setAttribute('readonly', true);
       document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
     } else {
-      document.getElementById('configButton').setAttribute('disabled', 'disabled');
-      document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
-      document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-      homebridge.showSchemaForm();
+      pluginConfig.push({});
     }
 
     // watch for changes to the form and update the config
@@ -142,10 +137,11 @@
 
         const data = response.data;
         const status = response.status;
-        const startAuthorizationButton = document.getElementById('startAuthorizationButton');
-        const authorizeConsoleButton = document.getElementById('authorizeConsoleButton');
+
         const activationStepByStep = document.getElementById('info');
         const deviceTokenInput = document.getElementById('deviceTokenInput');
+        const startAuthorizationButton = document.getElementById('startAuthorizationButton');
+        const authorizeConsoleButton = document.getElementById('authorizeConsoleButton');
 
         if (status == 0) {
           startAuthorizationButton.setAttribute('disabled', 'disabled');
@@ -205,7 +201,6 @@
           activationStepByStep.innerHTML =
             'Activation console done, Token file saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
           homebridge.toast.success('Activation done, Token File saved.', 'Success!');
-
         }
 
         if (status == 4) {
