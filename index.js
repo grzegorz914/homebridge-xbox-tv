@@ -144,8 +144,16 @@ class xboxTvDevice {
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
 		this.rebootControl = config.rebootControl || false;
-		this.inputs = config.inputs || DEFAULT_INPUTS;
+		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
+		
+		const defaultInputsArr = new Array();
+			const defaultInputsCount = DEFAULT_INPUTS.length;
+			for (let i = 0; i < defaultInputsCount; i++) {
+				defaultInputsArr.push(DEFAULT_INPUTS[i]);
+			}
+		defaultInputsArr.push(this.inputs);
+		this.inputs = defaultInputsArr;
 
 		//device
 		this.manufacturer = config.manufacturer || 'Microsoft';
