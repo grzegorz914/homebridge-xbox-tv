@@ -1237,17 +1237,21 @@ class xboxTvDevice {
 			const targetVisibility = (savedTargetVisibility[inputOneStoreProductId] != undefined) ? savedTargetVisibility[inputOneStoreProductId] : 0;
 			const currentVisibility = targetVisibility;
 
-			const inputService = new Service.InputSource(inputOneStoreProductId, 'input' + i);
+			const inputService = new Service.InputSource(accessoryName, 'Input' + i);
 			inputService
 				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
-				.setCharacteristic(Characteristic.InputSourceType, inputType)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
-				.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
+				.setCharacteristic(Characteristic.InputSourceType, inputType);
 
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
+				.onGet(async () => {
+					const value = inputName;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get Input name: %s', this.host, accessoryName, value);
+					}
+					return value;
+				})
 				.onSet(async (name) => {
 					try {
 						let newName = savedInputsNames;
@@ -1260,6 +1264,16 @@ class xboxTvDevice {
 					} catch (error) {
 						this.log.error('Device: %s %s, saved new Input Name error: %s', this.host, accessoryName, error);
 					}
+				});
+
+			inputService
+				.getCharacteristic(Characteristic.CurrentVisibilityState)
+				.onGet(async () => {
+					const state = currentVisibility;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get Current Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+					}
+					return state;
 				});
 
 			inputService

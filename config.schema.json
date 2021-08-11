@@ -126,7 +126,7 @@
 							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings."
 						},
 						"getInputsFromDevice": {
-							"title": "Get inputs from device",
+							"title": "Load inputs from device",
 							"type": "boolean",
 							"default": false,
 							"required": false,
