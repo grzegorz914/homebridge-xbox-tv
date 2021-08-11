@@ -96,7 +96,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
 | `getInputsFromDevice`| If `true` then enable possibility get apps direct from device, only available if `webApiControl` is enabled |
 | `rebootControl`| If `true` then enable possibility reboot console, only available if `webApiControl` is enabled |
-| `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list |
+| `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |
 | `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 | `oneStoreProductId` | Optional to switch apps, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
@@ -127,18 +127,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"getInputsFromDevice": false,
 			"rebootControl": false,
 			"inputs": [
-						{
-							"name": "Dashboard",
-							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"oneStoreProductId": "",
-							"type": "HOME_SCREEN"
-						},
-						{
-							"name": "Settings",
-							"reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-							"oneStoreProductId": "",
-							"type": "OTHER"
-						},
 						{
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
