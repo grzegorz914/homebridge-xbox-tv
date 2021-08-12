@@ -118,7 +118,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"clientSecret": "",
 			"userToken": "",
 			"uhs": "",
-			"xboxWebApiToken": "M.R5_BAU.be1c3729-8ae5-d62b-5abd-4323c9c96383",
+			"xboxWebApiToken": "",
 			"refreshInterval": 5,
 			"webApiControl": false,
 			"disableLogInfo": false,

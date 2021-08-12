@@ -67,7 +67,7 @@
 							"type": "string",
 							"placeholder": "Web Api Token",
 							"description": "Here put the reponse Token (value after ?code=) from the authentication URL.",
-							"required": true
+							"required": false
 						},
 						"refreshInterval": {
 							"title": "Refresh interval (sec)",

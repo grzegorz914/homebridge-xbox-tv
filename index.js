@@ -71,6 +71,8 @@ const DEFAULT_INPUTS = [{
 	}
 ];
 
+const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
+
 let Accessory, Characteristic, Service, Categories, AccessoryUUID;
 
 module.exports = (api) => {
@@ -1228,7 +1230,7 @@ class xboxTvDevice {
 			const titleId = (inputs[i].titleId != undefined) ? inputs[i].titleId : '0';
 
 			//get input type
-			const inputType = (inputs[i].type != undefined) ? inputs[i].type : 'APPLICATION';
+			const inputType = (inputs[i].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[i].type) : 'APPLICATION';
 
 			//get input configured
 			const isConfigured = 1;
@@ -1240,8 +1242,7 @@ class xboxTvDevice {
 			const inputService = new Service.InputSource(accessoryName, 'Input' + i);
 			inputService
 				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
-				.setCharacteristic(Characteristic.InputSourceType, inputType);
+				.setCharacteristic(Characteristic.IsConfigured, isConfigured);
 
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
@@ -1264,6 +1265,16 @@ class xboxTvDevice {
 					} catch (error) {
 						this.log.error('Device: %s %s, saved new Input Name error: %s', this.host, accessoryName, error);
 					}
+				});
+
+			inputService
+				.getCharacteristic(Characteristic.InputSourceType)
+				.onGet(async () => {
+					const value = inputType;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get Input Source Type successful, input: %s, state: %s', this.host, accessoryName, inputName, INPUT_SOURCE_TYPES[value]);
+					}
+					return value;
 				});
 
 			inputService
