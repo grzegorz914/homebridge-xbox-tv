@@ -67,14 +67,15 @@
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
-      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
+      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
+        .value;
 
       // update the config
       homebridge.updatePluginConfig(pluginConfig);
     });
 
-    const configButton = document.getElementById('configButton');
-    document.querySelector('#configButton').addEventListener('click', async () => {
+    document.getElementById('configButton').addEventListener('click', async () => {
+      const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
         homebridge.hideSchemaForm();
@@ -88,8 +89,8 @@
 
 
     // watch for click events on the startAuthorizationButton
-    document.querySelector('#startAuthorizationButton').addEventListener('click', async () => {
-      // validate a token was provided
+    document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
+      // validate a data was provided
       const webApiToken = document.querySelector('#deviceTokenInput').value;
       const host = document.querySelector('#deviceHostInput').value;
       const clientId = '5e5ead27-ed60-482d-b3fc-702b28a97404';
@@ -115,6 +116,8 @@
         const startAuthorizationButton = document.getElementById('startAuthorizationButton');
         const authorizeConsoleButton = document.getElementById('authorizeConsoleButton');
 
+        homebridge.updatePluginConfig(pluginConfig);
+
         if (status == 0) {
           startAuthorizationButton.setAttribute('disabled', 'disabled');
           startAuthorizationButton.innerText = "Start authorization";
@@ -132,7 +135,7 @@
           activationStepByStep.innerHTML =
             'Authorization proces started, now press the *Authorize Console* button.';
           homebridge.toast.info('Authorization proces started!', 'Info!');
-          document.querySelector('#authorizeConsoleButton').addEventListener('click', async () => {
+          document.getElementById('authorizeConsoleButton').addEventListener('click', async () => {
             if (this.authorizeConsole) {
               const token = document.querySelector('#deviceTokenInput').value;
               pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
