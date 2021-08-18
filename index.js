@@ -1293,17 +1293,14 @@ class xboxTvDevice {
 			const inputService = new Service.InputSource(accessoryName, 'Input ' + i);
 			inputService
 				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.IsConfigured, isConfigured);
+				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
+				.setCharacteristic(Characteristic.InputSourceType, inputType)
+				.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+				.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
-				.onGet(async () => {
-					const value = inputName;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, get Input name: %s', this.host, accessoryName, value);
-					}
-					return value;
-				})
 				.onSet(async (name) => {
 					try {
 						const nameIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
@@ -1320,32 +1317,7 @@ class xboxTvDevice {
 				});
 
 			inputService
-				.getCharacteristic(Characteristic.InputSourceType)
-				.onGet(async () => {
-					const value = inputType;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, get Input Source Type successful, input: %s, state: %s', this.host, accessoryName, inputName, INPUT_SOURCE_TYPES[value]);
-					}
-					return value;
-				});
-
-			inputService
-				.getCharacteristic(Characteristic.CurrentVisibilityState)
-				.onGet(async () => {
-					const state = currentVisibility;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, get Current Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
-					}
-					return state;
-				});
-
-			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
-				.onGet(async () => {
-					const state = targetVisibility;
-					this.log.debug('Device: %s %s, get Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
-					return state;
-				})
 				.onSet(async (state) => {
 					try {
 						const targetVisibilityIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
