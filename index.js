@@ -37,44 +37,36 @@ const DEFAULT_INPUTS = [{
 		'name': 'Unconfigured input',
 		'titleId': 'undefined',
 		'reference': 'undefined',
-		'type': 'undefined',
-		'isGame': false,
-		'contentType': 'undefined'
-	}, {
+		'oneStoreProductId': 'undefined',
+		'type': 'undefined'
+	},
+	{
 		'name': 'Television',
 		'titleId': 'Television',
 		'reference': 'Xbox.Television',
 		'oneStoreProductId': 'Television',
-		'type': 'HDMI',
-		'isGame': false,
-		'contentType': 'HDMI'
+		'type': 'HDMI'
 	},
 	{
 		'name': 'Dashboard',
 		'titleId': 'Dashboard',
 		'reference': 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
 		'oneStoreProductId': 'Dashboard',
-		'type': 'HOME_SCREEN',
-		'isGame': false,
-		'contentType': 'Application'
+		'type': 'HOME_SCREEN'
 	},
 	{
 		'name': 'Settings',
 		'titleId': 'Settings',
 		'reference': 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
 		'oneStoreProductId': 'Settings',
-		'type': 'HOME_SCREEN',
-		'isGame': false,
-		'contentType': 'Application'
+		'type': 'HOME_SCREEN'
 	},
 	{
 		'name': 'Accessory',
 		'titleId': 'Accessory',
 		'reference': 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
 		'oneStoreProductId': 'Accessory',
-		'type': 'HOME_SCREEN',
-		'isGame': false,
-		'contentType': 'Application'
+		'type': 'HOME_SCREEN'
 	}
 ];
 
@@ -164,20 +156,7 @@ class xboxTvDevice {
 		}
 		const inputsCount = this.inputs.length;
 		for (let j = 0; j < inputsCount; j++) {
-			const name = this.inputs[j].name;
-			const reference = this.inputs[j].reference;
-			const oneStoreProductId = this.inputs[j].oneStoreProductId;
-			const type = this.inputs[j].type;
-			const inputsObj = {
-				'name': name,
-				'titleId': '',
-				'reference': reference,
-				'oneStoreProductId': oneStoreProductId,
-				'type': type,
-				'isGame': true,
-				'contentType': 'APPLIOCATION'
-			};
-			inputsArr.push(inputsObj);
+			inputsArr.push(this.inputs[j]);
 		}
 		this.inputs = inputsArr;
 
@@ -249,23 +228,18 @@ class xboxTvDevice {
 		if (fs.existsSync(this.prefDir) == false) {
 			fsPromises.mkdir(this.prefDir);
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devInfoFile) == false) {
 			fsPromises.writeFile(this.devInfoFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.authTokenFile) == false) {
 			fsPromises.writeFile(this.authTokenFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsFile) == false) {
 			fsPromises.writeFile(this.inputsFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsNamesFile) == false) {
 			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
 			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
 		}
@@ -432,7 +406,6 @@ class xboxTvDevice {
 			}
 
 			this.consolesListData = consolesListData;
-
 			this.getWebApiUserProfile();
 		}).catch((error) => {
 			this.log.error('Device: %s %s, get Consoles List error: %s.', this.host, this.name, error);
@@ -473,7 +446,6 @@ class xboxTvDevice {
 			}
 
 			this.userProfileData = userProfileData;
-
 			this.getWebApiInstalledApps();
 		}).catch((error) => {
 			this.log.error('Device: %s %s, get User Profile error: %s.', this.host, this.name, error);
@@ -486,6 +458,7 @@ class xboxTvDevice {
 			this.log.debug('Device: %s %s, debug getInstalledApps: %s', this.host, this.name, response.result);
 			const installedAppsData = response.result;
 
+			this.installedAppsArr = new Array();
 			const installedAppsCount = installedAppsData.length;
 			for (let i = 0; i < installedAppsCount; i++) {
 				const oneStoreProductId = installedAppsData[i].oneStoreProductId;
@@ -504,6 +477,16 @@ class xboxTvDevice {
 				const installTime = installedAppsData[i].installTime;
 				const updateTime = installedAppsData[i].updateTime;
 				const parentId = installedAppsData[i].parentId;
+				const type = 'APPLICATION';
+
+				const inputsObj = {
+					'name': name,
+					'titleId': titleId,
+					'reference': aumid,
+					'oneStoreProductId': oneStoreProductId,
+					'type': type
+				};
+				this.installedAppsArr.push(inputsObj);
 			}
 
 			this.installedAppsData = installedAppsData;
@@ -638,7 +621,6 @@ class xboxTvDevice {
 				const mediaState = (mediaStateData.title_id == 1);
 
 				if (this.checkDeviceInfo) {
-					const installedAppsData = this.installedAppsData;
 					//add installed inputs apps to the default inputs
 					const inputsArr = new Array();
 					const getInputsFromWebApi = (this.getInputsFromDevice && this.webApiEnabled);
@@ -647,27 +629,10 @@ class xboxTvDevice {
 						inputsArr.push(DEFAULT_INPUTS[i]);
 					}
 
-					const inputsData = getInputsFromWebApi ? installedAppsData : this.inputs;
+					const inputsData = getInputsFromWebApi ? this.installedAppsArr : this.inputs;
 					const inputsCount = inputsData.length;
 					for (let j = 0; j < inputsCount; j++) {
-						const oneStoreProductId = inputsData[j].oneStoreProductId;
-						const titleId = inputsData[j].titleId;
-						const aumid = inputsData[j].aumid;
-						const isGame = (inputsData[j].isGame == true);
-						const name = inputsData[j].name;
-						const contentType = inputsData[j].contentType;
-						const type = 'APPLICATION';
-
-						const inputsObj = {
-							'name': name,
-							'titleId': titleId,
-							'reference': aumid,
-							'oneStoreProductId': oneStoreProductId,
-							'type': type,
-							'isGame': isGame,
-							'contentType': contentType
-						};
-						inputsArr.push(inputsObj);
+						inputsArr.push(inputsData[j]);
 					}
 
 					const obj = JSON.stringify(inputsArr, null, 2);
