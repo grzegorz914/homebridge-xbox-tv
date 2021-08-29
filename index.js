@@ -88,11 +88,10 @@ class xboxTvPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log('No data found for homebridge-xbox-tv');
+			log('No configuration found for %s', PLUGIN_NAME);
 			return;
 		}
 		this.log = log;
-		this.config = config;
 		this.api = api;
 		this.devices = config.devices || [];
 		this.accessories = [];
@@ -101,11 +100,9 @@ class xboxTvPlatform {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				const deviceName = device.name;
-				if (!deviceName) {
-					this.log.warn('Device Name Missing')
+				if (!device.name) {
+					this.log.warn('Device Name Missing');
 				} else {
-					this.log.info('Adding new accessory:', deviceName);
 					new xboxTvDevice(this.log, device, this.api);
 				}
 			}
@@ -113,12 +110,12 @@ class xboxTvPlatform {
 	}
 
 	configureAccessory(accessory) {
-		this.log.debug('configureAccessory');
+		this.log.debug('configurePlatformAccessory');
 		this.accessories.push(accessory);
 	}
 
 	removeAccessory(accessory) {
-		this.log.debug('removeAccessory');
+		this.log.debug('removePlatformAccessory');
 		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
@@ -127,7 +124,6 @@ class xboxTvDevice {
 	constructor(log, config, api) {
 		this.log = log;
 		this.api = api;
-		this.config = config;
 
 		//device configuration
 		this.name = config.name;
