@@ -205,8 +205,8 @@ class xboxTvDevice {
 		this.inputType = 0;
 
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.authTokenFile = this.prefDir + '/' + 'authToken_' + this.host.split('.').join('');
+		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
 		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
@@ -224,11 +224,11 @@ class xboxTvDevice {
 		if (fs.existsSync(this.prefDir) == false) {
 			fsPromises.mkdir(this.prefDir);
 		}
-		if (fs.existsSync(this.devInfoFile) == false) {
-			fsPromises.writeFile(this.devInfoFile, '');
-		}
 		if (fs.existsSync(this.authTokenFile) == false) {
 			fsPromises.writeFile(this.authTokenFile, '');
+		}
+		if (fs.existsSync(this.devInfoFile) == false) {
+			fsPromises.writeFile(this.devInfoFile, '');
 		}
 		if (fs.existsSync(this.inputsFile) == false) {
 			fsPromises.writeFile(this.inputsFile, '');
@@ -1232,8 +1232,8 @@ class xboxTvDevice {
 			const isConfigured = 1;
 
 			//get input visibility state
-			const targetVisibility = (savedTargetVisibility[inputTitleId] != undefined) ? savedTargetVisibility[inputTitleId] : (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : (savedTargetVisibility[inputOneStoreProductId] != undefined) ? savedTargetVisibility[inputOneStoreProductId] : 0;
-			const currentVisibility = targetVisibility;
+			const currentVisibility = (savedTargetVisibility[inputTitleId] != undefined) ? savedTargetVisibility[inputTitleId] : (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : (savedTargetVisibility[inputOneStoreProductId] != undefined) ? savedTargetVisibility[inputOneStoreProductId] : 0;
+			const targetVisibility = currentVisibility;
 
 			const inputService = new Service.InputSource(accessoryName, 'Input ' + i);
 			inputService
