@@ -136,13 +136,13 @@
 							}
 						},
 						"filterGames": {
-							"title": "Hide games",
+							"title": "Hide Games",
 							"type": "boolean",
 							"default": false,
 							"required": false,
-							"description": "If enabled, Games will be hidden and not displayed in the inputs list.",
+							"description": "If enabled, Games will not be displayed on the list of inputs.",
 							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
 						},
 						"filterApps": {
@@ -150,9 +150,9 @@
 							"type": "boolean",
 							"default": false,
 							"required": false,
-							"description": "If enabled, Apps will be hidden and not displayed in the inputs list.",
+							"description": "If enabled, Apps will not be displayed on the list of inputs.",
 							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === tru && model.devices[arrayIndices].webApiControl === true"
 							}
 						},
 						"filterDlc": {
@@ -160,9 +160,9 @@
 							"type": "boolean",
 							"default": false,
 							"required": false,
-							"description": "If enabled, DLC will be hidden and not displayed in the inputs list.",
+							"description": "If enabled, DLC will not be displayed on the list of inputs.",
 							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
 						},
 						"rebootControl": {
