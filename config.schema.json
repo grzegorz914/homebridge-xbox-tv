@@ -135,6 +135,36 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
+						"filterGames": {
+							"title": "Hide games",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "If enabled, Games will be hidden and not displayed in the inputs list.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+							}
+						},
+						"filterApps": {
+							"title": "Hide Apps",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "If enabled, Apps will be hidden and not displayed in the inputs list.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+							}
+						},
+						"filterDlc": {
+							"title": "Hide DLC",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "If enabled, DLC will be hidden and not displayed in the inputs list.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
+							}
+						},
 						"rebootControl": {
 							"title": "Enable reboot control",
 							"type": "boolean",
@@ -383,6 +413,9 @@
 					"devices[].switchInfoMenu",
 					"devices[].rebootControl",
 					"devices[].getInputsFromDevice",
+					"devices[].filterGames",
+					"devices[].filterApps",
+					"devices[].filterDlc",
 					"devices[].refreshInterval",
 					"devices[].volumeControl"
 				]

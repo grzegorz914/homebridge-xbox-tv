@@ -95,6 +95,9 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
 | `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
 | `getInputsFromDevice`| If `true` then enable possibility get apps direct from device, only available if `webApiControl` is enabled |
+| `filterGames`| If `true` Games will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
+| `filterApps`| If `true` Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
+| `filterDlc`| If `true` Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
 | `rebootControl`| If `true` then enable possibility reboot console, only available if `webApiControl` is enabled |
 | `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
 | `buttons` | same as inputs but appear in HomeKit.app as extra tile |

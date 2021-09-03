@@ -31,6 +31,9 @@
 			"volumeControl": 0,
 			"switchInfoMenu": false,
 			"getInputsFromDevice": false,
+			"filterGames": false,
+			"filterApps": false,
+			"filterDlc": false,
 			"rebootControl": false,
 			"inputs": [{
 					"name": "A Way Out",

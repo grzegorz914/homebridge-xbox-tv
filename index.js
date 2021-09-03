@@ -141,6 +141,9 @@ class xboxTvDevice {
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
+		this.filterGames = config.filterGames || false
+		this.filterApps = config.filterGames || false
+		this.filterDlc = config.filterGames || false
 		this.rebootControl = config.rebootControl || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
@@ -485,7 +488,10 @@ class xboxTvDevice {
 					'oneStoreProductId': oneStoreProductId,
 					'type': type
 				};
-				this.installedAppsArr.push(inputsObj);
+				const filterGames = this.filterGames ? (contentType != 'Game') : true;
+				const filterApps = this.filterApps ? (contentType != 'App') : true;
+				const filterDlc = this.filterDlc ? (contentType != 'Dlc') : true;
+				const push = (filterGames && filterApps && filterDlc) ? this.installedAppsArr.push(inputsObj) : false;
 			}
 
 			this.installedAppsData = installedAppsData;
