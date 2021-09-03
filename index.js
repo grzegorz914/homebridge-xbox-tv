@@ -123,6 +123,7 @@ class xboxTvPlatform {
 class xboxTvDevice {
 	constructor(log, config, api) {
 		this.log = log;
+		this.config = config;
 		this.api = api;
 
 		//device configuration
@@ -175,7 +176,6 @@ class xboxTvDevice {
 		//setup variables
 		this.connectedToDevice = false;
 		this.checkDeviceInfo = false;
-		this.startPrepareAccessory = true;
 		this.webApiEnabled = false;
 
 		this.inputsService = new Array();
@@ -260,6 +260,9 @@ class xboxTvDevice {
 		}.bind(this), 60000);
 
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
+
+		//start prepare accessory
+		this.prepareAccessory();
 	}
 
 	connectToXbox() {
@@ -657,11 +660,6 @@ class xboxTvDevice {
 					this.log('Serialnr: %s', serialNumber);
 					this.log('Firmware: %s', firmwareRevision);
 					this.log('----------------------------------');
-
-					//start prepare accessory
-					if (this.startPrepareAccessory) {
-						this.prepareAccessory();
-					}
 				}
 
 				this.titleId = titleId;
@@ -757,9 +755,10 @@ class xboxTvDevice {
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
-		const accessoryUUID = AccessoryUUID.generate(accessoryName);
+		const accessoryUUID = AccessoryUUID.generate(this.xboxliveid);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
+		accessory.context.device = this.config.device;
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
@@ -1348,7 +1347,6 @@ class xboxTvDevice {
 			accessory.addService(this.buttonsService[i]);
 		}
 
-		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
