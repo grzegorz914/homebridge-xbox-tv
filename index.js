@@ -142,8 +142,8 @@ class xboxTvDevice {
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
 		this.filterGames = config.filterGames || false
-		this.filterApps = config.filterGames || false
-		this.filterDlc = config.filterGames || false
+		this.filterApps = config.filterApps || false
+		this.filterDlc = config.filterDlc || false
 		this.rebootControl = config.rebootControl || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
@@ -629,13 +629,13 @@ class xboxTvDevice {
 				if (this.checkDeviceInfo) {
 					//add installed inputs apps to the default inputs
 					const inputsArr = new Array();
-					const getInputsFromWebApi = (this.getInputsFromDevice && this.webApiEnabled);
-					const defaultInputsCount = getInputsFromWebApi ? DEFAULT_INPUTS.length : 0;
+					const getInputsFromDevice = (this.getInputsFromDevice && this.webApiEnabled);
+					const defaultInputsCount = getInputsFromDevice ? DEFAULT_INPUTS.length : 0;
 					for (let i = 0; i < defaultInputsCount; i++) {
 						inputsArr.push(DEFAULT_INPUTS[i]);
 					}
 
-					const inputsData = getInputsFromWebApi ? this.installedAppsArr : this.inputs;
+					const inputsData = getInputsFromDevice ? this.installedAppsArr : this.inputs;
 					const inputsCount = inputsData.length;
 					for (let j = 0; j < inputsCount; j++) {
 						inputsArr.push(inputsData[j]);
