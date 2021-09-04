@@ -460,7 +460,7 @@ class xboxTvDevice {
 			this.log.debug('Device: %s %s, debug getInstalledApps: %s', this.host, this.name, response.result);
 			const installedAppsData = response.result;
 
-			this.installedAppsArr = new Array();
+			const installedAppsArr = new Array();
 			const installedAppsCount = installedAppsData.length;
 			for (let i = 0; i < installedAppsCount; i++) {
 				const oneStoreProductId = installedAppsData[i].oneStoreProductId;
@@ -491,10 +491,11 @@ class xboxTvDevice {
 				const filterGames = this.filterGames ? (contentType != 'Game') : true;
 				const filterApps = this.filterApps ? (contentType != 'App') : true;
 				const filterDlc = this.filterDlc ? (contentType != 'Dlc') : true;
-				const push = (filterGames && filterApps && filterDlc) ? this.installedAppsArr.push(inputsObj) : false;
+				const push = (filterGames && filterApps && filterDlc) ? installedAppsArr.push(inputsObj) : false;
 			}
 
 			this.installedAppsData = installedAppsData;
+			this.installedAppsArr = installedAppsArr
 			this.getWebApiStorageDevices();
 		}).catch((error) => {
 			if (error.status == 401) {
