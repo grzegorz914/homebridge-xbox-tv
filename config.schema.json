@@ -17,13 +17,13 @@
 						"name": {
 							"title": "Device name",
 							"type": "string",
-							"default": "Game console",
+							"placeholder": "Game console",
 							"required": true
 						},
 						"host": {
 							"title": "Address IP",
 							"type": "string",
-							"default": "192.168.1.6",
+							"placeholder": "192.168.1.6",
 							"required": true,
 							"format": "hostname"
 						},
@@ -195,30 +195,35 @@
 									"name": {
 										"title": "Name",
 										"type": "string",
+										"placeholder": "Input name",
 										"description": "Here set Your own name.",
 										"required": true
 									},
 									"titleId": {
 										"title": "Title Id",
 										"type": "string",
+										"placeholder": "Input Title Id",
 										"description": "Here set title Id. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": true
+										"required": false
 									},
 									"reference": {
 										"title": "Reference",
 										"type": "string",
+										"placeholder": "Input reference",
 										"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": true
 									},
 									"oneStoreProductId": {
-										"title": "",
+										"title": "OneStoreProductId",
 										"type": "string",
+										"placeholder": "Input oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
 									},
 									"type": {
-										"title": "Input type",
+										"title": "Type",
 										"type": "string",
+										"placeholder": "Input type",
 										"description": "Here select source input type.",
 										"oneOf": [{
 												"title": "Other",
@@ -287,7 +292,7 @@
 												]
 											}
 										],
-										"required": false
+										"required": true
 									}
 								}
 							}
@@ -302,14 +307,16 @@
 									"name": {
 										"title": "Name",
 										"type": "string",
+										"placeholder": "Button name",
 										"description": "Here set Your own name.",
 										"required": false
 									},
 									"oneStoreProductId": {
-										"title": "",
+										"title": "OneStoreProductId",
 										"type": "string",
+										"placeholder": "Input oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
+										"required": true
 									}
 								}
 							}

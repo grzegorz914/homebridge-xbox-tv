@@ -132,8 +132,8 @@ class xboxTvDevice {
 		this.api = api;
 
 		//device configuration
-		this.name = config.name;
-		this.host = config.host;
+		this.name = config.name || 'Game console';
+		this.host = config.host || '';
 		this.clientID = config.clientID || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
