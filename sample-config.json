@@ -33,6 +33,7 @@
 			"getInputsFromDevice": false,
 			"filterGames": false,
 			"filterApps": false,
+			"filterSystemApps": false,
 			"filterDlc": false,
 			"rebootControl": false,
 			"inputs": [{

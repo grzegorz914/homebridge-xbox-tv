@@ -125,6 +125,16 @@
 							"required": false,
 							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings."
 						},
+						"rebootControl": {
+							"title": "Enable reboot control",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable possibility reboot console if web api is enabled.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"getInputsFromDevice": {
 							"title": "Load inputs from device",
 							"type": "boolean",
@@ -152,7 +162,17 @@
 							"required": false,
 							"description": "If enabled, Apps will not be displayed on the list of inputs.",
 							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === tru && model.devices[arrayIndices].webApiControl === true"
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
+							}
+						},
+						"filterSystemApps": {
+							"title": "Hide System Apps",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "If enabled, System Apps (Accessory, TV) will not be displayed on the list of inputs.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
 						},
 						"filterDlc": {
@@ -163,16 +183,6 @@
 							"description": "If enabled, DLC will not be displayed on the list of inputs.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
-							}
-						},
-						"rebootControl": {
-							"title": "Enable reboot control",
-							"type": "boolean",
-							"default": false,
-							"required": false,
-							"description": "This enable possibility reboot console if web api is enabled.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
 						"inputs": {
@@ -351,21 +361,28 @@
 				"title": "Inputs",
 				"expandable": true,
 				"expanded": false,
-				"items": [{
-					"key": "devices[].inputs",
-					"type": "array",
-					"orderable": false,
-					"buttonText": "Add input",
-					"items": [
-						"devices[].inputs[].name",
-						"devices[].inputs[].reference",
-						"devices[].inputs[].oneStoreProductId",
-						"devices[].inputs[].type"
-					]
-				}],
-				"condition": {
-					"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
-				}
+				"items": [
+					"devices[].getInputsFromDevice",
+					"devices[].filterGames",
+					"devices[].filterApps",
+					"devices[].filterSystemApps",
+					"devices[].filterDlc",
+					{
+						"key": "devices[].inputs",
+						"type": "array",
+						"orderable": false,
+						"buttonText": "Add input",
+						"items": [
+							"devices[].inputs[].name",
+							"devices[].inputs[].reference",
+							"devices[].inputs[].oneStoreProductId",
+							"devices[].inputs[].type"
+						],
+						"condition": {
+							"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
+						}
+					}
+				]
 			},
 			{
 				"key": "devices[]",
@@ -412,10 +429,6 @@
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
 					"devices[].rebootControl",
-					"devices[].getInputsFromDevice",
-					"devices[].filterGames",
-					"devices[].filterApps",
-					"devices[].filterDlc",
 					"devices[].refreshInterval",
 					"devices[].volumeControl"
 				]

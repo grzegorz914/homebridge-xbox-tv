@@ -38,35 +38,40 @@ const DEFAULT_INPUTS = [{
 		'titleId': 'undefined',
 		'reference': 'undefined',
 		'oneStoreProductId': 'undefined',
-		'type': 'undefined'
+		'type': 'undefined',
+		'contentType': 'undefined'
 	},
 	{
 		'name': 'Television',
 		'titleId': 'Television',
 		'reference': 'Xbox.Television',
 		'oneStoreProductId': 'Television',
-		'type': 'HDMI'
+		'type': 'HDMI',
+		'contentType': 'systemApp'
 	},
 	{
 		'name': 'Dashboard',
 		'titleId': 'Dashboard',
 		'reference': 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
 		'oneStoreProductId': 'Dashboard',
-		'type': 'HOME_SCREEN'
+		'type': 'HOME_SCREEN',
+		'contentType': 'Dashboard'
 	},
 	{
 		'name': 'Settings',
 		'titleId': 'Settings',
 		'reference': 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
 		'oneStoreProductId': 'Settings',
-		'type': 'HOME_SCREEN'
+		'type': 'HOME_SCREEN',
+		'contentType': 'Settings'
 	},
 	{
 		'name': 'Accessory',
 		'titleId': 'Accessory',
 		'reference': 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
 		'oneStoreProductId': 'Accessory',
-		'type': 'HOME_SCREEN'
+		'type': 'HOME_SCREEN',
+		'contentType': 'systemApp'
 	}
 ];
 
@@ -141,9 +146,10 @@ class xboxTvDevice {
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
-		this.filterGames = config.filterGames || false
-		this.filterApps = config.filterApps || false
-		this.filterDlc = config.filterDlc || false
+		this.filterGames = config.filterGames || false;
+		this.filterApps = config.filterApps || false;
+		this.filterSystemApps = config.filterSystemApps || false;
+		this.filterDlc = config.filterDlc || false;
 		this.rebootControl = config.rebootControl || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
@@ -156,7 +162,15 @@ class xboxTvDevice {
 		}
 		const inputsCount = this.inputs.length;
 		for (let j = 0; j < inputsCount; j++) {
-			inputsArr.push(this.inputs[j]);
+			const obj = {
+				'name': this.inputs[1].name,
+				'titleId': this.inputs[1].titleId,
+				'reference': this.inputs[1].reference,
+				'oneStoreProductId': this.inputs[1].oneStoreProductId,
+				'type': this.inputs[1].type,
+				'contentType': 'Game'
+			}
+			inputsArr.push(obj);
 		}
 		this.inputs = inputsArr;
 
@@ -486,12 +500,10 @@ class xboxTvDevice {
 					'titleId': titleId,
 					'reference': aumid,
 					'oneStoreProductId': oneStoreProductId,
-					'type': type
+					'type': type,
+					'contentType': contentType
 				};
-				const filterGames = this.filterGames ? (contentType != 'Game') : true;
-				const filterApps = this.filterApps ? (contentType != 'App') : true;
-				const filterDlc = this.filterDlc ? (contentType != 'Dlc') : true;
-				const push = (filterGames && filterApps && filterDlc) ? installedAppsArr.push(inputsObj) : false;
+				installedAppsArr.push(inputsObj);
 			}
 
 			this.installedAppsData = installedAppsData;
@@ -641,11 +653,12 @@ class xboxTvDevice {
 						inputsArr.push(inputsData[j]);
 					}
 
+					//save nputs to the file
 					const obj = JSON.stringify(inputsArr, null, 2);
 					const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
 					this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
 
-
+					//device info
 					const manufacturer = this.manufacturer;
 					const modelName = this.modelName;
 					const serialNumber = this.webApiEnabled ? this.serialNumber : liveid;
@@ -1213,26 +1226,40 @@ class xboxTvDevice {
 		const savedTargetVisibility = ((fs.readFileSync(this.targetVisibilityInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
 		this.log.debug('Device: %s %s, read saved Target Visibility successful, states %s', this.host, accessoryName, savedTargetVisibility);
 
+		//check available inputs and filter costom inputs
+		const allInputs = (savedInputs.length > 0) ? savedInputs : this.inputs;
+		const inputsArr = new Array();
+		const allInputsCount = allInputs.length;
+		const installedAppsArr = this.installedAppsArr;
+		for (let i = 0; i < allInputsCount; i++) {
+			const contentType = allInputs[i].contentType;
+			const filterGames = this.filterGames ? (contentType != 'Game') : true;
+			const filterApps = this.filterApps ? (contentType != 'App') : true;
+			const filterSystemApps = this.filterSystemApps ? (contentType != 'systemApp') : true;
+			const filterDlc = this.filterDlc ? (contentType != 'Dlc') : true;
+			const push = (filterGames && filterApps && filterSystemApps && filterDlc) ? inputsArr.push(allInputs[i]) : false;
+		}
+
 		//check available inputs and possible inputs count (max 93)
-		const inputs = (savedInputs.length > 0) ? savedInputs : this.inputs;
+		const inputs = inputsArr;
 		const inputsCount = inputs.length;
 		const maxInputsCount = (inputsCount < 93) ? inputsCount : 93;
-		for (let i = 0; i < maxInputsCount; i++) {
+		for (let j = 0; j < maxInputsCount; j++) {
 
 			//get title Id
-			const inputTitleId = (inputs[i].titleId != undefined) ? inputs[i].titleId : undefined;
+			const inputTitleId = (inputs[j].titleId != undefined) ? inputs[j].titleId : undefined;
 
 			//get input reference
-			const inputReference = (inputs[i].reference != undefined) ? inputs[i].reference : undefined;
+			const inputReference = (inputs[j].reference != undefined) ? inputs[j].reference : undefined;
 
 			//get input oneStoreProductId
-			const inputOneStoreProductId = (inputs[i].oneStoreProductId != undefined) ? inputs[i].oneStoreProductId : undefined;
+			const inputOneStoreProductId = (inputs[j].oneStoreProductId != undefined) ? inputs[j].oneStoreProductId : undefined;
 
 			//get input name		
-			const inputName = (savedInputsNames[inputTitleId] != undefined) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId] != undefined) ? savedInputsNames[inputOneStoreProductId] : inputs[i].name;
+			const inputName = (savedInputsNames[inputTitleId] != undefined) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId] != undefined) ? savedInputsNames[inputOneStoreProductId] : inputs[j].name;
 
 			//get input type
-			const inputType = (inputs[i].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[i].type) : 10;
+			const inputType = (inputs[j].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[j].type) : 10;
 
 			//get input configured
 			const isConfigured = 1;
@@ -1241,9 +1268,9 @@ class xboxTvDevice {
 			const currentVisibility = (savedTargetVisibility[inputTitleId] != undefined) ? savedTargetVisibility[inputTitleId] : (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : (savedTargetVisibility[inputOneStoreProductId] != undefined) ? savedTargetVisibility[inputOneStoreProductId] : 0;
 			const targetVisibility = currentVisibility;
 
-			const inputService = new Service.InputSource(accessoryName, 'Input ' + i);
+			const inputService = new Service.InputSource(accessoryName, 'Input ' + j);
 			inputService
-				.setCharacteristic(Characteristic.Identifier, i)
+				.setCharacteristic(Characteristic.Identifier, j)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
 				.setCharacteristic(Characteristic.InputSourceType, inputType)
@@ -1292,8 +1319,8 @@ class xboxTvDevice {
 			this.inputsType.push(inputType);
 
 			this.inputsService.push(inputService);
-			this.televisionService.addLinkedService(this.inputsService[i]);
-			accessory.addService(this.inputsService[i]);
+			this.televisionService.addLinkedService(this.inputsService[j]);
+			accessory.addService(this.inputsService[j]);
 		}
 
 		//Prepare inputs button services
