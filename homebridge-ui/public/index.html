@@ -2,7 +2,7 @@
   <img src="./homebridge-xbox-tv.png" style="text-align: center;" height="150" />
 </div>
 
-<div class="card card-body">
+<div id="authorizationRequired" style="display:none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
       <label id="info">Authorization Manager</label><br><br>
@@ -28,8 +28,13 @@
     // get the initial config - this is an array potentially containing multiple config blocks
     const pluginConfig = await homebridge.getPluginConfig();
 
-    // get the intial from the config and add it to the form
-    if (pluginConfig.length) {
+    if (!pluginConfig.length) {
+      pluginConfig.push({});
+      await homebridge.updatePluginConfig(pluginConfig);
+      homebridge.showSchemaForm();
+    } else {
+      // get the intial from the config and add it to the form
+      document.getElementById('authorizationRequired').style.display = 'block';
       const devicesCount = pluginConfig[0].devices.length;
       for (let i = 0; i < devicesCount; i++) {
 
@@ -57,9 +62,6 @@
         });
         this.deviceIndex = 0;
       }
-      // disable start authorization
-    } else {
-      pluginConfig.push({});
     }
 
     // watch for changes to the form and update the config
