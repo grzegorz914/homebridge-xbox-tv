@@ -92,31 +92,32 @@
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
-      // validate a data was provided
-      const webApiToken = document.querySelector('#deviceTokenInput').value;
-      const host = document.querySelector('#deviceHostInput').value;
-      const clientId = '5e5ead27-ed60-482d-b3fc-702b28a97404';
-      const clientSecret = '';
-
-      // starting the request, show the loading spinner
       homebridge.showSpinner();
 
-      // request a token from the server
       try {
-        const response = await homebridge.request('/data', {
-          token: webApiToken,
-          host: host,
-          clientId: clientId,
-          clientSecret: clientSecret
-        });
-
-        const data = response.data;
-        const status = response.status;
-
         const activationStepByStep = document.getElementById('info');
         const deviceTokenInput = document.getElementById('deviceTokenInput');
         const startAuthorizationButton = document.getElementById('startAuthorizationButton');
         const authorizeConsoleButton = document.getElementById('authorizeConsoleButton');
+
+        const webApiToken = document.querySelector('#deviceTokenInput').value;
+        const host = document.querySelector('#deviceHostInput').value;
+        const clientId = '5e5ead27-ed60-482d-b3fc-702b28a97404';
+        const clientSecret = '';
+
+        const payload = {
+          token: webApiToken,
+          host: host,
+          clientId: clientId,
+          clientSecret: clientSecret
+        };
+
+        const response = await homebridge.request('/data', payload);
+        const displayInfo = response.status > 0 ? false : activationStepByStep.innerHTML =
+          'Something wrong happened, please press the *Start Authorization* button again.';
+
+        const data = response.res;
+        const status = response.status;
 
         homebridge.updatePluginConfig(pluginConfig);
 

@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const fsPromises = require('fs').promises;
+const fsPromises = fs.promises;
 
 const XboxWebApi = require('xbox-webapi');
 const Smartglass = require('xbox-smartglass-core-node');
@@ -221,12 +221,12 @@ class xboxTvDevice {
 		this.inputName = '';
 		this.inputType = 0;
 
-		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		this.authTokenFile = this.prefDir + '/' + 'authToken_' + this.host.split('.').join('');
-		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
-		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
-		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
+		const prefDir = path.join(api.user.storagePath(), 'xboxTv');
+		this.authTokenFile = prefDir + '/' + 'authToken_' + this.host.split('.').join('');
+		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
+		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
+		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
+		this.targetVisibilityInputsFile = prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
 
 		this.xbox = Smartglass();
 
@@ -238,8 +238,8 @@ class xboxTvDevice {
 		});
 
 		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.prefDir) == false) {
-			fsPromises.mkdir(this.prefDir);
+		if (fs.existsSync(prefDir) == false) {
+			fsPromises.mkdir(prefDir);
 		}
 		if (fs.existsSync(this.authTokenFile) == false) {
 			fsPromises.writeFile(this.authTokenFile, '');
@@ -705,8 +705,7 @@ class xboxTvDevice {
 		this.log.debug('Device: %s %s, update device state.', this.host, this.name);
 		try {
 			//get variable data
-			const xboxState = this.xbox._connection_status;
-			const powerState = xboxState;
+			const powerState = this.xbox._connection_status;
 			const volume = this.volume;
 			const muteState = powerState ? this.muteState : true;
 			const mediaState = this.mediaState;

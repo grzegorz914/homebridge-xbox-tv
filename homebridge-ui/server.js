@@ -9,6 +9,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
     // super() MUST be called first
     super();
 
+    this.data = {};
     // handle request for the /data route
     this.onRequest('/data', this.getData.bind(this));
 
@@ -30,54 +31,49 @@ class PluginUiServer extends HomebridgePluginUiServer {
         clientId: clientId,
         clientSecret: clientSecret,
         userToken: '',
-        uhs: '',
+        uhs: ''
       });
 
       webApiCheck._authentication._tokensFile = authTokenFile;
       webApiCheck.isAuthenticated().then(() => {
-        this.obj = {
-          'res': 'Console already authenticated',
-          'status': 0
+        this.data = {
+          res: 'Console already authenticated',
+          status: 0
         }
       }).catch(() => {
         if (token != undefined) {
           webApiCheck._authentication.getTokenRequest(token).then((authToken) => {
             webApiCheck._authentication._tokens.oauth = authToken;
             webApiCheck._authentication.saveTokens();
-            this.obj = {
-              'res': 'Console successfully authenticated and autToken file saved',
-              'status': 3
+            this.data = {
+              res: 'Console successfully authenticated and *autToken* file saved',
+              status: 3
             }
           }).catch(() => {
-            this.obj = {
-              'res': 'Authorization and Token file saved error.',
-              'status': 4
+            this.data = {
+              res: 'Authorization and Token file saved error.',
+              status: 4
             }
           });
         } else {
-          this.obj = {
-            'res': 'Authorization link empty, check authToken file.',
-            'status': 2
+          this.data = {
+            res: 'Authorization link empty, check *authToken* file.',
+            status: 2
           }
         }
         const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
-        this.obj = {
-          'res': oauth2URI,
-          'status': 1
+        this.data = {
+          res: oauth2URI,
+          status: 1
         }
       });
 
-      return {
-        data: this.obj.res,
-        status: this.obj.status
-      }
-
+      return this.data;
     } catch (e) {
       throw new RequestError('Failed to return data try again.', {
         message: e.message
       });
     }
-
   }
 }
 
