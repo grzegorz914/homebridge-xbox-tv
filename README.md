@@ -51,7 +51,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
-## Authorization Maager
+## Authorization Mager
 * First of all please use built in Authorization Manager, if this fail use Authorization Manual.
 
 <p align="left">
