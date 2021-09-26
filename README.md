@@ -46,9 +46,9 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 
 ## Configuration Console
 1. [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
-  * Profile & system > Settings > General > Power mode & startup
+  * Profile & System > Settings > General > Power mode & startup
 2. Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
-  * Profile & system > Settings > Devices & connections > Remote features > Xbox app preferences.
+  * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Configuration web API
 1. First of all use built in authentication manager in config menu, if this fail use bottom instruction.
