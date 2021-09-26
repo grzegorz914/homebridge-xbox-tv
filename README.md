@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/homebridge-xbox-tv.png" height="280"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/homebridge-xbox-tv.png" width="840"></a>
 </p>
 
 <span align="center">
@@ -16,30 +16,18 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 </span>
 
 ## Package Requirements
-| Package Link | Required |
-| --- | --- |
-| [Homebridge](https://github.com/homebridge/homebridge) | Required | 
-| [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) | Highly Recommended |
+| Package Link | Installation | Role | Required |
+| --- | --- | --- | --- |
+| [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
+| [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Homebridge Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Web User Interface | Recommended |
+| [Homebridge Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm npm install -g homebridge-xbox-tv` | Plug-In | Required |
 
 ## Note
-- For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
-- Authorization console from Config Menu still in Test Phase.
+* For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
+* Authorization console from Config Menu still in Test Phase.
 
 ## Know issues
-- If used with Hoobs, there is a possible configuration incompatibilty.
-
-## Installation Instructions
-1. Follow the step-by-step instructions at [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Follow the step-by-step instructions at [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
-3. Install homebridge-xbox-tv using: `npm install -g homebridge-xbox-tv` or search for `Xbox Tv` in Config UI X.
-
-## HomeKit Pairing
-1. Each accessories needs to be manually paired.
-2. Open the Home <img alt="" src="https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png" height="16.42px" /> app on your device.
-3. Tap the Home tab, then tap <img alt="plus button" src="https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png" height="16.42px" />.
-4. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*.
-5. You should now see your Xbox, select it
-6. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+* If used with Hoobs, there is a possible configuration incompatibilty.
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
@@ -50,13 +38,10 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Siri control.
 
 <p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" height="300" /></a> 
-</p>
-
-<p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Changing the accessory input" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/inputs.png" height="300" /></a>
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Remote control interface" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" height="300" /></a>
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" height="300" /></a>
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="480" /></a> 
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Changing the accessory input" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/inputs.png" width="115" /></a>
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Remote control interface" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" width="115" /></a>
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" width="115" /></a>
 </p>
 
 ## Configuration console
@@ -72,43 +57,43 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 4. After accept permiossion for this app copy the part after `?code=` from the response URI and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again, done.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" height="500"></a>
-</p>
-<p align="left">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" height="170"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="500"></a>
 </p>
 
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) plugin to configure this plugin (strongly recomended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+
+<p align="left">
+	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
+</p>
+
 | Key | Description | 
 | --- | --- |
-| `name` | Name of Your console |
-| `host` | Address IP of Your console |
-| `xboxliveid` | on your console select Profile & system > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
+| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
+| `host` | Here set the *Hsostname or Address IP* of TV.|
+| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number* |
 | `clientID` | Optional, If You create app on Azure AD then You can use Your own ClientID |
 | `clientSecret` | Optional, If You create app on Azure AD then You can use Your own ClientSecret |
 | `userToken` | Optional alternate authentication method. |
 | `uhs` | Optional alternate authentication method. |
 | `xboxWebApiToken` | Required if `xboxWebApiEnabled` enabled.|
-| `webApiControl` | Optional, if `true` the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section |
-| `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds |
-| `volumeControl`| Select what a additional volume control mode You want to use (None, Slider, Fan) |
-| `switchInfoMenu`| If `true` then the `I` button will toggle its behaviour in the Apple Remote in Control Center and `PowerModeSelection` in settings |
-| `disableLogInfo`| If `true` then disable log info, all values and state will not be displayed in Homebridge log console |
-| `getInputsFromDevice`| If `true` then enable possibility get apps direct from device, only available if `webApiControl` is enabled |
-| `filterGames`| If `true` Games will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
-| `filterApps`| If `true` Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
-| `filterSystemApps`| If `true` System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
-| `filterDlc`| If `true` Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` is enabled |
-| `rebootControl`| If `true` then enable possibility reboot console, only available if `webApiControl` is enabled |
-| `inputs` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
-| `buttons` | same as inputs but appear in HomeKit.app as extra tile |
-| `reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
-| `oneStoreProductId` | Optional to switch apps, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
-| `type` | Optional choice from available options |
-| `manufacturer` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
-| `modelName` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
-| `serialNumber` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
-| `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app if it is filled in |
+| `webApiControl` | Optional, if enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section |
+| `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds. |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `getInputsFromDevice`| If enabled, then enable possibility get apps direct from device, only available if `webApiControl` enabled |
+| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled |
+| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled |
+| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled |
+| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled |
+| `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled |
+| `inputs.name` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+| `inputs.oneStoreProductId` | Optional to switch apps, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+| `inputs.type` | Optional choice from available options |
+| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+| `manufacturer`, `model`, `serialNumber`, `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app. |
 
 ```json
 {
@@ -187,13 +172,21 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 }
 ```
 
+## Adding to HomeKit
+Each accessory needs to be manually paired. 
+1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
+2. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
+3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*. 
+4. Select Your accessory. 
+5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+
 ## Limitations
 * Due to a HomeKit limitation, that maximum services for 1 accessory is 100. Acessories containing services above this value in the HomeKit app will not respond.
 * If all services are enabled possible inputs to use is 95. The services in this accessory are:
   * Information service.
   * Speaker service.
   * Lightbulb service.
-  * Fan service.
+  * Fan service
   * Television service.
   * Inputs service which may range from 6 to 100 as each input is 1 service.
   * Buttons service which may range from 6 to 100 as each input is 1 service.
