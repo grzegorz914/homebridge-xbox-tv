@@ -184,15 +184,15 @@ Each accessory needs to be manually paired.
 5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
 ## Limitations
-* Due to a HomeKit limitation, that maximum services for 1 accessory is 100. Acessory containing > 100 services will not respond.
-* If all services are enabled possible inputs to use is 95. The services in this accessory are:
-  * Information service.
-  * Speaker service.
-  * Lightbulb service.
-  * Fan service
-  * Television service.
-  * Inputs service which may range from 6 to 100 as each input is 1 service.
-  * Buttons service which may range from 6 to 100 as each input is 1 service.
+* That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
+* The Services in this accessory are:
+  * Information.
+  * Speaker.
+  * Lightbulb.
+  * Fan.
+  * Television.
+  * Inputs, which may range from 6 to 100 as each input is 1 service.
+  * Buttons, which may range from 6 to 100 as each input is 1 service.
 
 ## Whats new
 https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md
