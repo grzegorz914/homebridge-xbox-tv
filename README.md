@@ -35,7 +35,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
 * Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
 * Apps, Inputs and Games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case are only displayed.
-* Siri can be used to control Legacy Volume, Mute and switch Games, Apps with Buttons.
+* Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="480" /></a> 
