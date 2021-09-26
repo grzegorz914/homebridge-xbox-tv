@@ -24,8 +24,8 @@
 							"title": "Address IP",
 							"type": "string",
 							"placeholder": "192.168.1.6",
-							"required": true,
-							"format": "hostname"
+							"format": "hostname",
+							"required": true
 						},
 						"xboxliveid": {
 							"title": "Live ID",
@@ -81,15 +81,15 @@
 							"title": "Disable log info",
 							"type": "boolean",
 							"default": false,
-							"required": false,
-							"description": "This disable log info, all values and state will not be displayed in Homebridge log console."
+							"description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
+							"required": false
 						},
 						"webApiControl": {
 							"title": "Enable Web Api",
 							"type": "boolean",
 							"default": false,
-							"required": false,
-							"description": "This enable possibility to control Xbox over Web Api."
+							"description": "This enable possibility to control Xbox over Web Api.",
+							"required": false
 						},
 						"volumeControl": {
 							"title": "Volume control mode",
@@ -116,21 +116,21 @@
 									]
 								}
 							],
-							"required": false
+							"required": true
 						},
 						"switchInfoMenu": {
 							"title": "Switch Info/Menu",
 							"type": "boolean",
 							"default": false,
-							"required": false,
-							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings."
+							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
+							"required": false
 						},
 						"rebootControl": {
 							"title": "Enable reboot control",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "This enable possibility reboot console if web api is enabled.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
@@ -139,8 +139,8 @@
 							"title": "Load inputs from device",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
@@ -149,8 +149,8 @@
 							"title": "Hide Games",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "If enabled, Games will not be displayed on the list of inputs.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
@@ -159,8 +159,8 @@
 							"title": "Hide Apps",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "If enabled, Apps will not be displayed on the list of inputs.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
@@ -169,8 +169,8 @@
 							"title": "Hide System Apps",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "If enabled, System Apps (Accessory, TV) will not be displayed on the list of inputs.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
@@ -179,8 +179,8 @@
 							"title": "Hide DLC",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "If enabled, DLC will not be displayed on the list of inputs.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
@@ -316,7 +316,7 @@
 										"type": "string",
 										"placeholder": "Input oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": true
+										"required": false
 									}
 								}
 							}
