@@ -24,7 +24,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 
 ## Note
 * For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
-* Authorization console using *Wen Api Wizard* still in Test Phase.
+* Authorization console using *Web Api Wizard* still in Test Phase.
 
 ## Know issues
 * If used with Hoobs, there is a possible configuration incompatibilty.
@@ -33,9 +33,9 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Power ON/OFF short press tile in HomeKit app.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan` (slider) or using Siri `Volume Service`.
-* Apps, Inputs and Games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case the current apps, inputs, games can be only displayed.
-* Siri control.
+* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
+* Apps, Inputs and Games can be controled and switched if `xboxWebApiEnabled` and the console is authenticated. In other case are only displayed.
+* Siri can be used to control Legacy Volume, Mute and switch Games, Apps with Buttons.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="480" /></a> 
