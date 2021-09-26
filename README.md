@@ -194,8 +194,7 @@ Each accessory needs to be manually paired.
   * Inputs, which may range from 6 to 100 as each input is 1 service.
   * Buttons, which may range from 6 to 100 as each input is 1 service.
 
-## Whats new
-https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md
+## [What's New](https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md)
 
 ## Development
 * Pull request and help in development highly appreciated.
