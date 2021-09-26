@@ -76,13 +76,13 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of TV.|
 | `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number*. |
-| `clientID` | Optional, If You create app on Azure AD then You can use Your own ClientID. |
-| `clientSecret` | Optional, If You create app on Azure AD then You can use Your own ClientSecret. |
+| `clientID` | Optional, If You create app on Azure AD then You can use own ClientID. |
+| `clientSecret` | Optional, If You create app on Azure AD then You can use own ClientSecret. |
 | `userToken` | Optional alternate authorization method. |
 | `uhs` | Optional alternate authorization method. |
 | `xboxWebApiToken` | Required if `xboxWebApiEnabled` enabled.|
 | `webApiControl` | Optional, if enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
-| `refreshInterval` | Set the data refresh time in seconds, default is every 5 seconds. |
+| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
