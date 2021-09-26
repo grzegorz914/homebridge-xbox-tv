@@ -46,13 +46,13 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 </p>
 
 ## Configuration Console
-1. [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
+* [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
   * Profile & System > Settings > General > Power mode & startup
-2. Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
+* Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Configuration Web API Wizard
-1. First of all use built in Authentication Manager from config menu, if this fail use Configuration Web API Manual.
+* First of all please use built in Authentication Manager, if this fail use Configuration Web API Manual.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
