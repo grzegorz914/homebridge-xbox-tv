@@ -51,14 +51,14 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
-## Configuration Web API Wizard
-* First of all please use built in Authentication Manager, if this fail use Configuration Web API Manual.
+## Web API Wizard
+* First of all please use built in Authorization Manager, if this fail use Web API Manual.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
-### Configuration Web API Manual
+### Web API Manual
 * After enable `xboxWebApiEnabled` option, restart the plugin and go to Homebridge console log.
 * Open the authentication URI and login to Your Xbox Live account, next accept permission for this app.
 * After accept permission for this app copy the part after `?code=` from the response URI and paste it in to the `xboxWebApiToken` in plugin config, save and restart the plugin again, done.
