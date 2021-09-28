@@ -74,7 +74,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | Key | Description | 
 | --- | --- |
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
-| `host` | Here set the *Hsostname or Address IP* of TV.|
+| `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox Live device ID**. *You can only find the Xbox Live device ID in Settings on your console, this is different from your console serial number*. |
 | `clientID` | Optional, If You create app on Azure AD then You can use own ClientID. |
 | `clientSecret` | Optional, If You create app on Azure AD then You can use own ClientSecret. |
@@ -86,7 +86,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
-| `getInputsFromDevice`| If enabled, then enable possibility get apps direct from device, only available if `webApiControl` enabled. |
+| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
