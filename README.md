@@ -34,7 +34,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
 * Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
-* Apps, Inputs, Games can be switched if `xboxWebApiEnabled` and console is authorized
+* Apps, Inputs, Games can be switched if `webApiControl` and console is authorized
 * Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
 * Home automations and shortcuts can be used for all functions.
 
@@ -59,7 +59,7 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 </p>
 
 ### Authorization Manual
-* After enable `xboxWebApiEnabled` option, restart the plugin and go to Homebridge console log.
+* After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
 * Open the authorization URI and login to Your Xbox Live account, next accept permission for this app.
 * After accept permission copy the part after `?code=` from the response URI and paste it in to the `xboxWebApiToken`.
 * Next save and restart the plugin again, done.
