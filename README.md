@@ -93,12 +93,13 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled. | Optional |
 | `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. | Required |
-| `inputs.reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Required |
-| `inputs.oneStoreProductId` | Required to switch app, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Optional |
+| `inputs.reference` | Required to identify current running app. | Required |
+| `inputs.oneStoreProductId` | Required to switch apps. | Optional |
 | `inputs.type` | Choice from available options. | Optional |
-| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |  Required |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Required |
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app. | Optional |
+| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |  Optional |
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. | Optional |
+| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. | Optional |
+| `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Optional |
 
 ```json
 {
