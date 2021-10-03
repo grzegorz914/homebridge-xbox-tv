@@ -71,34 +71,34 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
 </p>
 
-| Key | Description | 
-| --- | --- |
-| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
-| `host` | Here set the *Hsostname or Address IP* of Console.|
-| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
-| `clientID` | Optional, If You create app on Azure AD then You can use own ClientID. |
-| `clientSecret` | Optional, If You create app on Azure AD then You can use own ClientSecret. |
-| `userToken` | Optional alternate authorization method. |
-| `uhs` | Optional alternate authorization method. |
-| `webApiControl` | Optional, if enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
-| `xboxWebApiToken` | Required if `webApiControl` enabled.|
-| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| Key | Description | Required |
+| --- | --- | --- |
+| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. | Required |
+| `host` | Here set the *Hsostname or Address IP* of Console.| Required |
+| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. | Required |
+| `clientID` | If You create app on Azure AD then You can use own ClientID. | Optional |
+| `clientSecret` | If You create app on Azure AD then You can use own ClientSecret. | Optional |
+| `userToken` | Alternate authorization method. | Optional |
+| `uhs` | Alternate authorization method. | Optional |
+| `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. | Optional |
+| `xboxWebApiToken` | Required if `webApiControl` enabled. | Optional |
+| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. | Required |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. | Optional |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). | Optional |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
-| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
-| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. | Optional |
+| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled. |
-| `inputs.name` | Configure apps/inputs which will be published and appear in HomeKit app in the device tile as inputs list, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
-| `inputs.reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
-| `inputs.oneStoreProductId` | Optional to switch apps, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
-| `inputs.type` | Optional choice from available options. |
-| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. | 
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app. |
+| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
+| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
+| `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled. | Optional |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Required |
+| `inputs.oneStoreProductId` | Required to switch app, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Optional |
+| `inputs.type` | Choice from available options. | Optional |
+| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |  Required |
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Required |
+| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Optional free-form informational data that will be displayed in the Home.app. | Optional |
 
 ```json
 {
