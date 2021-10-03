@@ -163,11 +163,11 @@ class xboxTvDevice {
 		const inputsCount = this.inputs.length;
 		for (let j = 0; j < inputsCount; j++) {
 			const obj = {
-				'name': this.inputs[1].name,
-				'titleId': this.inputs[1].titleId,
-				'reference': this.inputs[1].reference,
-				'oneStoreProductId': this.inputs[1].oneStoreProductId,
-				'type': this.inputs[1].type,
+				'name': this.inputs[j].name,
+				'titleId': this.inputs[j].titleId,
+				'reference': this.inputs[j].reference,
+				'oneStoreProductId': this.inputs[j].oneStoreProductId,
+				'type': this.inputs[j].type,
 				'contentType': 'Game'
 			}
 			inputsArr.push(obj);
