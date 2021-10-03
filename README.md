@@ -85,14 +85,14 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. | Required |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. | Optional |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). | Optional |
-| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. | Optional |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. | Optional |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled. | Optional |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. | Required |
 | `inputs.reference` | Required to identify current running app, open homebridge console and look in the log or if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Required |
 | `inputs.oneStoreProductId` | Required to switch app, if web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Optional |
 | `inputs.type` | Choice from available options. | Optional |
