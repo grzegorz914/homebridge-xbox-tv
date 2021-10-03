@@ -377,7 +377,6 @@
 					{
 						"key": "devices[].inputs",
 						"type": "array",
-						"orderable": false,
 						"buttonText": "Add input",
 						"items": [
 							"devices[].inputs[].name",
@@ -400,7 +399,6 @@
 				"items": [{
 					"key": "devices[].buttons",
 					"type": "array",
-					"orderable": false,
 					"buttonText": "Add button",
 					"items": [
 						"devices[].buttons[].name",
