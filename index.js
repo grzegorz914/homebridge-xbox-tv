@@ -1314,8 +1314,8 @@ class xboxTvDevice {
 			this.inputsName.push(inputName);
 			this.inputsType.push(inputType);
 
-			this.televisionService.addLinkedService(this.inputsService[j]);
-			accessory.addService(this.inputsService[j]);
+			this.televisionService.addLinkedService(inputService);
+			accessory.addService(inputService);
 		}
 
 		//Prepare inputs button services
