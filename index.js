@@ -195,16 +195,11 @@ class xboxTvDevice {
 		this.checkDeviceInfo = false;
 		this.webApiEnabled = false;
 
-		this.inputsService = new Array();
 		this.inputsReference = new Array();
 		this.inputsOneStoreProductId = new Array();
 		this.inputsName = new Array();
 		this.inputsTitleId = new Array();
 		this.inputsType = new Array();
-
-		this.buttonsService = new Array();
-		this.buttonsOneStoreProductId = new Array();
-		this.buttonsName = new Array();
 
 		this.powerState = false;
 		this.volume = 0;
@@ -1141,7 +1136,6 @@ class xboxTvDevice {
 				};
 			});
 
-		this.televisionService.addLinkedService(this.speakerService);
 		accessory.addService(this.speakerService);
 
 		//Prepare volume service
@@ -1165,8 +1159,10 @@ class xboxTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeService);
 			}
+
 			if (this.volumeControl == 2) {
 				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'Volume');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
@@ -1185,6 +1181,7 @@ class xboxTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
@@ -1317,7 +1314,6 @@ class xboxTvDevice {
 			this.inputsName.push(inputName);
 			this.inputsType.push(inputType);
 
-			this.inputsService.push(inputService);
 			this.televisionService.addLinkedService(this.inputsService[j]);
 			accessory.addService(this.inputsService[j]);
 		}
@@ -1373,11 +1369,8 @@ class xboxTvDevice {
 							.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
-			this.buttonsOneStoreProductId.push(buttonOneStoreProductId);
-			this.buttonsName.push(buttonName);
 
-			this.buttonsService.push(buttonService)
-			accessory.addService(this.buttonsService[i]);
+			accessory.addService(buttonService);
 		}
 
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
