@@ -38,10 +38,9 @@
   },
   "keywords": [
     "homebridge",
-    "homebridge-plugin",
-    "HomeKit",
-    "homebridge-xbox-tv",
-    "XboxTv"
+    "homekit",
+    "xbox",
+    "microsoft"
   ],
   "contributors": [],
   "scripts": {
