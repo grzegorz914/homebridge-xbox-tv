@@ -34,14 +34,6 @@ const CONSOLE_PLAYBACK_STATE = {
 	'Unknown': 3
 };
 const DEFAULT_INPUTS = [{
-		'name': 'Unconfigured input',
-		'titleId': 'undefined',
-		'reference': 'undefined',
-		'oneStoreProductId': 'undefined',
-		'type': 'undefined',
-		'contentType': 'undefined'
-	},
-	{
 		'name': 'Television',
 		'titleId': 'Television',
 		'reference': 'Xbox.Television',
@@ -77,14 +69,14 @@ const DEFAULT_INPUTS = [{
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 
-let Accessory, Characteristic, Service, Categories, AccessoryUUID;
+let Accessory, Characteristic, Service, Categories, UUID;
 
 module.exports = (api) => {
 	Accessory = api.platformAccessory;
 	Characteristic = api.hap.Characteristic;
 	Service = api.hap.Service;
 	Categories = api.hap.Categories;
-	AccessoryUUID = api.hap.uuid;
+	UUID = api.hap.uuid;
 	api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, xboxTvPlatform, true);
 };
 
@@ -115,12 +107,12 @@ class xboxTvPlatform {
 	}
 
 	configureAccessory(accessory) {
-		this.log.debug('configurePlatformAccessory');
+		this.log.debug('configureAccessory');
 		this.accessories.push(accessory);
 	}
 
 	removeAccessory(accessory) {
-		this.log.debug('removePlatformAccessory');
+		this.log.debug('removeAccessory');
 		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
@@ -221,16 +213,7 @@ class xboxTvDevice {
 		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.targetVisibilityInputsFile = prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
-
-		this.xbox = Smartglass();
-
-		this.xboxWebApi = XboxWebApi({
-			clientId: this.clientID,
-			clientSecret: this.clientSecret,
-			userToken: this.userToken,
-			uhs: this.uhs
-		});
+		this.inputsTargetVisibilityFile = prefDir + '/' + 'inputsTargetVisibility_' + this.host.split('.').join('');
 
 		//check if the directory exists, if not then create it
 		if (fs.existsSync(prefDir) == false) {
@@ -248,9 +231,18 @@ class xboxTvDevice {
 		if (fs.existsSync(this.inputsNamesFile) == false) {
 			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
-		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
-			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
+		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+			fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
 		}
+
+		this.xbox = Smartglass();
+
+		this.xboxWebApi = XboxWebApi({
+			clientId: this.clientID,
+			clientSecret: this.clientSecret,
+			userToken: this.userToken,
+			uhs: this.uhs
+		});
 
 		//Check net state
 		setInterval(function () {
@@ -708,7 +700,7 @@ class xboxTvDevice {
 			const titleId = this.titleId
 			const inputReference = this.inputReference;
 
-			const currentInputIdentifier = this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : 0;
+			const currentInputIdentifier = this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputIdentifier;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
 			const inputName = this.inputsName[inputIdentifier];
@@ -769,7 +761,7 @@ class xboxTvDevice {
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
-		const accessoryUUID = AccessoryUUID.generate(this.xboxliveid);
+		const accessoryUUID = UUID.generate(this.xboxliveid);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 		accessory.context.device = this.config.device;
@@ -1207,6 +1199,7 @@ class xboxTvDevice {
 							.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
+
 			accessory.addService(this.rebootService);
 		}
 
@@ -1219,14 +1212,13 @@ class xboxTvDevice {
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		this.log.debug('Device: %s %s, read saved custom Inputs Names successful, names: %s', this.host, accessoryName, savedInputsNames)
 
-		const savedTargetVisibility = ((fs.readFileSync(this.targetVisibilityInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+		const savedTargetVisibility = ((fs.readFileSync(this.inputsTargetVisibilityFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		this.log.debug('Device: %s %s, read saved Target Visibility successful, states %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check available inputs and filter costom inputs
 		const allInputs = (savedInputs.length > 0) ? savedInputs : this.inputs;
 		const inputsArr = new Array();
 		const allInputsCount = allInputs.length;
-		const installedAppsArr = this.installedAppsArr;
 		for (let i = 0; i < allInputsCount; i++) {
 			const contentType = allInputs[i].contentType;
 			const filterGames = this.filterGames ? (contentType != 'Game') : true;
@@ -1298,7 +1290,7 @@ class xboxTvDevice {
 						let newState = savedTargetVisibility;
 						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
-						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.targetVisibilityInputsFile, newTargetVisibility) : false;
+						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, saved new Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 						}
