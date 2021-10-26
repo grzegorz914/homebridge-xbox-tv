@@ -91,7 +91,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `rebootControl` | If enabled, reboot console will be possible, only available if `webApiControl` enabled. | Optional |
+| `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. | Optional |
+| `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. | Optional |
 | `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. | Required |
 | `inputs.reference` | Required to identify current running app. | Required |
 | `inputs.oneStoreProductId` | Required to switch apps. | Optional |
@@ -125,6 +126,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterSystemApps": false,
 			"filterDlc": false,
 			"rebootControl": false,
+			"recordGameDvr": false,
 			"inputs": [
 						{
 							"name": "A Way Out",

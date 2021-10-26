@@ -34,39 +34,41 @@ class PluginUiServer extends HomebridgePluginUiServer {
         uhs: ''
       });
 
-      webApiCheck._authentication._tokensFile = authTokenFile;
-      webApiCheck.isAuthenticated().then(() => {
+      try {
+        webApiCheck._authentication._tokensFile = authTokenFile;
+        const isAuthenticated = await webApiCheck.isAuthenticated();
         this.data = {
           res: 'Console already authenticated',
           status: 0
         }
-      }).catch(() => {
+      } catch (error) {
         if (token != undefined) {
-          webApiCheck._authentication.getTokenRequest(token).then((authToken) => {
-            webApiCheck._authentication._tokens.oauth = authToken;
+          const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
+          this.data = {
+            res: oauth2URI,
+            status: 1
+          }
+          try {
+            const authenticationData = await webApiCheck._authentication.getTokenRequest(token);
+            webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {
               res: 'Console successfully authenticated and *autToken* file saved',
               status: 3
             }
-          }).catch(() => {
+          } catch (error) {
             this.data = {
-              res: 'Authorization and Token file saved error.',
+              res: 'Authorization and Token file save error.',
               status: 4
             }
-          });
+          };
         } else {
           this.data = {
             res: 'Authorization link empty, check *authToken* file.',
             status: 2
           }
         }
-        const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
-        this.data = {
-          res: oauth2URI,
-          status: 1
-        }
-      });
+      };
 
       return this.data;
     } catch (e) {

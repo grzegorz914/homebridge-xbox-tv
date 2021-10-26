@@ -126,14 +126,21 @@
 							"required": false
 						},
 						"rebootControl": {
-							"title": "Enable reboot control",
+							"title": "Reboot Console",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable possibility reboot console if web api is enabled.",
+							"description": "This enable possibility reboot Console if web api is enabled.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
+						},
+						"recordGameDvr": {
+							"title": "Record Game DVR",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable possibility record Game DVR.",
+							"required": false
 						},
 						"getInputsFromDevice": {
 							"title": "Load inputs from device",
@@ -434,6 +441,7 @@
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
 					"devices[].rebootControl",
+					"devices[].recordGameDvr",
 					"devices[].refreshInterval",
 					"devices[].volumeControl"
 				]

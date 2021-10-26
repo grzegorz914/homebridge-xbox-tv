@@ -143,6 +143,7 @@ class xboxTvDevice {
 		this.filterSystemApps = config.filterSystemApps || false;
 		this.filterDlc = config.filterDlc || false;
 		this.rebootControl = config.rebootControl || false;
+		this.recordGameDvr = config.recordGameDvr || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
@@ -183,6 +184,7 @@ class xboxTvDevice {
 		this.devNetConfigData = {};
 
 		//setup variables
+		this.deviceIsOnline = false;
 		this.connectedToDevice = false;
 		this.checkDeviceInfo = false;
 		this.webApiEnabled = false;
@@ -246,13 +248,44 @@ class xboxTvDevice {
 			uhs: this.uhs
 		});
 
-		try {
-			const discoveryConsolesData = this.xbox.discovery(this.host);
-			this.log.debug('Device: %s %s, discovered.', this.host, this.name);
-			this.connectToXbox();
-		} catch (error) {
-			this.log.debug('Device: %s %s, discovering error: %s', this.host, this.name, error);
-		};
+		setInterval(async function () {
+			if (!this.connectedToDevice) {
+				this.xbox = Smartglass();
+				try {
+					const discoveryData = await this.xbox.discovery(this.host);
+					this.log.debug('Device: %s %s, debug discoveryData: %s.', this.host, this.name, discoveryData);
+
+					const consolesArr = new Array();
+					const consolesCount = discoveryData.length;
+					if (consolesCount > 0) {
+						for (let i = 0; i < consolesCount; i++) {
+							const message = discoveryData[i].message;
+							const addressIp = discoveryData[i].remote.address;
+							const family = discoveryData[i].remote.family;
+							const port = discoveryData[i].remote.port;
+							const size = discoveryData[i].remote.size;
+
+							const obj = {
+								message: message,
+								addressIp: addressIp,
+								family: family,
+								port: port,
+								size: size
+							}
+							consolesArr.push(obj);
+							this.log.debug('Device: %s %s, debug discovery obj: %s', this.host, this.name, obj);
+
+						}
+						this.deviceIsOnline = true;
+						this.connectToXbox();
+					}
+				} catch (error) {
+					this.log.debug('Device: %s %s, discovery error: %s', this.host, this.name, error);
+					this.deviceIsOnline = false;
+				};
+			}
+
+		}.bind(this), this.refreshInterval * 1000);
 
 		setInterval(function () {
 			if (this.connectedToDevice) {
@@ -266,47 +299,92 @@ class xboxTvDevice {
 		this.prepareAccessory();
 	}
 
-	connectToXbox() {
-		this.xbox = Smartglass();
-		this.xbox.connect(this.host).then(() => {
-			this.log('Device: %s %s, connected.', this.host, this.name);
+	async connectToXbox() {
+		try {
+			this.xbox = Smartglass();
+			await this.xbox.connect(this.host);
 			this.xbox.addManager('system_input', SystemInputChannel());
 			this.xbox.addManager('system_media', SystemMediaChannel());
 			this.xbox.addManager('tv_remote', TvRemoteChannel());
 			this.connectedToDevice = true;
 			this.checkDeviceInfo = true;
 
-			if (this.televisionService) {
-				this.televisionService
-					.updateCharacteristic(Characteristic.Active, true);
-			}
+			this.xbox.on('_on_console_status', (response, config, smartglass) => {
+				this.log.debug('Device %s %s, debug _on_console_status response: %s, apps: %s, config: %s, smartglass: %s', this.host, this.name, response.packet_decoded.protected_payload, response.packet_decoded.protected_payload.apps[0], config, smartglass);
+				if (response.packet_decoded.protected_payload.apps[0] != undefined) {
+					const devInfoAndAppsData = response.packet_decoded.protected_payload;
+					const devConfigData = config;
+					const devNetConfigData = smartglass;
 
-			const getDeviceInfo = !this.webApiControl ? this.getDeviceInfo() : this.getWebApiToken();
-		}).catch(error => {
-			this.log.debug('Device: %s %s, connection error: %s', this.host, this.name, error);
-		});
+					const live_tv_provider = devInfoAndAppsData.live_tv_provider;
+					const major_version = devInfoAndAppsData.major_version;
+					const minor_version = devInfoAndAppsData.minor_version;
+					const build_number = devInfoAndAppsData.build_number;
+					const locale = devInfoAndAppsData.locale;
 
-		this.xbox.on('_on_timeout', () => {
-			this.log('Device: %s %s, disconnected.', this.host, this.name);
-			this.connectedToDevice = false;
-			this.checkDeviceInfo = false;
-			this.powerState = false;
+					const titleId = devInfoAndAppsData.apps[0].title_id;
+					const flags = devInfoAndAppsData.apps[0].flags;
+					const productId = devInfoAndAppsData.apps[0].product_id;
+					const sandboxId = devInfoAndAppsData.apps[0].sandbox_id;
+					const aumId = devInfoAndAppsData.apps[0].aum_id;
 
-			if (this.televisionService) {
-				this.televisionService
-					.updateCharacteristic(Characteristic.Active, false);
-			}
-		});
+					const ip = devConfigData._ip;
+					const certificate = devConfigData._certificate;
+					const iv = devConfigData._iv;
+					const liveid = devConfigData._liveid;
+					const is_authenticated = devConfigData._is_authenticated;
+					const participantid = devConfigData._participantid;
+					const connection_status = devConfigData._connection_status;
+					const request_num = devConfigData._request_num;
+					const target_participant_id = devConfigData._target_participant_id;
+					const source_participant_id = devConfigData._source_participant_id;
+					const fragments = devConfigData._fragments;
+
+
+					const address = devNetConfigData.address;
+					const family = devNetConfigData.family;
+					const port = devNetConfigData.port;
+					const size = devNetConfigData.size;
+
+					this.devInfoAndAppsData = devInfoAndAppsData;
+					this.devConfigData = devConfigData;
+					this.devNetConfigData = devNetConfigData;
+
+					this.titleId = titleId;
+					this.inputReference = aumId;
+					this.major_version = major_version;
+					this.minor_version = minor_version;
+					this.build_number = build_number;
+					this.liveid = liveid;
+
+					const getDeviceInfoUpdateDeviceState = this.checkDeviceInfo ? this.getDeviceInfo() : this.updateDeviceState();
+				}
+			}, function (error) {
+				this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
+				this.checkDeviceInfo = true;
+			});
+
+			this.xbox.on('_on_timeout', () => {
+				this.log('Device: %s %s, Disconnected.', this.host, this.name);
+				this.deviceIsOnline = false;
+				this.connectedToDevice = false;
+				this.checkDeviceInfo = false;
+				this.updateDeviceState();
+			});
+		} catch (error) {
+			this.log('Device: %s %s, connection error: %s', this.host, this.name, error);
+		};
 	};
 
-	getWebApiToken() {
+	async getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
-		this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
-		this.xboxWebApi.isAuthenticated().then(() => {
+		try {
+			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
+			const isAuthenticated = await this.xboxWebApi.isAuthenticated();
 			this.log('Device: %s %s, authenticated and web api enabled.', this.host, this.name);
 			this.webApiEnabled = true;
 			this.getWebApiInstalledApps();
-		}).catch(() => {
+		} catch (error) {
 			const oauth2URI = this.xboxWebApi._authentication.generateAuthorizationUrl();
 			this.log('----- Device: %s %s start authentication process -----', this.host, this.name, );
 			this.log('1. Open the URI: %s', oauth2URI);
@@ -317,30 +395,32 @@ class xboxTvDevice {
 			this.log('----------------------------------------------------------------------------------------');
 			if (this.xboxWebApiToken != undefined) {
 				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
-				this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken).then((data) => {
+				try {
+					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);
 					this.log.debug('Device: %s %s, get oauth2 Web Api Token:', this.host, this.name, data);
 
-					this.xboxWebApi._authentication._tokens.oauth = data;
+					this.xboxWebApi._authentication._tokens.oauth = authenticationData;
 					this.xboxWebApi._authentication.saveTokens();
 					this.webApiEnabled = true;
 					this.getWebApiInstalledApps();
-				}).catch((error) => {
+				} catch (error) {
 					this.log.debug('Device: %s %s, getTokenRequest error: %s:', this.host, this.name, error);
 					this.webApiEnabled = false;
-				});
+				};
 			} else {
 				this.log('Device: %s %s, web api disabled, token undefined.', this.host, this.name);
 				this.webApiEnabled = false;
 			}
-		});
+		};
 	}
 
-	getWebApiConsolesList() {
+	async getWebApiConsolesList() {
 		this.log.debug('Device: %s %s, requesting web api consoles list.', this.host, this.name);
-		this.xboxWebApi.getProvider('smartglass').getConsolesList().then((response) => {
-			this.log.debug('Device: %s %s, debug getConsolesList, result: %s, %s', this.host, this.name, response.result[0], response.result[0].storageDevices[0]);
-			const consolesListData = response.result;
+		try {
+			const getConsolesListData = await this.xboxWebApi.getProvider('smartglass').getConsolesList();
+			this.log.debug('Device: %s %s, debug getConsolesListData, result: %s, %s', this.host, this.name, getConsolesListData.result[0], getConsolesListData.result[0].storageDevices[0]);
+			const consolesListData = getConsolesListData.result;
 
 			this.consolesId = new Array();
 			this.consolesName = new Array();
@@ -407,16 +487,17 @@ class xboxTvDevice {
 
 			this.consolesListData = consolesListData;
 			this.getWebApiUserProfile();
-		}).catch((error) => {
+		} catch (error) {
 			this.log.error('Device: %s %s, get Consoles List error: %s.', this.host, this.name, error);
-		});
+		};
 	}
 
-	getWebApiUserProfile() {
+	async getWebApiUserProfile() {
 		this.log.debug('Device: %s %s, requesting web api user profile.', this.host, this.name);
-		this.xboxWebApi.getProvider('profile').getUserProfile().then((response) => {
-			this.log.debug('Device: %s %s, debug getUserProfile, result: %s', this.host, this.name, response.profileUsers[0], response.profileUsers[0].settings[0]);
-			const userProfileData = response.profileUsers;
+		try {
+			const getUserProfileData = await this.xboxWebApi.getProvider('profile').getUserProfile();
+			this.log.debug('Device: %s %s, debug getUserProfileData, result: %s', this.host, this.name, getUserProfileData.profileUsers[0], getUserProfileData.profileUsers[0].settings[0]);
+			const userProfileData = getUserProfileData.profileUsers;
 
 			this.userProfileId = new Array();
 			this.userProfileHostId = new Array();
@@ -447,15 +528,16 @@ class xboxTvDevice {
 
 			this.userProfileData = userProfileData;
 			this.getWebApiInstalledApps();
-		}).catch((error) => {
+		} catch (error) {
 			this.log.error('Device: %s %s, get User Profile error: %s.', this.host, this.name, error);
-		});
+		};
 	}
 
-	getWebApiInstalledApps() {
+	async getWebApiInstalledApps() {
 		this.log.debug('Device: %s %s, requesting installed apps from xbox live account.', this.host, this.name);
-		this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxliveid).then((response) => {
-			this.log.debug('Device: %s %s, debug getInstalledApps: %s', this.host, this.name, response.result);
+		try {
+			const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxliveid);
+			this.log.debug('Device: %s %s, debug getInstalledAppsData: %s', this.host, this.name, getInstalledAppsData.result);
 
 			const inputsArr = new Array();
 			const defaultInputsCount = DEFAULT_INPUTS.length;
@@ -464,7 +546,7 @@ class xboxTvDevice {
 			}
 
 			//get installed inputs/apps from web
-			const inputsData = response.result;
+			const inputsData = getInstalledAppsData.result;
 			const inputsCount = inputsData.length;
 			for (let i = 0; i < inputsCount; i++) {
 				const oneStoreProductId = inputsData[i].oneStoreProductId;
@@ -496,29 +578,30 @@ class xboxTvDevice {
 				inputsArr.push(inputsObj);
 			}
 			const obj = JSON.stringify(inputsArr, null, 2);
-			const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
+			const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
 			this.log.debug('Device: %s %s, saved inputs/apps list: %s', this.host, this.name, obj);
 
 			this.installedAppsData = inputsData;
 			this.getWebApiStorageDevices();
-		}).catch((error) => {
+		} catch (error) {
 			if (error.status == 401) {
 				this.getWebApiToken();
 				this.log('Device: %s %s, with liveid: %s, get Installed Apps error, trying to reauthenticate.', this.host, this.name, this.xboxliveid);
 			} else {
 				this.log.error('Device: %s %s, with liveid: %s, get Installed Apps error: %s.', this.host, this.name, this.xboxliveid, error);
 			}
-		});
+		};
 	}
 
-	getWebApiStorageDevices() {
+	async getWebApiStorageDevices() {
 		this.log.debug('Device: %s %s, requesting web api storage devices.', this.host, this.name);
-		this.xboxWebApi.getProvider('smartglass').getStorageDevices(this.xboxliveid).then((response) => {
-			this.log.debug('Device: %s %s, debug storageDevices, result: %s', this.host, this.name, response);
+		try {
+			const getStorageDevicesData = await this.xboxWebApi.getProvider('smartglass').getStorageDevices(this.xboxliveid);
+			this.log.debug('Device: %s %s, debug getStorageDevicesData, result: %s', this.host, this.name, getStorageDevicesData);
 
-			const storageDeviceData = response.result;
-			const deviceId = response.deviceId;
-			const agentUserId = response.agentUserId;
+			const storageDeviceData = getStorageDevicesData.result;
+			const deviceId = getStorageDevicesData.deviceId;
+			const agentUserId = getStorageDevicesData.agentUserId;
 
 			this.storageDeviceId = new Array();
 			this.storageDeviceName = new Array();
@@ -545,16 +628,17 @@ class xboxTvDevice {
 			}
 			this.storageDevicesData = storageDeviceData;
 			this.getWebApiConsoleStatus();
-		}).catch((error) => {
+		} catch (error) {
 			this.log.error('Device: %s %s, with liveid: %s, get Storage Devices error: %s.', this.host, this.name, this.xboxliveid, error);
-		});
+		};
 	}
 
-	getWebApiConsoleStatus() {
+	async getWebApiConsoleStatus() {
 		this.log.debug('Device: %s %s, requesting web api device info.', this.host, this.name);
-		this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid).then((response) => {
-			this.log.debug('Device: %s %s, debug getConsoleStatus, result: %s', this.host, this.name, response);
-			const consoleStatusData = response;
+		try {
+			const getConsoleStatusData = await this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveid);
+			this.log.debug('Device: %s %s, debug getConsoleStatusData, result: %s', this.host, this.name, getConsoleStatusData);
+			const consoleStatusData = getConsoleStatusData;
 
 			const id = consoleStatusData.id;
 			const name = consoleStatusData.name;
@@ -575,113 +659,58 @@ class xboxTvDevice {
 			//this.powerState = powerState;
 			//this.mediaState = playbackState;
 			this.consoleStatusData = consoleStatusData;
-
-			const getDeviceInfo = this.checkDeviceInfo ? this.getDeviceInfo() : false;
-		}).catch((error) => {
+		} catch (error) {
 			if (error.status == 401) {
 				this.getWebApiToken();
 				this.log('Device: %s %s, with liveid: %s, get Console Status error, trying to reauthenticate.', this.host, this.name, this.xboxliveid);
 			} else {
 				this.log.error('Device: %s %s, with liveid: %s, get Console Status error: %s.', this.host, this.name, this.xboxliveid, error);
 			}
-		});
+		};
 	}
 
-	getDeviceInfo() {
+	async getDeviceInfo() {
 		this.log.debug('Device: %s %s, requesting device info.', this.host, this.name);
-		this.xbox.on('_on_console_status', (response, config, smartglass) => {
-			this.log.debug('Device %s %s, debug _on_console_status response: %s, config: %s, smartglass: %s', this.host, this.name, response.packet_decoded.protected_payload.apps[0], config, smartglass);
-			if (response.packet_decoded.protected_payload.apps[0] != undefined) {
-				const devInfoAndAppsData = response.packet_decoded.protected_payload;
-				const devConfigData = config;
-				const devNetConfigData = smartglass;
+		try {
+			//display device info
+			const manufacturer = this.manufacturer;
+			const modelName = this.modelName;
+			const serialNumber = this.webApiEnabled ? this.serialNumber : this.liveid;
+			const firmwareRevision = `${this.major_version}.${this.minor_version}.${this.build_number}`;
 
-				const live_tv_provider = devInfoAndAppsData.live_tv_provider;
-				const major_version = devInfoAndAppsData.major_version;
-				const minor_version = devInfoAndAppsData.minor_version;
-				const build_number = devInfoAndAppsData.build_number;
-				const locale = devInfoAndAppsData.locale;
+			this.log('Device: %s %s, Connected.', this.host, this.name);
+			this.log('-------- %s --------', this.name);
+			this.log('Manufacturer: %s', manufacturer);
+			this.log('Model: %s', modelName);
+			this.log('Serialnr: %s', serialNumber);
+			this.log('Firmware: %s', firmwareRevision);
+			this.log('----------------------------------');
 
-				const titleId = devInfoAndAppsData.apps[0].title_id;
-				const flags = devInfoAndAppsData.apps[0].flags;
-				const productId = devInfoAndAppsData.apps[0].product_id;
-				const sandboxId = devInfoAndAppsData.apps[0].sandbox_id;
-				const aumId = devInfoAndAppsData.apps[0].aum_id;
+			const devInfoObj = {
+				'manufacturer': manufacturer,
+				'modelName': modelName,
+				'serialNumber': serialNumber,
+				'firmwareRevision': firmwareRevision
+			};
+			const obj = JSON.stringify(devInfoObj, null, 2);
+			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, obj);
+			this.log.debug('Device: %s %s, debug writeDevInfo: %s', this.host, this.name, obj);
 
-				const ip = devConfigData._ip;
-				const certificate = devConfigData._certificate;
-				const iv = devConfigData._iv;
-				const liveid = devConfigData._liveid;
-				const is_authenticated = devConfigData._is_authenticated;
-				const participantid = devConfigData._participantid;
-				const connection_status = devConfigData._connection_status;
-				const request_num = devConfigData._request_num;
-				const target_participant_id = devConfigData._target_participant_id;
-				const source_participant_id = devConfigData._source_participant_id;
-				const fragments = devConfigData._fragments;
-
-				const address = devNetConfigData.address;
-				const family = devNetConfigData.family;
-				const port = devNetConfigData.port;
-				const size = devNetConfigData.size;
-
-				//get current media state
-				const mediaStateData = this.xbox.getManager('system_media').getState();
-				this.log.debug('Device: %s %s, debug data: %s', this.host, this.name, mediaStateData);
-				const mediaState = mediaStateData.title_id;
-
-				if (this.checkDeviceInfo) {
-					//device info
-					const manufacturer = this.manufacturer;
-					const modelName = this.modelName;
-					const serialNumber = this.webApiEnabled ? this.serialNumber : liveid;
-					const firmwareRevision = `${major_version}.${minor_version}.${build_number}`;
-
-					const devInfoObj = {
-						'manufacturer': manufacturer,
-						'modelName': modelName,
-						'serialNumber': serialNumber,
-						'firmwareRevision': firmwareRevision
-					};
-					const obj = JSON.stringify(devInfoObj, null, 2);
-					const writeDevInfo = fsPromises.writeFile(this.devInfoFile, obj);
-					this.log.debug('Device: %s %s, debug writeDevInfo: %s', this.host, this.name, obj);
-
-					this.log('-------- %s --------', this.name);
-					this.log('Manufacturer: %s', manufacturer);
-					this.log('Model: %s', modelName);
-					this.log('Serialnr: %s', serialNumber);
-					this.log('Firmware: %s', firmwareRevision);
-					this.log('----------------------------------');
-				}
-
-				this.titleId = titleId;
-				this.inputReference = aumId;
-				this.mediaState = mediaState;
-
-				this.devInfoAndAppsData = devInfoAndAppsData;
-				this.devConfigData = devConfigData;
-				this.devNetConfigData = devNetConfigData;
-				this.devNetConfigData = devNetConfigData;
-				this.mediaStateData = mediaStateData;
-
-				this.checkDeviceInfo = false;
-				this.updateDeviceState();
-			}
-		}, function (error) {
+			this.checkDeviceInfo = false
+			this.updateDeviceState()
+		} catch (error) {
 			this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
 			this.checkDeviceInfo = true;
-		});
+		};
 	}
 
 	updateDeviceState() {
-		this.log.debug('Device: %s %s, update device state.', this.host, this.name);
+		this.log.debug('Device: %s %s, debug update device state.', this.host, this.name);
 		try {
 			//get variable data
 			const powerState = this.xbox._connection_status;
 			const volume = this.volume;
 			const muteState = powerState ? this.muteState : true;
-			const mediaState = this.mediaState;
 
 			const titleId = this.titleId
 			const inputReference = this.inputReference;
@@ -692,18 +721,15 @@ class xboxTvDevice {
 			const inputName = this.inputsName[inputIdentifier];
 			const inputType = this.inputsType.indexOf(inputIdentifier);
 
+			//get current media state
+			const mediaStateData = this.xbox.getManager('system_media').getState();
+			this.log.debug('Device: %s %s, debug mediaStateData: %s', this.host, this.name, mediaStateData);
+			const mediaState = mediaStateData.title_id;
+
+			//update characteristics
 			if (this.televisionService) {
-				if (powerState) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, true)
-				} else {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, false)
-					if (this.rebootService) {
-						this.rebootService
-							.updateCharacteristic(Characteristic.On, false);
-					}
-				}
+				this.televisionService
+					.updateCharacteristic(Characteristic.Active, powerState)
 
 				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -726,6 +752,16 @@ class xboxTvDevice {
 				}
 			}
 
+			if (this.rebootService) {
+				this.rebootService
+					.updateCharacteristic(Characteristic.On, false);
+			}
+
+			if (this.recordGameDvrService) {
+				this.recordGameDvrService
+					.updateCharacteristic(Characteristic.On, false);
+			}
+
 			this.powerState = powerState;
 			this.volume = volume;
 			this.muteState = muteState;
@@ -739,7 +775,6 @@ class xboxTvDevice {
 			this.inputType = inputType;
 		} catch (error) {
 			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
-			this.checkDeviceInfo = true;
 		};
 	}
 
@@ -778,7 +813,7 @@ class xboxTvDevice {
 				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
 			accessory.addService(informationService);
 		} catch (error) {
-			this.log.debug('Device: %s %s, debug prepareInformationService error: %s', this.host, accessoryName, error);
+			this.log.debug('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
 		};
 
 
@@ -792,59 +827,26 @@ class xboxTvDevice {
 			.onGet(async () => {
 				const state = this.powerState;
 				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, get Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					this.log('Device: %s %s, get Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				}
 				return state;
 			})
 			.onSet(async (state) => {
-				if (state && !this.powerState) {
+				try {
 					const xbox = Smartglass();
-					const setPowerOn = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, web api set Power ON state successful', this.host, accessoryName);
-						}
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, true)
-						this.powerState = true;
-					}).catch((error) => {
-						this.log.error('Device: %s %s, web api set Power ON, error: %s', this.host, accessoryName, error);
-					}) : xbox.powerOn({
+					const options = {
 						live_id: this.xboxliveid,
 						tries: 15,
 						ip: this.host
-					}).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Power ON successful', this.host, accessoryName);
-						}
-						this.televisionService
-							.updateCharacteristic(Characteristic.Active, true)
-						this.powerState = true;
-					}).catch(error => {
-						this.log.error('Device: %s %s, set Power ON, error: %s', this.host, accessoryName, error);
-					});
-				} else {
-					if (!state && this.powerState) {
-						const setPowerOff = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxliveid).then(() => {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, web api set Power OFF successful', this.host, accessoryName);
-							}
-							this.televisionService
-								.updateCharacteristic(Characteristic.Active, false)
-							this.powerState = false;
-						}).catch((error) => {
-							this.log.error('Device: %s %s, set Power OFF error: %s', this.host, accessoryName, error);
-						}) : this.xbox.powerOff().then(() => {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Power OFF successful', this.host, accessoryName);
-							}
-							this.televisionService
-								.updateCharacteristic(Characteristic.Active, false)
-							this.powerState = false;
-						}).catch(error => {
-							this.log.error('Device: %s %s, set Power OFF error: %s', this.host, accessoryName, error);
-						});
+					};
+					const setPowerOn = (this.deviceIsOnline = true && !this.powerState && state) ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxliveid) : await xbox.powerOn(options) : false;
+					const setPowerOff = (this.powerState && !state) ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxliveid) : await this.xbox.powerOff() : false;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set Power successful: %s.', this.host, accessoryName, state ? 'ON' : 'OFF');
 					}
-				}
+				} catch (error) {
+					this.log.debug('Device: %s %s, set Power error: %s', this.host, this.name, error);
+				};
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
@@ -862,105 +864,85 @@ class xboxTvDevice {
 				const inputReference = this.inputsReference[inputIdentifier];
 				const inputName = this.inputsName[inputIdentifier];
 				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-				if (this.powerState) {
-					const setInput = (this.webApiEnabled) ? ((inputOneStoreProductId == 'Dashboard') || (inputOneStoreProductId == 'Settings') || (inputOneStoreProductId == 'Accessory')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, inputName, error);
-					}) : (inputOneStoreProductId == 'Television') ? this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, inputName, error);
-					}) : (inputOneStoreProductId != undefined && inputOneStoreProductId != '0') ? this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputOneStoreProductId).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, inputName, error);
-					}) : false : false;
-				}
-				this.setStartInputIdentifier = inputIdentifier;
-				this.setStartInput = this.powerState ? false : true;
-				this.inputIdentifier = inputIdentifier;
+				try {
+					const setInput = this.powerState ? this.webApiEnabled ? ((inputOneStoreProductId == 'Dashboard') || (inputOneStoreProductId == 'Settings') || (inputOneStoreProductId == 'Accessory')) ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid) : (inputOneStoreProductId == 'Television') ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveid) : (inputOneStoreProductId != undefined && inputOneStoreProductId != '0') ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, inputOneStoreProductId) : false : false : false;
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
+					}
+					this.setStartInputIdentifier = inputIdentifier;
+					this.setStartInput = this.powerState ? false : true;
+					this.inputIdentifier = inputIdentifier;
+				} catch (error) {
+					this.log.error('Device: %s %s, set Input error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.onSet(async (command) => {
-				if (this.powerState) {
-					let type;
-					switch (command) {
-						case Characteristic.RemoteKey.REWIND:
-							command = 'rewind';
-							type = 'system_media';
-							break;
-						case Characteristic.RemoteKey.FAST_FORWARD:
-							command = 'fast_forward';
-							type = 'system_media';
-							break;
-						case Characteristic.RemoteKey.NEXT_TRACK:
-							command = 'next_track';
-							type = 'system_media';
-							break;
-						case Characteristic.RemoteKey.PREVIOUS_TRACK:
-							command = 'prev_track';
-							type = 'system_media';
-							break;
-						case Characteristic.RemoteKey.ARROW_UP:
-							command = 'up';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.ARROW_DOWN:
-							command = 'down';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.ARROW_LEFT:
-							command = 'left';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.ARROW_RIGHT:
-							command = 'right';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.SELECT:
-							command = 'a';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.BACK:
-							command = 'b';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.EXIT:
-							command = 'nexus';
-							type = 'system_input';
-							break;
-						case Characteristic.RemoteKey.PLAY_PAUSE:
-							command = this.webApiEnabled ? this.invertMediaState ? 'pause' : 'play' : 'playpause';
-							type = 'system_media';
-							this.invertMediaState = !this.invertMediaState;
-							break;
-						case Characteristic.RemoteKey.INFORMATION:
-							command = this.webApiEnabled ? this.switchInfoMenu ? 'menu' : 'view' : this.switchInfoMenu ? 'nexus' : 'view';
-							type = 'system_input';
-							break;
-					}
-					this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set RemoteKey successful, command: %s', this.host, accessoryName, command);
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, can not set RemoteKey command, error: %s', this.host, accessoryName, error);
-					}) : this.xbox.getManager(type).sendCommand(command).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, setRemoteKey successful,  command: %s', this.host, accessoryName, command);
-						}
-					}).catch(error => {
-						this.log.error('Device: %s %s, can not set RemoteKey command, error: %s', this.host, accessoryName, error);
-					});
+				let type;
+				switch (command) {
+					case Characteristic.RemoteKey.REWIND:
+						command = 'rewind';
+						type = 'system_media';
+						break;
+					case Characteristic.RemoteKey.FAST_FORWARD:
+						command = 'fast_forward';
+						type = 'system_media';
+						break;
+					case Characteristic.RemoteKey.NEXT_TRACK:
+						command = 'next_track';
+						type = 'system_media';
+						break;
+					case Characteristic.RemoteKey.PREVIOUS_TRACK:
+						command = 'prev_track';
+						type = 'system_media';
+						break;
+					case Characteristic.RemoteKey.ARROW_UP:
+						command = 'up';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.ARROW_DOWN:
+						command = 'down';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.ARROW_LEFT:
+						command = 'left';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.ARROW_RIGHT:
+						command = 'right';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.SELECT:
+						command = 'a';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.BACK:
+						command = 'b';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.EXIT:
+						command = 'nexus';
+						type = 'system_input';
+						break;
+					case Characteristic.RemoteKey.PLAY_PAUSE:
+						command = this.webApiEnabled ? this.invertMediaState ? 'pause' : 'play' : 'playpause';
+						type = 'system_media';
+						this.invertMediaState = !this.invertMediaState;
+						break;
+					case Characteristic.RemoteKey.INFORMATION:
+						command = this.webApiEnabled ? this.switchInfoMenu ? 'menu' : 'view' : this.switchInfoMenu ? 'nexus' : 'view';
+						type = 'system_input';
+						break;
 				}
+				try {
+					const setcommand = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command) : await this.xbox.getManager(type).sendCommand(command) : false;
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, set Remote Key command error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		//optional television characteristics
@@ -972,27 +954,28 @@ class xboxTvDevice {
 			.onSet(async (value) => {
 				try {
 					const brightness = value;
-					const setBrightness = false
+					const setBrightness = this.powerState ? false : false;
 					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Brightness successful, brightness: %s', this.host, accessoryName, value);
+						this.log('Device: %s %s, set Brightness successful: %s', this.host, accessoryName, value);
 					}
 					this.brightness = value;
 				} catch (error) {
-					this.log.error('Device: %s %s, can not set Brightness. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
-				};
+					this.log.error('Device: %s %s, set Brightness error: %s', this.host, accessoryName, error);
+				}
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.ClosedCaptions)
 			.onGet(async () => {
 				const state = 0;
-				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, get Closed captions successful: %s', this.host, accessoryName, state);
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, get Closed Captions successful: %s', this.host, accessoryName, state);
 				}
 				return state;
 			})
 			.onSet(async (state) => {
-				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, set Closed captions successful: %s', this.host, accessoryName, state);
+				const setClosedCaption = this.powerState ? false : false;
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, set Closed Captions successful: %s', this.host, accessoryName, state);
 				}
 			});
 
@@ -1002,13 +985,13 @@ class xboxTvDevice {
 		//		const length = 0x01;
 		//		const value = 0x01;
 		//		const data = [tag, length, value];
-		//		if (!this.disableLogInfo) {
+		//		if (!this.disableLogInfo && this.powerState) {
 		//			this.log('Device: %s %s, get display order successful: %s %', this.host, accessoryName, data);
 		//		}
 		//		return data;
 		//	})
 		//	.onSet(async (data) => {
-		//		if (!this.disableLogInfo) {
+		//		if (!this.disableLogInfo && this.powerState) {
 		//			this.log('Device: %s %s, set display order successful: %s.', this.host, accessoryName, data);
 		//		}
 		//	});
@@ -1018,8 +1001,8 @@ class xboxTvDevice {
 				//apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
 				//xbox, 0 - STOP, 1 - PLAY, 2 - PAUSE
 				const value = [2, 0, 1, 3, 4][this.mediaState];
-				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, get Media state successful: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, get Current Media state successful: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
 				}
 				return value;
 			});
@@ -1028,7 +1011,7 @@ class xboxTvDevice {
 			.onGet(async () => {
 				//0 - PLAY, 1 - PAUSE, 2 - STOP
 				const value = [2, 0, 1, 3, 4][this.mediaState];
-				if (!this.disableLogInfo) {
+				if (!this.disableLogInfo && this.powerState) {
 					this.log('Device: %s %s, get Target Media state successful: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
 				}
 				return value;
@@ -1036,80 +1019,73 @@ class xboxTvDevice {
 			.onSet(async (value) => {
 				try {
 					const newMediaState = value;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Media state successful, state: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
+					const setMediaState = this.powerState ? false : false;
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, set Target Media state successful: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
 					}
 				} catch (error) {
-					this.log.error('Device: %s %s %s, set Media state error: %s', this.host, accessoryName, error);
+					this.log.error('Device: %s %s %s, set Target Media state error: %s', this.host, accessoryName, error);
 				};
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
-				if (this.powerState) {
-					switch (command) {
-						case Characteristic.PowerModeSelection.SHOW:
-							command = this.webApiEnabled ? this.switchInfoMenu ? 'menu' : 'view' : this.switchInfoMenu ? 'nexus' : 'view';
-							break;
-						case Characteristic.PowerModeSelection.HIDE:
-							command = 'b';
-							break;
-					}
-					this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, can not set Power Mode Selection command, error: %s', this.host, accessoryName, error);
-					}) : this.xbox.getManager('system_input').sendCommand(command).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
-						}
-					}).catch(error => {
-						this.log.error('Device: %s %s, can not set Power Mode Selection command, error: %s', this.host, accessoryName, error);
-					});
+				switch (command) {
+					case Characteristic.PowerModeSelection.SHOW:
+						command = this.webApiEnabled ? this.switchInfoMenu ? 'menu' : 'view' : this.switchInfoMenu ? 'nexus' : 'view';
+						break;
+					case Characteristic.PowerModeSelection.HIDE:
+						command = 'b';
+						break;
 				}
+				try {
+					const setPowerModeSelection = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command) : await this.xbox.getManager('system_input').sendCommand(command) : false;
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, set Power Mode Selection command error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.PictureMode)
 			.onGet(async () => {
 				const pictureMode = this.pictureMode;
-				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, get current Picture mode: %s', this.host, accessoryName, pictureMode);
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, get Picture mode: %s', this.host, accessoryName, pictureMode);
 				}
 				return pictureMode;
 			})
 			.onSet(async (command) => {
-				if (this.powerState) {
-					switch (command) {
-						case Characteristic.PictureMode.OTHER:
-							command = 'PVMOV';
-							break;
-						case Characteristic.PictureMode.STANDARD:
-							command = 'PVSTD';
-							break;
-						case Characteristic.PictureMode.CALIBRATED:
-							command = 'PVDAY';
-							break;
-						case Characteristic.PictureMode.CALIBRATED_DARK:
-							command = 'PVNGT';
-							break;
-						case Characteristic.PictureMode.VIVID:
-							command = 'PVVVD';
-							break;
-						case Characteristic.PictureMode.GAME:
-							command = 'PVSTM';
-							break;
-						case Characteristic.PictureMode.COMPUTER:
-							command = 'PVSTM';
-							break;
-						case Characteristic.PictureMode.CUSTOM:
-							command = 'PVCTM';
-							break;
-					}
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Picture Mode successful, command: %s', this.host, accessoryName, command);
-					}
+				switch (command) {
+					case Characteristic.PictureMode.OTHER:
+						command = 'PVMOV';
+						break;
+					case Characteristic.PictureMode.STANDARD:
+						command = 'PVSTD';
+						break;
+					case Characteristic.PictureMode.CALIBRATED:
+						command = 'PVDAY';
+						break;
+					case Characteristic.PictureMode.CALIBRATED_DARK:
+						command = 'PVNGT';
+						break;
+					case Characteristic.PictureMode.VIVID:
+						command = 'PVVVD';
+						break;
+					case Characteristic.PictureMode.GAME:
+						command = 'PVSTM';
+						break;
+					case Characteristic.PictureMode.COMPUTER:
+						command = 'PVSTM';
+						break;
+					case Characteristic.PictureMode.CUSTOM:
+						command = 'PVCTM';
+						break;
+				}
+				const setPictureMode = this.powerState ? false : false;
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, set Picture Mode scommand uccessful: %s', this.host, accessoryName, command);
 				}
 			});
 
@@ -1131,29 +1107,25 @@ class xboxTvDevice {
 						command = this.webApiEnabled ? 'Down' : 'btn.vol_down';
 						break;
 				}
-				const setVolume = this.webApiEnabled ? this.xboxWebApi.getProvider('smartglass')._sendCommand(this.xboxliveid, 'Audio', 'Volume', [{
-					'direction': (command),
-					'amount': 1,
-				}]).then(() => {
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Volume successful, command: %s', this.host, accessoryName, command);
+				try {
+					const payload = [{
+						'direction': (command),
+						'amount': 1,
+					}]
+					const setVolume = this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass')._sendCommand(this.xboxliveid, 'Audio', 'Volume', payload) : await this.xbox.getManager('tv_remote').sendIrCommand(command);
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					}
-				}).catch((error) => {
-					this.log.error('Device: %s %s, can not set Volume command, error: %s', this.host, accessoryName, error);
-				}) : this.xbox.getManager('tv_remote').sendIrCommand(command).then(() => {
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, setVolumeSelector successful, command: %s', this.host, accessoryName, command);
-					}
-				}).catch(error => {
-					this.log.error('Device: %s %s, can not set Volume command, error: %s', this.host, accessoryName, error);
-				});
+				} catch (error) {
+					this.log.error('Device: %s %s, set Volume command error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 			.onGet(async () => {
 				const volume = this.volume;
 				if (!this.disableLogInfo && this.powerState) {
-					this.log('Device: %s %s, get Volume level successful: %s', this.host, accessoryName, volume);
+					this.log('Device: %s %s, get Volume successful: %s', this.host, accessoryName, volume);
 				}
 				return volume;
 			})
@@ -1161,8 +1133,8 @@ class xboxTvDevice {
 				if (volume == 0 || volume == 100) {
 					volume = this.volume;
 				}
-				if (!this.disableLogInfo) {
-					this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
+				if (!this.disableLogInfo && this.powerState) {
+					this.log('Device: %s %s, set Volume successful: %s', this.host, accessoryName, volume);
 				}
 			});
 
@@ -1170,32 +1142,21 @@ class xboxTvDevice {
 			.onGet(async () => {
 				const state = this.powerState ? this.muteState : true;
 				if (!this.disableLogInfo && this.powerState) {
-					this.log('Device: %s %s, get Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					this.log('Device: %s %s, get Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				}
 				return state;
 			})
 			.onSet(async (state) => {
 				if (this.powerState && (state != this.muteState)) {
-					const command = 'btn.vol_mute';
-					const toggleMute = this.webApiEnabled ? (state) ? this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					try {
+						const command = 'btn.vol_mute';
+						const toggleMute = this.webApiEnabled ? (state) ? await this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid) : await this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid) : await this.xbox.getManager('tv_remote').sendIrCommand(command);
+						if (!this.disableLogInfo && this.powerState) {
+							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, set Mute, error: %s', this.host, accessoryName, error);
-					}) : this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, unset Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, unset Mute, error: %s', this.host, accessoryName, error);
-					}) : this.xbox.getManager('tv_remote').sendIrCommand(command).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, toggle Mute successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-						}
-					}).catch(error => {
-						this.log.error('Device: %s %s, toggle Mute, error: %s', this.host, accessoryName, error);
-					});
+					} catch (error) {
+						this.log.error('Device: %s %s, set Mute error: %s', this.host, accessoryName, error);
+					};
 				};
 			});
 
@@ -1258,13 +1219,14 @@ class xboxTvDevice {
 					return state;
 				})
 				.onSet(async (state) => {
-					const reboot = state && this.powerState ? this.xboxWebApi.getProvider('smartglass').reboot(this.xboxliveid).then(() => {
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, web api set Reboot successful', this.host, accessoryName);
+					try {
+						const reboot = (this.powerState && state) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxliveid) : false;
+						if (!this.disableLogInfo && this.powerState) {
+							this.log('Device: %s %s, set Reboot successful: Rebooting', this.host, accessoryName);
 						}
-					}).catch((error) => {
-						this.log.error('Device: %s %s, web api set Reboot, error: %s', this.host, accessoryName, error);
-					}) : false;
+					} catch (error) {
+						this.log.error('Device: %s %s, set Reboot error: %s', this.host, accessoryName, error);
+					};
 					setTimeout(() => {
 						this.rebootService
 							.updateCharacteristic(Characteristic.On, false);
@@ -1272,6 +1234,33 @@ class xboxTvDevice {
 				});
 
 			accessory.addService(this.rebootService);
+		}
+
+		//Prepare record DVR
+		if (this.recordGameDvr) {
+			this.recordGameDvrService = new Service.Switch(`${accessoryName} Record Game`, 'Record Game');
+			this.recordGameDvrService.getCharacteristic(Characteristic.On)
+				.onGet(async () => {
+					const state = false;
+					return state;
+				})
+				.onSet(async (state) => {
+					try {
+						const xbox = Smartglass();
+						const recordGameDvr = (this.powerState && state) ? await xbox.recordGameDvr() : false;
+						if (!this.disableLogInfo && this.powerState) {
+							this.log('Device: %s %s, record Game DVR start successful: Recording', this.host, accessoryName);
+						}
+					} catch (error) {
+						this.log.error('Device: %s %s, record Game DVR error: %s', this.host, accessoryName, error);
+					};
+					setTimeout(() => {
+						this.recordGameDvrService
+							.updateCharacteristic(Characteristic.On, false);
+					}, 250);
+				});
+
+			accessory.addService(this.recordGameDvrService);
 		}
 
 		//Prepare inputs services
@@ -1345,7 +1334,7 @@ class xboxTvDevice {
 						newName[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(newName);
 						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						if (!this.disableLogInfo) {
+						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, saved new Input Name successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, newCustomName, inputOneStoreProductId);
 						}
 					} catch (error) {
@@ -1362,7 +1351,7 @@ class xboxTvDevice {
 						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						if (!this.disableLogInfo) {
+						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, saved new Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 						}
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
@@ -1400,33 +1389,20 @@ class xboxTvDevice {
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
 					const state = false;
-					if (!this.disableLogInfo) {
+					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, get Button state successful: %s', this.host, accessoryName, state);
 					}
 					return state;
 				})
 				.onSet(async (state) => {
-					if (state && this.powerState) {
-						const setInput = this.webApiEnabled ? ((buttonOneStoreProductId == 'Dashboard') || (buttonOneStoreProductId == 'Settings') || (buttonOneStoreProductId == 'Accessory')) ? this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid).then(() => {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Input successful, input: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
-							}
-						}).catch((error) => {
-							this.log.error('Device: %s %s, set Dashboard error:', this.host, accessoryName, error);
-						}) : (buttonOneStoreProductId == 'Television') ? this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveid).then(() => {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Input successful, input: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
-							}
-						}).catch((error) => {
-							this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, buttonName, error);
-						}) : (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0') ? this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, buttonOneStoreProductId).then(() => {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, set Input successful, input: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
-							}
-						}).catch((error) => {
-							this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, buttonName, error);
-						}) : false : false;
-					}
+					try {
+						const setInput = (this.powerState && state) ? this.webApiEnabled ? ((buttonOneStoreProductId == 'Dashboard') || (buttonOneStoreProductId == 'Settings') || (buttonOneStoreProductId == 'Accessory')) ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveid) : (buttonOneStoreProductId == 'Television') ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveid) : (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0') ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveid, buttonOneStoreProductId) : false : false : false;
+						if (!this.disableLogInfo && this.powerState) {
+							this.log('Device: %s %s, set Input successful, input: %s, oneStoreProductId: %s', this.host, accessoryName, buttonName, buttonOneStoreProductId);
+						}
+					} catch (error) {
+						this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, buttonName, error);
+					};
 					setTimeout(() => {
 						buttonService
 							.updateCharacteristic(Characteristic.On, false);
