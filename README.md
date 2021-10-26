@@ -31,10 +31,12 @@ Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
+* Reboot Console with additional button.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
 * Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
-* Apps, Inputs, Games can be switched if `webApiControl` and console is authorized
+* Apps, Inputs, Games can be switched if `webApiControl` and console is authorized.
+* Record Game DVR with additional button.
 * Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
 * Home automations and shortcuts can be used for all functions.
 
