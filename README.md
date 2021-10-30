@@ -74,7 +74,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 </p>
 
 | Key | Description |
-| --- | --- | --- |
+| --- | --- |
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
