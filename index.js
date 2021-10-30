@@ -174,7 +174,6 @@ class xboxTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.deviceIsOnline = false;
 		this.checkDeviceInfo = false;
 		this.webApiEnabled = false;
 
@@ -264,13 +263,10 @@ class xboxTvDevice {
 							this.log.debug('Device: %s %s, debug discovery obj: %s', this.host, this.name, obj);
 
 						}
-						this.deviceIsOnline = true;
 						this.connectToXbox();
 					}
-					this.deviceIsOnline = false;
 				} catch (error) {
 					this.log.debug('Device: %s %s, discovery error: %s', this.host, this.name, error);
-					this.deviceIsOnline = false;
 				};
 				this.powerState = false;
 				this.updateDeviceState();
@@ -822,7 +818,7 @@ class xboxTvDevice {
 						tries: 15,
 						ip: this.host
 					};
-					const setPowerOn = (this.deviceIsOnline && !this.powerState && state) ? await xbox.powerOn(options) : false;
+					const setPowerOn = (!this.powerState && state) ? await xbox.powerOn(options) : false;
 					const setPowerOff = (this.powerState && !state) ? await this.xbox.powerOff() : false;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Power successful: %s.', this.host, accessoryName, state ? 'ON' : 'OFF');
@@ -830,7 +826,7 @@ class xboxTvDevice {
 				} catch (error) {
 					this.log.debug('Device: %s %s, set Power error: %s', this.host, this.name, error);
 				};
-				if (!this.deviceIsOnline) {
+				if (!this.powerState) {
 					setTimeout(() => {
 						const updateOFF = !this.powerState ? this.televisionService.updateCharacteristic(Characteristic.Active, false) : false;
 					}, 12000);
