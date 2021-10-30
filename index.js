@@ -812,32 +812,20 @@ class xboxTvDevice {
 			})
 			.onSet(async (state) => {
 				const xbox = Smartglass();
-				const options = {
-					live_id: this.xboxliveid,
-					tries: 15,
-					ip: this.host
+				try {
+					const options = {
+						live_id: this.xboxliveid,
+						tries: 3,
+						ip: this.host
+					};
+					const setPowerOn = (!this.powerState && state) ? await xbox.powerOn(options) : false;
+					const setPowerOff = (this.powerState && !state) ? await this.xbox.powerOff() : false;
+					if (!this.disableLogInf) {
+						this.log('Device: %s %s, set Power successful, %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					}
+				} catch (error) {
+					this.log.debug('Device: %s %s, set Power, error: %s', this.host, accessoryName, error);
 				};
-				const setPowerOn = (!this.powerState && state) ? xbox.powerOn(options).then(() => {
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Power ON successful', this.host, accessoryName);
-					}
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, true)
-					this.powerState = true;
-				}).catch(error => {
-					this.log.debug('Device: %s %s, set Power ON, error: %s', this.host, accessoryName, error);
-				}) : false;
-
-				const setPowerOff = (this.powerState && !state) ? this.xbox.powerOff().then(() => {
-					if (!this.disableLogInfo && this.powerState) {
-						this.log('Device: %s %s, set Power OFF successful', this.host, accessoryName);
-					}
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, false)
-					this.powerState = false;
-				}).catch(error => {
-					this.log.debug('Device: %s %s, set Power OFF error: %s', this.host, accessoryName, error);
-				}) : false;
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
@@ -1106,7 +1094,7 @@ class xboxTvDevice {
 						'direction': (command),
 						'amount': 1,
 					}]
-					const setVolume = this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass')._sendCommand(this.xboxliveid, 'Audio', 'Volume', payload) : await this.xbox.getManager('tv_remote').sendIrCommand(command);
+					const setVolume = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass')._sendCommand(this.xboxliveid, 'Audio', 'Volume', payload) : await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					}
@@ -1144,7 +1132,7 @@ class xboxTvDevice {
 				if (this.powerState && (state != this.muteState)) {
 					try {
 						const command = 'btn.vol_mute';
-						const toggleMute = this.webApiEnabled ? (state) ? await this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid) : await this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid) : await this.xbox.getManager('tv_remote').sendIrCommand(command);
+						const toggleMute = this.powerState ? this.webApiEnabled ? state ? await this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid) : await this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid) : await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
@@ -1167,7 +1155,7 @@ class xboxTvDevice {
 						return volume;
 					})
 					.onSet(async (volume) => {
-						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+						const setVolume = this.powerState ? this.speakerService.setCharacteristic(Characteristic.Volume, volume) : false;
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
@@ -1175,7 +1163,7 @@ class xboxTvDevice {
 						return state;
 					})
 					.onSet(async (state) => {
-						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						const setMute = this.powerState ? this.speakerService.setCharacteristic(Characteristic.Mute, !state) : false;
 					});
 
 				accessory.addService(this.volumeService);
@@ -1189,7 +1177,7 @@ class xboxTvDevice {
 						return volume;
 					})
 					.onSet(async (volume) => {
-						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+						const setVolume = this.powerState ? this.speakerService.setCharacteristic(Characteristic.Volume, volume) : false;
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
@@ -1197,7 +1185,7 @@ class xboxTvDevice {
 						return state;
 					})
 					.onSet(async (state) => {
-						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						const setMute = this.powerState ? this.speakerService.setCharacteristic(Characteristic.Mute, !state) : false;
 					});
 
 				accessory.addService(this.volumeServiceFan);
