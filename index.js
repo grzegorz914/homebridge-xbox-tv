@@ -811,26 +811,33 @@ class xboxTvDevice {
 				return state;
 			})
 			.onSet(async (state) => {
-				try {
-					const xbox = Smartglass();
-					const options = {
-						live_id: this.xboxliveid,
-						tries: 15,
-						ip: this.host
-					};
-					const setPowerOn = (!this.powerState && state) ? await xbox.powerOn(options) : false;
-					const setPowerOff = (this.powerState && !state) ? await this.xbox.powerOff() : false;
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Power successful: %s.', this.host, accessoryName, state ? 'ON' : 'OFF');
-					}
-				} catch (error) {
-					this.log.debug('Device: %s %s, set Power error: %s', this.host, this.name, error);
+				const xbox = Smartglass();
+				const options = {
+					live_id: this.xboxliveid,
+					tries: 15,
+					ip: this.host
 				};
-				if (!this.powerState) {
-					setTimeout(() => {
-						const updateOFF = !this.powerState ? this.televisionService.updateCharacteristic(Characteristic.Active, false) : false;
-					}, 12000);
-				}
+				const setPowerOn = (!this.powerState && state) ? xbox.powerOn(options).then(() => {
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set Power ON successful', this.host, accessoryName);
+					}
+					this.televisionService
+						.updateCharacteristic(Characteristic.Active, true)
+					this.powerState = true;
+				}).catch(error => {
+					this.log.debug('Device: %s %s, set Power ON, error: %s', this.host, accessoryName, error);
+				}) : false;
+
+				const setPowerOff = (this.powerState && !state) ? this.xbox.powerOff().then(() => {
+					if (!this.disableLogInfo && this.powerState) {
+						this.log('Device: %s %s, set Power OFF successful', this.host, accessoryName);
+					}
+					this.televisionService
+						.updateCharacteristic(Characteristic.Active, false)
+					this.powerState = false;
+				}).catch(error => {
+					this.log.debug('Device: %s %s, set Power OFF error: %s', this.host, accessoryName, error);
+				}) : false;
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
