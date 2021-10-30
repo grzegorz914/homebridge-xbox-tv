@@ -175,7 +175,6 @@ class xboxTvDevice {
 
 		//setup variables
 		this.deviceIsOnline = false;
-		this.connectedToDevice = false;
 		this.checkDeviceInfo = false;
 		this.webApiEnabled = false;
 
@@ -238,7 +237,7 @@ class xboxTvDevice {
 		});
 
 		setInterval(async function () {
-			if (!this.connectedToDevice) {
+			if (!this.xbox._connection_status) {
 				try {
 					this.xbox = Smartglass();
 					const discoveryData = await this.xbox.discovery(this.host);
@@ -268,16 +267,18 @@ class xboxTvDevice {
 						this.deviceIsOnline = true;
 						this.connectToXbox();
 					}
+					this.deviceIsOnline = false;
 				} catch (error) {
 					this.log.debug('Device: %s %s, discovery error: %s', this.host, this.name, error);
 					this.deviceIsOnline = false;
 				};
+				this.powerState = false;
+				this.updateDeviceState();
 			}
-
 		}.bind(this), this.refreshInterval * 1000);
 
 		setInterval(function () {
-			if (this.connectedToDevice) {
+			if (this.xbox._connection_status) {
 				const getWebApiInstalledApps = this.webApiControl && this.webApiEnabled ? this.getWebApiInstalledApps() : false;
 			}
 		}.bind(this), 60000);
@@ -295,16 +296,17 @@ class xboxTvDevice {
 			this.xbox.addManager('system_input', SystemInputChannel());
 			this.xbox.addManager('system_media', SystemMediaChannel());
 			this.xbox.addManager('tv_remote', TvRemoteChannel());
-			this.connectedToDevice = true;
 			this.checkDeviceInfo = true;
 
-			this.xbox.on('_on_console_status', (response, config, smartglass) => {
-				this.log.debug('Device %s %s, debug _on_console_status response: %s, apps: %s, config: %s, smartglass: %s', this.host, this.name, response.packet_decoded.protected_payload, response.packet_decoded.protected_payload.apps[0], config, smartglass);
-				if (response.packet_decoded.protected_payload.apps[0] != undefined) {
-					const devInfoAndAppsData = response.packet_decoded.protected_payload;
-					const devConfigData = config;
-					const devNetConfigData = smartglass;
+			this.xbox.on('_on_console_status', (message, xbox, remote, smartglass) => {
+				this.log.debug('Device %s %s, debug _on_console_status message: %s, apps: %s, xbox: %s, remote: %s, smartglass: %s', this.host, this.name, message.packet_decoded.protected_payload, message.packet_decoded.protected_payload.apps[0], xbox, remote, smartglass);
+				if (message.packet_decoded.protected_payload.apps[0] != undefined) {
+					const devInfoAndAppsData = message.packet_decoded.protected_payload;
+					const devConfigData = xbox;
+					const devNetConfigData = remote;
+					const devSmartglass = smartglass;
 
+					//message
 					const live_tv_provider = devInfoAndAppsData.live_tv_provider;
 					const major_version = devInfoAndAppsData.major_version;
 					const minor_version = devInfoAndAppsData.minor_version;
@@ -317,6 +319,7 @@ class xboxTvDevice {
 					const sandboxId = devInfoAndAppsData.apps[0].sandbox_id;
 					const aumId = devInfoAndAppsData.apps[0].aum_id;
 
+					//xbox
 					const ip = devConfigData._ip;
 					const certificate = devConfigData._certificate;
 					const iv = devConfigData._iv;
@@ -329,16 +332,22 @@ class xboxTvDevice {
 					const source_participant_id = devConfigData._source_participant_id;
 					const fragments = devConfigData._fragments;
 
+					//remote
 					const address = devNetConfigData.address;
 					const family = devNetConfigData.family;
 					const port = devNetConfigData.port;
 					const size = devNetConfigData.size;
+
+					//smartglass
+					const powerState = devSmartglass._connection_status;
+					const currentApp = devSmartglass._current_app;
 
 					//get current media state
 					const mediaStateData = this.xbox.getManager('system_media').getState();
 					this.log.debug('Device: %s %s, debug mediaStateData: %s', this.host, this.name, mediaStateData);
 					const mediaState = mediaStateData.title_id;
 
+					this.powerState = powerState;
 					this.titleId = titleId;
 					this.inputReference = aumId;
 					this.major_version = major_version;
@@ -353,9 +362,8 @@ class xboxTvDevice {
 
 			this.xbox.on('_on_timeout', () => {
 				this.log('Device: %s %s, Disconnected.', this.host, this.name);
-				this.deviceIsOnline = false;
-				this.connectedToDevice = false;
-				this.checkDeviceInfo = false;
+				this.checkDeviceInfo = true;
+				this.powerState = false;
 				this.updateDeviceState();
 			});
 		} catch (error) {
@@ -629,7 +637,7 @@ class xboxTvDevice {
 			const locale = consoleStatusData.locale;
 			const region = consoleStatusData.region;
 			const consoleType = CONSOLES_NAME[consoleStatusData.consoleType];
-			const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] == 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+			const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] != 0); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
 			const playbackState = (CONSOLE_PLAYBACK_STATE[consoleStatusData.playbackState] == 1); // 0 - Stopped, 1 - Playng, 2 - Paused
 			const loginState = consoleStatusData.loginState;
 			const focusAppAumid = consoleStatusData.focusAppAumid;
@@ -690,7 +698,7 @@ class xboxTvDevice {
 	updateDeviceState() {
 		this.log.debug('Device: %s %s, debug update device state.', this.host, this.name);
 		//get states
-		const powerState = this.xbox._connection_status;
+		const powerState = this.powerState;
 		const volume = this.volume;
 		const muteState = powerState ? this.muteState : true;
 		const mediaState = this.mediaState;

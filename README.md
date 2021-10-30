@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/homebridge-xbox-tv.png" width="640"></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Xbox and controller" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homebridge-xbox-tv.png" width="640"></a>
 </p>
 
 <span align="center">
@@ -11,7 +11,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Homebridge plugin for Microsoft game consoles. Tested with Xbox One X/S and Xbox Series X.
+Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox Series X.
 
 </span>
 
@@ -73,36 +73,36 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
 </p>
 
-| Key | Description | Required |
+| Key | Description |
 | --- | --- | --- |
-| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. | Required |
-| `host` | Here set the *Hsostname or Address IP* of Console.| Required |
-| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. | Required |
-| `clientID` | If You create app on Azure AD then You can use own ClientID. | Optional |
-| `clientSecret` | If You create app on Azure AD then You can use own ClientSecret. | Optional |
-| `userToken` | Alternate authorization method. | Optional |
-| `uhs` | Alternate authorization method. | Optional |
-| `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. | Optional |
-| `xboxWebApiToken` | Required if `webApiControl` enabled. | Optional |
-| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. | Required |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. | Optional |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). | Optional |
-| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. | Optional |
-| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. | Optional |
-| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. | Optional |
-| `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. | Optional |
-| `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. | Optional |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. | Required |
-| `inputs.reference` | Required to identify current running app. | Required |
-| `inputs.oneStoreProductId` | Required to switch apps. | Optional |
-| `inputs.type` | Choice from available options. | Optional |
-| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |  Optional |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. | Optional |
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. | Optional |
-| `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. | Optional |
+| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
+| `host` | Here set the *Hsostname or Address IP* of Console.|
+| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
+| `clientID` | If You create app on Azure AD then You can use own ClientID. |
+| `clientSecret` | If You create app on Azure AD then You can use own ClientSecret. |
+| `userToken` | Alternate authorization method. |
+| `uhs` | Alternate authorization method. |
+| `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
+| `xboxWebApiToken` | Required if `webApiControl` enabled. |
+| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
+| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. |
+| `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.reference` | Required to identify current running app. |
+| `inputs.oneStoreProductId` | Required to switch apps. |
+| `inputs.type` | Choice from available options. |
+| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. |
+| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
+| `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 
 ```json
 {
@@ -185,10 +185,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 ## Adding to HomeKit
 Each accessory needs to be manually paired. 
 1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
-2. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
-3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*. 
+2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
+3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*. 
 4. Select Your accessory. 
-5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
+6. Complete the accessory setup.
 
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
