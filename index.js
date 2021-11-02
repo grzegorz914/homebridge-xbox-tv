@@ -239,34 +239,15 @@ class xboxTvDevice {
 			if (!this.xbox._connection_status) {
 				try {
 					this.xbox = Smartglass();
-					const discoveryData = await this.xbox.discovery(this.host);
-					this.log.debug('Device: %s %s, debug discoveryData: %s.', this.host, this.name, discoveryData);
+					await this.xbox.connect(this.host);
+					this.xbox.addManager('system_input', SystemInputChannel());
+					this.xbox.addManager('system_media', SystemMediaChannel());
+					this.xbox.addManager('tv_remote', TvRemoteChannel());
+					this.checkDeviceInfo = true;
+					this.connectToXbox();
 
-					const consolesArr = new Array();
-					const consolesCount = discoveryData.length;
-					if (consolesCount > 0) {
-						for (let i = 0; i < consolesCount; i++) {
-							const message = discoveryData[i].message;
-							const addressIp = discoveryData[i].remote.address;
-							const family = discoveryData[i].remote.family;
-							const port = discoveryData[i].remote.port;
-							const size = discoveryData[i].remote.size;
-
-							const obj = {
-								message: message,
-								addressIp: addressIp,
-								family: family,
-								port: port,
-								size: size
-							}
-							consolesArr.push(obj);
-							this.log.debug('Device: %s %s, debug discovery obj: %s', this.host, this.name, obj);
-
-						}
-						this.connectToXbox();
-					}
 				} catch (error) {
-					this.log.debug('Device: %s %s, discovery error: %s', this.host, this.name, error);
+					this.log.debug('Device: %s %s, connect error: %s', this.host, this.name, error);
 				};
 				this.powerState = false;
 				this.updateDeviceState();
@@ -287,13 +268,6 @@ class xboxTvDevice {
 
 	async connectToXbox() {
 		try {
-			this.xbox = Smartglass();
-			await this.xbox.connect(this.host);
-			this.xbox.addManager('system_input', SystemInputChannel());
-			this.xbox.addManager('system_media', SystemMediaChannel());
-			this.xbox.addManager('tv_remote', TvRemoteChannel());
-			this.checkDeviceInfo = true;
-
 			this.xbox.on('_on_console_status', (message, xbox, remote, smartglass) => {
 				this.log.debug('Device %s %s, debug _on_console_status message: %s, apps: %s, xbox: %s, remote: %s, smartglass: %s', this.host, this.name, message.packet_decoded.protected_payload, message.packet_decoded.protected_payload.apps[0], xbox, remote, smartglass);
 				if (message.packet_decoded.protected_payload.apps[0] != undefined) {
@@ -918,7 +892,7 @@ class xboxTvDevice {
 						break;
 				}
 				try {
-					const setcommand = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command) : await this.xbox.getManager(type).sendCommand(command) : false;
+					const setcommand = this.powerState ? await this.xbox.getManager(type).sendCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
 					}
@@ -1021,7 +995,7 @@ class xboxTvDevice {
 						break;
 				}
 				try {
-					const setPowerModeSelection = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxliveid, command) : await this.xbox.getManager('system_input').sendCommand(command) : false;
+					const setPowerModeSelection = this.powerState ? await this.xbox.getManager('system_input').sendCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 					}
@@ -1083,18 +1057,14 @@ class xboxTvDevice {
 			.onSet(async (command) => {
 				switch (command) {
 					case Characteristic.VolumeSelector.INCREMENT:
-						command = this.webApiEnabled ? 'Up' : 'btn.vol_up';
+						command = 'btn.vol_up';
 						break;
 					case Characteristic.VolumeSelector.DECREMENT:
-						command = this.webApiEnabled ? 'Down' : 'btn.vol_down';
+						command = 'btn.vol_down';
 						break;
 				}
 				try {
-					const payload = [{
-						'direction': (command),
-						'amount': 1,
-					}]
-					const setVolume = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass')._sendCommand(this.xboxliveid, 'Audio', 'Volume', payload) : await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
+					const setVolume = this.powerState ? await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					}
@@ -1132,7 +1102,7 @@ class xboxTvDevice {
 				if (this.powerState && (state != this.muteState)) {
 					try {
 						const command = 'btn.vol_mute';
-						const toggleMute = this.powerState ? this.webApiEnabled ? state ? await this.xboxWebApi.getProvider('smartglass').mute(this.xboxliveid) : await this.xboxWebApi.getProvider('smartglass').unmute(this.xboxliveid) : await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
+						const toggleMute = this.powerState ? await this.xbox.getManager('tv_remote').sendIrCommand(command) : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
@@ -1316,7 +1286,7 @@ class xboxTvDevice {
 						newName[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(newName);
 						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						if (!this.disableLogInfo && this.powerState) {
+						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, saved new Input Name successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, newCustomName, inputOneStoreProductId);
 						}
 					} catch (error) {
@@ -1333,7 +1303,7 @@ class xboxTvDevice {
 						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						if (!this.disableLogInfo && this.powerState) {
+						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, saved new Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 						}
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
