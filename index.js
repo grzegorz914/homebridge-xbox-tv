@@ -810,14 +810,15 @@ class xboxTvDevice {
 				return state;
 			})
 			.onSet(async (state) => {
-				const xbox = Smartglass();
 				try {
 					const options = {
 						live_id: this.xboxliveid,
-						tries: 3,
+						tries: 5,
 						ip: this.host
 					};
-					const setPower = (state) ? await xbox.powerOn(options) : await this.xbox.powerOff();
+					const setPower = (state) ? await this.xbox.powerOn(options) : await this.xbox.powerOff();
+					const statusON = (setPower.status == 'success')
+					const statusOFF = (setPower == true)
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Power successful, %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					}
