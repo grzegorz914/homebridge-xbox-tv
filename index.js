@@ -60,7 +60,7 @@ const DEFAULT_INPUTS = [{
 	{
 		'name': 'Accessory',
 		'titleId': 'Accessory',
-		'reference': 'Microsoft.XboxDevices_8wekyb3d8bbwe!App',
+		'reference': 'Microsoft.Xbox.Devices_8wekyb3d8bbwe!App',
 		'oneStoreProductId': 'Accessory',
 		'type': 'HOME_SCREEN',
 		'contentType': 'systemApp'
