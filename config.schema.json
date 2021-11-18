@@ -70,15 +70,15 @@
 							"required": false
 						},
 						"refreshInterval": {
-							"title": "Refresh interval (sec)",
+							"title": "Refresh Interval (msec)",
 							"type": "integer",
-							"default": 5,
-							"minimum": 0,
-							"maximum": 60,
+							"default": 5000,
+							"minimum": 1000,
+							"maximum": 60000,
 							"required": true
 						},
 						"disableLogInfo": {
-							"title": "Disable log info",
+							"title": "Disable Log Info",
 							"type": "boolean",
 							"default": false,
 							"description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
@@ -92,11 +92,11 @@
 							"required": false
 						},
 						"volumeControl": {
-							"title": "Volume control mode",
+							"title": "Volume Control Mode",
 							"type": "integer",
 							"minimum": 0,
 							"maximum": 2,
-							"description": "Here select what a volume control mode You want to use. If select \"None\" only hardware buttons in RC app can be used to control volume.",
+							"description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
 							"oneOf": [{
 									"title": "None",
 									"enum": [
@@ -143,7 +143,7 @@
 							"required": false
 						},
 						"getInputsFromDevice": {
-							"title": "Load inputs from device",
+							"title": "Load Inputs From Device",
 							"type": "boolean",
 							"default": false,
 							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
@@ -191,6 +191,13 @@
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
+						},
+						"enableDebugMode": {
+							"title": "Enable Debug Mode",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
 						},
 						"inputs": {
 							"title": "Inputs",
@@ -438,6 +445,7 @@
 				"expandable": true,
 				"expanded": false,
 				"items": [
+					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
 					"devices[].rebootControl",

@@ -129,6 +129,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterDlc": false,
 			"rebootControl": false,
 			"recordGameDvr": false,
+			"powerOnTries": 5,
 			"inputs": [
 						{
 							"name": "A Way Out",
