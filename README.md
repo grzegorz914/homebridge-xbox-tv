@@ -84,7 +84,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `uhs` | Alternate authorization method. |
 | `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
-| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. |
+| `refreshInterval` | Set the console reconnect time in seconds, default is 5 seconds. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
@@ -129,7 +130,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterDlc": false,
 			"rebootControl": false,
 			"recordGameDvr": false,
-			"powerOnTries": 5,
+			"enableDebugMode": false,
 			"inputs": [
 						{
 							"name": "A Way Out",

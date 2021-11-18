@@ -157,7 +157,7 @@ class xboxTvDevice {
 		this.xboxliveId = config.xboxliveid || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.webApiControl = config.webApiControl || false;
-		this.refreshInterval = config.refreshInterval || 5;
+		this.refreshInterval = (config.refreshInterval * 1000) || 5;
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
