@@ -268,6 +268,10 @@ class xboxTvDevice {
 		this.xbox.on('_on_connected', () => {
 			this.powerState = true;
 			this.checkDeviceInfo = true;
+
+			this.getApp = setInterval(function () {
+				const getWebApiInstalledApps = (this.webApiControl && this.webApiEnabled) ? this.getWebApiInstalledApps() : false;
+			}, 60000);
 		});
 
 		this.xbox.on('error', (error) => {
@@ -314,12 +318,9 @@ class xboxTvDevice {
 
 		this.xbox.on('_on_disconnected', () => {
 			this.powerState = false;
+			clearInterval(this.getApp);
 			this.updateDeviceState();
 		});
-
-		setInterval(function () {
-			const getWebApiInstalledApps = (this.webApiControl && this.webApiEnabled && this.powerState) ? this.getWebApiInstalledApps() : false;
-		}.bind(this), 60000);
 
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
 
