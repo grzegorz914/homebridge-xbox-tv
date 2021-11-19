@@ -96,7 +96,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. |
 | `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings` are created by default. |
 | `inputs.reference` | Required to identify current running app. |
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.type` | Choice from available options. |

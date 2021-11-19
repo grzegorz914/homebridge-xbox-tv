@@ -85,7 +85,7 @@ class XBOX extends EventEmitter {
         } else {
             this.emit('debug', 'Connecting using anonymous login');
             this.isAuthenticated = false;
-        }
+        };
 
         const message = connectRequest.pack(this);
         return message;
