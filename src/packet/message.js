@@ -26,7 +26,6 @@ const soundStatus = {
 
 class MESSAGE {
     constructor(type, packetData = false) {
-
         this.type = 'message';
         this.name = type;
         this.packetData = packetData;
@@ -466,6 +465,7 @@ class MESSAGE {
             };
         };
         this.packetDecoded = packet;
+        return this;
     };
 
     pack(xbox) {

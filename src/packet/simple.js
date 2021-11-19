@@ -2,7 +2,6 @@ const PacketStructure = require('./structure');
 
 class SIMPLE {
     constructor(packetFormat, packetData = false) {
-
         this.type = 'simple';
         this.name = packetFormat;
         this.packetData = packetData;
@@ -169,6 +168,7 @@ class SIMPLE {
             };
         };
         this.packetDecoded = packet;
+        return this;
     };
 
     pack(xbox = false) {

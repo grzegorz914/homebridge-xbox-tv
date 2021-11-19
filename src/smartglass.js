@@ -63,7 +63,7 @@ class SMARTGLASS extends EventEmitter {
         //channelManager
         this.channelStatus = false;
         this.channelServerId = 0;
-        this.managerId = 0;
+        this.channelManagerId = 0;
         this.channelName = '';
         this.configuration = {};
         this.headendInfo = {};
@@ -75,22 +75,6 @@ class SMARTGLASS extends EventEmitter {
         this.socket.on('error', (error) => {
                 this.socket.close();
                 this.emit('error', `Socket error: ${error}`);
-            })
-            .on('listening', () => {
-                const address = this.socket.address();
-                this.emit('message', `Server listening: ${address.address}:${address.port}`);
-                this.emit('debug', 'Start discovering...');
-
-                setInterval(() => {
-                    if (!this.connectionStatus) {
-                        const config = {
-                            type: 'simple.discoveryRequest'
-                        };
-                        let discoveryPacket = new Packer(config);
-                        const message = discoveryPacket.pack();
-                        this.send(message);
-                    };
-                }, 2500);
             })
             .on('message', (message, remote) => {
                 this.emit('debug', `Server message: ${message} from: ${remote.address}:${remote.port}`);
@@ -193,19 +177,31 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('debug', `Emit event: ${func}`);
                 this.emit(func, response);
             })
+            .on('listening', () => {
+                const address = this.socket.address();
+                this.emit('debug', `Server listening: ${address.address}:${address.port}, start discovering.`);
+
+                setInterval(() => {
+                    if (!this.connectionStatus) {
+                        const config = {
+                            type: 'simple.discoveryRequest'
+                        };
+                        let discoveryPacket = new Packer(config);
+                        const message = discoveryPacket.pack();
+                        this.send(message);
+                    };
+                }, 2500);
+            })
             .on('close', () => {
                 this.emit('debug', 'Socket closed.');
                 setTimeout(() => {
                     this.socketReconnect();
                 }, this.reconnect);
-
             })
             .bind();
 
         //EventEmmiter
         this.on('_on_discovery', (message) => {
-                this.emit('debug', 'Discovering...');
-
                 const discoveredConsoles = new Array();
                 discoveredConsoles.push(message.packetDecoded);
 
@@ -215,6 +211,7 @@ class SMARTGLASS extends EventEmitter {
                 };
 
                 if (consolesCount > 0) {
+                    this.emit('debug', 'Discovered.');
                     const uhs = '';
                     const xstsToken = '';
                     const certyficate = (discoveredConsoles[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
@@ -253,7 +250,7 @@ class SMARTGLASS extends EventEmitter {
 
                     this.disconnect12s = setInterval(() => {
                         const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
-                        this.emit('message', `Last received time: ${lastMessageReceivedTime} sec ago.`);
+                        this.emit('debug', `Last received time: ${lastMessageReceivedTime} sec ago.`);
 
                         if (this.connectionStatus) {
                             if (lastMessageReceivedTime == 5) {
@@ -322,13 +319,36 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_channelRequest', (message) => {})
+            .on('_on_channelOpen', (channelManagerId, channelName, udid) => {
+                if (!this.connectionStatus) {
+                    this.emit('debug', 'Not connected.')
+                    return;
+                };
+                
+                this.emit('message', `Request open channel: ${channelName}`);
+                this.channelManagerId = channelManagerId;
+                this.channelName = channelName;
+
+                this.xbox.getRequestNum();
+                const config = {
+                    type: 'message.channelRequest'
+                };
+                let channelRequest = new Packer(config);
+                channelRequest.set('channelRequestId', channelManagerId);
+                channelRequest.set('titleId', 0);
+                channelRequest.set('service', Buffer.from(udid, 'hex'));
+                channelRequest.set('activityId', 0);
+                const message = channelRequest.pack(this.xbox);
+                this.send(message);
+                this.emit('debug', `Send channel request for: ${channelName}, client id: ${channelManagerId}`);
+            })
             .on('_on_channelResponse', (message) => {
-                if (message.packetDecoded.protectedPayload.channelRequestId == this.managerId) {
+                this.emit('debug', `Channel response for: ${this.channelName}`);
+                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelManagerId) {
                     if (message.packetDecoded.protectedPayload.result == 0) {
                         this.channelStatus = true;
                         this.channelServerId = message.packetDecoded.protectedPayload.targetChannelId;
-                        this.emit('debug', `Channel ready: ${this.channelName}`);
+                        this.emit('message', `Channel ready for: ${this.channelName}`);
                     } else {
                         this.channelStatus = false;
                         this.emit('debug', `Could not open channel: ${this.channelName}`);
@@ -387,8 +407,18 @@ class SMARTGLASS extends EventEmitter {
                 }, 750);
 
                 setTimeout(() => {
-                    resolve(true);
-                }, 2500);
+                    if (this.connectionStatus) {
+                        resolve({
+                            status: 'success',
+                            state: this.connectionStatus
+                        });
+                    } else {
+                        reject({
+                            status: 'error',
+                            error: 'Not powered ON, try again.'
+                        });
+                    }
+                }, 4500);
             } else {
                 reject({
                     status: 'error',
@@ -457,12 +487,61 @@ class SMARTGLASS extends EventEmitter {
         });
     };
 
+    //systemMedia
+    sendSystemMediaCommand(command) {
+        return new Promise((resolve, reject) => {
+            this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd');
+
+            if (this.connectionStatus && this.channelStatus) {
+                if (systemMediaCommands[command] != undefined) {
+                    this.emit('debug', `systemMedia send media command: ${command}`);
+
+                    let mediaRequestId = 1;
+                    let requestId = "0000000000000000";
+                    const requestIdLength = requestId.length;
+                    requestId = (requestId + mediaRequestId).slice(-requestIdLength);
+                    this.xbox.getRequestNum();
+
+                    const config = {
+                        type: 'message.mediaCommand'
+                    };
+                    let mediaCommand = new Packer(config);
+                    mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                    mediaCommand.set('titleId', this.mediaState);
+                    mediaCommand.set('command', systemMediaCommands[command]);
+                    mediaRequestId++
+                    mediaCommand.setChannel(this.channelServerId);
+
+                    const message = mediaCommand.pack(this.xbox);
+                    this.send(message);
+
+                    resolve({
+                        status: 'success',
+                        command: command
+                    });
+                } else {
+                    this.emit('debug', `Failed to send command: ${command}`);
+                    reject({
+                        status: 'error',
+                        error: `Unknown command: ${command}`,
+                        commands: systemMediaCommands
+                    });
+                };
+            } else {
+                reject({
+                    status: 'error',
+                    error: 'Channel systemMedia not ready.'
+                });
+            };
+        });
+    };
+
     //systemInput
     sendSystemInputCommand(command) {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f');
+            this.emit('_on_channelOpen', 1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', `systemInput send command: ${command}`);
 
                 if (systemInputCommands[command] != undefined) {
@@ -514,61 +593,12 @@ class SMARTGLASS extends EventEmitter {
         });
     };
 
-    //systemMedia
-    sendSystemMediaCommand(command) {
-        return new Promise((resolve, reject) => {
-            this.openChannelManager(0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd');
-
-            if (this.channelStatus) {
-                if (systemMediaCommands[command] != undefined) {
-                    this.emit('debug', `systemMedia send media command: ${command}`);
-
-                    let mediaRequestId = 1;
-                    let requestId = "0000000000000000";
-                    const requestIdLength = requestId.length;
-                    requestId = (requestId + mediaRequestId).slice(-requestIdLength);
-                    this.xbox.getRequestNum();
-
-                    const config = {
-                        type: 'message.mediaCommand'
-                    };
-                    let mediaCommand = new Packer(config);
-                    mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                    mediaCommand.set('titleId', this.mediaState);
-                    mediaCommand.set('command', systemMediaCommands[command]);
-                    mediaRequestId++
-                    mediaCommand.setChannel(this.channelServerId);
-
-                    const message = mediaCommand.pack(this.xbox);
-                    this.send(message);
-
-                    resolve({
-                        status: 'success',
-                        command: command
-                    });
-                } else {
-                    this.emit('debug', `Failed to send command: ${command}`);
-                    reject({
-                        status: 'error',
-                        error: `Unknown command: ${command}`,
-                        commands: systemMediaCommands
-                    });
-                };
-            } else {
-                reject({
-                    status: 'error',
-                    error: 'Channel systemMedia not ready.'
-                });
-            };
-        });
-    };
-
     //tvRemote
     getConfiguration() {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', 'Get configuration');
 
                 let messageNum = 0;
@@ -598,9 +628,9 @@ class SMARTGLASS extends EventEmitter {
 
     getHeadendInfo() {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', 'Get headend info');
 
                 let messageNum = 0;
@@ -630,9 +660,9 @@ class SMARTGLASS extends EventEmitter {
 
     getLiveTVInfo() {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', 'Get live tv info');
 
                 let messageNum = 0;
@@ -662,9 +692,9 @@ class SMARTGLASS extends EventEmitter {
 
     getTunerLineups() {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', 'Get tuner lineups');
 
                 let messageNum = 0;
@@ -694,9 +724,9 @@ class SMARTGLASS extends EventEmitter {
 
     getAppChannelLineups() {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
 
-            if (this.channelStatus) {
+            if (this.connectionStatus && this.channelStatus) {
                 this.emit('debug', 'Get appchannel lineups');
 
                 let messageNum = 0;
@@ -726,9 +756,8 @@ class SMARTGLASS extends EventEmitter {
 
     sendIrCommand(command) {
         return new Promise((resolve, reject) => {
-            this.openChannelManager(2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (this.channelStatus) {
+            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
+            if (this.connectionStatus && this.channelStatus) {
                 if (tvRemoteCommands[command] != undefined) {
                     this.emit('debug', ` tvRemote send command: ${command}`);
 
@@ -779,39 +808,6 @@ class SMARTGLASS extends EventEmitter {
         json.set('json', JSON.stringify(jsonRequest));
         json.setChannel(this.channelServerId);
         return json.pack(this.xbox);
-    };
-
-    //channelManager
-    openChannelManager(managerId, channelName, udid) {
-        return new Promise((resolve, reject) => {
-            this.managerId = managerId;
-            this.channelName = channelName;
-
-            if (!this.channelStatus) {
-                this.emit('message', `Request open channel: ${channelName}`);
-
-                this.xbox.getRequestNum();
-                const config = {
-                    type: 'message.channelRequest'
-                };
-                let channelRequest = new Packer(config);
-                channelRequest.set('channelRequestId', managerId);
-                channelRequest.set('titleId', 0);
-                channelRequest.set('service', Buffer.from(udid, 'hex'));
-                channelRequest.set('activityId', 0);
-
-                const message = channelRequest.pack(this.xbox)
-                this.send(message);
-
-                this.emit('message', `Send channel request for: ${channelName}, client id: ${managerId}`);
-                resolve(true);
-            } else {
-                reject({
-                    status: 'error',
-                    error: `Channel ${channelName} not ready.`
-                });
-            };
-        });
     };
 
     send(message) {

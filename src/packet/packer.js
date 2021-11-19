@@ -13,10 +13,12 @@ const Types = {
 class PACKER {
     constructor(config) {
         this.type = config.type || '';
-        this.structure = '';
 
         const packetType = this.type.slice(0, 2).toString('hex');
+        this.structure = '';
+
         if (packetType in Types) {
+            // We got a packet that we need to unpack
             const packetValue = this.type;
             this.type = Types[packetType];
             this.structure = this.loadPacketStructure(this.type, packetValue);
@@ -24,16 +26,6 @@ class PACKER {
             this.structure = this.loadPacketStructure(this.type);
         };
 
-    };
-
-    loadPacketStructure(type, value = false) {
-        if (type.slice(0, 6) == 'simple') {
-            return new SimplePacket(type.slice(7), value);
-        } else if (type.slice(0, 7) == 'message') {
-            return new MessagePacket(type.slice(8), value);
-        } else {
-            return false;
-        };
     };
 
     set(key, value, protectedPayload = false) {
@@ -50,6 +42,18 @@ class PACKER {
 
     setChannel(channel) {
         this.structure.setChannel(channel);
+    };
+
+    loadPacketStructure(type, value = false) {
+        if (type.slice(0, 6) == 'simple') {
+            this.simplePacket = new SimplePacket(type.slice(7), value);
+            return this.simplePacket;
+        } else if (type.slice(0, 7) == 'message') {
+            this.messagePacket = new MessagePacket(type.slice(8), value);
+            return this.messagePacket;
+        } else {
+            return false;
+        };
     };
 };
 module.exports = PACKER;
