@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 - full code rebuild
 - config.schema updated
+- update dependencies
 ### Fixed
 - memmory leak on some scenerious 
 - disconnect problem if use RC controll
