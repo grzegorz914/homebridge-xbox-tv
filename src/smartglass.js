@@ -14,7 +14,7 @@ const systemInputCommands = {
     down: 512,
     nexus: 2,
     view: 4,
-    menu: 8,
+    menu: 8
 };
 
 const systemMediaCommands = {
@@ -32,7 +32,7 @@ const systemMediaCommands = {
     back: 4096,
     view: 8192,
     menu: 16384,
-    seek: 32786, // Not implemented yet
+    seek: 32786
 };
 
 const tvRemoteCommands = {
@@ -99,7 +99,7 @@ class SMARTGLASS extends EventEmitter {
                     if (response.packetDecoded.targetParticipantId != this.xbox.participantId) {
                         this.emit('debug', 'Participant id does not match. Ignoring packet.');
                         return;
-                    }
+                    };
 
                     func = `_on_${message.structure.packetDecoded.name}`;
                     this.emit('debug', `Received name: ${func}`);
@@ -123,9 +123,9 @@ class SMARTGLASS extends EventEmitter {
                             this.messageReceivedTime = (new Date().getTime()) / 1000;
                         } catch (error) {
                             this.emit('error', error);
-                        }
-                    }
-                }
+                        };
+                    };
+                };
 
                 if (func == '_on_json') {
                     const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json)
@@ -159,8 +159,8 @@ class SMARTGLASS extends EventEmitter {
                                     return true;
                                 },
                                 partials: {}
-                            }
-                        }
+                            };
+                        };
 
                         this.xbox.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                         if (this.xbox.fragments[jsonMessage.datagramId].isValid() == true) {
@@ -170,12 +170,12 @@ class SMARTGLASS extends EventEmitter {
 
                             this.emit('_on_json', jsonResponse);
                             this.xbox.fragments[jsonMessage.datagramId] = undefined;
-                        }
+                        };
                         func = '_on_json_fragment';
-                    }
-                }
-                this.emit('debug', `Emit event: ${func}`);
+                    };
+                };
                 this.emit(func, response);
+                this.emit('debug', `Emit event: ${func}`);
             })
             .on('listening', () => {
                 const address = this.socket.address();
@@ -190,7 +190,7 @@ class SMARTGLASS extends EventEmitter {
                         const message = discoveryPacket.pack();
                         this.send(message);
                     };
-                }, 2500);
+                }, 3500);
             })
             .on('close', () => {
                 this.emit('debug', 'Socket closed.');
@@ -218,11 +218,10 @@ class SMARTGLASS extends EventEmitter {
 
                     setInterval(() => {
                         if (!this.connectionStatus) {
-                            const message = this.xbox.connect(uhs, xstsToken, certyficate); {
-                                this.send(message);
-                            };
+                            const message = this.xbox.connect(uhs, xstsToken, certyficate);
+                            this.send(message);
                         }
-                    }, 3000);
+                    }, 3500);
                 };
             })
             .on('_on_connectResponse', (message) => {
@@ -265,13 +264,13 @@ class SMARTGLASS extends EventEmitter {
 
                                 this.send(ackMessage);
                                 this.emit('message', `Last packet was sent: ${lastMessageReceivedTime} sec ago, reconnect.`);
-                            }
+                            };
 
                             if (lastMessageReceivedTime > 12) {
                                 this.emit('message', `Last packet was sent: ${lastMessageReceivedTime} sec ago.`);
                                 this.disconnect();
-                            }
-                        }
+                            };
+                        };
                     }, 1000)
 
                 } else {
@@ -324,7 +323,7 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('debug', 'Not connected.')
                     return;
                 };
-                
+
                 this.emit('message', `Request open channel: ${channelName}`);
                 this.channelManagerId = channelManagerId;
                 this.channelName = channelName;
@@ -388,7 +387,7 @@ class SMARTGLASS extends EventEmitter {
     powerOn() {
         return new Promise((resolve, reject) => {
             if (!this.connectionStatus) {
-                this.emit('message', 'Sending power on.');
+                this.emit('message', 'Sending power On.');
 
                 let counter = 0;
                 this.boot = setInterval(() => {
@@ -401,10 +400,10 @@ class SMARTGLASS extends EventEmitter {
                     this.send(message);
 
                     counter += 1;
-                    if (counter === 6) {
+                    if (counter === 5) {
                         clearInterval(this.boot);
                     }
-                }, 750);
+                }, 900);
 
                 setTimeout(() => {
                     if (this.connectionStatus) {
@@ -440,19 +439,22 @@ class SMARTGLASS extends EventEmitter {
                 powerOff.set('liveId', this.liveId);
                 const message = powerOff.pack(this.xbox);
                 this.send(message);
-                this.emit('message', 'Sending power off.');
+                this.emit('message', 'Sending power Off.');
 
                 setTimeout(() => {
                     this.disconnect();
-                    resolve(true);
-                }, 3500);
+                    resolve({
+                        status: 'success',
+                        state: this.connectionStatus
+                    });
+                }, 4500);
             } else {
                 reject({
                     status: 'error',
                     error: 'Not connected.'
-                })
-            }
-        })
+                });
+            };
+        });
     };
 
     recordGameDvr() {
@@ -469,13 +471,16 @@ class SMARTGLASS extends EventEmitter {
                     recordGameDvr.set('endTimeDelta', 0);
                     const message = recordGameDvr.pack(this.xbox);
                     this.send(message);
+                    this.emit('debug', 'Sending record game.');
 
-                    this.emit('debug', 'Sending record game dvr.');
-                    resolve(true);
+                    resolve({
+                        status: 'success',
+                        state: 'Recording...'
+                    });
                 } else {
                     reject({
                         status: 'error',
-                        error: 'Game DVR record function requires an authenticated user.'
+                        error: 'Record game requires an authenticated user.'
                     });
                 }
             } else {
@@ -588,7 +593,7 @@ class SMARTGLASS extends EventEmitter {
                 reject({
                     status: 'error',
                     error: 'Channel systemInput not ready.'
-                })
+                });
             };
         });
     };
@@ -815,6 +820,9 @@ class SMARTGLASS extends EventEmitter {
             const ip = this.ip;
             const messageLength = message.length;
             this.socket.send(message, 0, messageLength, 5050, ip, (err, bytes) => {
+                if (err) {
+                    this.emit('debug', `Sending packet error: ${err}`);
+                };
                 this.emit('debug', `Sending packet: ${message.toString('hex')}`);
             });
         };
@@ -823,8 +831,8 @@ class SMARTGLASS extends EventEmitter {
     socketReconnect() {
         if (!this.socket) {
             this.emit('debug', 'Socket recnnecting...');
-            this.socket = dgram.createSocket('udp4');
-        }
+            this.socket.connect();
+        };
     };
 
     disconnect() {
@@ -841,6 +849,5 @@ class SMARTGLASS extends EventEmitter {
         this.send(message);
         this.emit('_on_disconnected');
     };
-}
-
+};
 module.exports = SMARTGLASS;

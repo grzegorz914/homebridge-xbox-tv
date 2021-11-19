@@ -8,7 +8,7 @@ const Types = {
     dd00: 'simple.discoveryRequest',
     dd01: 'simple.discovery',
     dd02: 'simple.powerOn',
-}
+};
 
 class PACKER {
     constructor(config) {

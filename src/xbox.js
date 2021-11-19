@@ -68,7 +68,7 @@ class XBOX extends EventEmitter {
         // Load crypto data
         this.loadCrypto(object.publicKey, object.secret);
 
-        this.emit('message', 'Sending connectRequest to xbox');
+        this.emit('message', 'Sending connectRequest.');
         const config = {
             type: 'simple.connectRequest'
         };

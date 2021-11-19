@@ -410,7 +410,7 @@ class MESSAGE {
             0xF2E: "SystemTouch",
             0xF34: "SystemTextAck",
             0xF35: "SystemTextDone"
-        }
+        };
         return messageFlags[type];
     };
 

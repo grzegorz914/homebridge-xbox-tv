@@ -327,10 +327,6 @@ class xboxTvDevice {
 		this.prepareAccessory();
 	}
 
-	connectToXbox() {
-
-	};
-
 	async getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
 		try {
@@ -871,7 +867,7 @@ class xboxTvDevice {
 						command = this.switchInfoMenu ? 'nexus' : 'view';
 						type = 'systemInput';
 						break;
-				}
+				};
 				try {
 					const setCommand = this.powerState ? (type === 'systemInput') ? await this.xbox.sendSystemInputCommand(command) : (type === 'systemMedia') ? await this.xbox.sendSystemMediaCommand(command) : false : false;
 					if (!this.disableLogInfo && this.powerState) {
@@ -974,9 +970,9 @@ class xboxTvDevice {
 					case Characteristic.PowerModeSelection.HIDE:
 						command = 'b';
 						break;
-				}
+				};
 				try {
-					const setPowerModeSelection = this.powerState ? (type === 'systemInput') ? await this.xbox.sendSystemInputCommand(command) : false : false;
+					const setPowerModeSelection = this.powerState ? await this.xbox.sendSystemInputCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 					};
@@ -1045,7 +1041,7 @@ class xboxTvDevice {
 						break;
 				}
 				try {
-					const setVolume = this.powerState ? (type === 'tvRemote') ? await this.xbox.sendIrCommand(command) : false : false;
+					const setVolume = this.powerState ? await this.xbox.sendIrCommand(command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					};
@@ -1083,7 +1079,7 @@ class xboxTvDevice {
 				if (this.powerState && (state != this.muteState)) {
 					try {
 						const command = 'volMute';
-						const toggleMute = this.powerState ? (type === 'tvRemote') ? await this.xbox.sendIrCommand(command) : false : false;
+						const toggleMute = this.powerState ? await this.xbox.sendIrCommand(command) : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						};
@@ -1161,8 +1157,7 @@ class xboxTvDevice {
 						this.log.error('Device: %s %s, set Reboot error: %s', this.host, accessoryName, error);
 					};
 					setTimeout(() => {
-						this.rebootService
-							.updateCharacteristic(Characteristic.On, false);
+						this.rebootService.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
 
@@ -1180,7 +1175,7 @@ class xboxTvDevice {
 				.onSet(async (state) => {
 					try {
 						this.xbox = Smartglass();
-						const recordGameDvr = state ? await this.xbox.recordGameDvr() : false;
+						const recordGameDvr = (this.powerState && state) ? await this.xbox.recordGameDvr() : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, record Game DVR start successful: Recording', this.host, accessoryName);
 						};
@@ -1188,8 +1183,7 @@ class xboxTvDevice {
 						this.log.error('Device: %s %s, record Game DVR error: %s', this.host, accessoryName, error);
 					};
 					setTimeout(() => {
-						this.recordGameDvrService
-							.updateCharacteristic(Characteristic.On, false);
+						this.recordGameDvrService.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
 
@@ -1340,8 +1334,7 @@ class xboxTvDevice {
 						this.log.error('Device: %s %s, set Input error, input: %s, error: %s', this.host, accessoryName, buttonName, error);
 					};
 					setTimeout(() => {
-						buttonService
-							.updateCharacteristic(Characteristic.On, false);
+						buttonService.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
 
