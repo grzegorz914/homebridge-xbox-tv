@@ -1,7 +1,11 @@
 const dgram = require('dgram');
-const Xbox = require('./xbox');
-const Packer = require('./packet/packer');
+const uuidParse = require('uuid-parse');
+const uuid = require('uuid');
+const EOL = require('os').EOL;
+const jsrsasign = require('jsrsasign');
 const EventEmitter = require('events').EventEmitter;
+const Packer = require('./packet/packer');
+const SGCrypto = require('./sgcrypto');
 
 const systemInputCommands = {
     a: 16,
@@ -49,16 +53,23 @@ class SMARTGLASS extends EventEmitter {
         this.liveId = config.liveId;
         this.reconnect = config.reconnect;
 
-        this.xbox = new Xbox({
-            ip: this.ip,
-            liveId: this.liveId
-        });
+        this.crypto = new SGCrypto();
+
+        //xbox
+        this.xboxsCount = 0;
+        this.requestNum = 1;
+        this.participantId = false;
+        this.targetParticipantId = 0;
+        this.sourceParticipantId = 0;
+        this.iv = false;
+        this.isAuthenticated = false;
 
         this.connectionStatus = false;
         this.messageReceivedTime = (new Date().getTime()) / 1000;
         this.titleId = '';
         this.currentApp = '';
         this.mediaState = 0;
+        this.fragments = {};
 
         //channelManager
         this.channelStatus = false;
@@ -88,7 +99,7 @@ class SMARTGLASS extends EventEmitter {
                     return;
                 };
 
-                const response = message.unpack(this.xbox);
+                const response = message.unpack(this);
                 const type = response.name;
                 let func = '';
 
@@ -96,7 +107,7 @@ class SMARTGLASS extends EventEmitter {
                     func = `_on_${type}`;
                     this.emit('debug', `Received type: ${func}`);
                 } else {
-                    if (response.packetDecoded.targetParticipantId != this.xbox.participantId) {
+                    if (response.packetDecoded.targetParticipantId != this.participantId) {
                         this.emit('debug', 'Participant id does not match. Ignoring packet.');
                         return;
                     };
@@ -107,7 +118,7 @@ class SMARTGLASS extends EventEmitter {
                     if (response.packetDecoded.flags.needAck == true) {
                         this.emit('debug', 'Packet needs to be acknowledged. Sending response');
 
-                        this.xbox.getRequestNum();
+                        this.getRequestNum();
                         const config = {
                             type: 'message.acknowledge'
                         };
@@ -116,7 +127,7 @@ class SMARTGLASS extends EventEmitter {
                         acknowledge.structure.structure.processedList.value.push({
                             id: response.packetDecoded.sequenceNumber
                         });
-                        const message = acknowledge.pack(this.xbox);
+                        const message = acknowledge.pack(this);
 
                         try {
                             this.send(message);
@@ -133,9 +144,9 @@ class SMARTGLASS extends EventEmitter {
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId != undefined) {
                         this.emit('debug', `_on_json is fragmented: ${jsonMessage.datagramId}`);
-                        if (this.xbox.fragments[jsonMessage.datagramId] == undefined) {
+                        if (this.fragments[jsonMessage.datagramId] == undefined) {
                             // Prepare buffer for JSON
-                            this.xbox.fragments[jsonMessage.datagramId] = {
+                            this.fragments[jsonMessage.datagramId] = {
 
                                 getValue: () => {
                                     let buffer = Buffer.from('');
@@ -162,14 +173,14 @@ class SMARTGLASS extends EventEmitter {
                             };
                         };
 
-                        this.xbox.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                        if (this.xbox.fragments[jsonMessage.datagramId].isValid() == true) {
+                        this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+                        if (this.fragments[jsonMessage.datagramId].isValid() == true) {
                             this.emit('debug', '_on_json: Completed fragmented packet');
                             const jsonResponse = response;
-                            jsonResponse.packetDecoded.protectedPayload.json = this.xbox.fragments[jsonMessage.datagramId].getValue().toString();
+                            jsonResponse.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
 
                             this.emit('_on_json', jsonResponse);
-                            this.xbox.fragments[jsonMessage.datagramId] = undefined;
+                            this.fragments[jsonMessage.datagramId] = undefined;
                         };
                         func = '_on_json_fragment';
                     };
@@ -202,26 +213,52 @@ class SMARTGLASS extends EventEmitter {
 
         //EventEmmiter
         this.on('_on_discovery', (message) => {
-                const discoveredConsoles = new Array();
-                discoveredConsoles.push(message.packetDecoded);
+                this.discoveredXboxs = new Array();
+                this.discoveredXboxs.push(message.packetDecoded);
+                this.xboxsCount = this.discoveredXboxs.length;
 
-                const consolesCount = discoveredConsoles.length;
-                if (this.connectionStatus && consolesCount > 0) {
-                    discoveredConsoles.splice(0, consolesCount);
-                };
-
-                if (consolesCount > 0) {
+                if (this.xboxsCount > 0) {
                     this.emit('debug', 'Discovered.');
                     const uhs = '';
                     const xstsToken = '';
-                    const certyficate = (discoveredConsoles[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
+                    const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-                    setInterval(() => {
-                        if (!this.connectionStatus) {
-                            const message = this.xbox.connect(uhs, xstsToken, certyficate);
-                            this.send(message);
-                        }
-                    }, 3500);
+                    // // Set pem
+                    const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+                    // Set uuid
+                    const uuid4 = Buffer.from(uuidParse.parse(uuid.v4()));
+
+                    // Create public key
+                    const ecKey = jsrsasign.X509.getPublicKeyFromCertPEM(pem);
+                    this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`);
+
+                    const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
+                    this.emit('debug', `Crypto output: ${object}`);
+
+                    // Load crypto data
+                    this.emit('debug', `Loading crypto, public key: ${object.publicKey}, shared secret: ${object.secret}`);
+                    this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
+
+                    this.emit('debug', 'Sending connectRequest.');
+                    const config = {
+                        type: 'simple.connectRequest'
+                    };
+                    let connectRequest = new Packer(config);
+                    connectRequest.set('uuid', uuid4);
+                    connectRequest.set('publicKey', this.crypto.getPublicKey());
+                    connectRequest.set('iv', this.crypto.getIv());
+
+                    if (uhs != undefined && xstsToken != undefined) {
+                        this.emit('debug', `Connecting using token: ${uhs}:${xstsToken}`);
+                        connectRequest.set('userhash', uhs, true);
+                        connectRequest.set('jwt', xstsToken, true);
+                        this.isAuthenticated = true;
+                    } else {
+                        this.emit('debug', 'Connecting using anonymous login');
+                        this.isAuthenticated = false;
+                    }
+                    const message = connectRequest.pack(this);
+                    this.send(message);
                 };
             })
             .on('_on_connectResponse', (message) => {
@@ -229,22 +266,25 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('debug', 'Ignore packet. Already connected.')
                     return;
                 };
-                clearInterval(this.boot);
 
                 const participantId = message.packetDecoded.protectedPayload.participantId;
-                this.xbox.setParticipantId(participantId);
+                this.participantId = participantId;
+                this.sourceParticipantId = participantId;
 
                 const connectionResult = message.packetDecoded.protectedPayload.connectResult;
                 if (connectionResult == '0') {
+                    this.discoveredXboxs.splice(0, this.xboxsCount);
+                    clearInterval(this.boot);
+
                     this.connectionStatus = true;
                     this.emit('_on_connected');
 
-                    this.xbox.getRequestNum();
+                    this.getRequestNum();
                     const config = {
                         type: 'message.localJoin'
                     };
                     const localJoin = new Packer(config);
-                    const message = localJoin.pack(this.xbox);
+                    const message = localJoin.pack(this);
                     this.send(message);
 
                     this.disconnect12s = setInterval(() => {
@@ -254,13 +294,13 @@ class SMARTGLASS extends EventEmitter {
                         if (this.connectionStatus) {
                             if (lastMessageReceivedTime == 5) {
 
-                                this.xbox.getRequestNum();
+                                this.getRequestNum();
                                 const config = {
                                     type: 'message.acknowledge'
                                 };
                                 let ack = new Packer(config);
-                                ack.set('lowWatermark', this.xbox.requestNum);
-                                const ackMessage = ack.pack(this.xbox);
+                                ack.set('lowWatermark', this.requestNum);
+                                const ackMessage = ack.pack(this);
 
                                 this.send(ackMessage);
                                 this.emit('message', `Last packet was sent: ${lastMessageReceivedTime} sec ago, reconnect.`);
@@ -328,7 +368,7 @@ class SMARTGLASS extends EventEmitter {
                 this.channelManagerId = channelManagerId;
                 this.channelName = channelName;
 
-                this.xbox.getRequestNum();
+                this.getRequestNum();
                 const config = {
                     type: 'message.channelRequest'
                 };
@@ -337,7 +377,7 @@ class SMARTGLASS extends EventEmitter {
                 channelRequest.set('titleId', 0);
                 channelRequest.set('service', Buffer.from(udid, 'hex'));
                 channelRequest.set('activityId', 0);
-                const message = channelRequest.pack(this.xbox);
+                const message = channelRequest.pack(this);
                 this.send(message);
                 this.emit('debug', `Send channel request for: ${channelName}, client id: ${channelManagerId}`);
             })
@@ -382,6 +422,14 @@ class SMARTGLASS extends EventEmitter {
                 this.connectionStatus = false;
                 this.emit('message', 'Disconnected.');
             });
+    };
+
+    getRequestNum() {
+        let num = this.requestNum;
+        this.requestNum++;
+
+        this.emit('debug', `Request number set to: ${this.requestNum}`)
+        return num;
     };
 
     powerOn() {
@@ -431,13 +479,13 @@ class SMARTGLASS extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (this.connectionStatus) {
 
-                this.xbox.getRequestNum();
+                this.getRequestNum();
                 const config = {
                     type: 'message.powerOff'
                 };
                 let powerOff = new Packer(config);
                 powerOff.set('liveId', this.liveId);
-                const message = powerOff.pack(this.xbox);
+                const message = powerOff.pack(this);
                 this.send(message);
                 this.emit('message', 'Sending power Off.');
 
@@ -460,16 +508,16 @@ class SMARTGLASS extends EventEmitter {
     recordGameDvr() {
         return new Promise((resolve, reject) => {
             if (this.connectionStatus) {
-                if (this.xbox.isAuthenticated) {
+                if (this.isAuthenticated) {
 
-                    this.xbox.getRequestNum();
+                    this.getRequestNum();
                     const config = {
                         type: 'message.recordGameDvr'
                     };
                     let recordGameDvr = new Packer(config);
                     recordGameDvr.set('startTimeDelta', -60);
                     recordGameDvr.set('endTimeDelta', 0);
-                    const message = recordGameDvr.pack(this.xbox);
+                    const message = recordGameDvr.pack(this);
                     this.send(message);
                     this.emit('debug', 'Sending record game.');
 
@@ -505,7 +553,7 @@ class SMARTGLASS extends EventEmitter {
                     let requestId = "0000000000000000";
                     const requestIdLength = requestId.length;
                     requestId = (requestId + mediaRequestId).slice(-requestIdLength);
-                    this.xbox.getRequestNum();
+                    this.getRequestNum();
 
                     const config = {
                         type: 'message.mediaCommand'
@@ -517,7 +565,7 @@ class SMARTGLASS extends EventEmitter {
                     mediaRequestId++
                     mediaCommand.setChannel(this.channelServerId);
 
-                    const message = mediaCommand.pack(this.xbox);
+                    const message = mediaCommand.pack(this);
                     this.send(message);
 
                     resolve({
@@ -551,7 +599,7 @@ class SMARTGLASS extends EventEmitter {
 
                 if (systemInputCommands[command] != undefined) {
                     const timestampNow = new Date().getTime();
-                    this.xbox.getRequestNum();
+                    this.getRequestNum();
 
                     const config = {
                         type: 'message.gamepad'
@@ -561,19 +609,19 @@ class SMARTGLASS extends EventEmitter {
                     gamepadPress.set('command', systemInputCommands[command]);
                     gamepadPress.setChannel(this.channelServerId);
 
-                    const message = gamepadPress.pack(this.xbox);
+                    const message = gamepadPress.pack(this);
                     this.send(message);
 
                     setTimeout(() => {
                         const timestamp = new Date().getTime();
-                        this.xbox.getRequestNum();
+                        this.getRequestNum();
 
                         let gamepadUnpress = new Packer(config);
                         gamepadUnpress.set('timestamp', Buffer.from('000' + timestamp.toString(), 'hex'));
                         gamepadUnpress.set('command', 0);
                         gamepadUnpress.setChannel(this.channelServerId);
 
-                        const message = gamepadUnpress.pack(this.xbox);
+                        const message = gamepadUnpress.pack(this);
                         this.send(message);
 
                         resolve({
@@ -804,7 +852,7 @@ class SMARTGLASS extends EventEmitter {
     };
 
     createJsonPacket(jsonRequest) {
-        this.xbox.getRequestNum();
+        this.getRequestNum();
 
         const config = {
             type: 'message.json'
@@ -812,7 +860,7 @@ class SMARTGLASS extends EventEmitter {
         let json = new Packer(config);
         json.set('json', JSON.stringify(jsonRequest));
         json.setChannel(this.channelServerId);
-        return json.pack(this.xbox);
+        return json.pack(this);
     };
 
     send(message) {
@@ -838,14 +886,14 @@ class SMARTGLASS extends EventEmitter {
     disconnect() {
         this.emit('debug', 'Disconnecting...');
 
-        this.xbox.getRequestNum();
+        this.getRequestNum();
         const config = {
             type: 'message.disconnect'
         };
         let disconnect = new Packer(config);
         disconnect.set('reason', 4);
         disconnect.set('errorCode', 0);
-        const message = disconnect.pack(this.xbox);
+        const message = disconnect.pack(this);
         this.send(message);
         this.emit('_on_disconnected');
     };

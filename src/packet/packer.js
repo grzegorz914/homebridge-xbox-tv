@@ -32,12 +32,12 @@ class PACKER {
         this.structure.set(key, value, protectedPayload);
     };
 
-    pack(xbox = undefined) {
-        return this.structure.pack(xbox);
+    pack(smartglass = undefined) {
+        return this.structure.pack(smartglass);
     };
 
-    unpack(xbox = undefined) {
-        return this.structure.unpack(xbox);
+    unpack(smartglass = undefined) {
+        return this.structure.unpack(smartglass);
     };
 
     setChannel(channel) {

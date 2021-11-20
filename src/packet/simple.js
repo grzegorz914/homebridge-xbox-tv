@@ -125,7 +125,7 @@ class SIMPLE {
         };
     };
 
-    unpack(xbox = undefined) {
+    unpack(smartglass = undefined) {
         const Packet = this.packet;
         const packetFormat = this.packetFormat;
         const payload = new PacketStructure(this.packetData);
@@ -156,7 +156,7 @@ class SIMPLE {
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
             packet.signature = packet.protectedPayload.slice(-32);
 
-            let decryptedPayload = xbox.crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
+            let decryptedPayload = smartglass.crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
             decryptedPayload = new PacketStructure(decryptedPayload);
 
             const protectedStructure = Packet[`${packetFormat}Protected`];
@@ -171,7 +171,7 @@ class SIMPLE {
         return this;
     };
 
-    pack(xbox = false) {
+    pack(smartglass = false) {
         let payload = new PacketStructure();
         let packet = payload.toBuffer();
 
@@ -196,7 +196,7 @@ class SIMPLE {
                     };
                 };
                 this.protectedPayloadLengthReal = this.protectedPayload.toBuffer().length;
-                const encryptedPayload = xbox.crypto.encrypt(this.protectedPayload.toBuffer(), xbox.crypto.getEncryptionKey(), this.structure.iv.value);
+                const encryptedPayload = smartglass.crypto.encrypt(this.protectedPayload.toBuffer(), smartglass.crypto.getEncryptionKey(), this.structure.iv.value);
                 payload.writeBytes(encryptedPayload);
             }
         };
@@ -214,7 +214,7 @@ class SIMPLE {
             packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
 
             // Sign protected payload
-            const protectedPayloadHash = xbox.crypto.sign(packet);
+            const protectedPayloadHash = smartglass.crypto.sign(packet);
             packet = Buffer.concat([
                 packet,
                 Buffer.from(protectedPayloadHash)
