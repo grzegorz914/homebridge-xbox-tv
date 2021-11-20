@@ -41,7 +41,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = packetStructure.readUInt32();
-                        return this.value
+                        return this.value;
                     }
                 }
             },
@@ -53,7 +53,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = packetStructure.readInt32();
-                        return this.value
+                        return this.value;
                     }
                 }
             },
@@ -65,7 +65,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = packetStructure.readUInt16();
-                        return this.value
+                        return this.value;
                     }
                 }
             },
@@ -78,7 +78,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = packetStructure.readBytes(length);
-                        return this.value
+                        return this.value;
                     }
                 }
             },
@@ -90,7 +90,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = packetStructure.readSGString().toString();
-                        return this.value
+                        return this.value;
                     }
                 }
             },
@@ -104,7 +104,7 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         this.value = this.readFlags(packetStructure.readBytes(this.length));
-                        return this.value
+                        return this.value;
                     }
                 }
             },

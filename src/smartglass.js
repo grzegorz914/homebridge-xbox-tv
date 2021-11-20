@@ -193,12 +193,12 @@ class SMARTGLASS extends EventEmitter {
 
                 this.listening = setInterval(async () => {
                     if (!this.connectionStatus) {
-                        const config = {
-                            type: 'simple.discoveryRequest'
-                        };
-                        let discoveryPacket = new Packer(config);
-                        const message = discoveryPacket.pack();
                         try {
+                            const config = {
+                                type: 'simple.discoveryRequest'
+                            };
+                            let discoveryPacket = new Packer(config);
+                            const message = discoveryPacket.pack();
                             await this.send(message);
                         } catch (error) {
                             this.emit('error', `Sending discoveryPacket error: ${error}`);
@@ -722,8 +722,7 @@ class SMARTGLASS extends EventEmitter {
 
                 try {
                     let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
+                    const msgId = `2ed6c0fd.${messageNum++}`;
 
                     const jsonRequest = {
                         msgid: msgId,
@@ -761,8 +760,7 @@ class SMARTGLASS extends EventEmitter {
 
                 try {
                     let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
+                    const msgId = `2ed6c0fd.${messageNum++}`;
 
                     const jsonRequest = {
                         msgid: msgId,
@@ -800,8 +798,7 @@ class SMARTGLASS extends EventEmitter {
 
                 try {
                     let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
+                    const msgId = `2ed6c0fd.${messageNum++}`;
 
                     const jsonRequest = {
                         msgid: msgId,
@@ -839,8 +836,7 @@ class SMARTGLASS extends EventEmitter {
 
                 try {
                     let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
+                    const msgId = `2ed6c0fd.${messageNum++}`;
 
                     const jsonRequest = {
                         msgid: msgId,
@@ -878,8 +874,7 @@ class SMARTGLASS extends EventEmitter {
 
                 try {
                     let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
+                    const msgId = `2ed6c0fd.${messageNum++}`;
 
                     const jsonRequest = {
                         msgid: msgId,
@@ -916,21 +911,20 @@ class SMARTGLASS extends EventEmitter {
                 if (tvRemoteCommands[command] != undefined) {
                     this.emit('debug', ` tvRemote send command: ${command}`);
 
-                    let messageNum = 0;
-                    messageNum++
-                    const msgId = `2ed6c0fd.${messageNum}`;
-
-                    const jsonRequest = {
-                        msgid: msgId,
-                        request: "SendKey",
-                        params: {
-                            button_id: tvRemoteCommands[command],
-                            device_id: null
-                        }
-                    };
-
-                    const message = this.createJsonPacket(jsonRequest);
                     try {
+                        let messageNum = 0;
+                        const msgId = `2ed6c0fd.${messageNum++}`;
+
+                        const jsonRequest = {
+                            msgid: msgId,
+                            request: "SendKey",
+                            params: {
+                                button_id: tvRemoteCommands[command],
+                                device_id: null
+                            }
+                        };
+
+                        const message = await this.createJsonPacket(jsonRequest);
                         await this.send(message);
                         resolve({
                             status: 'success',
