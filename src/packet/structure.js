@@ -31,14 +31,12 @@ class STRUCTURE {
     readSGString() {
         const dataLength = this.readUInt16();
         const data = this.packet.slice(this.offset, this.offset + dataLength);
-
         this.offset = (this.offset + 1 + dataLength);
         return data;
     };
 
     writeBytes(data, type) {
         const dataBuffer = Buffer.from(data, type);
-
         this.add(dataBuffer);
         return this;
     };

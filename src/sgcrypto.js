@@ -38,7 +38,6 @@ class SGCRYPTO {
         if (!this.encryptionKey) {
             this.load();
         };
-
         return this.hashKey;
     };
 
@@ -75,7 +74,6 @@ class SGCRYPTO {
         if (!this.encryptionKey) {
             this.load();
         };
-
         return this.encryptionKey;
     };
 
@@ -83,7 +81,6 @@ class SGCRYPTO {
         if (!this.iv) {
             this.load();
         };
-
         return this.iv;
     };
 
@@ -91,7 +88,6 @@ class SGCRYPTO {
         if (!this.hashKey) {
             this.load();
         };
-
         return this.hashKey;
     };
 
@@ -132,14 +128,12 @@ class SGCRYPTO {
         let decryptedPayload = cipher.update(data, 'binary', 'binary');
         decryptedPayload += cipher.final('binary');
 
-
         return this.removePadding(Buffer.from(decryptedPayload, 'binary'));
     };
 
     sign(data) {
         let hashHmac = crypto.createHmac('sha256', this.getHashKey());
         hashHmac.update(data, 'binary', 'binary');
-
         const protectedPayloadHash = hashHmac.digest('binary');
         return Buffer.from(protectedPayloadHash, 'binary');
     };

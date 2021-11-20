@@ -113,10 +113,7 @@ class MESSAGE {
                     value: value,
                     structure: structure,
                     pack(packetStructure) {
-                        // @Todo
-
                         packetStructure.writeUInt16(this.value.length);
-
                         let arrayStructure = Packet[structure];
                         for (let index in this.value) {
                             for (let name in arrayStructure) {
@@ -124,7 +121,6 @@ class MESSAGE {
                                 packetStructure = arrayStructure[name].pack(packetStructure);
                             }
                         }
-
                         return packetStructure;
                     },
                     unpack(packetStructure) {
@@ -138,10 +134,8 @@ class MESSAGE {
                             for (let name in arrayStructure) {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
                             }
-
                             array.push(item);
                         }
-
                         this.value = array;
                         return this.value;
                     }
@@ -162,7 +156,6 @@ class MESSAGE {
                                 packetStructure = arrayStructure[name].pack(packetStructure);
                             }
                         }
-
                         return packetStructure;
                     },
                     unpack(packetStructure) {
@@ -176,7 +169,6 @@ class MESSAGE {
                             for (let name in arrayStructure) {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
                             }
-
                             array.push(item);
                         }
                         this.value = array;
@@ -476,7 +468,7 @@ class MESSAGE {
         };
 
         let header = new PacketStructure();
-        header.writeBytes(Buffer.from('d00d', 'hex'));
+        header.writeBytes(Buffer.from('d00d', 'hex'))
         header.writeUInt16(payload.toBuffer().length);
         header.writeUInt32(smartglass.requestNum);
         header.writeUInt32(smartglass.targetParticipantId);

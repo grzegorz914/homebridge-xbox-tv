@@ -269,7 +269,7 @@ class xboxTvDevice {
 			this.powerState = true;
 			this.checkDeviceInfo = true;
 
-			this.getApp = setInterval(function () {
+			this.getApp = setInterval(() => {
 				const getWebApiInstalledApps = (this.webApiControl && this.webApiEnabled) ? this.getWebApiInstalledApps() : false;
 			}, 60000);
 		});
