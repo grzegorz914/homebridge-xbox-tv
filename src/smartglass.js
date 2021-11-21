@@ -60,6 +60,8 @@ class SMARTGLASS extends EventEmitter {
         this.currentApp = '';
         this.mediaState = 0;
         this.fragments = {};
+        this.blockMultipleSend = false;
+        this.blockMultiplePress = false;
 
         //xbox
         this.xboxsCount = 0;
@@ -580,8 +582,9 @@ class SMARTGLASS extends EventEmitter {
                 return;
             };
 
-            if (systemMediaCommands[command] != undefined) {
+            if (systemMediaCommands[command] != undefined && !this.blockMultiplePress) {
                 this.emit('debug', `systemMedia send command: ${command}`);
+                this.blockMultiplePress = true;
 
                 try {
                     let mediaRequestId = 1;
@@ -601,9 +604,11 @@ class SMARTGLASS extends EventEmitter {
                     mediaCommand.setChannel(this.channelServerId);
                     const message = mediaCommand.pack(this);
                     await this.socketSend(message);
+                    this.blockMultiplePress = false;
                     resolve(true);
                 } catch (error) {
                     this.emit('error', `Sending mediaCommand error: ${error}`);
+                    this.blockMultiplePress = false;
                     reject({
                         status: 'error',
                         error: `Sending mediaCommand error: ${error}`,
@@ -633,52 +638,52 @@ class SMARTGLASS extends EventEmitter {
                 return;
             };
 
-            if (systemInputCommands[command] != undefined) {
+            if (systemInputCommands[command] != undefined && !this.blockMultiplePress) {
                 this.emit('debug', `systemInput send command: ${command}`);
-                let press = true;
-                if (press) {
-                    press = !press;
-                    try {
-                        await this.getRequestNum();
+                this.blockMultiplePress = true;
 
-                        const config = {
-                            type: 'message.gamepad'
-                        };
-                        const timestampNow = new Date().getTime();
-                        let gamepadPress = new Packer(config);
-                        gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
-                        gamepadPress.set('command', systemInputCommands[command]);
-                        gamepadPress.setChannel(this.channelServerId);
-                        const message = gamepadPress.pack(this);
-                        await this.socketSend(message);
+                try {
+                    await this.getRequestNum();
 
-                        setTimeout(async () => {
-                            try {
-                                await this.getRequestNum();
-
-                                const config1 = {
-                                    type: 'message.gamepad'
-                                };
-                                const timestamp = new Date().getTime();
-                                let gamepadUnpress = new Packer(config1);
-                                gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
-                                gamepadUnpress.set('command', 0);
-                                gamepadUnpress.setChannel(this.channelServerId);
-                                const message = gamepadUnpress.pack(this);
-                                await this.socketSend(message);
-                                resolve(true);
-                            } catch (error) {
-                                this.emit('error', `Sending gamepadUnpress error: ${error}`);
-                            };
-                            press = true;
-                        }, 250);
-                    } catch (error) {
-                        this.emit('error', `Sending gamepadPress error: ${error}`);
-                        reject({
-                            status: 'error',
-                            error: `Sending gamepadPress error: ${error}`
-                        });
+                    const config = {
+                        type: 'message.gamepad'
                     };
+                    const timestampNow = new Date().getTime();
+                    let gamepadPress = new Packer(config);
+                    gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
+                    gamepadPress.set('command', systemInputCommands[command]);
+                    gamepadPress.setChannel(this.channelServerId);
+                    const message = gamepadPress.pack(this);
+                    await this.socketSend(message);
+
+                    setTimeout(async () => {
+                        try {
+                            await this.getRequestNum();
+
+                            const config1 = {
+                                type: 'message.gamepad'
+                            };
+                            const timestamp = new Date().getTime();
+                            let gamepadUnpress = new Packer(config1);
+                            gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
+                            gamepadUnpress.set('command', 0);
+                            gamepadUnpress.setChannel(this.channelServerId);
+                            const message = gamepadUnpress.pack(this);
+                            await this.socketSend(message);
+                            this.blockMultiplePress = false;
+                            resolve(true);
+                        } catch (error) {
+                            this.emit('error', `Sending gamepadUnpress error: ${error}`);
+                            this.blockMultiplePress = false;
+                        };
+                    }, 250);
+                } catch (error) {
+                    this.emit('error', `Sending gamepadPress error: ${error}`);
+                    this.blockMultiplePress = false;
+                    reject({
+                        status: 'error',
+                        error: `Sending gamepadPress error: ${error}`
+                    });
                 };
             } else {
                 this.emit('debug', `Failed to send command: ${command}`);
@@ -890,8 +895,9 @@ class SMARTGLASS extends EventEmitter {
                 return;
             };
 
-            if (tvRemoteCommands[command] != undefined) {
+            if (tvRemoteCommands[command] != undefined && !this.blockMultiplePress) {
                 this.emit('debug', ` tvRemote send command: ${command}`);
+                this.blockMultiplePress = true;
 
                 try {
                     let messageNum = 0;
@@ -907,9 +913,11 @@ class SMARTGLASS extends EventEmitter {
                     };
                     const message = await this.createJsonPacket(jsonRequest);
                     await this.socketSend(message);
+                    this.blockMultiplePress = false;
                     resolve(true);
                 } catch (error) {
                     this.emit('error', `Sending irCommand error: ${error}`);
+                    this.blockMultiplePress = false;
                     reject({
                         status: 'error',
                         error: `Sending irCommand error: ${error}`
@@ -945,18 +953,21 @@ class SMARTGLASS extends EventEmitter {
 
     socketSend(message) {
         return new Promise((resolve, reject) => {
-            if (this.socket) {
+            if (this.socket && !this.blockMultipleSend) {
+                this.blockMultipleSend = true;
                 const ip = this.ip;
                 const messageLength = message.length;
                 this.socket.send(message, 0, messageLength, 5050, ip, (error, bytes) => {
                     if (error) {
                         this.emit('error', `Sending packet error: ${error}`);
+                        this.blockMultipleSend = false;
                         reject({
                             status: 'error',
                             error: `Sending message error: ${error}`
                         });
                     };
-                    this.emit('debug', `Sending message: ${message.toString('hex')}`);
+                    this.emit('debug', `Sending bytes: ${bytes}`);
+                    this.blockMultipleSend = false;
                     resolve(true);
                 });
             };
@@ -993,6 +1004,7 @@ class SMARTGLASS extends EventEmitter {
                 reject(false);
             };
         });
+        ed
     };
 
     getRequestNum() {
