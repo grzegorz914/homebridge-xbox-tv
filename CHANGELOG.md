@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2021-11-04
+## [2.0.0] - 2021-11-21
 ### Added
 - Screensaver and Settings TV input as default
 - Smartglass library (based on @unknownskl code) as standalone packet, completelly rebuilded
@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - memmory leak on some scenerious 
-- disconnect problem if use RC
+- protocol disconnect if send multiple command at once
 
 ## [1.8.8] - 2021-11-04
 ### Fixed
