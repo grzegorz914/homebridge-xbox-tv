@@ -6,17 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - 2021-11-04
 ### Added
-- Screensaver and TV Settings input as default
+- Screensaver and Settings TV input as default
 - Smartglass library (based on @unknownskl code) as standalone packet, completelly rebuilded
 - Debug mode
+
 ### Changes
 - full code rebuild
 - config.schema updated
 - dependencies updated
 - async/await and promises
+
 ### Fixed
 - memmory leak on some scenerious 
-- disconnect problem if use RC controll
+- disconnect problem if use RC
+
 ## [1.8.8] - 2021-11-04
 ### Fixed
 - fix some connect/disconnect case
