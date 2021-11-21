@@ -192,24 +192,20 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('debug', `Server listening: ${address.address}:${address.port}, start discovering.`);
 
                 this.listening = setInterval(async () => {
-                    if (this.connectionStatus) {
-                        this.emit('debug', 'Already connected, sending discovery packet ignored.');
-                        clearInterval(this.listening);
-                        return;
-                    };
-
-                    this.emit('debug', `Sending discovery packet`);
-                    try {
-                        const config = {
-                            type: 'simple.discoveryRequest'
+                    if (!this.connectionStatus) {
+                        this.emit('debug', `Sending discovery packet`);
+                        try {
+                            const config = {
+                                type: 'simple.discoveryRequest'
+                            };
+                            let discoveryPacket = new Packer(config);
+                            const message = discoveryPacket.pack();
+                            await this.send(message);
+                        } catch (error) {
+                            this.emit('error', `Sending discovery packet error: ${error}`);
                         };
-                        let discoveryPacket = new Packer(config);
-                        const message = discoveryPacket.pack();
-                        await this.send(message);
-                    } catch (error) {
-                        this.emit('error', `Sending discovery packet error: ${error}`);
                     };
-                }, 3500);
+                }, 3000);
             })
             .on('close', () => {
                 this.emit('debug', 'Socket closed.');
@@ -228,39 +224,33 @@ class SMARTGLASS extends EventEmitter {
                 this.discoveredXboxs.push(message.packetDecoded);
                 this.xboxsCount = this.discoveredXboxs.length;
 
-                if (this.xboxsCount > 0) {
-                    this.emit('debug', 'Discovered.');
-                    clearInterval(this.boot);
-
-                    this.connectToXbox = setInterval(async () => {
-                        if (this.connectionStatus) {
-                            this.emit('debug', 'Already connected, connect request ignored.');
-                            clearInterval(this.connectToXbox);
-                            return;
-                        };
+                this.connectToXbox = setInterval(async () => {
+                    if (!this.connectionStatus && this.xboxsCount > 0) {
+                        this.emit('debug', 'Discovered.');
+                        clearInterval(this.boot);
 
                         this.emit('debug', 'Sending connect request.');
-                        const uhs = '';
-                        const xstsToken = '';
-                        const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
-
-                        // // Set pem
-                        const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
-                        // Set uuid
-                        const uuid4 = Buffer.from(uuidParse.parse(uuid.v4()));
-
-                        // Create public key
-                        const ecKey = jsrsasign.X509.getPublicKeyFromCertPEM(pem);
-                        this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`);
-
-                        const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
-                        this.emit('debug', `Crypto output: ${object}`);
-
-                        // Load crypto data
-                        this.emit('debug', `Loading crypto, public key: ${object.publicKey}, shared secret: ${object.secret}`);
-                        this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
-
                         try {
+                            const uhs = '';
+                            const xstsToken = '';
+                            const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
+
+                            // // Set pem
+                            const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+                            // Set uuid
+                            const uuid4 = Buffer.from(uuidParse.parse(uuid.v4()));
+
+                            // Create public key
+                            const ecKey = jsrsasign.X509.getPublicKeyFromCertPEM(pem);
+                            this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`);
+
+                            const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
+                            this.emit('debug', `Crypto output: ${object}`);
+
+                            // Load crypto data
+                            this.emit('debug', `Loading crypto, public key: ${object.publicKey}, shared secret: ${object.secret}`);
+                            this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
+
                             const config = {
                                 type: 'simple.connectRequest'
                             };
@@ -283,8 +273,8 @@ class SMARTGLASS extends EventEmitter {
                         } catch (error) {
                             this.emit('error', `Sending connect request error: ${error}`);
                         };
-                    }, 3000);
-                };
+                    };
+                }, 2500);
             })
             .on('_on_connectResponse', async (message) => {
                 if (this.connectionStatus) {
@@ -292,17 +282,16 @@ class SMARTGLASS extends EventEmitter {
                     return;
                 };
 
-                const participantId = message.packetDecoded.protectedPayload.participantId;
-                this.participantId = participantId;
-                this.sourceParticipantId = participantId;
-
                 const connectionResult = message.packetDecoded.protectedPayload.connectResult;
                 if (connectionResult == '0') {
                     this.emit('message', 'Connected.')
-                    this.discoveredXboxs.splice(0, this.xboxsCount);
+                    const participantId = message.packetDecoded.protectedPayload.participantId;
+                    this.participantId = participantId;
+                    this.sourceParticipantId = participantId;
 
+                    this.discoveredXboxs.splice(0, this.xboxsCount);
+                    clearInterval(this.connectToXbox);
                     this.connectionStatus = true;
-                    this.emit('_on_connected');
 
                     this.emit('debug', 'Sending packet.')
                     try {
@@ -312,45 +301,42 @@ class SMARTGLASS extends EventEmitter {
                         };
                         const localJoin = new Packer(config);
                         const message = localJoin.pack(this);
-
                         await this.send(message);
+
+                        this.emit('_on_connected');
                     } catch (error) {
                         this.emit('error', `Sending packet error: ${error}`);
                     };
 
                     this.checkConnectionTimeout = setInterval(async () => {
-                        if (!this.connectionStatus) {
-                            this.emit('debug', 'Not connected, check message timeout ignored. ')
-                            clearInterval(this.checkConnectionTimeout);
-                            return;
-                        };
+                        if (this.connectionStatus) {
+                            const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
+                            this.emit('debug', `Start check message timeout, last received time: ackMessage sec ago.`);
 
-                        const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
-                        this.emit('debug', `Start check message timeout, last received time: ackMessage sec ago.`);
+                            if (lastMessageReceivedTime == 5) {
+                                try {
+                                    await this.getRequestNum();
+                                    const config = {
+                                        type: 'message.acknowledge'
+                                    };
+                                    let ack = new Packer(config);
+                                    ack.set('lowWatermark', this.requestNum);
+                                    const ackMessage = ack.pack(this);
 
-                        if (lastMessageReceivedTime == 5) {
-                            try {
-                                await this.getRequestNum();
-                                const config = {
-                                    type: 'message.acknowledge'
+                                    await this.send(ackMessage);
+                                    this.emit('debug', `Send ackMessage.`);
+                                } catch (error) {
+                                    this.emit('error', `Send ackMessage error: ${error}`);
                                 };
-                                let ack = new Packer(config);
-                                ack.set('lowWatermark', this.requestNum);
-                                const ackMessage = ack.pack(this);
-
-                                await this.send(ackMessage);
-                                this.emit('debug', `Send ackMessage.`);
-                            } catch (error) {
-                                this.emit('error', `Send ackMessage error: ${error}`);
                             };
-                        };
 
-                        if (lastMessageReceivedTime > 12) {
-                            try {
-                                await this.disconnect();
-                                this.emit('message', `Send disconnect.`);
-                            } catch (error) {
-                                this.emit('error', `Send disconnect error: ${error}`);
+                            if (lastMessageReceivedTime > 12) {
+                                try {
+                                    await this.disconnect();
+                                    this.emit('message', `Send disconnect.`);
+                                } catch (error) {
+                                    this.emit('error', `Send disconnect error: ${error}`);
+                                };
                             };
                         };
                     }, 1000)
@@ -480,8 +466,8 @@ class SMARTGLASS extends EventEmitter {
                 });
                 return
             };
-            this.emit('message', 'Sending power On.');
 
+            this.emit('message', 'Sending power On.');
             this.boot = setInterval(async () => {
                 try {
                     const config = {
@@ -493,7 +479,6 @@ class SMARTGLASS extends EventEmitter {
                     await this.send(message);
 
                     if (this.connectionStatus) {
-                        clearInterval(this.boot);
                         resolve({
                             status: 'success',
                             state: true
@@ -501,6 +486,10 @@ class SMARTGLASS extends EventEmitter {
                     };
                 } catch (error) {
                     this.emit('error', `Sending powerOn error: ${error}`);
+                    reject({
+                        status: 'error',
+                        error: `Sending powerOn error: ${error}`
+                    });
                 };
             }, 500);
             setTimeout(() => {
@@ -524,8 +513,8 @@ class SMARTGLASS extends EventEmitter {
                 });
                 return;
             };
-            this.emit('message', 'Sending power Off.');
 
+            this.emit('message', 'Sending power Off.');
             try {
                 await this.getRequestNum();
                 const config = {
@@ -985,28 +974,25 @@ class SMARTGLASS extends EventEmitter {
 
     send(message) {
         return new Promise((resolve, reject) => {
-            if (!this.socket) {
-                this.emit('debug', `Socket not connected, send message ignored.`);
-                return;
-            };
+            if (this.socket) {
+                const ip = this.ip;
+                const messageLength = message.length;
+                this.socket.send(message, 0, messageLength, 5050, ip, (error, bytes) => {
+                    if (error) {
+                        this.emit('error', `Sending packet error: ${error}`);
+                        reject({
+                            status: 'error',
+                            error: `Sending message error: ${error}`
+                        });
+                    };
+                    this.emit('debug', `Sending message: ${message.toString('hex')}`);
 
-            const ip = this.ip;
-            const messageLength = message.length;
-            this.socket.send(message, 0, messageLength, 5050, ip, (error, bytes) => {
-                if (error) {
-                    this.emit('error', `Sending packet error: ${error}`);
-                    reject({
-                        status: 'error',
-                        error: `Sending message error: ${error}`
+                    resolve({
+                        status: 'success',
+                        bytes: bytes
                     });
-                };
-                this.emit('debug', `Sending message: ${message.toString('hex')}`);
-
-                resolve({
-                    status: 'success',
-                    bytes: bytes
                 });
-            });
+            };
         });
     };
 
