@@ -638,27 +638,30 @@ class SMARTGLASS extends EventEmitter {
                 let press = true;
                 if (press) {
                     press = !press;
-                    const timestampNow = new Date().getTime();
                     try {
                         await this.getRequestNum();
 
                         const config = {
                             type: 'message.gamepad'
                         };
+                        const timestampNow = new Date().getTime();
                         let gamepadPress = new Packer(config);
-                        gamepadPress.set('timestamp', Buffer.from('000' + timestampNow.toString(), 'hex'));
+                        gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
                         gamepadPress.set('command', systemInputCommands[command]);
                         gamepadPress.setChannel(this.channelServerId);
                         const message = gamepadPress.pack(this);
                         await this.socketSend(message);
 
                         setTimeout(async () => {
-                            const timestamp = new Date().getTime();
                             try {
                                 await this.getRequestNum();
 
-                                let gamepadUnpress = new Packer(config);
-                                gamepadUnpress.set('timestamp', Buffer.from('000' + timestamp.toString(), 'hex'));
+                                const config1 = {
+                                    type: 'message.gamepad'
+                                };
+                                const timestamp = new Date().getTime();
+                                let gamepadUnpress = new Packer(config1);
+                                gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
                                 gamepadUnpress.set('command', 0);
                                 gamepadUnpress.setChannel(this.channelServerId);
                                 const message = gamepadUnpress.pack(this);
