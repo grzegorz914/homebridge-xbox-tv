@@ -721,21 +721,20 @@ class SMARTGLASS extends EventEmitter {
                 return;
             };
 
-            const type = channelNames[channelName];
-            if (type = 0) {
+            if (channelName == 'systemMedia') {
                 this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd', command);
                 resolve(true);
             };
-            if (type = 1) {
+            if (channelName == 'systemInput') {
                 this.emit('_on_channelOpen', 1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f', command);
                 resolve(true);
             };
-            if (type = 2) {
+            if (channelName == 'tvRemote') {
                 this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7', command);
                 resolve(true);
             };
-            if (type = 3) {
-                this.emit('_on_channelOpen', 3, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7', null);
+            if (channelName == 'sysConfig') {
+                this.emit('_on_channelOpen', 3, 'sysConfig', 'd451e3b360bb4c71b3dbf994b1aca3a7', null);
                 resolve(true);
             };
         });
