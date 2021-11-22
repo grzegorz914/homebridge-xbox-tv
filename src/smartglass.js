@@ -261,25 +261,25 @@ class SMARTGLASS extends EventEmitter {
                             this.emit('debug', `Loading crypto, public key: ${object.publicKey}, shared secret: ${object.secret}`);
                             this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
 
-                            const config = {
-                                type: 'simple.connectRequest'
-                            };
-                            let connectRequest = new Packer(config);
-                            connectRequest.set('uuid', uuid4);
-                            connectRequest.set('publicKey', this.crypto.getPublicKey());
-                            connectRequest.set('iv', this.crypto.getIv());
-
-                            if (uhs != undefined && xstsToken != undefined) {
-                                this.emit('debug', `Connecting using token: ${uhs}:${xstsToken}`);
-                                connectRequest.set('userhash', uhs, true);
-                                connectRequest.set('jwt', xstsToken, true);
-                                this.isAuthenticated = true;
-                            } else {
-                                this.emit('debug', 'Connecting using anonymous login.');
-                                this.isAuthenticated = false;
-                            }
-                            const message = connectRequest.pack(this);
                             try {
+                                const config = {
+                                    type: 'simple.connectRequest'
+                                };
+                                let connectRequest = new Packer(config);
+                                connectRequest.set('uuid', uuid4);
+                                connectRequest.set('publicKey', this.crypto.getPublicKey());
+                                connectRequest.set('iv', this.crypto.getIv());
+
+                                if (uhs != undefined && xstsToken != undefined) {
+                                    this.emit('debug', `Connecting using token: ${uhs}:${xstsToken}`);
+                                    connectRequest.set('userhash', uhs, true);
+                                    connectRequest.set('jwt', xstsToken, true);
+                                    this.isAuthenticated = true;
+                                } else {
+                                    this.emit('debug', 'Connecting using anonymous login.');
+                                    this.isAuthenticated = false;
+                                }
+                                const message = connectRequest.pack(this);
                                 await this.sendSocketMessage(message);
                             } catch (error) {
                                 this.emit('error', `Sending connect request error: ${error}`);
@@ -332,18 +332,18 @@ class SMARTGLASS extends EventEmitter {
                                         const ackMessage = ack.pack(this);
 
                                         await this.sendSocketMessage(ackMessage);
-                                        this.emit('debug', `Send ackMessage.`);
+                                        this.emit('debug', `Last message was ${lastMessageReceivedTime} seconds ago, sending acknowledge.`);
                                     } catch (error) {
-                                        this.emit('error', `Send ackMessage error: ${error}`);
+                                        this.emit('error', `Send acknowledge error: ${error}`);
                                     };
                                 };
 
                                 if (lastMessageReceivedTime > 12) {
                                     try {
                                         await this.disconnect();
-                                        this.emit('message', `Send disconnect.`);
+                                        this.emit('debug', `Last message was ${lastMessageReceivedTime} seconds ago, sendding disconnect.`);
                                     } catch (error) {
-                                        this.emit('error', `Send disconnect error: ${error}`);
+                                        this.emit('error', `Sending disconnect error: ${error}`);
                                     };
                                 };
                             };
@@ -372,7 +372,7 @@ class SMARTGLASS extends EventEmitter {
                     return;
                 };
 
-                this.emit('message', `Request open channel: ${channelName}`);
+                this.emit('debug', `Request open channel: ${channelName}`);
                 this.channelRequestId = channelRequestId;
                 this.channelCommand = command;
 
@@ -387,7 +387,6 @@ class SMARTGLASS extends EventEmitter {
                     channelRequest.set('service', Buffer.from(udid, 'hex'));
                     channelRequest.set('activityId', 0);
                     const message = channelRequest.pack(this);
-
                     await this.sendSocketMessage(message);
                     this.emit('debug', `Send channel request for: ${channelName}, client id: ${channelRequestId}`);
                 } catch (error) {
@@ -404,7 +403,6 @@ class SMARTGLASS extends EventEmitter {
 
                         if (channelRequestId == 0) {
                             if (systemMediaCommands[command] != undefined && !this.blockMultiplePress) {
-                                this.emit('debug', `systemMedia send command: ${command}`);
                                 this.blockMultiplePress = true;
 
                                 try {
@@ -422,23 +420,23 @@ class SMARTGLASS extends EventEmitter {
                                     mediaCommand.set('titleId', 0);
                                     mediaCommand.set('command', systemMediaCommands[command]);
                                     mediaRequestId++
-                                    mediaCommand.setChannel(0);
+                                    mediaCommand.setChannel('0');
                                     const message = mediaCommand.pack(this);
                                     await this.sendSocketMessage(message);
                                     this.blockMultiplePress = false;
+                                    this.emit('debug', `System media send command: ${command}`);
                                 } catch (error) {
-                                    this.emit('error', `Sending mediaCommand error: ${error}`);
+                                    this.emit('error', `Sending media input command error: ${error}`);
                                     this.blockMultiplePress = false;
                                 };
                             } else {
-                                this.emit('debug', `Failed to send mediaCommand: ${command}`);
+                                this.emit('debug', `Failed to send media input command: ${command}`);
                                 this.blockMultiplePress = false;
                             };
                         };
 
                         if (channelRequestId == 1) {
                             if (systemInputCommands[command] != undefined && !this.blockMultiplePress) {
-                                this.emit('debug', `systemInput send command: ${command}`);
                                 this.blockMultiplePress = true;
 
                                 try {
@@ -451,7 +449,7 @@ class SMARTGLASS extends EventEmitter {
                                     let gamepadPress = new Packer(config);
                                     gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
                                     gamepadPress.set('command', systemInputCommands[command]);
-                                    gamepadPress.setChannel(1);
+                                    gamepadPress.setChannel('1');
                                     const message = gamepadPress.pack(this);
                                     await this.sendSocketMessage(message);
 
@@ -466,28 +464,28 @@ class SMARTGLASS extends EventEmitter {
                                             let gamepadUnpress = new Packer(config1);
                                             gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
                                             gamepadUnpress.set('command', 0);
-                                            gamepadUnpress.setChannel(1);
+                                            gamepadUnpress.setChannel('1');
                                             const message = gamepadUnpress.pack(this);
                                             await this.sendSocketMessage(message);
                                             this.blockMultiplePress = false;
+                                            this.emit('debug', `System input send command: ${command}`);
                                         } catch (error) {
-                                            this.emit('error', `Sending gamepadUnpress error: ${error}`);
+                                            this.emit('error', `Sending gamepad unpress error: ${error}`);
                                             this.blockMultiplePress = false;
                                         };
-                                    }, 250);
+                                    }, 150);
                                 } catch (error) {
-                                    this.emit('error', `Sending gamepadPress error: ${error}`);
+                                    this.emit('error', `Sending gamepad press error: ${error}`);
                                     this.blockMultiplePress = false;
                                 };
                             } else {
-                                this.emit('debug', `Failed to send systemInput: ${command}`);
+                                this.emit('debug', `Failed to send system input command: ${command}`);
                                 this.blockMultiplePress = false;
                             };
                         };
 
                         if (channelRequestId == 2) {
                             if (tvRemoteCommands[command] != undefined && !this.blockMultiplePress) {
-                                this.emit('debug', ` tvRemote send command: ${command}`);
                                 this.blockMultiplePress = true;
 
                                 try {
@@ -511,17 +509,19 @@ class SMARTGLASS extends EventEmitter {
                                     const message = json.pack(this);
                                     await this.sendSocketMessage(message);
                                     this.blockMultiplePress = false;
+                                    this.emit('debug', `TV remote send command: ${command}`);
                                 } catch (error) {
-                                    this.emit('error', `Sending irCommand error: ${error}`);
+                                    this.emit('error', `Sending tv remote command error: ${error}`);
                                     this.blockMultiplePress = false;
                                 };
                             } else {
-                                this.emit('debug', `Failed to send irCommand: ${command}`);
+                                this.emit('debug', `Failed to send tv remote command: ${command}`);
                                 this.blockMultiplePress = false;
                             };
                         };
 
                         if (channelRequestId == 3) {
+                            this.emit('debug', `System config send.`);
                             const configNamesCount = configNames.length;
                             for (let i = 0; i < configNamesCount; i++) {
                                 const configName = configNames[i];
@@ -539,7 +539,7 @@ class SMARTGLASS extends EventEmitter {
                                     };
                                     let json = new Packer(config);
                                     json.set('json', JSON.stringify(jsonRequest));
-                                    json.setChannel(2);
+                                    json.setChannel('2');
                                     const message = json.pack(this);
                                     await this.sendSocketMessage(message);
                                 } catch (error) {
@@ -611,42 +611,39 @@ class SMARTGLASS extends EventEmitter {
 
     powerOn() {
         return new Promise((resolve, reject) => {
-            if (this.connectionStatus) {
+            if (!this.connectionStatus) {
+                this.emit('message', 'Sending power On.');
+
+                this.boot = setInterval(async () => {
+                    try {
+                        const config = {
+                            type: 'simple.powerOn'
+                        };
+                        let powerOn = new Packer(config);
+                        powerOn.set('liveId', this.liveId);
+                        const message = powerOn.pack();
+                        await this.sendSocketMessage(message);
+
+                        if (this.connectionStatus) {
+                            resolve(true);
+                        };
+                    } catch (error) {
+                        this.emit('error', `Sending powerOn error: ${error}`);
+                        reject({
+                            status: 'error',
+                            error: `Sending powerOn error: ${error}`
+                        });
+                    };
+                }, 500);
+                setTimeout(() => {
+                    const resolveReject = !this.connectionStatus ? reject(false) : resolve(true);
+                }, 4500);
+            } else {
                 reject({
                     status: 'error',
                     error: 'Already connected.'
                 });
-                return;
             };
-            this.emit('message', 'Sending power On.');
-
-            this.boot = setInterval(async () => {
-                try {
-                    const config = {
-                        type: 'simple.powerOn'
-                    };
-                    let powerOn = new Packer(config);
-                    powerOn.set('liveId', this.liveId);
-                    const message = powerOn.pack();
-                    await this.sendSocketMessage(message);
-
-                    if (this.connectionStatus) {
-                        resolve(true);
-                    };
-                } catch (error) {
-                    this.emit('error', `Sending powerOn error: ${error}`);
-                    reject({
-                        status: 'error',
-                        error: `Sending powerOn error: ${error}`
-                    });
-                };
-            }, 500);
-            setTimeout(() => {
-                reject({
-                    status: 'error',
-                    error: 'Not powered ON, try again.'
-                });
-            }, 4500);
         });
     };
 
