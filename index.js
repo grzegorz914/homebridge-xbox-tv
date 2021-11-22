@@ -770,7 +770,7 @@ class xboxTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					const setPower = state ? await this.xbox.powerOn() : await this.xbox.powerOff();
+					const setPower = (state && !this.powerState) ? await this.xbox.powerOn() : (!state && this.powerState) ? await this.xbox.powerOff() : false;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Power successful, %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					}
@@ -1182,7 +1182,6 @@ class xboxTvDevice {
 				})
 				.onSet(async (state) => {
 					try {
-						this.xbox = Smartglass();
 						const recordGameDvr = state ? await this.xbox.recordGameDvr() : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, record Game DVR start successful: Recording', this.host, accessoryName);
