@@ -8,17 +8,17 @@ const Packer = require('./packet/packer');
 const SGCrypto = require('./sgcrypto');
 
 const systemInputCommands = {
+    nexus: 2,
+    view: 4,
+    menu: 8,
     a: 16,
     b: 32,
     x: 64,
     y: 128,
     up: 256,
-    left: 1024,
-    right: 2048,
     down: 512,
-    nexus: 2,
-    view: 4,
-    menu: 8
+    left: 1024,
+    right: 2048
 };
 
 const systemMediaCommands = {
@@ -45,6 +45,21 @@ const tvRemoteCommands = {
     volMute: 'btn.vol_mute'
 };
 
+const channelNames = {
+    0: 'systemMedia',
+    1: 'systemInput',
+    2: 'tvRemote',
+    3: 'sysConfig'
+};
+
+const configNames = {
+    0: 'GetConfiguration',
+    1: 'GetHeadendInfo',
+    2: 'GetLiveTVInfo',
+    3: 'GetTunerLineups',
+    4: 'GetAppChannelLineups'
+};
+
 class SMARTGLASS extends EventEmitter {
     constructor(config) {
         super();
@@ -63,7 +78,6 @@ class SMARTGLASS extends EventEmitter {
         this.blockMultipleSend = false;
         this.blockMultiplePress = false;
 
-        //xbox
         this.xboxsCount = 0;
         this.requestNum = 0;
         this.participantId = false;
@@ -73,10 +87,7 @@ class SMARTGLASS extends EventEmitter {
         this.isAuthenticated = false;
 
         //channelManager
-        this.channelStatus = false;
-        this.channelServerId = 0;
-        this.channelManagerId = 0;
-        this.channelName = '';
+        this.channelRequestId = 0;
         this.configuration = {};
         this.headendInfo = {};
         this.liveTv = {};
@@ -355,9 +366,181 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
+            .on('_on_channelOpen', async (channelRequestId, channelName, udid, command) => {
+                if (!this.connectionStatus) {
+                    this.emit('debug', 'Not connected, channel open ignored.')
+                    return;
+                };
+
+                this.emit('message', `Request open channel: ${channelName}`);
+                this.channelRequestId = channelRequestId;
+                this.channelCommand = command;
+
+                try {
+                    await this.getRequestNum();
+                    const config = {
+                        type: 'message.channelRequest'
+                    };
+                    let channelRequest = new Packer(config);
+                    channelRequest.set('channelRequestId', channelRequestId);
+                    channelRequest.set('titleId', 0);
+                    channelRequest.set('service', Buffer.from(udid, 'hex'));
+                    channelRequest.set('activityId', 0);
+                    const message = channelRequest.pack(this);
+
+                    await this.socketSend(message);
+                    this.emit('debug', `Send channel request for: ${channelName}, client id: ${channelRequestId}`);
+                } catch (error) {
+                    this.emit('error', `Send channelRequest error: ${error}`);
+                };
+            })
+            .on('_on_channelResponse', async (message) => {
+                this.emit('debug', `Channel response for: ${channelNames[this.channelRequestId]}`);
+                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelRequestId) {
+                    const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+
+                    if (message.packetDecoded.protectedPayload.result == 0) {
+                        const command = this.channelCommand;
+
+                        if (channelRequestId == 0) {
+                            if (systemMediaCommands[command] != undefined && !this.blockMultiplePress) {
+                                this.emit('debug', `systemMedia send command: ${command}`);
+                                this.blockMultiplePress = true;
+
+                                try {
+                                    let mediaRequestId = 1;
+                                    let requestId = "0000000000000000";
+                                    const requestIdLength = requestId.length;
+                                    requestId = (requestId + mediaRequestId).slice(-requestIdLength);
+                                    await this.getRequestNum();
+
+                                    const config = {
+                                        type: 'message.mediaCommand'
+                                    };
+                                    let mediaCommand = new Packer(config);
+                                    mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                                    mediaCommand.set('titleId', this.mediaState);
+                                    mediaCommand.set('command', systemMediaCommands[command]);
+                                    mediaRequestId++
+                                    mediaCommand.setChannel(0);
+                                    const message = mediaCommand.pack(this);
+                                    await this.socketSend(message);
+                                    this.blockMultiplePress = false;
+                                } catch (error) {
+                                    this.emit('error', `Sending mediaCommand error: ${error}`);
+                                    this.blockMultiplePress = false;
+                                };
+                            } else {
+                                this.emit('debug', `Failed to send mediaCommand: ${command}`);
+                                this.blockMultiplePress = false;
+                            };
+                        };
+
+                        if (channelRequestId == 1) {
+                            if (systemInputCommands[command] != undefined && !this.blockMultiplePress) {
+                                this.emit('debug', `systemInput send command: ${command}`);
+                                this.blockMultiplePress = true;
+
+                                try {
+                                    await this.getRequestNum();
+
+                                    const config = {
+                                        type: 'message.gamepad'
+                                    };
+                                    const timestampNow = new Date().getTime();
+                                    let gamepadPress = new Packer(config);
+                                    gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
+                                    gamepadPress.set('command', systemInputCommands[command]);
+                                    gamepadPress.setChannel(1);
+                                    const message = gamepadPress.pack(this);
+                                    await this.socketSend(message);
+
+                                    setTimeout(async () => {
+                                        try {
+                                            await this.getRequestNum();
+
+                                            const config1 = {
+                                                type: 'message.gamepad'
+                                            };
+                                            const timestamp = new Date().getTime();
+                                            let gamepadUnpress = new Packer(config1);
+                                            gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
+                                            gamepadUnpress.set('command', 0);
+                                            gamepadUnpress.setChannel(1);
+                                            const message = gamepadUnpress.pack(this);
+                                            await this.socketSend(message);
+                                            this.blockMultiplePress = false;
+                                        } catch (error) {
+                                            this.emit('error', `Sending gamepadUnpress error: ${error}`);
+                                            this.blockMultiplePress = false;
+                                        };
+                                    }, 250);
+                                } catch (error) {
+                                    this.emit('error', `Sending gamepadPress error: ${error}`);
+                                    this.blockMultiplePress = false;
+                                };
+                            } else {
+                                this.emit('debug', `Failed to send systemInput: ${command}`);
+                                this.blockMultiplePress = false;
+                            };
+                        };
+
+                        if (channelRequestId == 2) {
+                            if (tvRemoteCommands[command] != undefined && !this.blockMultiplePress) {
+                                this.emit('debug', ` tvRemote send command: ${command}`);
+                                this.blockMultiplePress = true;
+
+                                try {
+                                    let messageNum = 0;
+                                    const msgId = `2ed6c0fd.${messageNum++}`;
+
+                                    const jsonRequest = {
+                                        msgid: msgId,
+                                        request: "SendKey",
+                                        params: {
+                                            button_id: tvRemoteCommands[command],
+                                            device_id: null
+                                        }
+                                    };
+                                    const message = await this.createJsonPacket(jsonRequest);
+                                    await this.socketSend(message);
+                                    this.blockMultiplePress = false;
+                                } catch (error) {
+                                    this.emit('error', `Sending irCommand error: ${error}`);
+                                    this.blockMultiplePress = false;
+                                };
+                            } else {
+                                this.emit('debug', `Failed to send irCommand: ${command}`);
+                                this.blockMultiplePress = false;
+                            };
+                        };
+
+                        if (channelRequestId == 3) {
+                            const configNamesCount = configNames.length;
+                            for (let i = 0; i < configNamesCount; i++) {
+                                const configName = configNames[i];
+                                this.emit('debug', `Get ${configName}`);
+                                try {
+                                    const msgId = `2ed6c0fd.${i}`;
+                                    const jsonRequest = {
+                                        msgid: msgId,
+                                        request: configName,
+                                        params: null
+                                    };
+                                    const message = await this.createJsonPacket(jsonRequest);
+                                    await this.socketSend(message);
+                                } catch (error) {
+                                    this.emit('error', `Sending ${configName} error: ${error}`);
+                                };
+                            };
+                        };
+                    } else {
+                        this.emit('debug', `Could not request channel: ${channelNames[channelRequestId]}`);
+                    };
+                };
+            })
             .on('_on_json', (message) => {
                 const response = JSON.parse(message.packetDecoded.protectedPayload.json);
-
                 if (response.response == "Error") {
                     this.emit('debug', `Got Error: ${response}`);
                 } else {
@@ -383,47 +566,6 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_channelOpen', async (channelManagerId, channelName, udid) => {
-                if (!this.connectionStatus) {
-                    this.emit('debug', 'Not connected.')
-                    return;
-                };
-
-                this.emit('message', `Request open channel: ${channelName}`);
-                this.channelManagerId = channelManagerId;
-                this.channelName = channelName;
-
-                try {
-                    await this.getRequestNum();
-                    const config = {
-                        type: 'message.channelRequest'
-                    };
-                    let channelRequest = new Packer(config);
-                    channelRequest.set('channelRequestId', channelManagerId);
-                    channelRequest.set('titleId', 0);
-                    channelRequest.set('service', Buffer.from(udid, 'hex'));
-                    channelRequest.set('activityId', 0);
-                    const message = channelRequest.pack(this);
-
-                    await this.socketSend(message);
-                    this.emit('debug', `Send channel request for: ${channelName}, client id: ${channelManagerId}`);
-                } catch (error) {
-                    this.emit('error', `Send channelRequest error: ${error}`);
-                };
-            })
-            .on('_on_channelResponse', (message) => {
-                this.emit('debug', `Channel response for: ${this.channelName}`);
-                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelManagerId) {
-                    if (message.packetDecoded.protectedPayload.result == 0) {
-                        this.channelStatus = true;
-                        this.channelServerId = message.packetDecoded.protectedPayload.targetChannelId;
-                        this.emit('message', `Channel ready for: ${this.channelName}`);
-                    } else {
-                        this.channelStatus = false;
-                        this.emit('debug', `Could not open channel: ${this.channelName}`);
-                    };
-                };
-            })
             .on('_on_status', (message) => {
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
                     if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
@@ -441,7 +583,7 @@ class SMARTGLASS extends EventEmitter {
                             };
                             appsArray.push(app);
                             this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
-                        }
+                        };
                         this.titleId = appsArray[appsCount - 1].titleId;
                         this.currentApp = appsArray[appsCount - 1].reference;
                         this.emit('_on_change', decodedMessage, this.mediaState);
@@ -569,365 +711,32 @@ class SMARTGLASS extends EventEmitter {
         });
     };
 
-    //systemMedia
-    sendSystemMediaCommand(command) {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd');
-
-            if (!this.connectionStatus || !this.channelStatus) {
+    sendCommand(command, channelName) {
+        return new Promise((resolve, reject) => {
+            if (!this.connectionStatus) {
                 reject({
                     status: 'error',
-                    error: 'Channel systemMedia not ready.'
+                    error: 'Not connected, send command ignored.'
                 });
                 return;
             };
 
-            if (systemMediaCommands[command] != undefined && !this.blockMultiplePress) {
-                this.emit('debug', `systemMedia send command: ${command}`);
-                this.blockMultiplePress = true;
-
-                try {
-                    let mediaRequestId = 1;
-                    let requestId = "0000000000000000";
-                    const requestIdLength = requestId.length;
-                    requestId = (requestId + mediaRequestId).slice(-requestIdLength);
-                    await this.getRequestNum();
-
-                    const config = {
-                        type: 'message.mediaCommand'
-                    };
-                    let mediaCommand = new Packer(config);
-                    mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                    mediaCommand.set('titleId', this.mediaState);
-                    mediaCommand.set('command', systemMediaCommands[command]);
-                    mediaRequestId++
-                    mediaCommand.setChannel(this.channelServerId);
-                    const message = mediaCommand.pack(this);
-                    await this.socketSend(message);
-                    this.blockMultiplePress = false;
-                    resolve(true);
-                } catch (error) {
-                    this.emit('error', `Sending mediaCommand error: ${error}`);
-                    this.blockMultiplePress = false;
-                    reject({
-                        status: 'error',
-                        error: `Sending mediaCommand error: ${error}`,
-                    });
-                };
-            } else {
-                this.emit('debug', `Failed to send command: ${command}`);
-                reject({
-                    status: 'error',
-                    error: `Unknown command: ${command}`,
-                    commands: systemMediaCommands
-                });
+            const type = channelNames[channelName];
+            if (type = 0) {
+                this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd', command);
+                resolve(true);
             };
-        });
-    };
-
-    //systemInput
-    sendSystemInputCommand(command) {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel systemInput not ready.'
-                });
-                return;
+            if (type = 1) {
+                this.emit('_on_channelOpen', 1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f', command);
+                resolve(true);
             };
-
-            if (systemInputCommands[command] != undefined && !this.blockMultiplePress) {
-                this.emit('debug', `systemInput send command: ${command}`);
-                this.blockMultiplePress = true;
-
-                try {
-                    await this.getRequestNum();
-
-                    const config = {
-                        type: 'message.gamepad'
-                    };
-                    const timestampNow = new Date().getTime();
-                    let gamepadPress = new Packer(config);
-                    gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
-                    gamepadPress.set('command', systemInputCommands[command]);
-                    gamepadPress.setChannel(this.channelServerId);
-                    const message = gamepadPress.pack(this);
-                    await this.socketSend(message);
-
-                    setTimeout(async () => {
-                        try {
-                            await this.getRequestNum();
-
-                            const config1 = {
-                                type: 'message.gamepad'
-                            };
-                            const timestamp = new Date().getTime();
-                            let gamepadUnpress = new Packer(config1);
-                            gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
-                            gamepadUnpress.set('command', 0);
-                            gamepadUnpress.setChannel(this.channelServerId);
-                            const message = gamepadUnpress.pack(this);
-                            await this.socketSend(message);
-                            this.blockMultiplePress = false;
-                            resolve(true);
-                        } catch (error) {
-                            this.emit('error', `Sending gamepadUnpress error: ${error}`);
-                            this.blockMultiplePress = false;
-                        };
-                    }, 250);
-                } catch (error) {
-                    this.emit('error', `Sending gamepadPress error: ${error}`);
-                    this.blockMultiplePress = false;
-                    reject({
-                        status: 'error',
-                        error: `Sending gamepadPress error: ${error}`
-                    });
-                };
-            } else {
-                this.emit('debug', `Failed to send command: ${command}`);
-                reject({
-                    status: 'error',
-                    error: `Unknown command: ${command}`,
-                    commands: systemInputCommands
-                });
+            if (type = 2) {
+                this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7', command);
+                resolve(true);
             };
-        });
-    };
-
-    //tvRemote
-    getConfiguration() {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
-                return;
-            };
-
-            this.emit('debug', 'Get configuration');
-            try {
-                let messageNum = 0;
-                const msgId = `2ed6c0fd.${messageNum++}`;
-
-                const jsonRequest = {
-                    msgid: msgId,
-                    request: "GetConfiguration",
-                    params: null
-                };
-                const message = await this.createJsonPacket(jsonRequest);
-                await this.socketSend(message);
-                setTimeout(() => {
-                    resolve(this.configuration);
-                }, 1000);
-            } catch (error) {
-                this.emit('error', `Sending GetConfiguration error: ${error}`);
-                reject({
-                    status: 'error',
-                    error: `Sending GetConfiguration error: ${error}`
-                });
-            };
-        });
-    };
-
-    getHeadendInfo() {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
-                return;
-            };
-
-            this.emit('debug', 'Get headend info');
-            try {
-                let messageNum = 0;
-                const msgId = `2ed6c0fd.${messageNum++}`;
-
-                const jsonRequest = {
-                    msgid: msgId,
-                    request: "GetHeadendInfo",
-                    params: null
-                };
-                const message = await this.createJsonPacket(jsonRequest);
-                await this.socketSend(message);
-                setTimeout(() => {
-                    resolve(this.headendInfo);
-                }, 1000);
-            } catch (error) {
-                this.emit('error', `Sending GetHeadendInfo error: ${error}`);
-                reject({
-                    status: 'error',
-                    error: `Sending GetHeadendInfo error: ${error}`
-                });
-            };
-        });
-    };
-
-    getLiveTVInfo() {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
-                return;
-            };
-
-            this.emit('debug', 'Get live tv info');
-            try {
-                let messageNum = 0;
-                const msgId = `2ed6c0fd.${messageNum++}`;
-
-                const jsonRequest = {
-                    msgid: msgId,
-                    request: "GetLiveTVInfo",
-                    params: null
-                };
-                const message = await this.createJsonPacket(jsonRequest);
-                await this.socketSend(message);
-                setTimeout(() => {
-                    resolve(this.liveTv);
-                }, 1000);
-            } catch (error) {
-                this.emit('error', `Sending GetLiveTVInfo error: ${error}`);
-                reject({
-                    status: 'error',
-                    error: `Sending GetLiveTVInfo error: ${error}`
-                });
-            };
-        });
-    };
-
-    getTunerLineups() {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
-                return;
-            };
-
-            this.emit('debug', 'Get tuner lineups');
-            try {
-                let messageNum = 0;
-                const msgId = `2ed6c0fd.${messageNum++}`;
-
-                const jsonRequest = {
-                    msgid: msgId,
-                    request: "GetTunerLineups",
-                    params: null
-                };
-                const message = awaitthis.createJsonPacket(jsonRequest);
-                await this.socketSend(message);
-                setTimeout(() => {
-                    resolve(this.tunerLineups);
-                }, 1000);
-            } catch (error) {
-                this.emit('error', `Sending GetTunerLineups error: ${error}`);
-                reject({
-                    status: 'error',
-                    error: `Sending GetTunerLineups error: ${error}`
-                });
-            };
-        });
-    };
-
-    getAppChannelLineups() {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
-                return;
-            };
-
-            this.emit('debug', 'Get appchannel lineups');
-            try {
-                let messageNum = 0;
-                const msgId = `2ed6c0fd.${messageNum++}`;
-
-                const jsonRequest = {
-                    msgid: msgId,
-                    request: "GetAppChannelLineups",
-                    params: null
-                };
-                const message = await this.createJsonPacket(jsonRequest);
-                await this.socketSend(message);
-                setTimeout(() => {
-                    resolve(this.appChannelLineups);
-                }, 1000);
-            } catch (error) {
-                this.emit('error', `Sending GetAppChannelLineups error: ${error}`);
-                reject({
-                    status: 'error',
-                    error: `Sending GetAppChannelLineups error: ${error}`
-                });
-            };
-        });
-    };
-
-    sendIrCommand(command) {
-        return new Promise(async (resolve, reject) => {
-            this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7');
-
-            if (!this.connectionStatus || !this.channelStatus) {
-                reject({
-                    status: 'error',
-                    error: `Unknown command: ${command}`,
-                    commands: tvRemoteCommands[command]
-                });
-                return;
-            };
-
-            if (tvRemoteCommands[command] != undefined && !this.blockMultiplePress) {
-                this.emit('debug', ` tvRemote send command: ${command}`);
-                this.blockMultiplePress = true;
-
-                try {
-                    let messageNum = 0;
-                    const msgId = `2ed6c0fd.${messageNum++}`;
-
-                    const jsonRequest = {
-                        msgid: msgId,
-                        request: "SendKey",
-                        params: {
-                            button_id: tvRemoteCommands[command],
-                            device_id: null
-                        }
-                    };
-                    const message = await this.createJsonPacket(jsonRequest);
-                    await this.socketSend(message);
-                    this.blockMultiplePress = false;
-                    resolve(true);
-                } catch (error) {
-                    this.emit('error', `Sending irCommand error: ${error}`);
-                    this.blockMultiplePress = false;
-                    reject({
-                        status: 'error',
-                        error: `Sending irCommand error: ${error}`
-                    });
-                };
-            } else {
-                reject({
-                    status: 'error',
-                    error: 'Channel tvRemote not ready.'
-                });
+            if (type = 3) {
+                this.emit('_on_channelOpen', 3, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7', null);
+                resolve(true);
             };
         });
     };
@@ -942,7 +751,7 @@ class SMARTGLASS extends EventEmitter {
                 };
                 let json = new Packer(config);
                 json.set('json', JSON.stringify(jsonRequest));
-                json.setChannel(this.channelServerId);
+                json.setChannel(2);
                 resolve(json.pack(this));
             } catch (error) {
                 this.emit('error', `Sending jsonRequest error: ${error}`);
@@ -955,6 +764,7 @@ class SMARTGLASS extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (this.socket && !this.blockMultipleSend) {
                 this.blockMultipleSend = true;
+
                 const ip = this.ip;
                 const messageLength = message.length;
                 this.socket.send(message, 0, messageLength, 5050, ip, (error, bytes) => {

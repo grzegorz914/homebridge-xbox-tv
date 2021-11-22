@@ -813,64 +813,64 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.onSet(async (command) => {
-				let type;
+				let channelName;
 				switch (command) {
 					case Characteristic.RemoteKey.REWIND:
 						command = 'rewind';
-						type = 'systemMedia';
+						channelName = 'systemMedia';
 						break;
 					case Characteristic.RemoteKey.FAST_FORWARD:
 						command = 'fastForward';
-						type = 'systemMedia';
+						channelName = 'systemMedia';
 						break;
 					case Characteristic.RemoteKey.NEXT_TRACK:
 						command = 'nextTrack';
-						type = 'systemMedia';
+						channelName = 'systemMedia';
 						break;
 					case Characteristic.RemoteKey.PREVIOUS_TRACK:
 						command = 'prevTrack';
-						type = 'systemMedia';
+						channelName = 'systemMedia';
 						break;
 					case Characteristic.RemoteKey.ARROW_UP:
 						command = 'up';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.ARROW_DOWN:
 						command = 'down';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.ARROW_LEFT:
 						command = 'left';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.ARROW_RIGHT:
 						command = 'right';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.SELECT:
 						command = 'a';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.BACK:
 						command = 'b';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.EXIT:
 						command = 'nexus';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.RemoteKey.PLAY_PAUSE:
 						command = 'playpause';
-						type = 'systemMedia';
+						channelName = 'systemMedia';
 						this.invertMediaState = !this.invertMediaState;
 						break;
 					case Characteristic.RemoteKey.INFORMATION:
 						command = this.switchInfoMenu ? 'nexus' : 'view';
-						type = 'systemInput';
+						channelName = 'systemInput';
 						break;
 				};
 				try {
-					const setCommand = (type === 'systemInput') ? await this.xbox.sendSystemInputCommand(command) : (type === 'systemMedia') ? await this.xbox.sendSystemMediaCommand(command) : false;
+					const sendCommand = await this.xbox.sendCommand(command, channelName);
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
 					};
@@ -964,16 +964,19 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
+				let channelName;
 				switch (command) {
 					case Characteristic.PowerModeSelection.SHOW:
 						command = this.switchInfoMenu ? 'nexus' : 'view';
+						channelName = 'systemInput';
 						break;
 					case Characteristic.PowerModeSelection.HIDE:
 						command = 'b';
+						channelName = 'systemInput';
 						break;
 				};
 				try {
-					const setPowerModeSelection = await this.xbox.sendSystemInputCommand(command);
+					const setPowerModeSelection = await this.xbox.sendCommand(command, channelName);
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 					};
@@ -1033,16 +1036,19 @@ class xboxTvDevice {
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
 			.onSet(async (command) => {
+				let channelName;
 				switch (command) {
 					case Characteristic.VolumeSelector.INCREMENT:
 						command = 'volUp';
+						channelName = 'tvRemote';
 						break;
 					case Characteristic.VolumeSelector.DECREMENT:
 						command = 'volDown';
+						channelName = 'tvRemote';
 						break;
 				}
 				try {
-					const setVolume = await this.xbox.sendIrCommand(command);
+					const setVolume = await this.xbox.sendCommand(command, channelName);
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					};
@@ -1080,7 +1086,8 @@ class xboxTvDevice {
 				if (this.powerState && (state != this.muteState)) {
 					try {
 						const command = 'volMute';
-						const toggleMute = await this.xbox.sendIrCommand(command);
+						const channelName = 'tvRemote';
+						const toggleMute = await this.xbox.sendCommand(command, channelName);
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						};

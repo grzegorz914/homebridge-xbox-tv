@@ -30,7 +30,7 @@ class MESSAGE {
         this.name = type;
         this.packetData = packetData;
         this.packetDecoded = false;
-        this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
+        this.targetChannelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
         const Type = {
             uInt32(value) {
@@ -406,8 +406,8 @@ class MESSAGE {
         return messageFlags[type];
     };
 
-    setChannel(channel) {
-        this.channelId = Buffer.from(channel);
+    setChannel(targetChannelId) {
+        this.targetChannelId = Buffer.from(targetChannelId);
     };
 
     set(key, value, subkey = false) {
@@ -474,7 +474,7 @@ class MESSAGE {
         header.writeUInt32(smartglass.targetParticipantId);
         header.writeUInt32(smartglass.sourceParticipantId);
         header.writeBytes(this.setFlags(this.name));
-        header.writeBytes(this.channelId);
+        header.writeBytes(this.targetChannelId);
 
         if (payload.toBuffer().length % 16 > 0) {
             const padStart = payload.toBuffer().length % 16;

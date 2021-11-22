@@ -40,8 +40,8 @@ class PACKER {
         return this.structure.unpack(smartglass);
     };
 
-    setChannel(channel) {
-        this.structure.setChannel(channel);
+    setChannel(targetChannelId) {
+        this.structure.setChannel(targetChannelId);
     };
 
     loadPacketStructure(type, value = false) {
