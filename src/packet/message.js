@@ -466,6 +466,7 @@ class MESSAGE {
         for (let name in this.structure) {
             this.structure[name].pack(payload);
         };
+        smartglass.getRequestNum();
 
         let header = new PacketStructure();
         header.writeBytes(Buffer.from('d00d', 'hex'))

@@ -11,19 +11,17 @@ const Types = {
 };
 
 class PACKER {
-    constructor(config) {
-        this.type = config.type || '';
-
-        const packetType = this.type.slice(0, 2).toString('hex');
+    constructor(type) {
+        const packetType = type.slice(0, 2).toString('hex');
         this.structure = '';
 
         if (packetType in Types) {
             // We got a packet that we need to unpack
-            const packetValue = this.type;
-            this.type = Types[packetType];
-            this.structure = this.loadPacketStructure(this.type, packetValue);
+            const packetValue = type;
+            type = Types[packetType];
+            this.structure = this.loadPacketStructure(type, packetValue);
         } else {
-            this.structure = this.loadPacketStructure(this.type);
+            this.structure = this.loadPacketStructure(type);
         };
 
     };

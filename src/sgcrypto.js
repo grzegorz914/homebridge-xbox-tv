@@ -49,20 +49,20 @@ class SGCRYPTO {
         const key2 = this.ec.keyFromPublic(publicKey, 'hex');
 
         const shared1 = key1.derive(key2.getPublic());
-        let derivedSecret = Buffer.from(shared1.toString(16), 'hex');
+        const derivedSecret = Buffer.from(shared1.toString(16), 'hex');
         const publicKeyClient = key1.getPublic('hex');
 
         const preSalt = Buffer.from('d637f1aae2f0418c', 'hex');
         const postSalt = Buffer.from('a8f81a574e228ab7', 'hex');
-        derivedSecret = Buffer.from(preSalt.toString('hex') + derivedSecret.toString('hex') + postSalt.toString('hex'), 'hex');
+        const prePostSalt = Buffer.from(preSalt.toString('hex') + derivedSecret.toString('hex') + postSalt.toString('hex'), 'hex');
 
         // Hash shared secret
-        const sha = sha512.update(derivedSecret);
-        derivedSecret = sha.digest();
+        const sha = sha512.update(prePostSalt);
+        const secret = sha.digest();
 
         return {
             publicKey: publicKeyClient.toString('hex').slice(2),
-            secret: derivedSecret.toString('hex')
+            secret: secret.toString('hex')
         };
     };
 
@@ -135,15 +135,16 @@ class SGCRYPTO {
         let hashHmac = crypto.createHmac('sha256', this.getHashKey());
         hashHmac.update(data, 'binary', 'binary');
         const protectedPayloadHash = hashHmac.digest('binary');
-        return Buffer.from(protectedPayloadHash, 'binary');
+        const protectedPayloadHashBuffer = Buffer.from(protectedPayloadHash, 'binary');
+        return protectedPayloadHashBuffer
     };
 
     removePadding(payload) {
-        let length = Buffer.from(payload.slice(-1));
-        length = length.readUInt8(0);
+        const payloadBuffer = Buffer.from(payload.slice(-1));
+        const payloadLength = payloadBuffer.readUInt8(0);
 
-        if (length > 0 && length < 16) {
-            return Buffer.from(payload.slice(0, payload.length - length));
+        if (payloadLength > 0 && payloadLength < 16) {
+            return Buffer.from(payload.slice(0, payload.length - payloadLength));
         } else {
             return payload;
         };

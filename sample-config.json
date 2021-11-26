@@ -35,8 +35,6 @@
 			"filterApps": false,
 			"filterSystemApps": false,
 			"filterDlc": false,
-			"rebootControl": false,
-			"recordGameDvr": false,
 			"enableDebugMode": false,
 			"inputs": [{
 					"name": "A Way Out",
@@ -64,20 +62,32 @@
 				}
 			],
 			"buttons": [{
+					"name": "Play",
+					"mode": 0,
+					"mediaCommand": "play"
+				},
+				{
+					"name": "Button A",
+					"mode": 1,
+					"gamePadCommand": "a"
+				},
+				{
+					"name": "Volume Up",
+					"mode": 2,
+					"tvRemoteCommand": "volUp"
+				},
+				{
 					"name": "Don't Starve Together",
-					"oneStoreProductId": "C4GH8N6ZXG5L"
+					"mode": 3,
+					"oneStoreProductId": ""
 				},
 				{
-					"name": "EA Play Hub",
-					"oneStoreProductId": "C4GH8N6ZXG5L"
+					"name": "Record Game DVR",
+					"mode": 4
 				},
 				{
-					"name": "AirServer Xbox Edition",
-					"oneStoreProductId": "C4GH8N6ZXG5L"
-				},
-				{
-					"name": "Gears of War 4",
-					"oneStoreProductId": "C4GH8N6ZXG5L"
+					"name": "Reboot",
+					"mode": 5
 				}
 			],
 			"manufacturer": "Microsoft Corporation",

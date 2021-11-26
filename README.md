@@ -94,14 +94,16 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterSystemApps` | If enabled, System Apps (Accessory, Microsoft Store) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. |
-| `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. |
 | `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings` are created by default. |
 | `inputs.reference` | Required to identify current running app. |
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.type` | Choice from available options. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. |
+| `buttons.mode` | Here select button control mode, `Media`, `Game Pad`, `TV Remote`, `Games/Apps`, `Record Game DVR`, `Reboot` - only possible if `webApiControl` enabled.. |
+| `buttons.mediaCommand` | Here select media command. |
+| `buttons.gamePadCommand` | Here select game pad command. |
+| `buttons.tvRemoteCommand` | Here select tv remote command. |
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 
@@ -128,8 +130,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterApps": false,
 			"filterSystemApps": false,
 			"filterDlc": false,
-			"rebootControl": false,
-			"recordGameDvr": false,
 			"enableDebugMode": false,
 			"inputs": [
 						{
@@ -143,37 +143,37 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
 							"oneStoreProductId": "",
 							"type": "APPLICATION"
-						},
-						{
-							"name": "Battlefield 4",
-							"reference": "BFX_8s70symrha4j2!BF.App",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Cities: Skylines",
-							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
-							"oneStoreProductId": "C4GH8N6ZXG5L",
-							"type": "APPLICATION"
 						}
 					],
 					"buttons": [
 						{
-							"name": "Don't Starve Together",
-							"oneStoreProductId": ""
-						},
-						{
-							"name": "EA Play Hub",
-							"oneStoreProductId": ""
-						},
-						{
-							"name": "AirServer Xbox Edition",
-							"oneStoreProductId": ""
-						},
-						{
-							"name": "Gears of War 4",
-							"oneStoreProductId": ""
+							"name": "Play",
+                            "mode": 0,
+                            "mediaCommand": "play"
 						}
+						{
+							"name": "Button A",
+                            "mode": 1,
+                            "gamePadCommand": "a"
+						},
+						{
+							"name": "Volume Up",
+                            "mode": 2,
+                            "tvRemoteCommand": "volUp"
+						},
+						{
+							"name": "Don't Starve Together",
+							"mode": 3,
+							"oneStoreProductId": ""
+						},
+						{
+							"name": "Record Game DVR",
+							"mode": 4
+						},
+						{
+							"name": "Reboot",
+							"mode": 5
+						},
 					],
 			"manufacturer": "Microsoft Corporation",
 			"modelName": "Model",

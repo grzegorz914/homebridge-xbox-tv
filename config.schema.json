@@ -126,23 +126,6 @@
 							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
 							"required": false
 						},
-						"rebootControl": {
-							"title": "Reboot Console",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable possibility reboot Console if web api is enabled.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"recordGameDvr": {
-							"title": "Record Game DVR",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable possibility record Game DVR.",
-							"required": false
-						},
 						"getInputsFromDevice": {
 							"title": "Load Inputs From Device",
 							"type": "boolean",
@@ -229,16 +212,15 @@
 										"required": true
 									},
 									"oneStoreProductId": {
-										"title": "OneStoreProductId",
+										"title": "Product Id",
 										"type": "string",
-										"placeholder": "Input oneStoreProductId",
+										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
 									},
 									"type": {
 										"title": "Type",
 										"type": "string",
-										"placeholder": "Input type",
 										"description": "Here select source input type.",
 										"oneOf": [{
 												"title": "Other",
@@ -326,12 +308,246 @@
 										"description": "Here set Your own name.",
 										"required": false
 									},
-									"oneStoreProductId": {
-										"title": "OneStoreProductId",
+									"mode": {
+										"title": "Control mode",
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 5,
+										"description": "Here select the mode of button.",
+										"oneOf": [{
+												"title": "Media",
+												"enum": [
+													0
+												]
+											},
+											{
+												"title": "Game Pad",
+												"enum": [
+													1
+												]
+											},
+											{
+												"title": "TV Remote",
+												"enum": [
+													2
+												]
+											},
+											{
+												"title": "Games/Apps",
+												"enum": [
+													3
+												]
+											},
+											{
+												"title": "Record Game DVR",
+												"enum": [
+													4
+												]
+											},
+											{
+												"title": "Reboot",
+												"enum": [
+													5
+												]
+											}
+										],
+										"required": true
+									},
+									"mediaCommand": {
+										"title": "Command",
 										"type": "string",
-										"placeholder": "Input oneStoreProductId",
+										"description": "Here set the media control function.",
+										"oneOf": [{
+												"title": "Play",
+												"enum": [
+													"play"
+												]
+											},
+											{
+												"title": "Pause",
+												"enum": [
+													"pause"
+												]
+											},
+											{
+												"title": "Play/Pause",
+												"enum": [
+													"playpause"
+												]
+											},
+											{
+												"title": "Stop",
+												"enum": [
+													"stop"
+												]
+											},
+											{
+												"title": "Record",
+												"enum": [
+													"record"
+												]
+											},
+											{
+												"title": "Next Track",
+												"enum": [
+													"nextTrack"
+												]
+											},
+											{
+												"title": "Previous Track",
+												"enum": [
+													"prevTrack"
+												]
+											},
+											{
+												"title": "Fast Forward",
+												"enum": [
+													"fastForward"
+												]
+											},
+											{
+												"title": "Rewind",
+												"enum": [
+													"rewind"
+												]
+											},
+											{
+												"title": "Channel Up",
+												"enum": [
+													"channelUp"
+												]
+											},
+											{
+												"title": "Channel Down",
+												"enum": [
+													"channelDown"
+												]
+											},
+											{
+												"title": "Back",
+												"enum": [
+													"back"
+												]
+											},
+											{
+												"title": "View",
+												"enum": [
+													"view"
+												]
+											},
+											{
+												"title": "Menu",
+												"enum": [
+													"Menu"
+												]
+											},
+											{
+												"title": "Seek",
+												"enum": [
+													"seek"
+												]
+											}
+										],
+										"required": true
+									},
+									"gamePadCommand": {
+										"title": "Command",
+										"type": "string",
+										"description": "Here select the game pad control function.",
+										"oneOf": [{
+												"title": "Nexus",
+												"enum": [
+													"nexus"
+												]
+											}, {
+												"title": "Menu",
+												"enum": [
+													"menu"
+												]
+											},
+											{
+												"title": "A",
+												"enum": [
+													"a"
+												]
+											},
+											{
+												"title": "B",
+												"enum": [
+													"b"
+												]
+											},
+											{
+												"title": "X",
+												"enum": [
+													"x"
+												]
+											},
+											{
+												"title": "Y",
+												"enum": [
+													"y"
+												]
+											},
+											{
+												"title": "Up",
+												"enum": [
+													"up"
+												]
+											},
+											{
+												"title": "Down",
+												"enum": [
+													"down"
+												]
+											},
+											{
+												"title": "Left",
+												"enum": [
+													"left"
+												]
+											},
+											{
+												"title": "Right",
+												"enum": [
+													"right"
+												]
+											}
+										],
+										"required": true
+									},
+									"tvRemoteCommand": {
+										"title": "Command",
+										"type": "string",
+										"description": "Here select the tv remote control function.",
+										"oneOf": [{
+												"title": "Volume Up",
+												"enum": [
+													"volUp"
+												]
+											}, {
+												"title": "Volume Down",
+												"enum": [
+													"volDown"
+												]
+											},
+											{
+												"title": "Mute",
+												"enum": [
+													"volMute"
+												]
+											}
+										],
+										"required": true
+									},
+									"oneStoreProductId": {
+										"title": "Product Id",
+										"type": "string",
+										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 3;"
+										}
 									}
 								}
 							}
@@ -417,6 +633,10 @@
 					"buttonText": "Add button",
 					"items": [
 						"devices[].buttons[].name",
+						"devices[].buttons[].mode",
+						"devices[].buttons[].mediaCommand",
+						"devices[].buttons[].gamePadCommand",
+						"devices[].buttons[].tvRemoteCommand",
 						"devices[].buttons[].oneStoreProductId"
 					]
 				}]
@@ -449,8 +669,6 @@
 					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
-					"devices[].rebootControl",
-					"devices[].recordGameDvr",
 					"devices[].refreshInterval",
 					"devices[].volumeControl"
 				]

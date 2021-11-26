@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Screensaver and Settings TV input as default
 - Smartglass library (based on @unknownskl code) as standalone packet, completelly rebuilded
 - Debug mode
+- TV Remote control (buttons)
+- Media control (buttons)
+- Game Pad control (buttons)
 
 ### Changes
 - full code rebuild
 - config.schema updated
 - dependencies updated
-- async/await and promises
 
 ### Fixed
 - memmory leak on some scenerious 
