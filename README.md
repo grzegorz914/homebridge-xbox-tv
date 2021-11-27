@@ -145,12 +145,12 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 							"type": "APPLICATION"
 						}
 					],
-					"buttons": [
+			"buttons": [
 						{
 							"name": "Play",
                             "mode": 0,
                             "mediaCommand": "play"
-						}
+						},
 						{
 							"name": "Button A",
                             "mode": 1,

@@ -354,7 +354,7 @@
 										"required": true
 									},
 									"mediaCommand": {
-										"title": "Command",
+										"title": "Media command",
 										"type": "string",
 										"description": "Here set the media control function.",
 										"oneOf": [{
@@ -451,7 +451,7 @@
 										"required": true
 									},
 									"gamePadCommand": {
-										"title": "Command",
+										"title": "Game pad command",
 										"type": "string",
 										"description": "Here select the game pad control function.",
 										"oneOf": [{
@@ -517,7 +517,7 @@
 										"required": true
 									},
 									"tvRemoteCommand": {
-										"title": "Command",
+										"title": "RC command",
 										"type": "string",
 										"description": "Here select the tv remote control function.",
 										"oneOf": [{
@@ -545,9 +545,7 @@
 										"type": "string",
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 3;"
-										}
+										"required": true
 									}
 								}
 							}
