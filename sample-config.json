@@ -62,33 +62,22 @@
 				}
 			],
 			"buttons": [{
-					"name": "Play",
-					"mode": 0,
-					"mediaCommand": "play"
-				},
-				{
-					"name": "Button A",
-					"mode": 1,
-					"gamePadCommand": "a"
-				},
-				{
-					"name": "Volume Up",
-					"mode": 2,
-					"tvRemoteCommand": "volUp"
-				},
-				{
-					"name": "Don't Starve Together",
-					"mode": 3,
-					"oneStoreProductId": ""
-				},
-				{
-					"name": "Record Game DVR",
-					"mode": 4
-				},
-				{
-					"name": "Reboot",
-					"mode": 5
-				}
+				"name": "Play",
+				"command": "play"
+			   },
+			   {
+				"name": "Record Game DVR",
+				"command": "recordGameDvr"
+			   },
+			   {
+				"name": "Reboot",
+				"command": "reboot"
+			   },
+			   {
+				"name": "A Way Out",
+				"command": "switchAppGame",
+				"oneStoreProductId": "oneStoreProductId"
+			   }
 			],
 			"manufacturer": "Microsoft Corporation",
 			"modelName": "Model",

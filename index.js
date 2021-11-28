@@ -91,6 +91,44 @@ const DEFAULT_INPUTS = [{
 	}
 ];
 
+const SYSTEM_MEDIA_COMMANDS = {
+	play: 2,
+	pause: 4,
+	playpause: 8,
+	stop: 16,
+	record: 32,
+	nextTrack: 64,
+	prevTrack: 128,
+	fastForward: 256,
+	rewind: 512,
+	channelUp: 1024,
+	channelDown: 2048,
+	back: 4096,
+	view: 8192,
+	menu: 16384,
+	seek: 32786
+};
+
+const SYSTEM_INPUTS_COMMANDS = {
+	nexus: 2,
+	view1: 4,
+	menu1: 8,
+	a: 16,
+	b: 32,
+	x: 64,
+	y: 128,
+	up: 256,
+	down: 512,
+	left: 1024,
+	right: 2048
+};
+
+const TV_REMOTE_COMMANDS = {
+	volUp: 'btn.vol_up',
+	volDown: 'btn.vol_down',
+	volMute: 'btn.vol_mute'
+};
+
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 
 let Accessory, Characteristic, Service, Categories, UUID;
@@ -264,110 +302,106 @@ class xboxTvDevice {
 		});
 
 		this.xbox.on('_on_connected', () => {
-			this.powerState = true;
-			this.checkDeviceInfo = true;
+				this.powerState = true;
+				this.checkDeviceInfo = true;
 
-			if (this.televisionService) {
-				this.televisionService
-					.updateCharacteristic(Characteristic.Active, true)
-			};
-
-			this.getApp = setInterval(() => {
-				const getWebApiInstalledApps = (this.xboxWebApiControl && this.xboxWebApiEnabled) ? this.getWebApiInstalledApps() : false;
-			}, 60000);
-		});
-
-		this.xbox.on('error', (error) => {
-			this.log('Device: %s %s, %s', this.host, this.name, error);
-		});
-
-		this.xbox.on('debug', (message) => {
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, %s', this.host, this.name, message) : false;
-		});
-
-		this.xbox.on('message', (message) => {
-			this.log('Device: %s %s, %s', this.host, this.name, message);
-		});
-
-		this.xbox.on('_on_change', (decodedMessage, mediaState) => {
-			const majorVersion = decodedMessage.majorVersion;
-			const minorVersion = decodedMessage.minorVersion;
-			const buildNumber = decodedMessage.buildNumber;
-
-			const appsArray = new Array();
-			const appsCount = decodedMessage.apps.length;
-			for (let i = 0; i < appsCount; i++) {
-				const titleId = decodedMessage.apps[i].titleId;
-				const reference = decodedMessage.apps[i].aumId;
-				const app = {
-					titleId: titleId,
-					reference: reference
+				if (this.televisionService) {
+					this.televisionService
+						.updateCharacteristic(Characteristic.Active, true)
 				};
-				appsArray.push(app);
-			}
-			const titleId = appsArray[appsCount - 1].titleId;
-			const inputReference = appsArray[appsCount - 1].reference;
 
-			//get states
-			const volume = this.volume;
-			const muteState = this.powerState ? this.muteState : true;
+				this.getApp = setInterval(() => {
+					const getWebApiInstalledApps = (this.xboxWebApiControl && this.xboxWebApiEnabled) ? this.getWebApiInstalledApps() : false;
+				}, 60000);
+			})
+			.on('error', (error) => {
+				this.log('Device: %s %s, %s', this.host, this.name, error);
+			})
+			.on('debug', (message) => {
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, %s', this.host, this.name, message) : false;
+			})
+			.on('message', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('_on_change', (decodedMessage, mediaState) => {
+				const majorVersion = decodedMessage.majorVersion;
+				const minorVersion = decodedMessage.minorVersion;
+				const buildNumber = decodedMessage.buildNumber;
 
-			const currentInputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
-			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
-			const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-			const inputName = this.inputsName[inputIdentifier];
-			const inputType = this.inputsType.indexOf(inputIdentifier);
+				const appsArray = new Array();
+				const appsCount = decodedMessage.apps.length;
+				for (let i = 0; i < appsCount; i++) {
+					const titleId = decodedMessage.apps[i].titleId;
+					const reference = decodedMessage.apps[i].aumId;
+					const app = {
+						titleId: titleId,
+						reference: reference
+					};
+					appsArray.push(app);
+				}
+				const titleId = appsArray[appsCount - 1].titleId;
+				const inputReference = appsArray[appsCount - 1].reference;
 
-			//update characteristics
-			if (this.televisionService) {
-				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
-					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				this.setStartInput = (currentInputIdentifier == inputIdentifier) ? false : true;
-			};
+				//get states
+				const volume = this.volume;
+				const muteState = powerState ? this.muteState : true;
 
-			if (this.speakerService) {
-				this.speakerService
-					.updateCharacteristic(Characteristic.Volume, volume)
-					.updateCharacteristic(Characteristic.Mute, muteState);
-				if (this.volumeService && this.volumeControl == 1) {
-					this.volumeService
-						.updateCharacteristic(Characteristic.Brightness, volume)
-						.updateCharacteristic(Characteristic.On, !muteState);
+				const currentInputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
+				const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
+				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+				const inputName = this.inputsName[inputIdentifier];
+				const inputType = this.inputsType.indexOf(inputIdentifier);
+
+				//update characteristics
+				if (this.televisionService) {
+					const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
+						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+					this.setStartInput = (currentInputIdentifier == inputIdentifier) ? false : true;
 				};
-				if (this.volumeServiceFan && this.volumeControl == 2) {
-					this.volumeServiceFan
-						.updateCharacteristic(Characteristic.RotationSpeed, volume)
-						.updateCharacteristic(Characteristic.On, !muteState);
+
+				if (this.speakerService) {
+					this.speakerService
+						.updateCharacteristic(Characteristic.Volume, volume)
+						.updateCharacteristic(Characteristic.Mute, muteState);
+					if (this.volumeService && this.volumeControl == 1) {
+						this.volumeService
+							.updateCharacteristic(Characteristic.Brightness, volume)
+							.updateCharacteristic(Characteristic.On, !muteState);
+					};
+					if (this.volumeServiceFan && this.volumeControl == 2) {
+						this.volumeServiceFan
+							.updateCharacteristic(Characteristic.RotationSpeed, volume)
+							.updateCharacteristic(Characteristic.On, !muteState);
+					};
 				};
-			};
 
-			this.majorVersion = majorVersion;
-			this.minorVersion = minorVersion;
-			this.buildNumber = buildNumber;
+				this.majorVersion = majorVersion;
+				this.minorVersion = minorVersion;
+				this.buildNumber = buildNumber;
 
-			this.inputTitleId = titleId;
-			this.inputReference = inputReference;
-			this.volume = volume;
-			this.muteState = muteState;
-			this.mediaState = mediaState;
+				this.inputTitleId = titleId;
+				this.inputReference = inputReference;
 
-			this.inputIdentifier = inputIdentifier;
-			this.inputOneStoreProductId = inputOneStoreProductId;
-			this.inputName = inputName;
-			this.inputType = inputType;
+				this.volume = volume;
+				this.muteState = muteState;
+				this.mediaState = mediaState;
 
-			const getDeviceInfo = this.checkDeviceInfo ? this.getDeviceInfo() : false;
-		});
+				this.inputIdentifier = inputIdentifier;
+				this.inputOneStoreProductId = inputOneStoreProductId;
+				this.inputName = inputName;
+				this.inputType = inputType;
 
-		this.xbox.on('_on_disconnected', () => {
-			this.powerState = false;
-			clearInterval(this.getApp);
+				const getDeviceInfo = this.checkDeviceInfo ? this.getDeviceInfo() : false;
+			})
+			.on('_on_disconnected', () => {
+				this.powerState = false;
+				clearInterval(this.getApp);
 
-			if (this.televisionService) {
-				this.televisionService
-					.updateCharacteristic(Characteristic.Active, false)
-			};
-		});
+				if (this.televisionService) {
+					this.televisionService
+						.updateCharacteristic(Characteristic.Active, false)
+				};
+			});
 
 		const getWebApiToken = this.xboxWebApiControl ? this.getWebApiToken() : false;
 
@@ -763,7 +797,7 @@ class xboxTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputIdentifier = this.inputIdentifier;
-				const inputReference = this.inputsReference[inputIdentifier];
+				const inputReference = this.inputReference;
 				const inputName = this.inputsName[inputIdentifier];
 				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
 				if (!this.disableLogInfo && this.powerState) {
@@ -1146,26 +1180,34 @@ class xboxTvDevice {
 		const maxButtonsCount = ((inputsCount + buttonsCount) < 93) ? buttonsCount : 93 - inputsCount;
 		for (let i = 0; i < maxButtonsCount; i++) {
 
+			//get button command
+			const buttonCommand = (buttons[i].command != undefined) ? buttons[i].command : '';
+
+			//get button name
+			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttonCommand;
+
 			//get button mode
-			const buttonMode = (buttons[i].mode != undefined) ? buttons[i].mode : '';
-
-			//get button media command
-			const buttonMediaCommand = (buttons[i].mediaCommand != undefined) ? buttons[i].mediaCommand : '';
-
-			//get button game pad command
-			const buttonGamePadCommand = (buttons[i].gamePadCommand != undefined) ? buttons[i].gamePadCommand : '';
-
-			//get button tv remote command
-			const buttonTvRemoteCommand = (buttons[i].tvRemoteCommand != undefined) ? buttons[i].tvRemoteCommand : '';
+			let buttonMode = 0;
+			let channelName = '';
+			if (buttonCommand in SYSTEM_MEDIA_COMMANDS) {
+				buttonMode = 0;
+				channelName = 'systemMedia';
+			} else if (buttonCommand in SYSTEM_INPUTS_COMMANDS) {
+				buttonMode = 1;
+				channelName = 'systemInput';
+			} else if (buttonCommand in TV_REMOTE_COMMANDS) {
+				buttonMode = 2;
+				channelName = 'tvRemote';
+			} else if (buttonCommand === 'recordGameDvr') {
+				buttonMode = 3;
+			} else if (buttonCommand === 'reboot') {
+				buttonMode = 4;
+			} else if (buttonCommand === 'switchAppGame') {
+				buttonMode = 5;
+			};
 
 			//get button inputOneStoreProductId
 			const buttonOneStoreProductId = (buttons[i].oneStoreProductId != undefined) ? buttons[i].oneStoreProductId : '0';
-
-			const command = [buttonMediaCommand, buttonGamePadCommand, buttonTvRemoteCommand, buttonOneStoreProductId, 'Record Game DVR', 'Reboot'][buttonMode];
-			const channelName = ['systemMedia', 'systemInput', 'tvRemote', '', '', ''][buttonMode];
-
-			//get button name
-			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : command;
 
 			const buttonService = new Service.Switch(`${accessoryName} ${buttonName}`, `Button ${i}`);
 			buttonService.getCharacteristic(Characteristic.On)
@@ -1181,10 +1223,10 @@ class xboxTvDevice {
 						const setDashboard = (buttonOneStoreProductId === 'Dashboard') || (buttonOneStoreProductId === 'Settings') || (buttonOneStoreProductId === 'Accessory') || (buttonOneStoreProductId === 'Screensaver');
 						const setTelevision = (buttonOneStoreProductId === 'Television');
 						const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
-						const setInput = (this.powerState && state && buttonMode == 3) ? this.xboxWebApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveId, buttonOneStoreProductId) : false : false : false;
 						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(command, channelName) : false
-						const recordGameDvr = (this.powerState && state && this.xboxWebApiControl && this.xboxWebApiEnabled && buttonMode == 4) ? await this.xbox.recordGameDvr() : false;
-						const rebootConsole = (this.powerState && state && buttonMode == 5) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxliveId) : false;
+						const recordGameDvr = (this.powerState && state && this.xboxWebApiControl && this.xboxWebApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
+						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxliveId) : false;
+						const setAppInput = (this.powerState && state && buttonMode == 5) ? this.xboxWebApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveId, buttonOneStoreProductId) : false : false : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set button successful, name: %s, reference: %s', this.host, accessoryName, buttonName, [buttonMediaCommand, buttonGamePadCommand, buttonTvRemoteCommand, buttonOneStoreProductId][buttonMode]);
 						}

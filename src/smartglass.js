@@ -7,20 +7,6 @@ const EventEmitter = require('events').EventEmitter;
 const Packer = require('./packet/packer');
 const SGCrypto = require('./sgcrypto');
 
-const systemInputCommands = {
-    nexus: 2,
-    view: 4,
-    menu: 8,
-    a: 16,
-    b: 32,
-    x: 64,
-    y: 128,
-    up: 256,
-    down: 512,
-    left: 1024,
-    right: 2048
-};
-
 const systemMediaCommands = {
     play: 2,
     pause: 4,
@@ -37,6 +23,20 @@ const systemMediaCommands = {
     view: 8192,
     menu: 16384,
     seek: 32786
+};
+
+const systemInputCommands = {
+    nexus: 2,
+    view1: 4,
+    menu1: 8,
+    a: 16,
+    b: 32,
+    x: 64,
+    y: 128,
+    up: 256,
+    down: 512,
+    left: 1024,
+    right: 2048
 };
 
 const tvRemoteCommands = {
@@ -266,6 +266,12 @@ class SMARTGLASS extends EventEmitter {
                     const message = localJoin.pack(this);
                     this.sendSocketMessage(message);
 
+                    this.connectionStatus = true;
+                    this.discoveredXboxs.splice(0, this.xboxsCount);
+                    this.xboxsCount = 0;
+                    this.emit('message', 'Connected.')
+                    this.emit('_on_connected');
+
                     this.checkConnection = setInterval(() => {
                         if (this.connectionStatus) {
                             const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
@@ -287,9 +293,9 @@ class SMARTGLASS extends EventEmitter {
                     }, 1000);
                 } else {
                     const errorTable = {
-                        0: 'Success',
+                        0: 'Success.',
                         1: 'Pending login. Reconnect to complete.',
-                        2: 'Unknown error',
+                        2: 'Unknown error.',
                         3: 'No anonymous connections.',
                         4: 'Device limit exceeded.',
                         5: 'Smartglass is disabled on the Xbox console.',
@@ -447,13 +453,6 @@ class SMARTGLASS extends EventEmitter {
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
                     if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
                         const decodedMessage = message.packetDecoded.protectedPayload;
-                        if (!this.connectionStatus) {
-                            this.emit('message', 'Connected.')
-                            this.emit('_on_connected');
-                            this.discoveredXboxs.splice(0, this.xboxsCount);
-                            this.xboxsCount = 0;
-                            this.connectionStatus = true;
-                        };
 
                         const appsArray = new Array();
                         const appsCount = decodedMessage.apps.length;
@@ -493,14 +492,15 @@ class SMARTGLASS extends EventEmitter {
 
                     const lastBootTime = (Math.trunc(((new Date().getTime()) / 1000) - bootStartTime));
                     this.emit('debug', `Last boot time was ${lastBootTime} seconds ago.`);
-                    if (lastBootTime == 4) {
-                        resolve(true);
-                    };
                     if (lastBootTime > 15) {
                         this.emit('_on_disconnected');
                         clearInterval(this.boot)
                     };
                 }, 500);
+
+                setTimeout(() => {
+                    resolve(true);
+                }, 3500);
             } else {
                 reject({
                     status: 'error',
@@ -523,7 +523,7 @@ class SMARTGLASS extends EventEmitter {
                 setTimeout(() => {
                     this.disconnect();
                     resolve(true);
-                }, 2500);
+                }, 3500);
             } else {
                 reject({
                     status: 'error',

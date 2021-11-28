@@ -99,10 +99,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.type` | Choice from available options. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.mode` | Here select button control mode, `Media`, `Game Pad`, `TV Remote`, `Games/Apps`, `Record Game DVR`, `Reboot` - only possible if `webApiControl` enabled.. |
-| `buttons.mediaCommand` | Here select media command. |
-| `buttons.gamePadCommand` | Here select game pad command. |
-| `buttons.tvRemoteCommand` | Here select tv remote command. |
+| `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled.. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
@@ -148,31 +145,20 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"buttons": [
 						{
 							"name": "Play",
-                            "mode": 0,
-                            "mediaCommand": "play"
+                            "command": "play"
 						},
 						{
-							"name": "Button A",
-                            "mode": 1,
-                            "gamePadCommand": "a"
-						},
+					        "name": "Record Game DVR",
+					        "command": "recordGameDvr"
+				        },
+				        {
+					        "name": "Reboot",
+					        "command": "reboot"
+				        },
 						{
-							"name": "Volume Up",
-                            "mode": 2,
-                            "tvRemoteCommand": "volUp"
-						},
-						{
-							"name": "Don't Starve Together",
-							"mode": 3,
-							"oneStoreProductId": ""
-						},
-						{
-							"name": "Record Game DVR",
-							"mode": 4
-						},
-						{
-							"name": "Reboot",
-							"mode": 5
+							"name": "A Way Out",
+							"command": "switchAppGame",
+							"oneStoreProductId": "oneStoreProductId",
 						},
 					],
 			"manufacturer": "Microsoft Corporation",
