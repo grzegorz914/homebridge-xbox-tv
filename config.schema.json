@@ -184,10 +184,9 @@
 							"required": false
 						},
 						"inputs": {
-							"title": "Inputs",
-							"buttonText": "Add app/input",
 							"type": "array",
 							"items": {
+								"title": "Input",
 								"type": "object",
 								"properties": {
 									"name": {
@@ -295,10 +294,9 @@
 							}
 						},
 						"buttons": {
-							"title": "Buttons",
-							"buttonText": "Add button",
 							"type": "array",
 							"items": {
+								"title": "Button",
 								"type": "object",
 								"properties": {
 									"name": {
@@ -575,8 +573,8 @@
 					"devices[].filterDlc",
 					{
 						"key": "devices[].inputs",
-						"type": "array",
-						"buttonText": "Add input",
+						"type": "tabarray",
+						"title": "{{ value.name || 'new input' }}",
 						"items": [
 							"devices[].inputs[].name",
 							"devices[].inputs[].reference",
@@ -597,8 +595,8 @@
 				"expanded": false,
 				"items": [{
 					"key": "devices[].buttons",
-					"type": "array",
-					"buttonText": "Add button",
+					"type": "tabarray",
+					"title": "{{ value.name || 'new button' }}",
 					"items": [
 						"devices[].buttons[].name",
 						"devices[].buttons[].command",
