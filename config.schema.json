@@ -9,13 +9,13 @@
 		"type": "object",
 		"properties": {
 			"devices": {
-				"title": "Devices",
 				"type": "array",
 				"items": {
+					"title": "Device",
 					"type": "object",
 					"properties": {
 						"name": {
-							"title": "Device name",
+							"title": "Name",
 							"type": "string",
 							"placeholder": "Game console",
 							"required": true
