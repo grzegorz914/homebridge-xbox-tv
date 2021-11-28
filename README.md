@@ -32,10 +32,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
 * Reboot Console with additional button.
-* RC/Media control is possible after you go to the RC app on iPhone/iPad.
-* Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
-* Apps, Inputs, Games can be switched if `webApiControl` and console is authorized.
+* RC/Media/Pad control is possible with the RC app on iPhone/iPad or with additional buttons.
+* Speaker control is possible using hardware buttins on iPhone/iPad `Speaker Service`.
+* Legacy Volume/Mute control is possible throught extra `lightbulb`/`fan` or with additional buttons.
+* Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
 * Record Game DVR with additional button.
 * Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
 * Home automations and shortcuts can be used for all functions.
@@ -87,7 +87,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `refreshInterval` | Set the console reconnect time in seconds, default is 5 seconds. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan), not yet implemented. |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
@@ -99,7 +99,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.type` | Choice from available options. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled.. |
+| `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
