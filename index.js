@@ -344,7 +344,7 @@ class xboxTvDevice {
 
 				//get states
 				const volume = this.volume;
-				const muteState = powerState ? this.muteState : true;
+				const muteState = this.powerState ? this.muteState : true;
 
 				const currentInputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
 				const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
