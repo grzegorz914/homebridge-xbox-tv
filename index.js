@@ -418,23 +418,16 @@ class xboxTvDevice {
 			this.xboxWebApiEnabled = true;
 			this.getWebApiInstalledApps();
 		} catch (error) {
-			const oauth2URI = this.xboxWebApi._authentication.generateAuthorizationUrl();
-			this.log('----- Device: %s %s start authentication process -----', this.host, this.name, );
-			this.log(`1. Open the URI: ${oauth2URI}`);
-			this.log('2. Login to Your Xbox Live account and accept permission for this app.');
-			this.log('3. After accept permission copy the part after the (?code=) from the response URL.');
-			this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token.');
-			this.log('5. Save and restart the plugin again, done.')
-			this.log('----------------------------------------------------------------------------------------');
 			if (this.xboxWebApiToken != undefined) {
 				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
 				try {
 					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);
-					this.log.debug('Device: %s %s, get oauth2 Web Api Token:', this.host, this.name, data);
+					this.log.debug('Device: %s %s, get oauth2 Web Api Token:', this.host, this.name, authenticationData);
 
 					this.xboxWebApi._authentication._tokens.oauth = authenticationData;
 					this.xboxWebApi._authentication.saveTokens();
+					this.log.debug('Device: %s %s, token saved.', this.host, this.name);
 					this.xboxWebApiEnabled = true;
 					this.getWebApiInstalledApps();
 				} catch (error) {
@@ -442,7 +435,14 @@ class xboxTvDevice {
 					this.xboxWebApiEnabled = false;
 				};
 			} else {
-				this.log('Device: %s %s, web api disabled, token undefined.', this.host, this.name);
+				const oauth2URI = this.xboxWebApi._authentication.generateAuthorizationUrl();
+				this.log('----- Device: %s %s start authorization process -----', this.host, this.name, );
+				this.log(`1. Open the URI: ${oauth2URI}`);
+				this.log('2. Login to Your Xbox Live account and accept permission for this app.');
+				this.log('3. After accept permission copy the part after the (?code=) from the response URL.');
+				this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token.');
+				this.log('5. Save and restart the plugin again, done.')
+				this.log('----------------------------------------------------------------------------------------');
 				this.xboxWebApiEnabled = false;
 			}
 		};
@@ -574,7 +574,7 @@ class xboxTvDevice {
 			const defaultInputsCount = DEFAULT_INPUTS.length;
 			for (let i = 0; i < defaultInputsCount; i++) {
 				inputsArr.push(DEFAULT_INPUTS[i]);
-			}
+			};
 
 			//get installed inputs/apps from web
 			const inputsData = getInstalledAppsData.result;
@@ -607,7 +607,7 @@ class xboxTvDevice {
 					'contentType': contentType
 				};
 				inputsArr.push(inputsObj);
-			}
+			};
 			const obj = JSON.stringify(inputsArr, null, 2);
 			const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
 			this.log.debug('Device: %s %s, saved inputs/apps list: %s', this.host, this.name, obj);

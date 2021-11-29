@@ -3,6 +3,8 @@ const {
   RequestError
 } = require('@homebridge/plugin-ui-utils');
 const XboxWebApi = require('xbox-webapi');
+const fs = require('fs');
+const fsPromises = fs.promises;
 
 class PluginUiServer extends HomebridgePluginUiServer {
   constructor() {
@@ -13,8 +15,29 @@ class PluginUiServer extends HomebridgePluginUiServer {
     // handle request for the /data route
     this.onRequest('/data', this.getData.bind(this));
 
+    // remove token file
+    this.onRequest('/clearToken', this.clearToken.bind(this));
+
     // this MUST be called when you are ready to accept requests
     this.ready();
+  }
+
+  async clearToken(payload) {
+
+    const host = payload.host;
+    const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
+
+    try {
+      if (fs.existsSync(authTokenFile) == true) {
+        fsPromises.writeFile(authTokenFile, '');
+      }
+
+      return true;
+    } catch (e) {
+      throw new RequestError('Clear token file failed.', {
+        message: e.message
+      });
+    }
   }
 
   async getData(payload) {
@@ -38,36 +61,32 @@ class PluginUiServer extends HomebridgePluginUiServer {
         webApiCheck._authentication._tokensFile = authTokenFile;
         const isAuthenticated = await webApiCheck.isAuthenticated();
         this.data = {
-          res: 'Console already authenticated',
+          res: 'Console already authorized',
           status: 0
         }
       } catch (error) {
-        if (token != undefined) {
-          const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
-          this.data = {
-            res: oauth2URI,
-            status: 1
-          }
+        if (token.length > 5) {
           try {
             const authenticationData = await webApiCheck._authentication.getTokenRequest(token);
             webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {
-              res: 'Console successfully authenticated and *autToken* file saved',
-              status: 3
+              res: 'Console successfully authorized and *autToken* file saved',
+              status: 2
             }
           } catch (error) {
             this.data = {
-              res: 'Authorization and Token file save error.',
-              status: 4
+              res: 'Authorization or save Token file error.',
+              status: 3
             }
           };
         } else {
+          const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
           this.data = {
-            res: 'Authorization link empty, check *authToken* file.',
-            status: 2
-          }
-        }
+            res: oauth2URI,
+            status: 1
+          };
+        };
       };
 
       return this.data;
