@@ -45,20 +45,8 @@ const tvRemoteCommands = {
     volMute: 'btn.vol_mute'
 };
 
-const channelNames = {
-    0: 'systemMedia',
-    1: 'systemInput',
-    2: 'tvRemote',
-    3: 'sysConfig'
-};
-
-const configNames = {
-    0: 'GetConfiguration',
-    1: 'GetHeadendInfo',
-    2: 'GetLiveTVInfo',
-    3: 'GetTunerLineups',
-    4: 'GetAppChannelLineups'
-};
+const channelNames = ['systemMedia', 'systemInput', 'tvRemote', 'sysConfig'];
+const configNames = ['GetConfiguration', 'GetHeadendInfo', 'GetLiveTVInfo', 'GetTunerLineups', 'GetAppChannelLineups'];
 
 class SMARTGLASS extends EventEmitter {
     constructor(config) {
@@ -384,7 +372,7 @@ class SMARTGLASS extends EventEmitter {
                                     msgid: `2ed6c0fd.${messageNum++}`,
                                     request: 'SendKey',
                                     params: {
-                                        button_id: tvRemoteCommands.command,
+                                        button_id: tvRemoteCommands[command],
                                         device_id: null
                                     }
                                 };
@@ -428,23 +416,23 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('debug', `Got Error: ${response}`);
                 } else {
                     if (response.response == 'GetConfiguration') {
-                        this.emit('debug', 'Got tvRemote Configuration');
+                        this.emit('debug', 'Got tvRemote Configuration.');
                         this.configuration = response.params;
                     };
                     if (response.response == 'GetHeadendInfo') {
-                        this.emit('debug', 'Got Headend Configuration');
+                        this.emit('debug', 'Got Headend Info.');
                         this.headendInfo = response.params;
                     };
                     if (response.response == 'GetLiveTVInfo') {
-                        this.emit('debug', 'Got live tv Info');
+                        this.emit('debug', 'Got Live TV Info.');
                         this.liveTv = response.params;
                     };
                     if (response.response == 'GetTunerLineups') {
-                        this.emit('debug', 'Got live tv Info');
+                        this.emit('debug', 'Got Tuner Lineups.');
                         this.tunerLineups = response.params;
                     };
                     if (response.response == 'GetAppChannelLineups') {
-                        this.emit('debug', 'Got live tv Info');
+                        this.emit('debug', 'Got App Channel Lineups.');
                         this.appChannelLineups = response.params;
                     };
                 };
