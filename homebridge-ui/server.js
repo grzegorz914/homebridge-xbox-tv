@@ -8,15 +8,15 @@ const fsPromises = fs.promises;
 
 class PluginUiServer extends HomebridgePluginUiServer {
   constructor() {
-    // super() MUST be called first
     super();
 
     this.data = {};
-    // handle request for the /data route
-    this.onRequest('/data', this.getData.bind(this));
 
-    // remove token file
+    // clear token
     this.onRequest('/clearToken', this.clearToken.bind(this));
+
+    // start console authorization
+    this.onRequest('/startAuthorization', this.getWebApiToken.bind(this));
 
     // this MUST be called when you are ready to accept requests
     this.ready();
@@ -40,7 +40,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
     }
   }
 
-  async getData(payload) {
+  async getWebApiToken(payload) {
     console.log('Incomming token %s:, host: %s, clientId: %s.', payload.token, payload.host, payload.clientId);
 
     try {
@@ -61,7 +61,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
         webApiCheck._authentication._tokensFile = authTokenFile;
         const isAuthenticated = await webApiCheck.isAuthenticated();
         this.data = {
-          res: 'Console already authorized',
+          info: 'Console already authorized',
           status: 0
         }
       } catch (error) {
@@ -71,19 +71,19 @@ class PluginUiServer extends HomebridgePluginUiServer {
             webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {
-              res: 'Console successfully authorized and *autToken* file saved',
+              info: 'Console successfully authorized and token saved.',
               status: 2
             }
           } catch (error) {
             this.data = {
-              res: 'Authorization or save Token file error.',
+              info: 'Authorization or save Token error.',
               status: 3
             }
           };
         } else {
           const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
           this.data = {
-            res: oauth2URI,
+            info: oauth2URI,
             status: 1
           };
         };

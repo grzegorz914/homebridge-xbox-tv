@@ -18,7 +18,7 @@
     <div class="text-center">
       <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start authorization</button>
       <button id="authorizeConsoleButton" type="button" class="btn btn-primary">Authorize console</button>
-      <button id="clearTokenButton" type="button" class="btn btn-primary">Clear Token</button>
+      <button id="clearTokenButton" type="button" class="btn btn-primary">Clear Web Api Token</button>
       <button id="configButton" type="button" class="btn btn-primary">Show Config</button>
     </div>
   </form>
@@ -107,7 +107,7 @@
         if (response) {
           document.getElementById('startAuthorizationButton').removeAttribute("disabled");
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-          homebridge.toast.info('Clear token file done!.', 'Info!');
+          homebridge.toast.info('Clear web api token done!.', 'Info!');
           homebridge.updatePluginConfig(pluginConfig);
           homebridge.savePluginConfig(pluginConfig);
         }
@@ -135,8 +135,8 @@
           clientSecret: clientSecret
         };
 
-        const response = await homebridge.request('/data', payload);
-        const data = response.res;
+        const response = await homebridge.request('/startAuthorization', payload);
+        const info = response.info;
         const status = response.status;
 
         homebridge.updatePluginConfig(pluginConfig);
@@ -147,8 +147,8 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Console already authorized. To start new athorization process please clear token file.';
-          homebridge.toast.info('Console already authorized!.', 'Info!');
+            'Console already authorized. Start new athorization process need clear web api token.';
+          homebridge.toast.info(info, 'Info!');
         }
 
         if (status == 1) {
@@ -169,13 +169,13 @@
               document.getElementById('startAuthorizationButton').innerText = "Activate console";
               document.getElementById('info').innerHTML =
                 'Token saved successful, now please press *Activate Console* button.';
-              homebridge.toast.info('Token saved successful!.', 'Info!');
+              homebridge.toast.info(info, 'Info!');
               this.authorizeConsole = false;
             } else {
               document.getElementById('authorizeConsoleButton').innerText = "Save token";
               document.getElementById('info').innerHTML =
-                'Now please go to the opened window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
-               await open(data);
+                'Now go to the new window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
+              await open(data);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
             }
@@ -188,8 +188,8 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Activation console done, Token file saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
-          homebridge.toast.success('Activation done, Token File saved.', 'Success!');
+            'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
+          homebridge.toast.success(info, 'Success!');
         }
 
         if (status == 3) {
@@ -198,7 +198,7 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML = 'Authorization and Token file saved error.';
-          homebridge.toast.error('Activation and Token File saved error.', 'Error!');
+          homebridge.toast.error(info, 'Error!');
         }
 
       } catch (e) {
