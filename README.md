@@ -34,10 +34,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Reboot Console with additional button.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan`.
+* Legacy Volume and Mute control is possible throught extra `lightbulb` or `fan` buttons/sliders.
 * Apps, Inputs, Games can be switched if `webApiControl` and console is authorized.
 * Record Game DVR with additional button.
-* Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
+* Siri can be used to control Power, Legacy Volume, Mute and switch Games or Apps with created Buttons.
 * Home automations and shortcuts can be used for all functions.
 
 <p align="left">
@@ -54,7 +54,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Authorization Manager
-* First of all please use built in Authorization Manager, if this fail use Authorization Manual.
+* First of all please use built in Authorization Manager, if this fails please use the Manual Authorization method.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
@@ -62,9 +62,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ### Authorization Manual
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
-* Open the authorization URI and login to Your Xbox Live account, next accept permission for this app.
-* After accept permission copy the part after `?code=` from the response URI and paste it in to the `xboxWebApiToken`.
-* Next save and restart the plugin again, done.
+* Follow the instructions in the log file.
 
 ## Configuration
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
@@ -187,13 +185,13 @@ Each accessory needs to be manually paired.
 1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
 2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
 3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*. 
-4. Select Your accessory. 
+4. Select your Xbox in the screen after this.. 
 5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
 6. Complete the accessory setup.
 
 ## Limitations
-* That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
-* The Services in this accessory are:
+* That maximum services (mute, buttons, inputs e.t.c.) for 1 accessory is 100. If Services > 100, the accessory will stop responding.
+* The possible services in this accessory are:
   * Information.
   * Speaker.
   * Lightbulb.
