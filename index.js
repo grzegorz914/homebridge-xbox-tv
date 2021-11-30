@@ -64,7 +64,31 @@ const DEFAULT_INPUTS = [{
 		'oneStoreProductId': 'Accessory',
 		'type': 'HOME_SCREEN',
 		'contentType': 'systemApp'
-	}
+	},
+        {
+      		"name": "Xbox Original Avatars",
+        	"titleId": '270462276',
+        	"reference": "Microsoft.Avatars_8wekyb3d8bbwe!Microsoft.Avatars",
+        	"oneStoreProductId": "9NBLGGGZ5QDQ",
+        	"type": "APPLICATION",
+		"contentType": "App"
+   	},
+    	{
+        	"name": "Microsoft Rewards on Xbox",
+       		"titleId": '2024109982',
+        	"reference": "Microsoft.MicrosoftRewardsonXbox_8wekyb3d8bbwe!App",
+        	"oneStoreProductId": "9N43KFKG7HZT",
+        	"type": "APPLICATION",
+        	"contentType": "App"
+    	},
+    	{
+        	"name": "Microsoft Edge",
+       		"titleId": '0',
+        	"reference": "Microsoft.MicrosoftEdge.Stable_8wekyb3d8bbwe!MSEDGE",
+        	"oneStoreProductId": null,
+        	"type": "APPLICATION",
+        	"contentType": "App"
+    	}
 ];
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
@@ -379,10 +403,10 @@ class xboxTvDevice {
 			const oauth2URI = this.xboxWebApi._authentication.generateAuthorizationUrl();
 			this.log('----- Device: %s %s start authentication process -----', this.host, this.name, );
 			this.log('1. Open the URI: %s', oauth2URI);
-			this.log('2. Login to Your Xbox Live account and accept permission for this app.');
-			this.log('3. After accept permission copy the part after the (?code=) from the response URL.');
-			this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token.');
-			this.log('5. Save and restart the plugin again, done.')
+			this.log('2. Login to your Xbox Live account and accept permission for this app.');
+			this.log('3. After you accept permission, copy the part after the (?code=) from the URL of the pop-up.');
+			this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token (Not Web Api Client ID).');
+			this.log('5. Save and restart the plugin again, then you are done.')
 			this.log('----------------------------------------------------------------------------------------');
 			if (this.xboxWebApiToken != undefined) {
 				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
