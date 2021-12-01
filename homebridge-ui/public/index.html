@@ -87,11 +87,11 @@
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
         homebridge.hideSchemaForm();
-        this.configButtonState = true;
+        this.configButtonState = false;
       } else {
         configButton.innerText = "Hide Config";
         homebridge.showSchemaForm();
-        this.configButtonState = false;
+        this.configButtonState = true;
       };
     });
 
