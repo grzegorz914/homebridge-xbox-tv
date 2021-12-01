@@ -230,7 +230,7 @@ class xboxTvDevice {
 
 		//device
 		this.manufacturer = config.manufacturer || 'Microsoft';
-		this.modelName = config.modelName || 'Model Name';
+		this.modelName = config.modelName || 'Model Name (e.g. Xbox Series S)';
 		this.serialNumber = config.serialNumber || 'Serial Number';
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
@@ -419,7 +419,7 @@ class xboxTvDevice {
 			this.getWebApiInstalledApps();
 		} catch (error) {
 			if (this.xboxWebApiToken != undefined) {
-				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
+				this.log('Hold on, trying to authnticate %s %s with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
 				try {
 					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);
@@ -441,7 +441,7 @@ class xboxTvDevice {
 				this.log('2. Login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass.');
 				this.log('3. After you accept permission, copy the part after the (?code=) from the URL of the pop-up.');
 				this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token (Not Web Api Client ID).');
-				this.log('5. Save and restart the plugin again, then you are donedone.')
+				this.log('5. Save and restart the plugin again, then you are done.')
 				this.log('----------------------------------------------------------------------------------------');
 				this.xboxWebApiEnabled = false;
 			}
@@ -565,7 +565,7 @@ class xboxTvDevice {
 	}
 
 	async getWebApiInstalledApps() {
-		this.log.debug('Device: %s %s, requesting installed apps from xbox live account.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting installed apps from your Xbox Live account.', this.host, this.name);
 		try {
 			const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxliveId);
 			this.log.debug('Device: %s %s, debug getInstalledAppsData: %s', this.host, this.name, getInstalledAppsData.result);
@@ -616,7 +616,7 @@ class xboxTvDevice {
 		} catch (error) {
 			if (error.status == 401) {
 				this.getWebApiToken();
-				this.log('Device: %s %s, with liveId: %s, get Installed Apps error, trying to reauthenticate.', this.host, this.name, this.xboxliveId);
+				this.log('Device: %s %s, with liveId: %s, trying to get Installed Apps gave an error, trying to reauthenticate.', this.host, this.name, this.xboxliveId);
 			} else {
 				this.log.error('Device: %s %s, with liveId: %s, get Installed Apps error: %s.', this.host, this.name, this.xboxliveId, error);
 			};
@@ -664,7 +664,7 @@ class xboxTvDevice {
 	}
 
 	async getWebApiConsoleStatus() {
-		this.log.debug('Device: %s %s, requesting web api device info.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting device info from Web API.', this.host, this.name);
 		try {
 			const getConsoleStatusData = await this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveId);
 			this.log.debug('Device: %s %s, debug getConsoleStatusData, result: %s', this.host, this.name, getConsoleStatusData);
