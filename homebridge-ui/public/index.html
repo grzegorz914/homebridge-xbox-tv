@@ -58,7 +58,7 @@
         document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
 
         //get actuall value on console select
-        document.getElementById('button' + i).addEventListener('click', () => {
+        document.getElementById('button' + i).addEventListener('click', async() => {
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
