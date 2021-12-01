@@ -40,7 +40,7 @@
 							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
 							"default": "5e5ead27-ed60-482d-b3fc-702b28a97404",
 							"description": "Here set your own Client ID created on Azure AD or leave empty to use default ID.",
-							"required": true
+							"required": false
 						},
 						"clientSecret": {
 							"title": "Web Api Client Secret",

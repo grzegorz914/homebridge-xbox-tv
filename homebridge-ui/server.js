@@ -71,12 +71,12 @@ class PluginUiServer extends HomebridgePluginUiServer {
             webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {
-              info: 'Console successfully authorized and token saved.',
+              info: 'Console successfully authorized and token file saved.',
               status: 2
             }
           } catch (error) {
             this.data = {
-              info: 'Authorization or save Token error.',
+              info: 'Authorization or save token file error.',
               status: 3
             }
           };
