@@ -188,14 +188,14 @@ class xboxTvDevice {
 		//device configuration
 		this.name = config.name || 'Game console';
 		this.host = config.host || '';
-		this.clientID = config.clientID || '5e5ead27-ed60-482d-b3fc-702b28a97404';
+		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
-		this.uhs = config.uhs || '';
-		this.xboxliveId = config.xboxliveid || '';
+		this.userUhs = config.userUhs || '';
+		this.xboxliveId = config.xboxLiveId || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.xboxWebApiControl = config.webApiControl || false;
-		this.refreshInterval = (config.refreshInterval * 1000) || 5;
+		this.refreshInterval = (config.refreshInterval * 1000) || 5000;
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
@@ -290,15 +290,15 @@ class xboxTvDevice {
 
 		this.xbox = new Smartglass({
 			ip: this.host,
-			liveId: this.xboxliveId,
+			xboxLiveId: this.xboxLiveId,
 			reconnect: this.refreshInterval
 		});
 
 		this.xboxWebApi = XboxWebApi({
-			clientId: this.clientID,
+			clientId: this.clientId,
 			clientSecret: this.clientSecret,
 			userToken: this.userToken,
-			uhs: this.uhs
+			userUhs: this.userUhs
 		});
 
 		this.xbox.on('_on_connected', () => {
@@ -414,12 +414,12 @@ class xboxTvDevice {
 		try {
 			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
 			const isAuthenticated = await this.xboxWebApi.isAuthenticated();
-			this.log('Device: %s %s, authenticated and web api enabled.', this.host, this.name);
+			this.log('Device: %s %s, authorized and web api enabled.', this.host, this.name);
 			this.xboxWebApiEnabled = true;
 			this.getWebApiInstalledApps();
 		} catch (error) {
 			if (this.xboxWebApiToken != undefined) {
-				this.log('Hold on, trying to authnticate %s %s with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
+				this.log('Device: %s %s, trying to authorize with Web Api Token: %s', this.host, this.name, this.xboxWebApiToken);
 				try {
 					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);

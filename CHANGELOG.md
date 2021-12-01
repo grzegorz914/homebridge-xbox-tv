@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TV Remote control (buttons)
 - Media control (buttons)
 - Game Pad control (buttons)
-- Clear web api token from config menu
+- Clear web api token
 
 ### Changes
 - full code rebuild
