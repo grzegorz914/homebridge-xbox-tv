@@ -77,11 +77,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | --- | --- |
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
-| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
-| `clientID` | If You create app on Azure AD then You can use own ClientID. |
+| `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
+| `clientId` | If You create app on Azure AD then You can use your own ClientID. |
 | `clientSecret` | If You create app on Azure AD then You can use own ClientSecret. |
 | `userToken` | Alternate authorization method. |
-| `uhs` | Alternate authorization method. |
+| `userUhs` | Alternate authorization method. |
 | `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
 | `refreshInterval` | Set the console reconnect time in seconds, default is 5 seconds. |
@@ -111,11 +111,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 		{
 			"name": "Xbox One",
 			"host": "192.168.1.6",
-			"xboxliveid": "FD0000000000",
-			"clientID": "",
+			"xboxLiveId": "FD0000000000",
+			"clientId": "",
 			"clientSecret": "",
 			"userToken": "",
-			"uhs": "",
+			"userUhs": "",
 			"xboxWebApiToken": "",
 			"refreshInterval": 5,
 			"webApiControl": false,
