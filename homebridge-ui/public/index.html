@@ -53,7 +53,6 @@
         document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[0].name;
         document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[0].host;
         document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
-        this.host = pluginConfig[0].devices[0].host;
         this.clientId = pluginConfig[0].devices[0].clientId;
         this.clientSecret = pluginConfig[0].devices[0].clientSecret;
         document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
@@ -63,7 +62,6 @@
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
-          this.host = pluginConfig[0].devices[i].host;
           this.clientId = pluginConfig[0].devices[i].clientId;
           this.clientSecret = pluginConfig[0].devices[i].clientSecret;
           this.deviceIndex = i;
@@ -99,11 +97,13 @@
 
     // clear token file
     document.getElementById('clearTokenButton').addEventListener('click', async () => {
+      homebridge.updatePluginConfig(pluginConfig);
       homebridge.showSpinner();
 
       try {
+        const host = document.querySelector('#deviceHostInput').value;
         const payload = {
-          host: this.host,
+          host: host,
         };
         const response = await homebridge.request('/clearToken', payload);
 
@@ -131,9 +131,10 @@
       homebridge.showSpinner();
 
       try {
+        const host = document.querySelector('#deviceHostInput').value;
         const webApiToken = document.querySelector('#deviceTokenInput').value;
         const payload = {
-          host: this.host,
+          host: host,
           clientId: this.clientId,
           clientSecret: this.clientSecret,
           webApiToken: webApiToken,
