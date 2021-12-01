@@ -71,15 +71,15 @@
     };
 
     // watch for changes to the form and update the config
-    document.getElementById('configForm').addEventListener('input', () => {
+    document.getElementById('configForm').addEventListener('input', async () => {
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
       pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
         .value;
 
-      homebridge.updatePluginConfig(pluginConfig);
-      homebridge.savePluginConfig(pluginConfig);
+      await homebridge.updatePluginConfig(pluginConfig);
+      await homebridge.savePluginConfig(pluginConfig);
     });
 
     document.getElementById('configButton').addEventListener('click', async () => {
@@ -97,7 +97,6 @@
 
     // clear token file
     document.getElementById('clearTokenButton').addEventListener('click', async () => {
-      homebridge.updatePluginConfig(pluginConfig);
       homebridge.showSpinner();
 
       try {
@@ -114,8 +113,8 @@
 
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
           document.querySelector('#deviceTokenInput').value = '';
-          homebridge.updatePluginConfig(pluginConfig);
-          homebridge.savePluginConfig(pluginConfig);
+          await homebridge.updatePluginConfig(pluginConfig);
+          await homebridge.savePluginConfig(pluginConfig);
         };
 
         homebridge.hideSpinner();
@@ -127,7 +126,6 @@
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
-      homebridge.updatePluginConfig(pluginConfig);
       homebridge.showSpinner();
 
       try {
