@@ -441,7 +441,7 @@ class xboxTvDevice {
 				this.log('2. Login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass.');
 				this.log('3. After you accept permission, copy the part after the (?code=) from the URL of the pop-up.');
 				this.log('4. Paste it in to the plugin config, Settings >> Xbox Live and Web Api >> Web Api Token (Not Web Api Client ID).');
-				this.log('5. Save and restart the plugin again, then you are donedone.')
+				this.log('5. Save and restart the plugin again, then you are done.')
 				this.log('----------------------------------------------------------------------------------------');
 				this.xboxWebApiEnabled = false;
 			}

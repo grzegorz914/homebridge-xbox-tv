@@ -5,7 +5,7 @@
 <div id="authorizationRequired" style="display:none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
-      <label id="info" style="font-size: 19px">Authorization Manager</label><br><br>
+      <label id="info" style="font-size: 18px">Authorization Manager</label><br><br>
     </div>
     <div class="form-group">
       <label for="deviceNameInput">Name</label>
@@ -175,7 +175,7 @@
               document.getElementById('authorizeConsoleButton').innerText = "Save token";
               document.getElementById('info').innerHTML =
                 'Now go to the new window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
-              await open(data);
+              await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
             }
