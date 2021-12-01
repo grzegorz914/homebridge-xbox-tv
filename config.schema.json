@@ -608,7 +608,7 @@
 			{
 				"key": "devices[]",
 				"type": "section",
-				"title": "Xbox Live and Web Api",
+				"title": "Web Api Settings",
 				"expandable": true,
 				"expanded": false,
 				"items": [
