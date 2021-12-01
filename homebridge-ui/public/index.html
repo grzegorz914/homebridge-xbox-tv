@@ -55,6 +55,8 @@
         document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
         this.host = pluginConfig[0].devices[0].host;
         this.clientId = pluginConfig[0].devices[0].clientId;
+        this.clientSecret = pluginConfig[0].devices[0].clientSecret;
+        this.webApiToken = pluginConfig[0].devices[0].xboxWebApiToken;
 
 
         //get actuall value on console select
@@ -64,11 +66,13 @@
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
           this.host = pluginConfig[0].devices[i].host;
           this.clientId = pluginConfig[0].devices[i].clientId;
+          this.clientSecret = pluginConfig[0].devices[i].clientSecret;
+          this.webApiToken = pluginConfig[0].devices[i].xboxWebApiToken;
           this.deviceIndex = i;
         });
         this.deviceIndex = 0;
-      }
-    }
+      };
+    };
 
     // watch for changes to the form and update the config
     document.getElementById('configForm').addEventListener('input', () => {
@@ -91,7 +95,7 @@
         configButton.innerText = "Hide Config";
         homebridge.showSchemaForm();
         this.configButtonState = true;
-      }
+      };
     });
 
     // clear token file
@@ -113,28 +117,25 @@
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
           homebridge.updatePluginConfig(pluginConfig);
           homebridge.savePluginConfig(pluginConfig);
-        }
+        };
 
         homebridge.hideSpinner();
       } catch (e) {
         homebridge.toast.error('Clear token file failed.', 'Error!');
         homebridge.hideSpinner();
-      }
-    })
+      };
+    });
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
       homebridge.showSpinner();
 
       try {
-        const clientSecret = '';
-        const webApiToken = document.querySelector('#deviceTokenInput').value;
-
         const payload = {
           host: this.host,
           clientId: this.clientId,
-          clientSecret: clientSecret,
-          webApiToken: webApiToken,
+          clientSecret: this.clientSecret,
+          webApiToken: this.webApiToken,
         };
 
         const response = await homebridge.request('/startAuthorization', payload);
@@ -149,7 +150,7 @@
           document.getElementById('info').innerHTML =
             'Console already authorized. Start new athorization process need clear web api token.';
           homebridge.toast.info(info, 'Info!');
-        }
+        };
 
         if (status == 1) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
@@ -174,9 +175,9 @@
               await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
-            }
+            };
           });
-        }
+        };
 
         if (status == 2) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
@@ -186,7 +187,7 @@
           document.getElementById('info').innerHTML =
             'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
           homebridge.toast.success(info, 'Success!');
-        }
+        };
 
         if (status == 3) {
           startAuthorizationButton.removeAttribute('disabled');
@@ -195,13 +196,13 @@
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML = 'Authorization and token file saved error.';
           homebridge.toast.error(info, 'Error!');
-        }
+        };
 
       } catch (e) {
         homebridge.toast.error('Failed to get data try again.', 'Error!');
       } finally {
         homebridge.hideSpinner();
-      }
+      };
     });
   })();
 </script>
