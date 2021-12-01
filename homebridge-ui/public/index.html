@@ -5,7 +5,7 @@
 <div id="authorizationRequired" style="display:none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
-      <label id="info" style="font-size: 18px">Authorization Manager</label><br><br>
+      <label id="info" style="font-size: 17px">Authorization Manager</label><br><br>
     </div>
     <div class="form-group">
       <label for="deviceNameInput">Name</label>
@@ -82,6 +82,7 @@
     });
 
     document.getElementById('configButton').addEventListener('click', async () => {
+      homebridge.updatePluginConfig(pluginConfig);
       const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
@@ -96,6 +97,7 @@
 
     // clear token file
     document.getElementById('clearTokenButton').addEventListener('click', async () => {
+      homebridge.updatePluginConfig(pluginConfig);
       homebridge.showSpinner();
 
       try {
@@ -124,8 +126,8 @@
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
-      homebridge.showSpinner();
       homebridge.updatePluginConfig(pluginConfig);
+      homebridge.showSpinner();
 
       try {
         const clientSecret = '';
@@ -141,8 +143,6 @@
         const response = await homebridge.request('/startAuthorization', payload);
         const info = response.info;
         const status = response.status;
-
-        homebridge.updatePluginConfig(pluginConfig);
 
         if (status == 0) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
@@ -163,8 +163,7 @@
           homebridge.toast.info('Authorization proces started!', 'Info!');
           document.getElementById('authorizeConsoleButton').addEventListener('click', async () => {
             if (this.authorizeConsole) {
-              const token = document.querySelector('#deviceTokenInput').value;
-              pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
+              pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
               homebridge.updatePluginConfig(pluginConfig);
               homebridge.savePluginConfig(pluginConfig);
               document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
@@ -177,7 +176,7 @@
             } else {
               document.getElementById('authorizeConsoleButton').innerText = "Save token";
               document.getElementById('info').innerHTML =
-                'Now go to the new window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
+                'Now go to the pop-up window and login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
               await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
@@ -193,6 +192,8 @@
           document.getElementById('info').innerHTML =
             'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
           homebridge.toast.success(info, 'Success!');
+          homebridge.updatePluginConfig(pluginConfig);
+          homebridge.savePluginConfig(pluginConfig);
         }
 
         if (status == 3) {
@@ -200,7 +201,7 @@
           startAuthorizationButton.innerText = "Start authorization";
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
-          document.getElementById('info').innerHTML = 'Authorization and Token file saved error.';
+          document.getElementById('info').innerHTML = 'Authorization and token file saved error.';
           homebridge.toast.error(info, 'Error!');
         }
 
