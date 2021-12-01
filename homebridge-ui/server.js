@@ -41,20 +41,20 @@ class PluginUiServer extends HomebridgePluginUiServer {
   }
 
   async getWebApiToken(payload) {
-    console.log('Incomming token %s:, host: %s, clientId: %s.', payload.token, payload.host, payload.clientId);
+    console.log('Incomming token %s:, host: %s, clientId: %s.', payload.webApiToken, payload.host, payload.clientId);
 
     try {
-      const token = payload.token;
       const host = payload.host;
       const clientId = payload.clientId;
       const clientSecret = payload.clientSecret;
+      const webApiToken = payload.webApiToken;
       const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
       const webApiCheck = XboxWebApi({
         clientId: clientId,
         clientSecret: clientSecret,
         userToken: '',
-        uhs: ''
+        userUhs: ''
       });
 
       try {
@@ -65,9 +65,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
           status: 0
         }
       } catch (error) {
-        if (token.length > 5) {
+        if (webApiToken.length > 10) {
           try {
-            const authenticationData = await webApiCheck._authentication.getTokenRequest(token);
+            const authenticationData = await webApiCheck._authentication.getTokenRequest(webApiToken);
             webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {

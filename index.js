@@ -188,11 +188,11 @@ class xboxTvDevice {
 		//device configuration
 		this.name = config.name || 'Game console';
 		this.host = config.host || '';
-		this.clientID = config.clientID || '5e5ead27-ed60-482d-b3fc-702b28a97404';
+		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
-		this.uhs = config.uhs || '';
-		this.xboxliveId = config.xboxliveid || '';
+		this.userUhs = config.userUhs || '';
+		this.xboxliveId = config.xboxLiveId || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.xboxWebApiControl = config.webApiControl || false;
 		this.refreshInterval = (config.refreshInterval * 1000) || 5;
@@ -290,15 +290,15 @@ class xboxTvDevice {
 
 		this.xbox = new Smartglass({
 			ip: this.host,
-			liveId: this.xboxliveId,
+			xboxLiveId: this.xboxLiveId,
 			reconnect: this.refreshInterval
 		});
 
 		this.xboxWebApi = XboxWebApi({
-			clientId: this.clientID,
+			clientId: this.clientId,
 			clientSecret: this.clientSecret,
 			userToken: this.userToken,
-			uhs: this.uhs
+			userUhs: this.userUhs
 		});
 
 		this.xbox.on('_on_connected', () => {

@@ -53,7 +53,7 @@ class SMARTGLASS extends EventEmitter {
         super();
 
         this.ip = config.ip;
-        this.liveId = config.liveId;
+        this.xboxLiveId = config.xboxLiveId;
         this.reconnect = config.reconnect;
 
         this.crypto = new SGCrypto();
@@ -474,7 +474,7 @@ class SMARTGLASS extends EventEmitter {
 
                 this.boot = setInterval(() => {
                     let powerOn = new Packer('simple.powerOn');
-                    powerOn.set('liveId', this.liveId);
+                    powerOn.set('liveId', this.xboxLiveId);
                     const message = powerOn.pack();
                     this.sendSocketMessage(message);
 
@@ -504,7 +504,7 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('message', 'Send power Off.');
 
                 let powerOff = new Packer('message.powerOff');
-                powerOff.set('liveId', this.liveId);
+                powerOff.set('liveId', this.xboxLiveId);
                 const message = powerOff.pack(this);
                 this.sendSocketMessage(message);
 

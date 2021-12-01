@@ -54,6 +54,7 @@
         document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[0].host;
         document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
         this.host = pluginConfig[0].devices[0].host;
+        this.clientId = pluginConfig[0].devices[0].clientId;
 
 
         //get actuall value on console select
@@ -61,8 +62,9 @@
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
-          this.deviceIndex = i;
           this.host = pluginConfig[0].devices[i].host;
+          this.clientId = pluginConfig[0].devices[i].clientId;
+          this.deviceIndex = i;
         });
         this.deviceIndex = 0;
       }
@@ -73,8 +75,7 @@
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
-      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
-        .value;
+      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
 
       // update the config
       homebridge.updatePluginConfig(pluginConfig);
@@ -124,15 +125,14 @@
       homebridge.showSpinner();
 
       try {
-        const webApiToken = document.querySelector('#deviceTokenInput').value;
-        const clientId = '5e5ead27-ed60-482d-b3fc-702b28a97404';
         const clientSecret = '';
+        const webApiToken = document.querySelector('#deviceTokenInput').value;
 
         const payload = {
-          token: webApiToken,
           host: this.host,
-          clientId: clientId,
-          clientSecret: clientSecret
+          clientId: this.clientId,
+          clientSecret: clientSecret,
+          webApiToken: webApiToken,
         };
 
         const response = await homebridge.request('/startAuthorization', payload);
