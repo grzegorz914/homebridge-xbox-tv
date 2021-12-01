@@ -20,7 +20,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
     // this MUST be called when you are ready to accept requests
     this.ready();
-  }
+  };
 
   async clearToken(payload) {
 
@@ -30,15 +30,15 @@ class PluginUiServer extends HomebridgePluginUiServer {
     try {
       if (fs.existsSync(authTokenFile) == true) {
         fsPromises.writeFile(authTokenFile, '');
-      }
+      };
 
       return true;
     } catch (e) {
       throw new RequestError('Clear token file failed.', {
         message: e.message
       });
-    }
-  }
+    };
+  };
 
   async getWebApiToken(payload) {
     console.log('Incomming token %s:, host: %s, clientId: %s.', payload.webApiToken, payload.host, payload.clientId);
@@ -63,7 +63,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
         this.data = {
           info: 'Console already authorized',
           status: 0
-        }
+        };
       } catch (error) {
         if (webApiToken.length > 10) {
           try {
@@ -73,12 +73,12 @@ class PluginUiServer extends HomebridgePluginUiServer {
             this.data = {
               info: 'Console successfully authorized and token file saved.',
               status: 2
-            }
+            };
           } catch (error) {
             this.data = {
               info: 'Authorization or save token file error.',
               status: 3
-            }
+            };
           };
         } else {
           const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
@@ -94,9 +94,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
       throw new RequestError('Failed to return data try again.', {
         message: e.message
       });
-    }
-  }
-}
+    };
+  };
+};
 
 (() => {
   return new PluginUiServer();
