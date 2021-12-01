@@ -195,7 +195,7 @@ class xboxTvDevice {
 		this.xboxliveId = config.xboxLiveId || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.xboxWebApiControl = config.webApiControl || false;
-		this.refreshInterval = (config.refreshInterval * 1000) || 5;
+		this.refreshInterval = (config.refreshInterval * 1000) || 5000;
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
@@ -414,12 +414,12 @@ class xboxTvDevice {
 		try {
 			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
 			const isAuthenticated = await this.xboxWebApi.isAuthenticated();
-			this.log('Device: %s %s, authenticated and web api enabled.', this.host, this.name);
+			this.log('Device: %s %s, authorized and web api enabled.', this.host, this.name);
 			this.xboxWebApiEnabled = true;
 			this.getWebApiInstalledApps();
 		} catch (error) {
 			if (this.xboxWebApiToken != undefined) {
-				this.log('Device: %s %s, trying to authenticate with Web Api Token...', this.host, this.name, this.xboxWebApiToken);
+				this.log('Device: %s %s, trying to authorize with Web Api Token: %s', this.host, this.name, this.xboxWebApiToken);
 				try {
 					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					this.log('Device: %s %s, web api enabled.', this.host, this.name);
