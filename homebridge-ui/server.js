@@ -41,7 +41,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
   };
 
   async getWebApiToken(payload) {
-    console.log('Incomming token %s:, host: %s, clientId: %s.', payload.webApiToken, payload.host, payload.clientId);
+    console.log('Incomming token: %s, host: %s, clientId: %s.', payload.webApiToken, payload.host, payload.clientId);
 
     try {
       const host = payload.host;
