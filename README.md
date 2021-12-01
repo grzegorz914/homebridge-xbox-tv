@@ -24,7 +24,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Note
 * For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
-* Authorization Manager still in Test Phase.
+* The Authorization Manager still in Test Phase.
 
 ## Know Issues
 * If used with Hoobs, there is a possible configuration incompatibilty.
@@ -101,6 +101,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. |
 | `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+
+*Example Config:
 
 ```json
 {
