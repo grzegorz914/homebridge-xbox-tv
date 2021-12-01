@@ -57,7 +57,7 @@
 
 
         //get actuall value on console select
-        document.getElementById('button' + i).addEventListener('click', async () => {
+        document.getElementById('button' + i).addEventListener('click', () => {
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
@@ -69,7 +69,7 @@
     }
 
     // watch for changes to the form and update the config
-    document.getElementById('configForm').addEventListener('input', () => {
+    document.getElementById('configForm').addEventListener('input', async () => {
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
@@ -77,11 +77,11 @@
         .value;
 
       // update the config
-      homebridge.updatePluginConfig(pluginConfig);
-      homebridge.savePluginConfig(pluginConfig);
+      await homebridge.updatePluginConfig(pluginConfig);
+      await homebridge.savePluginConfig(pluginConfig);
     });
 
-    document.getElementById('configButton').addEventListener('click', async () => {
+    document.getElementById('configButton').addEventListener('click', () => {
       const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
@@ -112,8 +112,8 @@
           document.querySelector('#deviceTokenInput').value = '';
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
 
-          homebridge.updatePluginConfig(pluginConfig);
-          homebridge.savePluginConfig(pluginConfig);
+          await homebridge.updatePluginConfig(pluginConfig);
+          await homebridge.savePluginConfig(pluginConfig);
         }
 
         homebridge.hideSpinner();
@@ -143,8 +143,6 @@
         const info = response.info;
         const status = response.status;
 
-        homebridge.updatePluginConfig(pluginConfig);
-
         if (status == 0) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
           document.getElementById('startAuthorizationButton').innerText = "Start authorization";
@@ -162,12 +160,10 @@
           document.getElementById('info').innerHTML =
             'Authorization proces started, now press the *Authorize Console* button.';
           homebridge.toast.info('Authorization proces started!', 'Info!');
-          document.getElementById('authorizeConsoleButton').addEventListener('click', async () => {
+          document.getElementById('authorizeConsoleButton').addEventListener('click', () => {
             if (this.authorizeConsole) {
               const token = document.querySelector('#deviceTokenInput').value;
               pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
-              homebridge.updatePluginConfig(pluginConfig);
-              homebridge.savePluginConfig(pluginConfig);
               document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
               document.getElementById('startAuthorizationButton').removeAttribute('disabled');
               document.getElementById('startAuthorizationButton').innerText = "Activate console";
