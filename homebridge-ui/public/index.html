@@ -77,7 +77,8 @@
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
-      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
+      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
+        .value;
 
       homebridge.updatePluginConfig(pluginConfig);
       homebridge.savePluginConfig(pluginConfig);
