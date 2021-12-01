@@ -109,7 +109,7 @@
         if (response) {
           document.getElementById('startAuthorizationButton').removeAttribute("disabled");
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-          homebridge.toast.info('Clear web api token done!.', 'Info!');
+          homebridge.toast.info('Web API token cleared!', 'Info!');
 
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
           document.querySelector('#deviceTokenInput').value = '';
@@ -148,7 +148,7 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Console already authorized. Start new athorization process need clear web api token.';
+            'Console already authorized. To start a new athorization process you need clear the Web API token.';
           homebridge.toast.info(info, 'Info!');
         };
 
@@ -185,7 +185,7 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
+            'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fun!!!';
           homebridge.toast.success(info, 'Success!');
         };
 
