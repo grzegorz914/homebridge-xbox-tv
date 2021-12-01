@@ -75,12 +75,10 @@
       // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
-      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
-        .value;
+      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
 
       homebridge.updatePluginConfig(pluginConfig);
       homebridge.savePluginConfig(pluginConfig);
-      homebridge.toast.info('Plugin config updated!.', 'Info!');
     });
 
     document.getElementById('configButton').addEventListener('click', async () => {
@@ -112,6 +110,8 @@
           homebridge.toast.info('Clear web api token done!.', 'Info!');
 
           document.querySelector('#deviceTokenInput').value = '';
+          pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
+          homebridge.updatePluginConfig(pluginConfig);
           homebridge.savePluginConfig(pluginConfig);
         }
 
@@ -168,10 +168,9 @@
               homebridge.toast.info('Web api token in config saved.', 'Info!');
               this.authorizeConsole = false;
             } else {
-              document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-              document.getElementById('startAuthorizationButton').removeAttribute('disabled');
+              document.getElementById('authorizeConsoleButton').innerText = "Save Web Api Token";
               document.getElementById('info').innerHTML =
-                'Now go to the pop-up window and login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Activate Console* button.';
+                'Now go to the pop-up window and login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Web Api Token* button.';
               await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
