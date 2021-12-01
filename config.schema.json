@@ -558,6 +558,7 @@
 		"items": [
 			"devices[].name",
 			"devices[].host",
+			"devices[].xboxliveid",
 			"devices[].webApiControl",
 			{
 				"key": "devices[]",
@@ -611,7 +612,6 @@
 				"expandable": true,
 				"expanded": false,
 				"items": [
-					"devices[].xboxliveid",
 					"devices[].clientID",
 					"devices[].clientSecret",
 					"devices[].xboxWebApiToken",
