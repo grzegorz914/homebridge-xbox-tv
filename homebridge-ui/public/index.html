@@ -56,8 +56,7 @@
         this.host = pluginConfig[0].devices[0].host;
         this.clientId = pluginConfig[0].devices[0].clientId;
         this.clientSecret = pluginConfig[0].devices[0].clientSecret;
-        this.webApiToken = pluginConfig[0].devices[0].xboxWebApiToken;
-
+        document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
 
         //get actuall value on console select
         document.getElementById('button' + i).addEventListener('click', async () => {
@@ -67,7 +66,6 @@
           this.host = pluginConfig[0].devices[i].host;
           this.clientId = pluginConfig[0].devices[i].clientId;
           this.clientSecret = pluginConfig[0].devices[i].clientSecret;
-          this.webApiToken = pluginConfig[0].devices[i].xboxWebApiToken;
           this.deviceIndex = i;
         });
         this.deviceIndex = 0;
@@ -113,8 +111,8 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           homebridge.toast.info('Clear web api token done!.', 'Info!');
 
-          document.querySelector('#deviceTokenInput').value = '';
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
+          document.querySelector('#deviceTokenInput').value = '';
           homebridge.updatePluginConfig(pluginConfig);
           homebridge.savePluginConfig(pluginConfig);
         };
@@ -128,14 +126,16 @@
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
+      homebridge.updatePluginConfig(pluginConfig);
       homebridge.showSpinner();
 
       try {
+        const webApiToken = document.querySelector('#deviceTokenInput').value;
         const payload = {
           host: this.host,
           clientId: this.clientId,
           clientSecret: this.clientSecret,
-          webApiToken: this.webApiToken,
+          webApiToken: webApiToken,
         };
 
         const response = await homebridge.request('/startAuthorization', payload);
