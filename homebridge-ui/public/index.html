@@ -78,6 +78,7 @@
 
       // update the config
       homebridge.updatePluginConfig(pluginConfig);
+      homebridge.savePluginConfig(pluginConfig);
     });
 
     document.getElementById('configButton').addEventListener('click', async () => {
@@ -102,12 +103,15 @@
           host: this.host,
         };
         const response = await homebridge.request('/clearToken', payload);
-        pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
 
         if (response) {
           document.getElementById('startAuthorizationButton').removeAttribute("disabled");
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           homebridge.toast.info('Clear web api token done!.', 'Info!');
+
+          document.querySelector('#deviceTokenInput').value = '';
+          pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
+
           homebridge.updatePluginConfig(pluginConfig);
           homebridge.savePluginConfig(pluginConfig);
         }
@@ -175,7 +179,7 @@
               document.getElementById('authorizeConsoleButton').innerText = "Save token";
               document.getElementById('info').innerHTML =
                 'Now go to the new window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
-              await open(data);
+              await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
             }
