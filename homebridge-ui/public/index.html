@@ -57,7 +57,7 @@
 
 
         //get actuall value on console select
-        document.getElementById('button' + i).addEventListener('click', () => {
+        document.getElementById('button' + i).addEventListener('click', async () => {
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
@@ -81,7 +81,7 @@
       await homebridge.savePluginConfig(pluginConfig);
     });
 
-    document.getElementById('configButton').addEventListener('click', () => {
+    document.getElementById('configButton').addEventListener('click', async () => {
       const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
@@ -160,7 +160,7 @@
           document.getElementById('info').innerHTML =
             'Authorization proces started, now press the *Authorize Console* button.';
           homebridge.toast.info('Authorization proces started!', 'Info!');
-          document.getElementById('authorizeConsoleButton').addEventListener('click', () => {
+          document.getElementById('authorizeConsoleButton').addEventListener('click', async () => {
             if (this.authorizeConsole) {
               const token = document.querySelector('#deviceTokenInput').value;
               pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
