@@ -54,13 +54,14 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Authorization Manager
-* First of all please use built in Authorization Manager, if this fail use Authorization Manual.
+* First of all please use built in Authorization Manager.
+* If in some cases Authorization Manager can not be used, please use Authorization Manual Mode.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
-### Authorization Manual
+### Authorization Manual Mode
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
 * Follow the instructions in the console log.
 
