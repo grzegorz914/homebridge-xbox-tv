@@ -29,7 +29,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
     try {
       if (fs.existsSync(authTokenFile) == true) {
-        fsPromises.writeFile(authTokenFile, '');
+        await fsPromises.writeFile(authTokenFile, '');
       };
 
       return true;
@@ -61,7 +61,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
         webApiCheck._authentication._tokensFile = authTokenFile;
         const isAuthenticated = await webApiCheck.isAuthenticated();
         this.data = {
-          info: 'Console already authorized',
+          info: 'Console already authorized.',
           status: 0
         };
       } catch (error) {
