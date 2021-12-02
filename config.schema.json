@@ -76,14 +76,14 @@
 							"default": 5,
 							"minimum": 1,
 							"maximum": 60,
-							"description": "Here set socket reconnect time if closed after error.",
+							"description": "Here set socket reconnect time if disconnected after error.",
 							"required": true
 						},
 						"disableLogInfo": {
 							"title": "Disable Log Info",
 							"type": "boolean",
 							"default": false,
-							"description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
+							"description": "This disable log info, all values and state will not be displayed in Homebridge console log.",
 							"required": false
 						},
 						"webApiControl": {
