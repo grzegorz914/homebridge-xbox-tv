@@ -42,22 +42,6 @@ const DEFAULT_INPUTS = [{
 		'contentType': 'Dashboard'
 	},
 	{
-		'name': 'Television',
-		'titleId': '371594669',
-		'reference': 'Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application',
-		'oneStoreProductId': 'Television',
-		'type': 'HDMI',
-		'contentType': 'Television'
-	},
-	{
-		'name': 'Settings TV',
-		'titleId': '2019308066',
-		'reference': 'Microsoft.Xbox.TvSettings_8wekyb3d8bbwe!Microsoft.Xbox.TvSettings.Application',
-		'oneStoreProductId': 'SettingsTv',
-		'type': 'HOME_SCREEN',
-		'contentType': 'Settings'
-	},
-	{
 		'name': 'Dashboard',
 		'titleId': '750323071',
 		'reference': 'Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application',
@@ -71,7 +55,23 @@ const DEFAULT_INPUTS = [{
 		'reference': 'Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application',
 		'oneStoreProductId': 'Settings',
 		'type': 'HOME_SCREEN',
-		'contentType': 'Settings'
+		'contentType': 'Dashboard'
+	},
+	{
+		'name': 'Television',
+		'titleId': '371594669',
+		'reference': 'Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application',
+		'oneStoreProductId': 'Television',
+		'type': 'HDMI',
+		'contentType': 'systemApp'
+	},
+	{
+		'name': 'Settings TV',
+		'titleId': '2019308066',
+		'reference': 'Microsoft.Xbox.TvSettings_8wekyb3d8bbwe!Microsoft.Xbox.TvSettings.Application',
+		'oneStoreProductId': 'SettingsTv',
+		'type': 'HOME_SCREEN',
+		'contentType': 'Dashboard'
 	},
 	{
 		'name': 'Accessory',
@@ -305,7 +305,7 @@ class xboxTvDevice {
 			.on('message', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
-			.on('_on_change', (decodedMessage, mediaState) => {
+			.on('_on_change', async (decodedMessage, mediaState) => {
 				const majorVersion = decodedMessage.majorVersion;
 				const minorVersion = decodedMessage.minorVersion;
 				const buildNumber = decodedMessage.buildNumber;
@@ -417,7 +417,6 @@ class xboxTvDevice {
 
 		} catch (error) {
 			this.log.error('Device: %s %s, prepare directory and files error: %s', this.host, this.name, error);
-			this.checkDeviceInfo = true;
 		};
 	};
 
