@@ -23,7 +23,6 @@ class PluginUiServer extends HomebridgePluginUiServer {
   };
 
   async clearToken(payload) {
-
     const host = payload.host;
     const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
@@ -41,7 +40,6 @@ class PluginUiServer extends HomebridgePluginUiServer {
   };
 
   async getWebApiToken(payload) {
-    console.log('Incomming token: %s, host: %s, clientId: %s.', payload.webApiToken, payload.host, payload.clientId);
 
     try {
       const host = payload.host;
