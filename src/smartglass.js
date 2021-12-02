@@ -57,8 +57,8 @@ class SMARTGLASS extends EventEmitter {
         this.reconnect = config.reconnect;
 
         this.crypto = new SGCrypto();
-        this.connectionStatus = false;
-        this.messageReceivedTime = (new Date().getTime()) / 1000;
+        this.isConnected = false;
+        this.isAuthorized = false;
         this.titleId = '';
         this.currentApp = '';
         this.mediaState = 0;
@@ -70,7 +70,6 @@ class SMARTGLASS extends EventEmitter {
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
         this.iv = false;
-        this.isAuthenticated = false;
         this.function = '';
 
         //channelManager
@@ -175,7 +174,7 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('debug', `Server listening: ${address.address}:${address.port}, start discovering.`);
 
                 setInterval(() => {
-                    if (!this.connectionStatus) {
+                    if (!this.isConnected) {
                         let discoveryPacket = new Packer('simple.discoveryRequest');
                         const message = discoveryPacket.pack();
                         this.sendSocketMessage(message);
@@ -203,7 +202,7 @@ class SMARTGLASS extends EventEmitter {
                     const xstsToken = '';
                     const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-                    if (!this.connectionStatus && certyficate != undefined) {
+                    if (!this.isConnected && certyficate != undefined) {
                         this.emit('debug', 'Discovered, send connect request.');
 
                         // // Set pem
@@ -230,10 +229,10 @@ class SMARTGLASS extends EventEmitter {
                         if (uhs != undefined && xstsToken != undefined) {
                             connectRequest.set('userhash', uhs, true);
                             connectRequest.set('jwt', xstsToken, true);
-                            this.isAuthenticated = true;
+                            this.isAuthorized = true;
                             this.emit('debug', 'Connecting using token.');
                         } else {
-                            this.isAuthenticated = false;
+                            this.isAuthorized = false;
                             this.emit('debug', 'Connecting using anonymous login.');
                         }
                         const message = connectRequest.pack(this);
@@ -254,14 +253,14 @@ class SMARTGLASS extends EventEmitter {
                     const message = localJoin.pack(this);
                     this.sendSocketMessage(message);
 
-                    this.connectionStatus = true;
+                    this.isConnected = true;
                     this.discoveredXboxs.splice(0, this.xboxsCount);
                     this.xboxsCount = 0;
                     this.emit('message', 'Connected.')
                     this.emit('_on_connected');
 
                     this.checkConnection = setInterval(() => {
-                        if (this.connectionStatus) {
+                        if (this.isConnected) {
                             const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
                             this.emit('debug', `Start check message timeout, last received was ${lastMessageReceivedTime} seconds ago.`);
                             if (lastMessageReceivedTime == 5) {
@@ -292,7 +291,7 @@ class SMARTGLASS extends EventEmitter {
                         8: 'Sign-in timeout.',
                         9: 'Sign-in required.'
                     };
-                    this.connectionStatus = false;
+                    this.isConnected = false;
                     this.emit('error', `Connect error: ${errorTable[message.packetDecoded.protectedPayload.connectResult]}`);
                 };
             })
@@ -460,7 +459,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             }).on('_on_disconnected', () => {
-                this.connectionStatus = false;
+                this.isConnected = false;
                 this.requestNum = 0;
                 this.emit('message', 'Disconnected.');
             });
@@ -468,7 +467,7 @@ class SMARTGLASS extends EventEmitter {
 
     powerOn() {
         return new Promise((resolve, reject) => {
-            if (!this.connectionStatus) {
+            if (!this.isConnected) {
                 this.emit('message', 'Send power On.');
                 const bootStartTime = (new Date().getTime()) / 1000;
 
@@ -500,7 +499,7 @@ class SMARTGLASS extends EventEmitter {
 
     powerOff() {
         return new Promise((resolve, reject) => {
-            if (this.connectionStatus) {
+            if (this.isConnected) {
                 this.emit('message', 'Send power Off.');
 
                 let powerOff = new Packer('message.powerOff');
@@ -523,7 +522,7 @@ class SMARTGLASS extends EventEmitter {
 
     recordGameDvr() {
         return new Promise((resolve, reject) => {
-            if (this.connectionStatus && this.isAuthenticated) {
+            if (this.isConnected && this.isAuthorized) {
                 this.emit('debug', 'Send record game.');
                 let recordGameDvr = new Packer('message.recordGameDvr');
                 recordGameDvr.set('startTimeDelta', -60);
@@ -535,7 +534,7 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('debug', 'Not connected or not authorized, send record game ignored. ')
                 reject({
                     status: 'error',
-                    error: `Connection state: ${this.connectionStatus}, authorization state: ${this.isAuthenticated}`
+                    error: `Connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`
                 });
             };
         });
@@ -543,7 +542,7 @@ class SMARTGLASS extends EventEmitter {
 
     sendCommand(command, channelName) {
         return new Promise((resolve, reject) => {
-            if (this.connectionStatus) {
+            if (this.isConnected) {
                 if (channelName == 'systemMedia') {
                     this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd', command);
                     resolve(true);
