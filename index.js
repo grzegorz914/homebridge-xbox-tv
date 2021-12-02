@@ -261,32 +261,14 @@ class xboxTvDevice {
 		this.inputName = '';
 		this.inputType = 0;
 
-		const prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		this.authTokenFile = `${prefDir}/authToken_${this.host.split('.').join('')}`;
-		this.devInfoFile = `${prefDir}/devInfo_${this.host.split('.').join('')}`;
-		this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
-		this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
-		this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
+		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
+		this.authTokenFile = `${this.prefDir}/authToken_${this.host.split('.').join('')}`;
+		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
+		this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
+		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
+		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
-		//check if the directory exists, if not then create it
-		if (fs.existsSync(prefDir) == false) {
-			fsPromises.mkdir(prefDir);
-		}
-		if (fs.existsSync(this.authTokenFile) == false) {
-			fsPromises.writeFile(this.authTokenFile, '');
-		}
-		if (fs.existsSync(this.devInfoFile) == false) {
-			fsPromises.writeFile(this.devInfoFile, '');
-		}
-		if (fs.existsSync(this.inputsFile) == false) {
-			fsPromises.writeFile(this.inputsFile, '');
-		}
-		if (fs.existsSync(this.inputsNamesFile) == false) {
-			fsPromises.writeFile(this.inputsNamesFile, '');
-		}
-		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-			fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
-		}
+		this.prepareDirectoryAndFiles();
 
 		this.xbox = new Smartglass({
 			ip: this.host,
@@ -310,7 +292,7 @@ class xboxTvDevice {
 						.updateCharacteristic(Characteristic.Active, true)
 				};
 
-				this.getApp = setInterval(() => {
+				this.updateWebInstalledApp = setInterval(() => {
 					const getWebApiInstalledApps = (this.webApiControl && this.webApiEnabled) ? this.getWebApiInstalledApps() : false;
 				}, 60000);
 			})
@@ -395,7 +377,7 @@ class xboxTvDevice {
 			})
 			.on('_on_disconnected', () => {
 				this.powerState = false;
-				clearInterval(this.getApp);
+				clearInterval(this.updateWebInstalledApp);
 
 				if (this.televisionService) {
 					this.televisionService
@@ -408,6 +390,36 @@ class xboxTvDevice {
 		//start prepare accessory
 		this.prepareAccessory();
 	}
+
+	async prepareDirectoryAndFiles() {
+		this.log.debug('Device: %s %s, prepare directory and files.', this.host, this.name);
+
+		try {
+			//check if the directory exists, if not then create it
+			if (fs.existsSync(this.prefDir) == false) {
+				await fsPromises.mkdir(this.prefDir);
+			}
+			if (fs.existsSync(this.authTokenFile) == false) {
+				await fsPromises.writeFile(this.authTokenFile, '');
+			}
+			if (fs.existsSync(this.devInfoFile) == false) {
+				await fsPromises.writeFile(this.devInfoFile, '');
+			}
+			if (fs.existsSync(this.inputsFile) == false) {
+				await fsPromises.writeFile(this.inputsFile, '');
+			}
+			if (fs.existsSync(this.inputsNamesFile) == false) {
+				await fsPromises.writeFile(this.inputsNamesFile, '');
+			}
+			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+				await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
+			}
+
+		} catch (error) {
+			this.log.error('Device: %s %s, prepare directory and files error: %s', this.host, this.name, error);
+			this.checkDeviceInfo = true;
+		};
+	};
 
 	async getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
