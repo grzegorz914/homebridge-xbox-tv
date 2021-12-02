@@ -192,7 +192,7 @@ class xboxTvDevice {
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
 		this.userUhs = config.userUhs || '';
-		this.xboxliveId = config.xboxLiveId || '';
+		this.xboxLiveId = config.xboxLiveId || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.xboxWebApiControl = config.webApiControl || false;
 		this.refreshInterval = (config.refreshInterval * 1000) || 5000;
@@ -567,7 +567,7 @@ class xboxTvDevice {
 	async getWebApiInstalledApps() {
 		this.log.debug('Device: %s %s, requesting installed apps from your Xbox Live account.', this.host, this.name);
 		try {
-			const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxliveId);
+			const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxLiveId);
 			this.log.debug('Device: %s %s, debug getInstalledAppsData: %s', this.host, this.name, getInstalledAppsData.result);
 
 			const inputsArr = new Array();
@@ -616,9 +616,9 @@ class xboxTvDevice {
 		} catch (error) {
 			if (error.status == 401) {
 				this.getWebApiToken();
-				this.log('Device: %s %s, with liveId: %s, trying to get Installed Apps gave an error, trying to reauthenticate.', this.host, this.name, this.xboxliveId);
+				this.log('Device: %s %s, with liveId: %s, trying to get Installed Apps gave an error, trying to reauthenticate.', this.host, this.name, this.xboxLiveId);
 			} else {
-				this.log.error('Device: %s %s, with liveId: %s, get Installed Apps error: %s.', this.host, this.name, this.xboxliveId, error);
+				this.log.error('Device: %s %s, with liveId: %s, get Installed Apps error: %s.', this.host, this.name, this.xboxLiveId, error);
 			};
 		};
 	}
@@ -626,7 +626,7 @@ class xboxTvDevice {
 	async getWebApiStorageDevices() {
 		this.log.debug('Device: %s %s, requesting web api storage devices.', this.host, this.name);
 		try {
-			const getStorageDevicesData = await this.xboxWebApi.getProvider('smartglass').getStorageDevices(this.xboxliveId);
+			const getStorageDevicesData = await this.xboxWebApi.getProvider('smartglass').getStorageDevices(this.xboxLiveId);
 			this.log.debug('Device: %s %s, debug getStorageDevicesData, result: %s', this.host, this.name, getStorageDevicesData);
 
 			const storageDeviceData = getStorageDevicesData.result;
@@ -659,14 +659,14 @@ class xboxTvDevice {
 
 			this.getWebApiConsoleStatus();
 		} catch (error) {
-			this.log.error('Device: %s %s, with liveId: %s, get Storage Devices error: %s.', this.host, this.name, this.xboxliveId, error);
+			this.log.error('Device: %s %s, with liveId: %s, get Storage Devices error: %s.', this.host, this.name, this.xboxLiveId, error);
 		};
 	}
 
 	async getWebApiConsoleStatus() {
 		this.log.debug('Device: %s %s, requesting device info from Web API.', this.host, this.name);
 		try {
-			const getConsoleStatusData = await this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxliveId);
+			const getConsoleStatusData = await this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxLiveId);
 			this.log.debug('Device: %s %s, debug getConsoleStatusData, result: %s', this.host, this.name, getConsoleStatusData);
 			const consoleStatusData = getConsoleStatusData;
 
@@ -691,9 +691,9 @@ class xboxTvDevice {
 		} catch (error) {
 			if (error.status == 401) {
 				this.getWebApiToken();
-				this.log('Device: %s %s, with liveId: %s, get Console Status error, trying to reauthenticate.', this.host, this.name, this.xboxliveId);
+				this.log('Device: %s %s, with liveId: %s, get Console Status error, trying to reauthenticate.', this.host, this.name, this.xboxLiveId);
 			} else {
-				this.log.error('Device: %s %s, with liveId: %s, get Console Status error: %s.', this.host, this.name, this.xboxliveId, error);
+				this.log.error('Device: %s %s, with liveId: %s, get Console Status error: %s.', this.host, this.name, this.xboxLiveId, error);
 			};
 		};
 	}
@@ -703,7 +703,7 @@ class xboxTvDevice {
 		//display device info
 		const manufacturer = this.manufacturer;
 		const modelName = this.modelName;
-		const serialNumber = this.xboxWebApiEnabled ? this.serialNumber : this.xboxliveId;
+		const serialNumber = this.xboxWebApiEnabled ? this.serialNumber : this.xboxLiveId;
 		const firmwareRevision = `${this.majorVersion}.${this.minorVersion}.${this.buildNumber}`;
 
 		this.log('-------- %s --------', this.name);
@@ -734,7 +734,7 @@ class xboxTvDevice {
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
-		const accessoryUUID = UUID.generate(this.xboxliveId);
+		const accessoryUUID = UUID.generate(this.xboxLiveId);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 		accessory.context.device = this.config.device;
@@ -813,7 +813,7 @@ class xboxTvDevice {
 					const setDashboard = (inputOneStoreProductId === 'Dashboard') || (inputOneStoreProductId === 'Settings') || (inputOneStoreProductId === 'Accessory') || (inputOneStoreProductId === 'Screensaver');
 					const setTelevision = (inputOneStoreProductId === 'Television');
 					const setApp = (inputOneStoreProductId != undefined && inputOneStoreProductId != '0');
-					const setInput = this.powerState ? this.xboxWebApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveId, inputOneStoreProductId) : false : false : false;
+					const setInput = this.powerState ? this.xboxWebApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : false : false : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
 					}
@@ -1225,8 +1225,8 @@ class xboxTvDevice {
 						const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
 						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(command, channelName) : false
 						const recordGameDvr = (this.powerState && state && this.xboxWebApiControl && this.xboxWebApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
-						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxliveId) : false;
-						const setAppInput = (this.powerState && state && buttonMode == 5 && this.xboxWebApiEnabled && setApp) ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxliveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxliveId) : await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxliveId, buttonOneStoreProductId) : false;
+						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
+						const setAppInput = (this.powerState && state && buttonMode == 5 && this.xboxWebApiEnabled && setApp) ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : false;
 						if (!this.disableLogInfo && this.powerState) {
 							this.log('Device: %s %s, set button successful, name: %s, command: %s', this.host, accessoryName, buttonName, buttonCommand);
 						}
