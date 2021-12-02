@@ -23,21 +23,21 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm install -g homebridge-xbox-tv` | Plug-In | Required |
 
 ## Note
+* For homebridge-xbox-tv versions 2.0.0 and above the minimum required version of Node.js is 14.x.x
 * For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
-* Authorization Manager still in Test Phase.
 
 ## Know Issues
 * If used with Hoobs, there is a possible configuration incompatibilty.
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
-* Reboot Console with additional button.
+* Reboot Console with additional button, rquired `webApiControl` enabled.
 * RC/Media/Pad control is possible with the RC app on iPhone/iPad or with additional buttons.
 * Speaker control is possible using hardware buttons on iPhone/iPad `Speaker Service`.
 * Legacy Volume/Mute control is possible throught extra `lightbulbs`/`fans` or with additional buttons.
 * Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
 * Record Game DVR with additional button.
-* Siri can be used to control Power, Legacy Volume, Mute and switch Games, Apps with created Buttons.
+* Siri can be used to control all functions, some functions require create buttons.
 * Home automations and shortcuts can be used for all functions.
 
 <p align="left">
@@ -62,7 +62,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ### Authorization Manual
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
-* Follow the instructions in the log console.
+* Follow the instructions in the console log.
 
 ## Configuration
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
@@ -179,6 +179,8 @@ Each accessory needs to be manually paired.
 
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
+* To solved this problem the plugin couts the number of services and not allow add more as 100.
+* If You have configured more as 100 services some inputs or button will not be available in the Home app.
 * The Services in this accessory are:
   * Information.
   * Speaker.
