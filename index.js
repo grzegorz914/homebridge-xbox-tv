@@ -819,7 +819,7 @@ class xboxTvDevice {
 					const inputReference = this.inputsReference[inputIdentifier];
 					const inputName = this.inputsName[inputIdentifier];
 					const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-					const setDashboard = (inputOneStoreProductId === 'Dashboard') || (inputOneStoreProductId === 'Settings') || (inputOneStoreProductId === 'Accessory') || (inputOneStoreProductId === 'Screensaver');
+					const setDashboard = (inputOneStoreProductId === 'Dashboard');
 					const setTelevision = (inputOneStoreProductId === 'Television');
 					const setApp = (inputOneStoreProductId != undefined && inputOneStoreProductId != '0');
 					const setInput = this.powerState ? this.webApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : false : false : false;
@@ -884,7 +884,6 @@ class xboxTvDevice {
 					case Characteristic.RemoteKey.PLAY_PAUSE:
 						command = 'playpause';
 						channelName = 'systemMedia';
-						this.invertMediaState = !this.invertMediaState;
 						break;
 					case Characteristic.RemoteKey.INFORMATION:
 						command = this.switchInfoMenu ? 'nexus' : 'view';
@@ -1229,7 +1228,7 @@ class xboxTvDevice {
 				})
 				.onSet(async (state) => {
 					try {
-						const setDashboard = (buttonOneStoreProductId === 'Dashboard') || (buttonOneStoreProductId === 'Settings') || (buttonOneStoreProductId === 'Accessory') || (buttonOneStoreProductId === 'Screensaver');
+						const setDashboard = (buttonOneStoreProductId === 'Dashboard');
 						const setTelevision = (buttonOneStoreProductId === 'Television');
 						const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
 						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(command, channelName) : false
