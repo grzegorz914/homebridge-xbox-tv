@@ -313,6 +313,7 @@ class SMARTGLASS extends EventEmitter {
                 this.emit('debug', `Channel response for: ${channelNames[this.channelRequestId]}`);
                 if (message.packetDecoded.protectedPayload.channelRequestId == this.channelRequestId) {
                     const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+                    const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
 
                     if (message.packetDecoded.protectedPayload.result == 0) {
                         const command = this.channelCommand;
@@ -329,7 +330,7 @@ class SMARTGLASS extends EventEmitter {
                                 mediaCommand.set('titleId', 0);
                                 mediaCommand.set('command', systemMediaCommands[command]);
                                 mediaRequestId++
-                                mediaCommand.setChannel('0');
+                                mediaCommand.setChannel(channelTargetId);
                                 const message = mediaCommand.pack(this);
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `System media send command: ${command}`);
@@ -340,21 +341,21 @@ class SMARTGLASS extends EventEmitter {
 
                         if (channelRequestId == 1) {
                             if (command in systemInputCommands) {
-                                const timestampNow = new Date().getTime();
+                                const timeStampPress = new Date().getTime();
                                 let gamepadPress = new Packer('message.gamepad');
-                                gamepadPress.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'));
+                                gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
                                 gamepadPress.set('command', systemInputCommands[command]);
-                                gamepadPress.setChannel('1');
+                                gamepadPress.setChannel(channelTargetId);
                                 const message = gamepadPress.pack(this);
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `System input send press, command: ${command}`);
 
                                 setTimeout(() => {
-                                    const timestamp = new Date().getTime();
+                                    const timeStampUnpress = new Date().getTime();
                                     let gamepadUnpress = new Packer('message.gamepad');
-                                    gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'));
+                                    gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
                                     gamepadUnpress.set('command', 0);
-                                    gamepadUnpress.setChannel('1');
+                                    gamepadUnpress.setChannel(channelTargetId);
                                     const message = gamepadUnpress.pack(this);
                                     this.sendSocketMessage(message);
                                     this.emit('debug', `System input send unpress command: 0`);
@@ -377,7 +378,7 @@ class SMARTGLASS extends EventEmitter {
                                 };
                                 let json = new Packer('message.json');
                                 json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel('2');
+                                json.setChannel(channelTargetId);
                                 const message = json.pack(this);
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `TV remote send command: ${command}`);
@@ -398,7 +399,7 @@ class SMARTGLASS extends EventEmitter {
                                 };
                                 let json = new Packer('message.json');
                                 json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel('2');
+                                json.setChannel(channelTargetId);
                                 const message = json.pack(this);
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `System config send: ${configName}`);
