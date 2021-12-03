@@ -30,7 +30,7 @@ class MESSAGE {
         this.name = type;
         this.packetData = packetData;
         this.packetDecoded = false;
-        this.targetChannelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
+        this.channelTargetId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
         const Type = {
             uInt32(value) {
@@ -230,7 +230,7 @@ class MESSAGE {
             },
             channelResponse: {
                 channelRequestId: Type.uInt32('0'),
-                targetChannelId: Type.bytes(8, ''),
+                channelTargetId: Type.bytes(8, ''),
                 result: Type.uInt32('0'),
             },
             gamepad: {
@@ -406,8 +406,8 @@ class MESSAGE {
         return messageFlags[type];
     };
 
-    setChannel(targetChannelId) {
-        this.targetChannelId = Buffer.from(targetChannelId);
+    setChannel(channelTargetId) {
+        this.channelTargetId = Buffer.from(channelTargetId);
     };
 
     set(key, value, subkey = false) {
@@ -475,7 +475,7 @@ class MESSAGE {
         header.writeUInt32(smartglass.targetParticipantId);
         header.writeUInt32(smartglass.sourceParticipantId);
         header.writeBytes(this.setFlags(this.name));
-        header.writeBytes(this.targetChannelId);
+        header.writeBytes(this.channelTargetId);
 
         if (payload.toBuffer().length % 16 > 0) {
             const padStart = payload.toBuffer().length % 16;
