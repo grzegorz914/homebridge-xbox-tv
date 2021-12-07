@@ -26,6 +26,7 @@ const systemMediaCommands = {
 };
 
 const systemInputCommands = {
+    unpress: 0,
     nexus: 2,
     view1: 4,
     menu1: 8,
@@ -44,7 +45,18 @@ const tvRemoteCommands = {
     volDown: 'btn.vol_down',
     volMute: 'btn.vol_mute'
 };
-
+const channelIds = {
+    systemMedia: 0,
+    systemInput: 1,
+    tvRemote: 2,
+    sysConfig: 3
+};
+const channelUuids = {
+    systemMedia: '48a9ca24eb6d4e128c43d57469edd3cd',
+    systemInput: 'fa20b8ca66fb46e0adb60b978a59d35f',
+    tvRemote: 'd451e3b360bb4c71b3dbf994b1aca3a7',
+    sysConfig: 'd451e3b360bb4c71b3dbf994b1aca3a7'
+};
 const channelNames = ['systemMedia', 'systemInput', 'tvRemote', 'sysConfig'];
 const configNames = ['GetConfiguration', 'GetHeadendInfo', 'GetLiveTVInfo', 'GetTunerLineups', 'GetAppChannelLineups'];
 
@@ -52,9 +64,11 @@ class SMARTGLASS extends EventEmitter {
     constructor(config) {
         super();
 
-        this.ip = config.ip;
+        this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
         this.reconnect = config.reconnect;
+        this.userToken = config.userToken;
+        this.userHash = config.userHash;
 
         this.crypto = new SGCrypto();
         this.isConnected = false;
@@ -73,7 +87,7 @@ class SMARTGLASS extends EventEmitter {
         this.function = '';
 
         //channelManager
-        this.channelRequestId = 0;
+        this.channelClientId = 0;
         this.channelCommand = '';
         this.configuration = {};
         this.headendInfo = {};
@@ -94,25 +108,25 @@ class SMARTGLASS extends EventEmitter {
                     return;
                 };
 
-                const response = message.unpack(this);
-                const type = response.name;
+                this.response = message.unpack(this);
+                const type = this.response.name;
 
-                if (response.packetDecoded.type != 'd00d') {
+                if (this.response.packetDecoded.type != 'd00d') {
                     this.function = `_on_${type}`;
                 } else {
-                    if (response.packetDecoded.targetParticipantId != this.participantId) {
+                    if (this.response.packetDecoded.targetParticipantId != this.participantId) {
                         this.emit('debug', 'Participant id does not match. Ignoring packet.');
                         return;
                     };
 
                     this.function = `_on_${message.structure.packetDecoded.name}`;
-                    if (response.packetDecoded.flags.needAck == true) {
+                    if (this.response.packetDecoded.flags.needAck == true) {
                         this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.');
 
                         let acknowledge = new Packer('message.acknowledge');
-                        acknowledge.set('lowWatermark', response.packetDecoded.sequenceNumber);
+                        acknowledge.set('lowWatermark', this.response.packetDecoded.sequenceNumber);
                         acknowledge.structure.structure.processedList.value.push({
-                            id: response.packetDecoded.sequenceNumber
+                            id: this.response.packetDecoded.sequenceNumber
                         });
                         const message = acknowledge.pack(this);
                         this.sendSocketMessage(message);
@@ -120,7 +134,7 @@ class SMARTGLASS extends EventEmitter {
                 };
 
                 if (this.function == '_on_json') {
-                    const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json)
+                    const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
 
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId != undefined) {
@@ -157,16 +171,13 @@ class SMARTGLASS extends EventEmitter {
                         this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                         if (this.fragments[jsonMessage.datagramId].isValid() == true) {
                             this.emit('debug', '_on_json: Completed fragmented packet.');
-                            let jsonResponse = response;
-                            jsonResponse.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
-
-                            this.emit('_on_json', jsonResponse);
+                            this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
                             this.fragments[jsonMessage.datagramId] = undefined;
                         };
                         this.function = '_on_json_fragment';
                     };
                 };
-                this.emit(this.function, response);
+                this.emit(this.function, this.response);
                 this.emit('debug', `Emit event type: ${this.function}`);
             })
             .on('listening', () => {
@@ -198,8 +209,6 @@ class SMARTGLASS extends EventEmitter {
                 this.xboxsCount = this.discoveredXboxs.length;
 
                 if (this.xboxsCount > 0) {
-                    const uhs = '';
-                    const xstsToken = '';
                     const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
                     if (!this.isConnected && certyficate != undefined) {
@@ -226,9 +235,9 @@ class SMARTGLASS extends EventEmitter {
                         connectRequest.set('publicKey', this.crypto.getPublicKey());
                         connectRequest.set('iv', this.crypto.getIv());
 
-                        if (uhs != undefined && xstsToken != undefined) {
-                            connectRequest.set('userhash', uhs, true);
-                            connectRequest.set('jwt', xstsToken, true);
+                        if (this.userHash != undefined && this.userToken != undefined) {
+                            connectRequest.set('userHash', this.userHash, true);
+                            connectRequest.set('jwt', this.userToken, true);
                             this.isAuthorized = true;
                             this.emit('debug', 'Connecting using token.');
                         } else {
@@ -295,47 +304,31 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('error', `Connect error: ${errorTable[message.packetDecoded.protectedPayload.connectResult]}`);
                 };
             })
-            .on('_on_channelOpen', (channelRequestId, channelName, udid, command) => {
-                this.emit('debug', `Channel open for: ${channelName}`);
-                this.channelRequestId = channelRequestId;
-                this.channelCommand = command;
-
-                let channelRequest = new Packer('message.channelRequest');
-                channelRequest.set('channelRequestId', channelRequestId);
-                channelRequest.set('titleId', 0);
-                channelRequest.set('service', Buffer.from(udid, 'hex'));
-                channelRequest.set('activityId', 0);
-                const message = channelRequest.pack(this);
-                this.sendSocketMessage(message);
-                this.emit('debug', `Send channel request for: ${channelName}, channel id: ${channelRequestId}`);
-            })
             .on('_on_channelResponse', (message) => {
-                this.emit('debug', `Channel response for: ${channelNames[this.channelRequestId]}`);
-                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelRequestId) {
-                    const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
-                    const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
-
+                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelClientId) {
                     if (message.packetDecoded.protectedPayload.result == 0) {
                         const command = this.channelCommand;
+                        const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+                        const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
+                        this.emit('debug', `Channel response for request id: ${channelRequestId}, target id: ${channelTargetId}, name: ${channelNames[channelRequestId]}, command: ${command}`);
 
                         if (channelRequestId == 0) {
                             if (command in systemMediaCommands) {
-                                let mediaRequestId = 1;
+                                let mediaRequestId = 0;
                                 let requestId = '0000000000000000';
                                 const requestIdLength = requestId.length;
-                                requestId = (requestId + mediaRequestId).slice(-requestIdLength);
+                                requestId = (requestId + mediaRequestId++).slice(-requestIdLength);
 
                                 let mediaCommand = new Packer('message.mediaCommand');
                                 mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
                                 mediaCommand.set('titleId', 0);
                                 mediaCommand.set('command', systemMediaCommands[command]);
-                                mediaRequestId++
                                 mediaCommand.setChannel(channelTargetId);
                                 const message = mediaCommand.pack(this);
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `System media send command: ${command}`);
                             } else {
-                                this.emit('debug', `Failed to send media input command: ${command}`);
+                                this.emit('debug', `Unknown media input command: ${command}`);
                             };
                         };
 
@@ -344,7 +337,7 @@ class SMARTGLASS extends EventEmitter {
                                 const timeStampPress = new Date().getTime();
                                 let gamepadPress = new Packer('message.gamepad');
                                 gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
-                                gamepadPress.set('command', systemInputCommands[command]);
+                                gamepadPress.set('buttons', systemInputCommands[command]);
                                 gamepadPress.setChannel(channelTargetId);
                                 const message = gamepadPress.pack(this);
                                 this.sendSocketMessage(message);
@@ -354,14 +347,14 @@ class SMARTGLASS extends EventEmitter {
                                     const timeStampUnpress = new Date().getTime();
                                     let gamepadUnpress = new Packer('message.gamepad');
                                     gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
-                                    gamepadUnpress.set('command', 0);
+                                    gamepadUnpress.set('buttons', systemInputCommands['unpress']);
                                     gamepadUnpress.setChannel(channelTargetId);
                                     const message = gamepadUnpress.pack(this);
                                     this.sendSocketMessage(message);
-                                    this.emit('debug', `System input send unpress command: 0`);
+                                    this.emit('debug', `System input send unpress, command: unpress`);
                                 }, 100);
                             } else {
-                                this.emit('debug', `Failed to send system input command: ${command}`);
+                                this.emit('debug', `Unknown system input command: ${command}`);
                             };
                         };
 
@@ -383,12 +376,11 @@ class SMARTGLASS extends EventEmitter {
                                 this.sendSocketMessage(message);
                                 this.emit('debug', `TV remote send command: ${command}`);
                             } else {
-                                this.emit('debug', `Failed to send tv remote command: ${command}`);
+                                this.emit('debug', `Unknown tv remote command: ${command}`);
                             };
                         };
 
                         if (channelRequestId == 3) {
-                            this.emit('debug', `System config send.`);
                             const configNamesCount = configNames.length;
                             for (let i = 0; i < configNamesCount; i++) {
                                 const configName = configNames[i];
@@ -405,8 +397,6 @@ class SMARTGLASS extends EventEmitter {
                                 this.emit('debug', `System config send: ${configName}`);
                             };
                         };
-                    } else {
-                        this.emit('debug', `Could not request channel: ${channelNames[channelRequestId]}`);
                     };
                 };
             })
@@ -541,25 +531,21 @@ class SMARTGLASS extends EventEmitter {
         });
     };
 
-    sendCommand(command, channelName) {
+    sendCommand(channelName, command) {
         return new Promise((resolve, reject) => {
             if (this.isConnected) {
-                if (channelName == 'systemMedia') {
-                    this.emit('_on_channelOpen', 0, 'systemMedia', '48a9ca24eb6d4e128c43d57469edd3cd', command);
-                    resolve(true);
-                };
-                if (channelName == 'systemInput') {
-                    this.emit('_on_channelOpen', 1, 'systemInput', 'fa20b8ca66fb46e0adb60b978a59d35f', command);
-                    resolve(true);
-                };
-                if (channelName == 'tvRemote') {
-                    this.emit('_on_channelOpen', 2, 'tvRemote', 'd451e3b360bb4c71b3dbf994b1aca3a7', command);
-                    resolve(true);
-                };
-                if (channelName == 'sysConfig') {
-                    this.emit('_on_channelOpen', 3, 'sysConfig', 'd451e3b360bb4c71b3dbf994b1aca3a7', null);
-                    resolve(true);
-                };
+                this.channelCommand = command;
+                this.channelClientId = channelIds[channelName];
+
+                let channelRequest = new Packer('message.channelRequest');
+                channelRequest.set('channelRequestId', channelIds[channelName]);
+                channelRequest.set('titleId', 0);
+                channelRequest.set('service', Buffer.from(channelUuids[channelName], 'hex'));
+                channelRequest.set('activityId', 0);
+                const message = channelRequest.pack(this);
+                this.sendSocketMessage(message);
+                this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
+                resolve(true);
             } else {
                 reject({
                     status: 'error',
@@ -571,7 +557,7 @@ class SMARTGLASS extends EventEmitter {
 
     sendSocketMessage(message) {
         if (this.socket) {
-            this.socket.send(message, 0, message.length, 5050, this.ip, (error, bytes) => {
+            this.socket.send(message, 0, message.length, 5050, this.host, (error, bytes) => {
                 if (error) {
                     this.emit('error', `Socket send message error: ${error}`);
                 };
