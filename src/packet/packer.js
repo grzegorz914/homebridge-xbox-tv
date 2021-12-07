@@ -14,14 +14,15 @@ class PACKER {
     constructor(type) {
         const packetType = type.slice(0, 2).toString('hex');
         this.structure = '';
+        this.type = type;
 
         if (packetType in Types) {
             // We got a packet that we need to unpack
-            const packetValue = type;
-            type = Types[packetType];
-            this.structure = this.loadPacketStructure(type, packetValue);
+            const packetValue = this.type;
+            this.type = Types[packetType];
+            this.structure = this.loadPacketStructure(this.type, packetValue);
         } else {
-            this.structure = this.loadPacketStructure(type);
+            this.structure = this.loadPacketStructure(this.type);
         };
 
     };
@@ -38,8 +39,8 @@ class PACKER {
         return this.structure.unpack(smartglass);
     };
 
-    setChannel(targetChannelId) {
-        this.structure.setChannel(targetChannelId);
+    setChannel(channelId) {
+        this.structure.setChannel(channelId);
     };
 
     loadPacketStructure(type, value = false) {
