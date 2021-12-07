@@ -191,7 +191,7 @@ class xboxTvDevice {
 		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
-		this.userUhs = config.userUhs || '';
+		this.userHash = config.userHash || '';
 		this.xboxLiveId = config.xboxLiveId || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.webApiControl = config.webApiControl || false;
@@ -271,16 +271,18 @@ class xboxTvDevice {
 		this.prepareDirectoryAndFiles();
 
 		this.xbox = new Smartglass({
-			ip: this.host,
+			host: this.host,
 			xboxLiveId: this.xboxLiveId,
-			reconnect: this.refreshInterval
+			reconnect: this.refreshInterval,
+			userToken: this.userToken,
+			userHash: this.userHash
 		});
 
 		this.xboxWebApi = XboxWebApi({
 			clientId: this.clientId,
 			clientSecret: this.clientSecret,
 			userToken: this.userToken,
-			userUhs: this.userUhs
+			userHash: this.userHash
 		});
 
 		this.xbox.on('_on_connected', () => {
@@ -891,7 +893,7 @@ class xboxTvDevice {
 						break;
 				};
 				try {
-					const sendCommand = this.powerState ? await this.xbox.sendCommand(command, channelName) : false;
+					const sendCommand = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
 					};
@@ -934,19 +936,17 @@ class xboxTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
-				let channelName;
 				switch (command) {
 					case Characteristic.PowerModeSelection.SHOW:
 						command = this.switchInfoMenu ? 'nexus' : 'view';
-						channelName = 'systemInput';
 						break;
 					case Characteristic.PowerModeSelection.HIDE:
 						command = 'b';
-						channelName = 'systemInput';
 						break;
 				};
 				try {
-					const setPowerModeSelection = this.powerState ? await this.xbox.sendCommand(command, channelName) : false;
+					const channelName = 'systemInput';
+					const setPowerModeSelection = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 					};
@@ -975,7 +975,7 @@ class xboxTvDevice {
 				};
 				try {
 					const channelName = 'tvRemote';
-					const setVolume = this.powerState ? await this.xbox.sendCommand(command, channelName) : false;
+					const setVolume = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 					};
@@ -1013,7 +1013,7 @@ class xboxTvDevice {
 				try {
 					const command = 'volMute';
 					const channelName = 'tvRemote';
-					const toggleMute = (this.powerState && state != this.muteState) ? await this.xbox.sendCommand(command, channelName) : false;
+					const toggleMute = (this.powerState && state != this.muteState) ? await this.xbox.sendCommand(channelName, command) : false;
 					if (!this.disableLogInfo && this.powerState) {
 						this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					};
@@ -1197,17 +1197,21 @@ class xboxTvDevice {
 			//get button mode
 			let buttonMode = 0;
 			let channelName = '';
+			let command = '';
 			if (buttonCommand in SYSTEM_MEDIA_COMMANDS) {
 				buttonMode = 0;
 				channelName = 'systemMedia';
+				command = buttonCommand;
 			} else if (buttonCommand in SYSTEM_INPUTS_COMMANDS) {
 				buttonMode = 1;
 				channelName = 'systemInput';
+				command = buttonCommand;
 			} else if (buttonCommand in TV_REMOTE_COMMANDS) {
 				buttonMode = 2;
 				channelName = 'tvRemote';
 			} else if (buttonCommand === 'recordGameDvr') {
 				buttonMode = 3;
+				command = buttonCommand;
 			} else if (buttonCommand === 'reboot') {
 				buttonMode = 4;
 			} else if (buttonCommand === 'switchAppGame') {
@@ -1231,7 +1235,7 @@ class xboxTvDevice {
 						const setDashboard = (buttonOneStoreProductId === 'Dashboard');
 						const setTelevision = (buttonOneStoreProductId === 'Television');
 						const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
-						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(command, channelName) : false
+						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(channelName, command) : false
 						const recordGameDvr = (this.powerState && state && this.webApiControl && this.webApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
 						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
 						const setAppInput = (this.powerState && state && buttonMode == 5 && this.webApiEnabled && setApp) ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : false;
@@ -1243,7 +1247,7 @@ class xboxTvDevice {
 					};
 					setTimeout(() => {
 						buttonService.updateCharacteristic(Characteristic.On, false);
-					}, 250);
+					}, 200);
 				});
 
 			accessory.addService(buttonService);
