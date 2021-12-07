@@ -56,10 +56,10 @@
 							"description": "Optional alternative authentication method.",
 							"required": false
 						},
-						"userUhs": {
-							"title": "User Uhs",
+						"userHash": {
+							"title": "User Hash",
 							"type": "string",
-							"placeholder": "User Uhs",
+							"placeholder": "User Hash",
 							"description": "Optional alternative authentication method.",
 							"required": false
 						},
@@ -618,7 +618,7 @@
 					"devices[].clientSecret",
 					"devices[].xboxWebApiToken",
 					"devices[].userToken",
-					"devices[].userUhs"
+					"devices[].userHash"
 				],
 				"condition": {
 					"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
