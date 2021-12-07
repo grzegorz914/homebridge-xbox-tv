@@ -83,7 +83,7 @@ class SIMPLE {
                 protectedPayload: Type.bytes()
             },
             connectRequestProtected: {
-                userhash: Type.sgString(''),
+                userHash: Type.sgString(''),
                 jwt: Type.sgString(''),
                 connectRequestNum: Type.uInt32('0'),
                 connectRequestGroupStart: Type.uInt32('0'),
