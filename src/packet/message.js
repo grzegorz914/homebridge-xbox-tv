@@ -30,7 +30,7 @@ class MESSAGE {
         this.name = type;
         this.packetData = packetData;
         this.packetDecoded = false;
-        this.channelTargetId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
+        this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
         const Type = {
             uInt32(value) {
@@ -235,7 +235,7 @@ class MESSAGE {
             },
             gamepad: {
                 timestamp: Type.bytes(8, ''),
-                command: Type.uInt16('0'),
+                buttons: Type.uInt16('0'),
                 leftTrigger: Type.uInt32('0'),
                 rightTrigger: Type.uInt32('0'),
                 leftThumbstickX: Type.uInt32('0'),
@@ -406,8 +406,8 @@ class MESSAGE {
         return messageFlags[type];
     };
 
-    setChannel(channelTargetId) {
-        this.channelTargetId = Buffer.from(channelTargetId);
+    setChannel(channelId) {
+        this.channelId = Buffer.from(channelId);
     };
 
     set(key, value, subkey = false) {
@@ -475,12 +475,12 @@ class MESSAGE {
         header.writeUInt32(smartglass.targetParticipantId);
         header.writeUInt32(smartglass.sourceParticipantId);
         header.writeBytes(this.setFlags(this.name));
-        header.writeBytes(this.channelTargetId);
+        header.writeBytes(this.channelId);
 
         if (payload.toBuffer().length % 16 > 0) {
             const padStart = payload.toBuffer().length % 16;
             const padTotal = (16 - padStart);
-            for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
+            for (let paddingNum = (padStart + 1); paddingNum <= 16; paddingNum++) {
                 payload.writeUInt8(padTotal);
             };
         };
