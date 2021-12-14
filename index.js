@@ -249,7 +249,6 @@ class xboxTvDevice {
 		this.mediaState = 0;
 		this.pictureMode = 0;
 		this.brightness = 0;
-		this.invertMediaState = false;
 
 		this.setStartInput = false;
 		this.startInputIdentifier = 0;
@@ -417,7 +416,7 @@ class xboxTvDevice {
 			this.log('Device: %s %s, authorized and Web Api enabled.', this.host, this.name);
 		} catch (error) {
 			if (this.xboxWebApiToken != undefined) {
-				this.log('Device: %s %s, trying to authorize with Web Api Token: %s', this.host, this.name, this.xboxWebApiToken);
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, trying to authorize with Web Api Token: %s', this.host, this.name, this.xboxWebApiToken) : false;
 				try {
 					const authenticationData = await this.xboxWebApi._authentication.getTokenRequest(this.xboxWebApiToken);
 					const debug = this.enableDebugMode ? this.log('Device: %s %s, get oauth2 Web Api Token: %s', this.host, this.name, authenticationData) : false;
@@ -792,7 +791,7 @@ class xboxTvDevice {
 				const inputName = this.inputsName[inputIdentifier];
 				const inputReference = this.inputsReference[inputIdentifier];
 				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Input successful, input: %s, reference: %s, oneneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
+				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Input successful, input: %s, reference: %s, product Id: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
 				return inputIdentifier;
 			})
 			.onSet(async (inputIdentifier) => {
@@ -804,7 +803,7 @@ class xboxTvDevice {
 					const setTelevision = (inputOneStoreProductId === 'Television');
 					const setApp = (inputOneStoreProductId != undefined && inputOneStoreProductId != '0');
 					const setInput = this.powerState ? this.webApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : false : false : false;
-					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Input successful, input: %s, reference: %s, oneStoreProductId: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
+					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Input successful, input: %s, reference: %s, product Id: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
 					this.startInputIdentifier = inputIdentifier;
 					this.setStartInput = this.powerState ? false : true;
 				} catch (error) {
@@ -964,7 +963,7 @@ class xboxTvDevice {
 
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.onGet(async () => {
-				const state = this.powerState ? this.muteState : true;
+				const state = this.muteState;
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				return state;
 			})
@@ -996,7 +995,7 @@ class xboxTvDevice {
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = this.powerState ? !this.muteState : false;
+						const state = !this.muteState;
 						return state;
 					})
 					.onSet(async (state) => {
@@ -1018,7 +1017,7 @@ class xboxTvDevice {
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = this.powerState ? !this.muteState : false;
+						const state = !this.muteState;
 						return state;
 					})
 					.onSet(async (state) => {
@@ -1094,13 +1093,13 @@ class xboxTvDevice {
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
+					const nameIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
+					let newName = savedInputsNames;
+					newName[nameIdentifier] = name;
+					const newCustomName = JSON.stringify(newName);
 					try {
-						const nameIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
-						let newName = savedInputsNames;
-						newName[nameIdentifier] = name;
-						const newCustomName = JSON.stringify(newName);
 						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, saved new Input Name successful, name: %s, oneStoreProductId: %s', this.host, accessoryName, newCustomName, inputOneStoreProductId);
+						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, saved new Input name successful, name: %s, product Id: %s', this.host, accessoryName, newCustomName, inputOneStoreProductId);
 					} catch (error) {
 						this.log.error('Device: %s %s, saved new Input Name error: %s', this.host, accessoryName, error);
 					}
@@ -1109,11 +1108,11 @@ class xboxTvDevice {
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onSet(async (state) => {
+					const targetVisibilityIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
+					let newState = savedTargetVisibility;
+					newState[targetVisibilityIdentifier] = state;
+					const newTargetVisibility = JSON.stringify(newState);
 					try {
-						const targetVisibilityIdentifier = (inputTitleId != undefined) ? inputTitleId : (inputReference != undefined) ? inputReference : (inputOneStoreProductId != undefined) ? inputOneStoreProductId : false;
-						let newState = savedTargetVisibility;
-						newState[targetVisibilityIdentifier] = state;
-						const newTargetVisibility = JSON.stringify(newState);
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, saved new Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
@@ -1182,10 +1181,10 @@ class xboxTvDevice {
 					return state;
 				})
 				.onSet(async (state) => {
+					const setDashboard = (buttonOneStoreProductId === 'Dashboard');
+					const setTelevision = (buttonOneStoreProductId === 'Television');
+					const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
 					try {
-						const setDashboard = (buttonOneStoreProductId === 'Dashboard');
-						const setTelevision = (buttonOneStoreProductId === 'Television');
-						const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
 						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(channelName, command) : false
 						const recordGameDvr = (this.powerState && state && this.webApiControl && this.webApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
 						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
@@ -1198,7 +1197,6 @@ class xboxTvDevice {
 						buttonService.updateCharacteristic(Characteristic.On, false);
 					}, 200);
 				});
-
 			accessory.addService(buttonService);
 		}
 
