@@ -70,15 +70,6 @@
 							"description": "Here put the reponse Token (value after ?code=) from the authentication URL.",
 							"required": false
 						},
-						"refreshInterval": {
-							"title": "Reconnect interval (sec)",
-							"type": "integer",
-							"default": 5,
-							"minimum": 1,
-							"maximum": 60,
-							"description": "Here set socket reconnect time if disconnected after error.",
-							"required": true
-						},
 						"disableLogInfo": {
 							"title": "Disable Log Info",
 							"type": "boolean",
@@ -634,7 +625,6 @@
 					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
-					"devices[].refreshInterval",
 					"devices[].volumeControl"
 				]
 			},

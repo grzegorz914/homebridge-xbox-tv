@@ -66,7 +66,6 @@ class SMARTGLASS extends EventEmitter {
 
         this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
-        this.reconnect = config.reconnect;
         this.userToken = config.userToken;
         this.userHash = config.userHash;
 
@@ -197,7 +196,7 @@ class SMARTGLASS extends EventEmitter {
 
                 setTimeout(() => {
                     this.connect();
-                }, this.reconnect);
+                }, 5000);
             })
             .bind();
 
@@ -265,8 +264,7 @@ class SMARTGLASS extends EventEmitter {
                     this.isConnected = true;
                     this.discoveredXboxs.splice(0, this.xboxsCount);
                     this.xboxsCount = 0;
-                    this.emit('message', 'Connected.')
-                    this.emit('_on_connected');
+                    this.emit('_on_connect', 'Connected.');
 
                     this.checkConnection = setInterval(() => {
                         if (this.isConnected) {
@@ -449,10 +447,6 @@ class SMARTGLASS extends EventEmitter {
                         this.emit('_on_change', decodedMessage, this.mediaState);
                     };
                 };
-            }).on('_on_disconnected', () => {
-                this.isConnected = false;
-                this.requestNum = 0;
-                this.emit('message', 'Disconnected.');
             });
     };
 
@@ -575,7 +569,10 @@ class SMARTGLASS extends EventEmitter {
         disconnect.set('errorCode', 0);
         const message = disconnect.pack(this);
         this.sendSocketMessage(message);
-        this.emit('_on_disconnected');
+
+        this.isConnected = false;
+        this.requestNum = 0;
+        this.emit('_on_disconnect', 'Disconnected.');
     };
 
     getRequestNum() {
