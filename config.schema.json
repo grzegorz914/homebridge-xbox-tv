@@ -510,34 +510,6 @@
 									}
 								}
 							}
-						},
-						"manufacturer": {
-							"name": "Manufacturer",
-							"type": "string",
-							"placeholder": "Microsoft",
-							"description": "Optional - Set the manufacturer.",
-							"required": false
-						},
-						"modelName": {
-							"name": "Model",
-							"type": "string",
-							"placeholder": "Xbox One",
-							"description": "Optional - Set the model name.",
-							"required": false
-						},
-						"serialNumber": {
-							"name": "Serial Number",
-							"type": "string",
-							"placeholder": "000000000000",
-							"description": "Optionel - Set the serial number.",
-							"required": false
-						},
-						"firmwareRevision": {
-							"name": "Firmware Revision",
-							"type": "string",
-							"placeholder": "00.0.00000.0000",
-							"description": "Optional - Set the firmware revision.",
-							"required": false
 						}
 					}
 				}
@@ -626,19 +598,6 @@
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
 					"devices[].volumeControl"
-				]
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Branding",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].manufacturer",
-					"devices[].modelName",
-					"devices[].serialNumber",
-					"devices[].firmwareRevision"
 				]
 			}
 		]

@@ -100,7 +100,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home app. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 
 ```json
@@ -159,11 +158,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
 						},
-					],
-			"manufacturer": "Microsoft Corporation",
-			"modelName": "Model",
-			"serialNumber": "Serial Number",
-			"firmwareRevision": "Firmware Revision"
+					]
 		}
 	]
 }

@@ -228,10 +228,10 @@ class xboxTvDevice {
 		this.inputs = inputsArr;
 
 		//device
-		this.manufacturer = config.manufacturer || 'Microsoft';
-		this.modelName = config.modelName || 'Model Name (e.g. Xbox Series S)';
-		this.serialNumber = config.serialNumber || 'Serial Number';
-		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
+		this.manufacturer = 'Microsoft';
+		this.modelName = 'Model Name (e.g. Xbox Series S)';
+		this.serialNumber = 'Serial Number';
+		this.firmwareRevision = 'Firmware Revision';
 
 		//setup variables
 		this.checkDeviceInfo = false;

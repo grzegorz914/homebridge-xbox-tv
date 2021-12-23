@@ -62,27 +62,23 @@
 				}
 			],
 			"buttons": [{
-				"name": "Play",
-				"command": "play"
-			   },
-			   {
-				"name": "Record Game DVR",
-				"command": "recordGameDvr"
-			   },
-			   {
-				"name": "Reboot",
-				"command": "reboot"
-			   },
-			   {
-				"name": "A Way Out",
-				"command": "switchAppGame",
-				"oneStoreProductId": "oneStoreProductId"
-			   }
-			],
-			"manufacturer": "Microsoft Corporation",
-			"modelName": "Model",
-			"serialNumber": "Serial Number",
-			"firmwareRevision": "Firmware Revision"
+					"name": "Play",
+					"command": "play"
+				},
+				{
+					"name": "Record Game DVR",
+					"command": "recordGameDvr"
+				},
+				{
+					"name": "Reboot",
+					"command": "reboot"
+				},
+				{
+					"name": "A Way Out",
+					"command": "switchAppGame",
+					"oneStoreProductId": "oneStoreProductId"
+				}
+			]
 		}]
 	}]
 }
