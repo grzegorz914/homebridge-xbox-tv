@@ -171,7 +171,7 @@ Each accessory needs to be manually paired.
 1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
 2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
 3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*. 
-4. Select your Xbox in the screen after this.. 
+4. Select your Your accessory. 
 5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
 6. Complete the accessory setup.
 
