@@ -20,65 +20,63 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
     // this MUST be called when you are ready to accept requests
     this.ready();
-  }
+  };
 
   async clearToken(payload) {
-
     const host = payload.host;
     const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
     try {
       if (fs.existsSync(authTokenFile) == true) {
-        fsPromises.writeFile(authTokenFile, '');
-      }
+        await fsPromises.writeFile(authTokenFile, '');
+      };
 
       return true;
     } catch (e) {
       throw new RequestError('Clear token file failed.', {
         message: e.message
       });
-    }
-  }
+    };
+  };
 
   async getWebApiToken(payload) {
-    console.log('Incomming token %s:, host: %s, clientId: %s.', payload.token, payload.host, payload.clientId);
 
     try {
-      const token = payload.token;
       const host = payload.host;
       const clientId = payload.clientId;
       const clientSecret = payload.clientSecret;
+      const webApiToken = payload.webApiToken;
       const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
       const webApiCheck = XboxWebApi({
         clientId: clientId,
         clientSecret: clientSecret,
         userToken: '',
-        uhs: ''
+        userUhs: ''
       });
 
       try {
         webApiCheck._authentication._tokensFile = authTokenFile;
         const isAuthenticated = await webApiCheck.isAuthenticated();
         this.data = {
-          info: 'Console already authorized',
+          info: 'Console already authorized.',
           status: 0
-        }
+        };
       } catch (error) {
-        if (token.length > 5) {
+        if (webApiToken.length > 10) {
           try {
-            const authenticationData = await webApiCheck._authentication.getTokenRequest(token);
+            const authenticationData = await webApiCheck._authentication.getTokenRequest(webApiToken);
             webApiCheck._authentication._tokens.oauth = authenticationData;
             webApiCheck._authentication.saveTokens();
             this.data = {
-              info: 'Console successfully authorized and token saved.',
+              info: 'Console successfully authorized and token file saved.',
               status: 2
-            }
+            };
           } catch (error) {
             this.data = {
-              info: 'Authorization or save Token error.',
+              info: 'Authorization or save token file error.',
               status: 3
-            }
+            };
           };
         } else {
           const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
@@ -94,9 +92,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
       throw new RequestError('Failed to return data try again.', {
         message: e.message
       });
-    }
-  }
-}
+    };
+  };
+};
 
 (() => {
   return new PluginUiServer();

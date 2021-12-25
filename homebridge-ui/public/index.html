@@ -5,7 +5,7 @@
 <div id="authorizationRequired" style="display:none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
-      <label id="info" style="font-size: 19px">Authorization Manager</label><br><br>
+      <label id="info" style="font-size: 17px">Authorization Manager</label><br><br>
     </div>
     <div class="form-group">
       <label for="deviceNameInput">Name</label>
@@ -43,30 +43,33 @@
         const button = document.createElement("button");
         button.setAttribute("type", "button");
         button.setAttribute("id", "button" + i);
-        button.setAttribute("class", "btn btn-primary");
+        button.setAttribute("class", "btn btn-secondary");
         button.innerText = pluginConfig[0].devices[i].name;
         button.style.width = '160px';
-        button.style.height = '38x';
+        button.style.height = '34x';
         document.body.appendChild(button);
 
         //load on first run
         document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[0].name;
         document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[0].host;
         document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
-        this.host = pluginConfig[0].devices[0].host;
-
+        this.clientId = pluginConfig[0].devices[0].clientId;
+        this.clientSecret = pluginConfig[0].devices[0].clientSecret;
+        document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
 
         //get actuall value on console select
-        document.getElementById('button' + i).addEventListener('click', async () => {
+        document.getElementById('button' + i).addEventListener('click', async() => {
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
+          this.clientId = pluginConfig[0].devices[i].clientId;
+          this.clientSecret = pluginConfig[0].devices[i].clientSecret;
           this.deviceIndex = i;
           this.host = pluginConfig[0].devices[i].host;
         });
         this.deviceIndex = 0;
-      }
-    }
+      };
+    };
 
     // watch for changes to the form and update the config
     document.getElementById('configForm').addEventListener('input', async () => {
@@ -76,7 +79,6 @@
       pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput')
         .value;
 
-      // update the config
       await homebridge.updatePluginConfig(pluginConfig);
       await homebridge.savePluginConfig(pluginConfig);
     });
@@ -91,7 +93,7 @@
         configButton.innerText = "Hide Config";
         homebridge.showSchemaForm();
         this.configButtonState = true;
-      }
+      };
     });
 
     // clear token file
@@ -99,44 +101,42 @@
       homebridge.showSpinner();
 
       try {
+        const host = document.querySelector('#deviceHostInput').value;
         const payload = {
-          host: this.host,
+          host: host,
         };
         const response = await homebridge.request('/clearToken', payload);
 
         if (response) {
           document.getElementById('startAuthorizationButton').removeAttribute("disabled");
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-          homebridge.toast.info('Clear web api token done!.', 'Info!');
+          homebridge.toast.info('Web API token cleared!', 'Info!');
 
-          document.querySelector('#deviceTokenInput').value = '';
           pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
-
+          document.querySelector('#deviceTokenInput').value = '';
           await homebridge.updatePluginConfig(pluginConfig);
           await homebridge.savePluginConfig(pluginConfig);
-        }
+        };
 
         homebridge.hideSpinner();
       } catch (e) {
         homebridge.toast.error('Clear token file failed.', 'Error!');
         homebridge.hideSpinner();
-      }
-    })
+      };
+    });
 
     // watch for click events on the startAuthorizationButton
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
       homebridge.showSpinner();
 
       try {
+        const host = document.querySelector('#deviceHostInput').value;
         const webApiToken = document.querySelector('#deviceTokenInput').value;
-        const clientId = '5e5ead27-ed60-482d-b3fc-702b28a97404';
-        const clientSecret = '';
-
         const payload = {
-          token: webApiToken,
-          host: this.host,
-          clientId: clientId,
-          clientSecret: clientSecret
+          host: host,
+          clientId: this.clientId,
+          clientSecret: this.clientSecret,
+          webApiToken: webApiToken,
         };
 
         const response = await homebridge.request('/startAuthorization', payload);
@@ -149,9 +149,9 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Console already authorized. Start new athorization process need clear web api token.';
+            'Console already authorized. To start a new athorization process you need clear the Web API token.';
           homebridge.toast.info(info, 'Info!');
-        }
+        };
 
         if (status == 1) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
@@ -162,25 +162,23 @@
           homebridge.toast.info('Authorization proces started!', 'Info!');
           document.getElementById('authorizeConsoleButton').addEventListener('click', async () => {
             if (this.authorizeConsole) {
-              const token = document.querySelector('#deviceTokenInput').value;
-              pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = token;
               document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
               document.getElementById('startAuthorizationButton').removeAttribute('disabled');
               document.getElementById('startAuthorizationButton').innerText = "Activate console";
               document.getElementById('info').innerHTML =
-                'Token saved successful, now please press *Activate Console* button.';
-              homebridge.toast.info(info, 'Info!');
+                'Web api token in config saved, now please press *Activate Console* button.';
+              homebridge.toast.info('Web api token in config saved.', 'Info!');
               this.authorizeConsole = false;
             } else {
-              document.getElementById('authorizeConsoleButton').innerText = "Save token";
+              document.getElementById('authorizeConsoleButton').innerText = "Save Web Api Token";
               document.getElementById('info').innerHTML =
-                'Now go to the new window and accept permiossion for this app, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Token* button.';
+                'Now go to the pop-up window and login to Your Xbox Live account and accept permission to allow Homebridge-Smartglass, next copy the part after *?code=* from the response URI and paste it in to the *Web Api Token*, next press the *Save Web Api Token* button.';
               await open(info);
               homebridge.toast.info('Authorization page requested!', 'Info!');
               this.authorizeConsole = true;
-            }
+            };
           });
-        }
+        };
 
         if (status == 2) {
           document.getElementById('startAuthorizationButton').setAttribute('disabled', 'disabled');
@@ -188,24 +186,24 @@
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
           document.getElementById('info').innerHTML =
-            'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fan!!!';
+            'Activation console done, Token saved successful. Now enable *Web Api Control* in config menu, save and restart the plugin and have fun!!!';
           homebridge.toast.success(info, 'Success!');
-        }
+        };
 
         if (status == 3) {
           startAuthorizationButton.removeAttribute('disabled');
           startAuthorizationButton.innerText = "Start authorization";
           document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
           document.getElementById('authorizeConsoleButton').innerText = "Authorize console";
-          document.getElementById('info').innerHTML = 'Authorization and Token file saved error.';
+          document.getElementById('info').innerHTML = 'Authorization or Token file save error.';
           homebridge.toast.error(info, 'Error!');
-        }
+        };
 
       } catch (e) {
         homebridge.toast.error('Failed to get data try again.', 'Error!');
       } finally {
         homebridge.hideSpinner();
-      }
+      };
     });
   })();
 </script>

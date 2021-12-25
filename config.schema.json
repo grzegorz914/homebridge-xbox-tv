@@ -4,18 +4,18 @@
 	"singular": true,
 	"customUi": true,
 	"headerDisplay": "This plugin works with Xbox game Consoles and are exposed to HomeKit as separate accessories and each needs to be manually paired.\n\n1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device.\n2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>.\n3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*.\n4. Select Your accessory.\n5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.\n6. Complete the accessory setup.",
-	"footerDisplay": "This plugin is available [here](https://github.com/grzegorz914/homebridge-xbox-tv).",
+	"footerDisplay": "For documentation please see [GitHub repository](https://github.com/grzegorz914/homebridge-xbox-tv).",
 	"schema": {
 		"type": "object",
 		"properties": {
 			"devices": {
-				"title": "Devices",
 				"type": "array",
 				"items": {
+					"title": "Device",
 					"type": "object",
 					"properties": {
 						"name": {
-							"title": "Device name",
+							"title": "Name",
 							"type": "string",
 							"placeholder": "Game console",
 							"required": true
@@ -27,18 +27,19 @@
 							"format": "hostname",
 							"required": true
 						},
-						"xboxliveid": {
+						"xboxLiveId": {
 							"title": "Live ID",
 							"type": "string",
 							"placeholder": "FD00000000000000",
 							"description": "Xbox Live ID",
 							"required": true
 						},
-						"clientID": {
+						"clientId": {
 							"title": "Web Api Client ID",
 							"type": "string",
 							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
-							"description": "Optional for future use.",
+							"default": "5e5ead27-ed60-482d-b3fc-702b28a97404",
+							"description": "Here set your own Client ID created on Azure AD or leave empty to use default ID.",
 							"required": false
 						},
 						"clientSecret": {
@@ -49,16 +50,16 @@
 							"required": false
 						},
 						"userToken": {
-							"title": "Web Api User Token",
+							"title": "User Token",
 							"type": "string",
 							"placeholder": "User Token",
 							"description": "Optional alternative authentication method.",
 							"required": false
 						},
-						"uhs": {
-							"title": "Web Api UHS",
+						"userHash": {
+							"title": "User Hash",
 							"type": "string",
-							"placeholder": "UHS",
+							"placeholder": "User Hash",
 							"description": "Optional alternative authentication method.",
 							"required": false
 						},
@@ -69,19 +70,11 @@
 							"description": "Here put the reponse Token (value after ?code=) from the authentication URL.",
 							"required": false
 						},
-						"refreshInterval": {
-							"title": "Refresh interval (sec)",
-							"type": "integer",
-							"default": 5,
-							"minimum": 0,
-							"maximum": 60,
-							"required": true
-						},
 						"disableLogInfo": {
-							"title": "Disable log info",
+							"title": "Disable Log Info",
 							"type": "boolean",
 							"default": false,
-							"description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
+							"description": "This disable log info, all values and state will not be displayed in Homebridge console log.",
 							"required": false
 						},
 						"webApiControl": {
@@ -92,11 +85,12 @@
 							"required": false
 						},
 						"volumeControl": {
-							"title": "Volume control mode",
+							"title": "Volume Control Mode",
 							"type": "integer",
 							"minimum": 0,
 							"maximum": 2,
-							"description": "Here select what a volume control mode You want to use. If select \"None\" only hardware buttons in RC app can be used to control volume.",
+							"default": 0,
+							"description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
 							"oneOf": [{
 									"title": "None",
 									"enum": [
@@ -125,25 +119,8 @@
 							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
 							"required": false
 						},
-						"rebootControl": {
-							"title": "Reboot Console",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable possibility reboot Console if web api is enabled.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"recordGameDvr": {
-							"title": "Record Game DVR",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable possibility record Game DVR.",
-							"required": false
-						},
 						"getInputsFromDevice": {
-							"title": "Load inputs from device",
+							"title": "Load Inputs From Device",
 							"type": "boolean",
 							"default": false,
 							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
@@ -192,11 +169,17 @@
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
 						},
+						"enableDebugMode": {
+							"title": "Enable Debug Mode",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
+						},
 						"inputs": {
-							"title": "Inputs",
-							"buttonText": "Add app/input",
 							"type": "array",
 							"items": {
+								"title": "Input",
 								"type": "object",
 								"properties": {
 									"name": {
@@ -221,16 +204,15 @@
 										"required": true
 									},
 									"oneStoreProductId": {
-										"title": "OneStoreProductId",
+										"title": "Product Id",
 										"type": "string",
-										"placeholder": "Input oneStoreProductId",
+										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
 									},
 									"type": {
 										"title": "Type",
 										"type": "string",
-										"placeholder": "Input type",
 										"description": "Here select source input type.",
 										"oneOf": [{
 												"title": "Other",
@@ -305,10 +287,9 @@
 							}
 						},
 						"buttons": {
-							"title": "Buttons",
-							"buttonText": "Add button",
 							"type": "array",
 							"items": {
+								"title": "Button",
 								"type": "object",
 								"properties": {
 									"name": {
@@ -318,43 +299,217 @@
 										"description": "Here set Your own name.",
 										"required": false
 									},
-									"oneStoreProductId": {
-										"title": "OneStoreProductId",
+									"command": {
+										"title": "Command / Mode",
 										"type": "string",
-										"placeholder": "Input oneStoreProductId",
-										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
+										"oneOf": [{
+												"title": "Media Play",
+												"enum": [
+													"play"
+												]
+											},
+											{
+												"title": "Media Pause",
+												"enum": [
+													"pause"
+												]
+											},
+											{
+												"title": "Media Play/Pause",
+												"enum": [
+													"playpause"
+												]
+											},
+											{
+												"title": "Media Stop",
+												"enum": [
+													"stop"
+												]
+											},
+											{
+												"title": "Media Record",
+												"enum": [
+													"record"
+												]
+											},
+											{
+												"title": "Media Next Track",
+												"enum": [
+													"nextTrack"
+												]
+											},
+											{
+												"title": "Media Previous Track",
+												"enum": [
+													"prevTrack"
+												]
+											},
+											{
+												"title": "Media Fast Forward",
+												"enum": [
+													"fastForward"
+												]
+											},
+											{
+												"title": "Media Rewind",
+												"enum": [
+													"rewind"
+												]
+											},
+											{
+												"title": "Media Channel Up",
+												"enum": [
+													"channelUp"
+												]
+											},
+											{
+												"title": "Media Channel Down",
+												"enum": [
+													"channelDown"
+												]
+											},
+											{
+												"title": "Media Back",
+												"enum": [
+													"back"
+												]
+											},
+											{
+												"title": "Media View",
+												"enum": [
+													"view"
+												]
+											},
+											{
+												"title": "Media Menu",
+												"enum": [
+													"Menu"
+												]
+											},
+											{
+												"title": "Media Seek",
+												"enum": [
+													"seek"
+												]
+											},
+											{
+												"title": "Game Pad Nexus",
+												"enum": [
+													"nexus"
+												]
+											},
+											{
+												"title": "Game Pad View",
+												"enum": [
+													"view1"
+												]
+											},
+											{
+												"title": "Game Pad Menu",
+												"enum": [
+													"menu1"
+												]
+											},
+											{
+												"title": "Game Pad A",
+												"enum": [
+													"a"
+												]
+											},
+											{
+												"title": "Game Pad B",
+												"enum": [
+													"b"
+												]
+											},
+											{
+												"title": "Game Pad X",
+												"enum": [
+													"x"
+												]
+											},
+											{
+												"title": "Game Pad Y",
+												"enum": [
+													"y"
+												]
+											},
+											{
+												"title": "Game Pad Up",
+												"enum": [
+													"up"
+												]
+											},
+											{
+												"title": "Game Pad Down",
+												"enum": [
+													"down"
+												]
+											},
+											{
+												"title": "Game Pad Left",
+												"enum": [
+													"left"
+												]
+											},
+											{
+												"title": "Game Pad Right",
+												"enum": [
+													"right"
+												]
+											},
+											{
+												"title": "Volume Up",
+												"enum": [
+													"volUp"
+												]
+											},
+											{
+												"title": "Volume Down",
+												"enum": [
+													"volDown"
+												]
+											},
+											{
+												"title": "Mute",
+												"enum": [
+													"volMute"
+												]
+											},
+											{
+												"title": "Record Game DVR",
+												"enum": [
+													"recordGameDvr"
+												]
+											},
+											{
+												"title": "Reboot",
+												"enum": [
+													"reboot"
+												]
+											},
+											{
+												"title": "Switch App/Game",
+												"enum": [
+													"switchAppGame"
+												]
+											}
+										],
+										"description": "Here select the command or mode of button.",
+										"required": true
+									},
+									"oneStoreProductId": {
+										"title": "Product Id",
+										"type": "string",
+										"placeholder": "oneStoreProductId",
+										"description": "Here set the *oneStoreProductId*, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file. Set button mode to *Switch App/Game* and *Enable Web Api*, in other case leave this empty",
+										"required": true,
+										"condition": {
+											"functionBody": "return model.devices && model.devices[arrayIndices].webApiControl === true;"
+										}
 									}
 								}
 							}
-						},
-						"manufacturer": {
-							"name": "Manufacturer",
-							"type": "string",
-							"placeholder": "Microsoft",
-							"description": "Optional - Set the manufacturer.",
-							"required": false
-						},
-						"modelName": {
-							"name": "Model",
-							"type": "string",
-							"placeholder": "Xbox One",
-							"description": "Optional - Set the model name.",
-							"required": false
-						},
-						"serialNumber": {
-							"name": "Serial Number",
-							"type": "string",
-							"placeholder": "000000000000",
-							"description": "Optionel - Set the serial number.",
-							"required": false
-						},
-						"firmwareRevision": {
-							"name": "Firmware Revision",
-							"type": "string",
-							"placeholder": "00.0.00000.0000",
-							"description": "Optional - Set the firmware revision.",
-							"required": false
 						}
 					}
 				}
@@ -368,6 +523,7 @@
 		"items": [
 			"devices[].name",
 			"devices[].host",
+			"devices[].xboxLiveId",
 			"devices[].webApiControl",
 			{
 				"key": "devices[]",
@@ -383,8 +539,8 @@
 					"devices[].filterDlc",
 					{
 						"key": "devices[].inputs",
-						"type": "array",
-						"buttonText": "Add input",
+						"type": "tabarray",
+						"title": "{{ value.name || 'new input' }}",
 						"items": [
 							"devices[].inputs[].name",
 							"devices[].inputs[].reference",
@@ -405,10 +561,11 @@
 				"expanded": false,
 				"items": [{
 					"key": "devices[].buttons",
-					"type": "array",
-					"buttonText": "Add button",
+					"type": "tabarray",
+					"title": "{{ value.name || 'new button' }}",
 					"items": [
 						"devices[].buttons[].name",
+						"devices[].buttons[].command",
 						"devices[].buttons[].oneStoreProductId"
 					]
 				}]
@@ -416,16 +573,15 @@
 			{
 				"key": "devices[]",
 				"type": "section",
-				"title": "Xbox Live and Web Api",
+				"title": "Web Api Settings",
 				"expandable": true,
 				"expanded": false,
 				"items": [
-					"devices[].xboxliveid",
-					"devices[].clientID",
+					"devices[].clientId",
 					"devices[].clientSecret",
 					"devices[].xboxWebApiToken",
 					"devices[].userToken",
-					"devices[].uhs"
+					"devices[].userHash"
 				],
 				"condition": {
 					"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -438,25 +594,10 @@
 				"expandable": true,
 				"expanded": false,
 				"items": [
+					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
 					"devices[].switchInfoMenu",
-					"devices[].rebootControl",
-					"devices[].recordGameDvr",
-					"devices[].refreshInterval",
 					"devices[].volumeControl"
-				]
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Branding",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].manufacturer",
-					"devices[].modelName",
-					"devices[].serialNumber",
-					"devices[].firmwareRevision"
 				]
 			}
 		]

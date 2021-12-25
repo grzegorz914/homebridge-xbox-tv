@@ -23,6 +23,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm install -g homebridge-xbox-tv` | Plug-In | Required |
 
 ## Note
+* For homebridge-xbox-tv versions 2.0.0 and above the minimum required version of Node.js is 14.x.x
 * For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know Issues
@@ -30,13 +31,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
-* Reboot Console with additional button.
-* RC/Media control is possible after you go to the RC app on iPhone/iPad.
-* Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-* Legacy Volume and Mute control is possible throught extra `lightbulb` or `fan` buttons/sliders.
-* Apps, Inputs, Games can be switched if `webApiControl` and console is authorized.
+* Reboot Console with additional button, rquired `webApiControl` enabled.
+* RC/Media/Pad control is possible with the RC app on iPhone/iPad or with additional buttons.
+* Speaker control is possible using hardware buttons on iPhone/iPad `Speaker Service`.
+* Legacy Volume/Mute control is possible throught extra `lightbulbs`/`fans` or with additional buttons.
+* Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
 * Record Game DVR with additional button.
-* Siri can be used to control Power, Legacy Volume, Mute and switch Games or Apps with created Buttons.
+* Siri can be used to control all functions, some functions require create buttons.
 * Home automations and shortcuts can be used for all functions.
 
 <p align="left">
@@ -53,15 +54,16 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Authorization Manager
-* First of all please use built in Authorization Manager, if this fails please use the Manual Authorization method.
+* First of all please use built in Authorization Manager.
+* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
-### Authorization Manual
+### Authorization Manual Mode
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
-* Follow the instructions in the log file.
+* Follow the instructions in the console log.
 
 ## Configuration
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
@@ -74,31 +76,30 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | --- | --- |
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
-| `xboxliveid` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
-| `clientID` | If You create app on Azure AD then You can use own ClientID. |
-| `clientSecret` | If You create app on Azure AD then You can use own ClientSecret. |
+| `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
+| `clientId` | If You create app on Azure AD then You can use your own Client Id. |
+| `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
 | `userToken` | Alternate authorization method. |
-| `uhs` | Alternate authorization method. |
+| `userUhs` | Alternate authorization method. |
 | `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
-| `refreshInterval` | Set the data refresh time in seconds, default is 5 seconds. |
+| `refreshInterval` | Set the console reconnect time in seconds, default is 5 seconds. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `volumeControl` | Here select what a additional volume control mode You want to use (None, Slider, Fan), not yet implemented. |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterSystemApps` | If enabled, System Apps (Accessory, TV) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `filterSystemApps` | If enabled, System Apps (Accessory, Microsoft Store, Television) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `rebootControl` | If enabled, reboot Console will be possible with extra button, only available if `webApiControl` enabled. |
-| `recordGameDvr` | If enabled, record Game DVR will be possible with extra button. |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Television`, `Dashboard`, `Accessory`, `Settings` inputs are created by default. |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Microsoft Store` are created by default. |
 | `inputs.reference` | Required to identify current running app. |
 | `inputs.oneStoreProductId` | Required to switch apps. |
-| `inputs.type` | Choice from available options. |
+| `inputs.type` | Here select from available types. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*. |
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | Free-form informational data that will be displayed in the Home.app. |
+| `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 
 *Example Config:
@@ -110,11 +111,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 		{
 			"name": "Xbox One",
 			"host": "192.168.1.6",
-			"xboxliveid": "FD0000000000",
-			"clientID": "",
+			"xboxLiveId": "FD0000000000",
+			"clientId": "",
 			"clientSecret": "",
 			"userToken": "",
-			"uhs": "",
+			"userUhs": "",
 			"xboxWebApiToken": "",
 			"refreshInterval": 5,
 			"webApiControl": false,
@@ -126,8 +127,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterApps": false,
 			"filterSystemApps": false,
 			"filterDlc": false,
-			"rebootControl": false,
-			"recordGameDvr": false,
+			"enableDebugMode": false,
 			"inputs": [
 						{
 							"name": "A Way Out",
@@ -140,42 +140,27 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
 							"oneStoreProductId": "",
 							"type": "APPLICATION"
-						},
-						{
-							"name": "Battlefield 4",
-							"reference": "BFX_8s70symrha4j2!BF.App",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Cities: Skylines",
-							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
-							"oneStoreProductId": "C4GH8N6ZXG5L",
-							"type": "APPLICATION"
 						}
 					],
-					"buttons": [
+			"buttons": [
 						{
-							"name": "Don't Starve Together",
-							"oneStoreProductId": ""
+							"name": "Play",
+                            "command": "play"
 						},
 						{
-							"name": "EA Play Hub",
-							"oneStoreProductId": ""
-						},
+					        "name": "Record Game DVR",
+					        "command": "recordGameDvr"
+				        },
+				        {
+					        "name": "Reboot",
+					        "command": "reboot"
+				        },
 						{
-							"name": "AirServer Xbox Edition",
-							"oneStoreProductId": ""
+							"name": "A Way Out",
+							"command": "switchAppGame",
+							"oneStoreProductId": "oneStoreProductId",
 						},
-						{
-							"name": "Gears of War 4",
-							"oneStoreProductId": ""
-						}
-					],
-			"manufacturer": "Microsoft Corporation",
-			"modelName": "Model",
-			"serialNumber": "Serial Number",
-			"firmwareRevision": "Firmware Revision"
+					]
 		}
 	]
 }
@@ -191,15 +176,17 @@ Each accessory needs to be manually paired.
 6. Complete the accessory setup.
 
 ## Limitations
-* That maximum services (mute, buttons, inputs e.t.c.) for 1 accessory is 100. If Services > 100, the accessory will stop responding.
-* The possible services in this accessory are:
+* That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
+* To solved this problem the plugin couts the number of Services and not allow add more as 100.
+* If You have configured more as 100 Services some inputs or button will not be available in the Home app.
+* The Services in this accessory are:
   * Information.
   * Speaker.
   * Lightbulb.
   * Fan.
   * Television.
   * Inputs, which may range from 6 to 100 as each input is 1 service.
-  * Buttons, which may range from 6 to 100 as each input is 1 service.
+  * Buttons, which may range from 6 to 100 as each button is 1 service.
 
 ## [What's New](https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md)
 

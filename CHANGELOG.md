@@ -11,6 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - fix authorization UI Manager
 
+### NOTE!!!
+## After update to 2.0.0 the plugin settings need to be updated.
+## [2.0.0] - 2021-12-25
+### Added
+- Screensaver and Settings TV input as default
+- Smartglass library (based on @unknownskl code) as standalone packet, completelly rebuilded
+- Debug mode
+- TV Remote control (buttons)
+- Media control (buttons)
+- Game Pad control (buttons)
+- Clear web api token from plugin config menu
+
+### Changes
+- full code rebuild
+- config.schema updated
+- dependencies updated
+- authorizatin manager updated
+- removed bramnding
+
+### Fixed
+- memmory leak on some scenerious 
+- protocol disconnect if send multiple command at once
+- authorization manager
+
 ## [1.8.8] - 2021-11-04
 ### Fixed
 - fix some connect/disconnect case
