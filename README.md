@@ -23,9 +23,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm install -g homebridge-xbox-tv` | Plug-In | Required |
 
 ## Note
-* For homebridge-xbox-tv versions 2.0.0 and above the minimum required version of Node.js is 14.x.x
+* For versions 2.0.0 and above the minimum required version of Node.js is 14.x.x
 * If upgrade from previous version to 2.0.0 and above the xbpxLiveId need to be set again in config.
-* For homebridge-xbox-tv versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
+* For versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know Issues
 * If used with Hoobs, there is a possible configuration incompatibilty.
