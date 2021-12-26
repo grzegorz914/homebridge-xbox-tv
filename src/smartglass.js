@@ -49,13 +49,13 @@ const channelIds = {
     systemMedia: 0,
     systemInput: 1,
     tvRemote: 2,
-    sysConfig: 3
+    // sysConfig: 3
 };
 const channelUuids = {
     systemMedia: '48a9ca24eb6d4e128c43d57469edd3cd',
     systemInput: 'fa20b8ca66fb46e0adb60b978a59d35f',
     tvRemote: 'd451e3b360bb4c71b3dbf994b1aca3a7',
-    sysConfig: 'd451e3b360bb4c71b3dbf994b1aca3a7'
+    //sysConfig: 'd451e3b360bb4c71b3dbf994b1aca3a7'
 };
 const channelNames = ['systemMedia', 'systemInput', 'tvRemote', 'sysConfig'];
 const configNames = ['GetConfiguration', 'GetHeadendInfo', 'GetLiveTVInfo', 'GetTunerLineups', 'GetAppChannelLineups'];
@@ -93,6 +93,8 @@ class SMARTGLASS extends EventEmitter {
         this.liveTv = {};
         this.tunerLineups = {};
         this.appChannelLineups = {};
+        this.channelTargetId = null;
+        this.channelRequestId = null;
 
         this.socket = new dgram.createSocket('udp4');
         this.socket.on('error', (error) => {
@@ -261,11 +263,6 @@ class SMARTGLASS extends EventEmitter {
                     const message = localJoin.pack(this);
                     this.sendSocketMessage(message);
 
-                    this.isConnected = true;
-                    this.discoveredXboxs.splice(0, this.xboxsCount);
-                    this.xboxsCount = 0;
-                    this.emit('_on_connect', 'Connected.');
-
                     this.checkConnection = setInterval(() => {
                         if (this.isConnected) {
                             const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
@@ -303,98 +300,103 @@ class SMARTGLASS extends EventEmitter {
                 };
             })
             .on('_on_channelResponse', (message) => {
-                if (message.packetDecoded.protectedPayload.channelRequestId == this.channelClientId) {
-                    if (message.packetDecoded.protectedPayload.result == 0) {
-                        const command = this.channelCommand;
-                        const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
-                        const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
-                        this.emit('debug', `Channel response for request id: ${channelRequestId}, target id: ${channelTargetId}, name: ${channelNames[channelRequestId]}, command: ${command}`);
+                if (message.packetDecoded.protectedPayload.result == 0) {
+                    const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+                    const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
+                    this.emit('debug', `Channel response for name: ${channelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`);
 
-                        if (channelRequestId == 0) {
-                            if (command in systemMediaCommands) {
-                                let mediaRequestId = 0;
-                                let requestId = '0000000000000000';
-                                const requestIdLength = requestId.length;
-                                requestId = (requestId + mediaRequestId++).slice(-requestIdLength);
+                    if (channelTargetId != this.channelTargetId) {
+                        this.channelTargetId = channelTargetId;
+                        this.channelRequestId = channelRequestId;
+                    };
+                };
+            })
+            .on('sendCommand', (command) => {
+                this.emit('message', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`);
 
-                                let mediaCommand = new Packer('message.mediaCommand');
-                                mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                                mediaCommand.set('titleId', 0);
-                                mediaCommand.set('command', systemMediaCommands[command]);
-                                mediaCommand.setChannel(channelTargetId);
-                                const message = mediaCommand.pack(this);
-                                this.sendSocketMessage(message);
-                                this.emit('debug', `System media send command: ${command}`);
-                            } else {
-                                this.emit('debug', `Unknown media input command: ${command}`);
-                            };
+                if (this.channelRequestId == 0) {
+                    if (command in systemMediaCommands) {
+                        let mediaRequestId = 0;
+                        let requestId = '0000000000000000';
+                        const requestIdLength = requestId.length;
+                        requestId = (requestId + mediaRequestId++).slice(-requestIdLength);
+
+                        let mediaCommand = new Packer('message.mediaCommand');
+                        mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                        mediaCommand.set('titleId', 0);
+                        mediaCommand.set('command', systemMediaCommands[command]);
+                        mediaCommand.setChannel(this.channelTargetId);
+                        const message = mediaCommand.pack(this);
+                        this.sendSocketMessage(message);
+                        this.emit('debug', `System media send command: ${command}`);
+                    } else {
+                        this.emit('debug', `Unknown media input command: ${command}`);
+                    };
+                };
+
+                if (this.channelRequestId == 1) {
+                    if (command in systemInputCommands) {
+                        const timeStampPress = new Date().getTime();
+                        let gamepadPress = new Packer('message.gamepad');
+                        gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
+                        gamepadPress.set('buttons', systemInputCommands[command]);
+                        gamepadPress.setChannel(this.channelTargetId);
+                        const message = gamepadPress.pack(this);
+                        this.sendSocketMessage(message);
+                        this.emit('message', `System input send press, command: ${command}`);
+
+                        setTimeout(() => {
+                            const timeStampUnpress = new Date().getTime();
+                            let gamepadUnpress = new Packer('message.gamepad');
+                            gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
+                            gamepadUnpress.set('buttons', systemInputCommands['unpress']);
+                            gamepadUnpress.setChannel(this.channelTargetId);
+                            const message = gamepadUnpress.pack(this);
+                            this.sendSocketMessage(message);
+                            this.emit('debug', `System input send unpress, command: unpress`);
+                        }, 150);
+                    } else {
+                        this.emit('debug', `Unknown system input command: ${command}`);
+                    };
+                };
+
+                if (this.channelRequestId == 2) {
+                    if (command in tvRemoteCommands) {
+                        let messageNum = 0;
+                        const jsonRequest = {
+                            msgid: `2ed6c0fd.${messageNum++}`,
+                            request: 'SendKey',
+                            params: {
+                                button_id: tvRemoteCommands[command],
+                                device_id: null
+                            }
                         };
+                        let json = new Packer('message.json');
+                        json.set('json', JSON.stringify(jsonRequest));
+                        json.setChannel(this.channelTargetId);
+                        const message = json.pack(this);
+                        this.sendSocketMessage(message);
+                        this.emit('debug', `TV remote send command: ${command}`);
+                    } else {
+                        this.emit('debug', `Unknown tv remote command: ${command}`);
+                    };
+                };
 
-                        if (channelRequestId == 1) {
-                            if (command in systemInputCommands) {
-                                const timeStampPress = new Date().getTime();
-                                let gamepadPress = new Packer('message.gamepad');
-                                gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
-                                gamepadPress.set('buttons', systemInputCommands[command]);
-                                gamepadPress.setChannel(channelTargetId);
-                                const message = gamepadPress.pack(this);
-                                this.sendSocketMessage(message);
-                                this.emit('debug', `System input send press, command: ${command}`);
-
-                                setTimeout(() => {
-                                    const timeStampUnpress = new Date().getTime();
-                                    let gamepadUnpress = new Packer('message.gamepad');
-                                    gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
-                                    gamepadUnpress.set('buttons', systemInputCommands['unpress']);
-                                    gamepadUnpress.setChannel(channelTargetId);
-                                    const message = gamepadUnpress.pack(this);
-                                    this.sendSocketMessage(message);
-                                    this.emit('debug', `System input send unpress, command: unpress`);
-                                }, 100);
-                            } else {
-                                this.emit('debug', `Unknown system input command: ${command}`);
-                            };
+                if (this.channelRequestId == 3) {
+                    const configNamesCount = configNames.length;
+                    for (let i = 0; i < configNamesCount; i++) {
+                        const configName = configNames[i];
+                        const jsonRequest = {
+                            msgid: `2ed6c0fd.${i}`,
+                            request: configName,
+                            params: null
                         };
-
-                        if (channelRequestId == 2) {
-                            if (command in tvRemoteCommands) {
-                                let messageNum = 0;
-                                const jsonRequest = {
-                                    msgid: `2ed6c0fd.${messageNum++}`,
-                                    request: 'SendKey',
-                                    params: {
-                                        button_id: tvRemoteCommands[command],
-                                        device_id: null
-                                    }
-                                };
-                                let json = new Packer('message.json');
-                                json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel(channelTargetId);
-                                const message = json.pack(this);
-                                this.sendSocketMessage(message);
-                                this.emit('debug', `TV remote send command: ${command}`);
-                            } else {
-                                this.emit('debug', `Unknown tv remote command: ${command}`);
-                            };
-                        };
-
-                        if (channelRequestId == 3) {
-                            const configNamesCount = configNames.length;
-                            for (let i = 0; i < configNamesCount; i++) {
-                                const configName = configNames[i];
-                                const jsonRequest = {
-                                    msgid: `2ed6c0fd.${i}`,
-                                    request: configName,
-                                    params: null
-                                };
-                                let json = new Packer('message.json');
-                                json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel(channelTargetId);
-                                const message = json.pack(this);
-                                this.sendSocketMessage(message);
-                                this.emit('debug', `System config send: ${configName}`);
-                            };
-                        };
+                        let json = new Packer('message.json');
+                        json.set('json', JSON.stringify(jsonRequest));
+                        json.setChannel(this.channelTargetId);
+                        const message = json.pack(this);
+                        this.sendSocketMessage(message);
+                        this.emit('debug', `System config send: ${configName}`);
                     };
                 };
             })
@@ -426,6 +428,12 @@ class SMARTGLASS extends EventEmitter {
                 };
             })
             .on('_on_status', (message) => {
+                if (!this.isConnected) {
+                    this.isConnected = true;
+                    this.discoveredXboxs.splice(0, this.xboxsCount);
+                    this.xboxsCount = 0;
+                    this.emit('_on_connect', 'Connected.');
+                }
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
                     if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
                         const decodedMessage = message.packetDecoded.protectedPayload;
@@ -528,17 +536,23 @@ class SMARTGLASS extends EventEmitter {
     sendCommand(channelName, command) {
         return new Promise((resolve, reject) => {
             if (this.isConnected) {
-                this.channelCommand = command;
-                this.channelClientId = channelIds[channelName];
 
-                let channelRequest = new Packer('message.channelRequest');
-                channelRequest.set('channelRequestId', channelIds[channelName]);
-                channelRequest.set('titleId', 0);
-                channelRequest.set('service', Buffer.from(channelUuids[channelName], 'hex'));
-                channelRequest.set('activityId', 0);
-                const message = channelRequest.pack(this);
-                this.sendSocketMessage(message);
-                this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
+                if (channelIds[channelName] != this.channelRequestId) {
+                    let channelRequest = new Packer('message.channelRequest');
+                    channelRequest.set('channelRequestId', channelIds[channelName]);
+                    channelRequest.set('titleId', 0);
+                    channelRequest.set('service', Buffer.from(channelUuids[channelName], 'hex'));
+                    channelRequest.set('activityId', 0);
+                    const message = channelRequest.pack(this);
+                    this.sendSocketMessage(message);
+                    this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
+
+                    setTimeout(() => {
+                        this.emit('sendCommand', command)
+                    }, 500);
+                } else {
+                    this.emit('sendCommand', command)
+                }
                 resolve(true);
             } else {
                 reject({
@@ -548,6 +562,8 @@ class SMARTGLASS extends EventEmitter {
             };
         });
     };
+
+
 
     sendSocketMessage(message) {
         if (this.socket) {
@@ -572,6 +588,8 @@ class SMARTGLASS extends EventEmitter {
 
         this.isConnected = false;
         this.requestNum = 0;
+        this.channelTargetId = null;
+        this.channelRequestId = null;
         this.emit('_on_disconnect', 'Disconnected.');
     };
 

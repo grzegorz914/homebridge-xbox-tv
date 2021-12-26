@@ -799,13 +799,13 @@ class xboxTvDevice {
 					const inputName = this.inputsName[inputIdentifier];
 					const inputReference = this.inputsReference[inputIdentifier];
 					const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-					const setDashboard = (inputOneStoreProductId === 'Dashboard');
+					const setDashboard = (inputOneStoreProductId === 'Dashboard' || inputOneStoreProductId === 'Settings' || inputOneStoreProductId === 'SettingsTv' || inputOneStoreProductId === 'Accessory' || inputOneStoreProductId === 'Screensaver');
 					const setTelevision = (inputOneStoreProductId === 'Television');
-					const setApp = (inputOneStoreProductId != undefined && inputOneStoreProductId != '0');
-					const setInput = this.powerState ? this.webApiEnabled ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : false : false : false;
+					const setApp = ((inputOneStoreProductId != undefined && inputOneStoreProductId != '0') && !setDashboard && !setTelevision);
+					const setInput = (this.powerState && this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Input successful, input: %s, reference: %s, product Id: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
 					this.startInputIdentifier = inputIdentifier;
-					this.setStartInput = this.powerState ? false : true;
+					this.setStartInput = this.powerState ? false : this.webApiEnabled ? true : false;
 				} catch (error) {
 					this.log.error('Device: %s %s, set Input error: %s', this.host, accessoryName, error);
 				};
@@ -1181,14 +1181,14 @@ class xboxTvDevice {
 					return state;
 				})
 				.onSet(async (state) => {
-					const setDashboard = (buttonOneStoreProductId === 'Dashboard');
+					const setDashboard = (buttonOneStoreProductId === 'Dashboard' || buttonOneStoreProductId === 'Settings' || buttonOneStoreProductId === 'SettingsTv' || buttonOneStoreProductId === 'Accessory' || buttonOneStoreProductId === 'Screensaver');
 					const setTelevision = (buttonOneStoreProductId === 'Television');
-					const setApp = (buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0');
+					const setApp = ((buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0') && !setDashboard && !setTelevision);
 					try {
 						const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(channelName, command) : false
 						const recordGameDvr = (this.powerState && state && this.webApiControl && this.webApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
 						const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
-						const setAppInput = (this.powerState && state && buttonMode == 5 && this.webApiEnabled && setApp) ? setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : false;
+						const setAppInput = (this.powerState && state && buttonMode == 5 && this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set button successful, name: %s, command: %s', this.host, accessoryName, buttonName, buttonCommand);
 					} catch (error) {
 						this.log.error('Device: %s %s, set button error, name: %s, error: %s', this.host, accessoryName, buttonName, error);
