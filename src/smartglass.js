@@ -312,7 +312,7 @@ class SMARTGLASS extends EventEmitter {
                 };
             })
             .on('sendCommand', (command) => {
-                this.emit('message', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`);
+                this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`);
 
                 if (this.channelRequestId == 0) {
                     if (command in systemMediaCommands) {
