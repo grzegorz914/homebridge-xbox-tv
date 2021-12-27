@@ -66,7 +66,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ### Authorization Manual Mode
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
 * Follow the instructions in the console log.
-* Start new authorization need remove old token first, go to *./hobebridge/xboxTv/* and remove token file.
+* Start new authorization need remove old token first, go to *./homebridge/xboxTv/* and remove token file.
 
 ## Configuration
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
