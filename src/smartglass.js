@@ -311,7 +311,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('sendCommand', (command) => {
+            .on('_on_sendCommand', (command) => {
                 this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`);
 
                 if (this.channelRequestId == 0) {
@@ -517,6 +517,7 @@ class SMARTGLASS extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (this.isConnected && this.isAuthorized) {
                 this.emit('debug', 'Send record game.');
+
                 let recordGameDvr = new Packer('message.recordGameDvr');
                 recordGameDvr.set('startTimeDelta', -60);
                 recordGameDvr.set('endTimeDelta', 0);
@@ -536,7 +537,8 @@ class SMARTGLASS extends EventEmitter {
     sendCommand(channelName, command) {
         return new Promise((resolve, reject) => {
             if (this.isConnected) {
-
+                this.emit('debug', 'Send command.');
+                
                 if (channelIds[channelName] != this.channelRequestId) {
                     let channelRequest = new Packer('message.channelRequest');
                     channelRequest.set('channelRequestId', channelIds[channelName]);
@@ -548,10 +550,10 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
 
                     setTimeout(() => {
-                        this.emit('sendCommand', command)
+                        this.emit('_on_sendCommand', command)
                     }, 500);
                 } else {
-                    this.emit('sendCommand', command)
+                    this.emit('_on_sendCommand', command)
                 }
                 resolve(true);
             } else {
