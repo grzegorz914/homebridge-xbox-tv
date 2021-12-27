@@ -56,8 +56,8 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Authorization Manager
 * First of all please use built in Authorization Manager.
-* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
 * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
+* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
@@ -66,6 +66,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ### Authorization Manual Mode
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
 * Follow the instructions in the console log.
+* Start new authorization need remove old token first, go to *./hobebridge/xboxTv/* and remove token file.
 
 ## Configuration
 Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
