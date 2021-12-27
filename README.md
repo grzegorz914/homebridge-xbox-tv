@@ -101,6 +101,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
+| `buttons.displayType` | Here select display type in Home app, possible `Switch`, `Button` - selectable in Home app as Light, Fan, Outlet.|
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
 
 *Example Config:
@@ -146,20 +147,24 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"buttons": [
 						{
 							"name": "Play",
-                            "command": "play"
+                            "command": "play",
+							"displayType": 0,
 						},
 						{
 					        "name": "Record Game DVR",
-					        "command": "recordGameDvr"
+					        "command": "recordGameDvr",
+							"displayType": 0,
 				        },
 				        {
 					        "name": "Reboot",
-					        "command": "reboot"
+					        "command": "reboot",
+							"displayType": 0,
 				        },
 						{
 							"name": "A Way Out",
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
+							"displayType": 0,
 						},
 					]
 		}

@@ -1146,6 +1146,9 @@ class xboxTvDevice {
 			//get button name
 			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttonCommand;
 
+			//get button display type
+			const buttonDisplayType = buttons[i].displayType;
+
 			//get button mode
 			let buttonMode = 0;
 			let channelName = '';
@@ -1173,7 +1176,8 @@ class xboxTvDevice {
 			//get button inputOneStoreProductId
 			const buttonOneStoreProductId = (buttons[i].oneStoreProductId != undefined) ? buttons[i].oneStoreProductId : '0';
 
-			const buttonService = new Service.Outlet(`${accessoryName} ${buttonName}`, `Button ${i}`);
+			const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType]
+			const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
 					const state = false;

@@ -503,10 +503,26 @@
 										"type": "string",
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file. Set button mode to *Switch App/Game* and *Enable Web Api*, in other case leave this empty",
-										"required": true,
-										"condition": {
-											"functionBody": "return model.devices && model.devices[arrayIndices].webApiControl === true;"
-										}
+										"required": true
+									},
+									"displayType": {
+										"title": "Display Type",
+										"type": "integer",
+										"oneOf": [{
+												"title": "Button",
+												"enum": [
+													0
+												]
+											},
+											{
+												"title": "Switch",
+												"enum": [
+													1
+												]
+											}
+										],
+										"description": "Here select display type in Home app",
+										"required": true
 									}
 								}
 							}
@@ -566,7 +582,8 @@
 					"items": [
 						"devices[].buttons[].name",
 						"devices[].buttons[].command",
-						"devices[].buttons[].oneStoreProductId"
+						"devices[].buttons[].oneStoreProductId",
+						"devices[].buttons[].displayType"
 					]
 				}]
 			},
