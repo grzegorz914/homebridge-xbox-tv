@@ -1176,7 +1176,7 @@ class xboxTvDevice {
 			//get button inputOneStoreProductId
 			const buttonOneStoreProductId = (buttons[i].oneStoreProductId != undefined) ? buttons[i].oneStoreProductId : '0';
 
-			const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType]
+			const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
 			const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
