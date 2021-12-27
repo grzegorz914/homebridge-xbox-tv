@@ -515,7 +515,12 @@ class xboxTvDevice {
 
 			this.getWebApiUserProfile();
 		} catch (error) {
-			this.log.error('Device: %s %s, get Consoles List error: %s.', this.host, this.name, error);
+			if (error.status == 401) {
+				this.getWebApiToken();
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, with liveId: %s, trying to get Installed Apps gave an error, trying to reauthenticate.', this.host, this.name, this.xboxLiveId) : false;
+			} else {
+				this.log.error('Device: %s %s, get Consoles List error: %s.', this.host, this.name, error);
+			};
 		};
 	}
 
@@ -555,7 +560,12 @@ class xboxTvDevice {
 
 			this.getWebApiInstalledApps();
 		} catch (error) {
-			this.log.error('Device: %s %s, get User Profile error: %s.', this.host, this.name, error);
+			if (error.status == 401) {
+				this.getWebApiToken();
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, with liveId: %s, trying to get Installed Apps gave an error, trying to reauthenticate.', this.host, this.name, this.xboxLiveId) : false;
+			} else {
+				this.log.error('Device: %s %s, get User Profile error: %s.', this.host, this.name, error);
+			};
 		};
 	}
 
@@ -654,7 +664,12 @@ class xboxTvDevice {
 
 			this.getWebApiConsoleStatus();
 		} catch (error) {
-			this.log.error('Device: %s %s, with liveId: %s, get Storage Devices error: %s.', this.host, this.name, this.xboxLiveId, error);
+			if (error.status == 401) {
+				this.getWebApiToken();
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, with liveId: %s, get Console Status error, trying to reauthenticate.', this.host, this.name, this.xboxLiveId) : false;
+			} else {
+				this.log.error('Device: %s %s, with liveId: %s, get Storage Devices error: %s.', this.host, this.name, this.xboxLiveId, error);
+			};
 		};
 	}
 
