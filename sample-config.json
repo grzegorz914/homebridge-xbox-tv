@@ -63,20 +63,24 @@
 			],
 			"buttons": [{
 					"name": "Play",
-					"command": "play"
+					"command": "play",
+					"displayType": 0
 				},
 				{
 					"name": "Record Game DVR",
-					"command": "recordGameDvr"
+					"command": "recordGameDvr",
+					"displayType": 0
 				},
 				{
 					"name": "Reboot",
-					"command": "reboot"
+					"command": "reboot",
+					"displayType": 0
 				},
 				{
 					"name": "A Way Out",
 					"command": "switchAppGame",
-					"oneStoreProductId": "oneStoreProductId"
+					"oneStoreProductId": "oneStoreProductId",
+					"displayType": 0
 				}
 			]
 		}]

@@ -153,18 +153,18 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 						{
 					        "name": "Record Game DVR",
 					        "command": "recordGameDvr",
-							"displayType": 0,
+							"displayType": 0
 				        },
 				        {
 					        "name": "Reboot",
 					        "command": "reboot",
-							"displayType": 0,
+							"displayType": 0
 				        },
 						{
 							"name": "A Way Out",
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
-							"displayType": 0,
+							"displayType": 0
 						},
 					]
 		}

@@ -1147,7 +1147,7 @@ class xboxTvDevice {
 			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttonCommand;
 
 			//get button display type
-			const buttonDisplayType = buttons[i].displayType;
+			const buttonDisplayType = (buttons[i].displayType != undefined) ? buttons[i].displayType : 0;
 
 			//get button mode
 			let buttonMode = 0;
