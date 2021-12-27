@@ -57,6 +57,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Authorization Manager
 * First of all please use built in Authorization Manager.
 * If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
+* Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
