@@ -753,7 +753,7 @@ class xboxTvDevice {
 		this.log.debug('prepareInformationService');
 		try {
 			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = (readDevInfo != undefined) ? JSON.parse(readDevInfo) : {
+			const devInfo = (readDevInfo.manufacturer != undefined) ? JSON.parse(readDevInfo) : {
 				'manufacturer': this.manufacturer,
 				'modelName': this.modelName,
 				'serialNumber': this.serialNumber,

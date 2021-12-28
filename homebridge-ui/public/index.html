@@ -58,7 +58,7 @@
         document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
 
         //get actuall value on console select
-        document.getElementById('button' + i).addEventListener('click', async() => {
+        document.getElementById('button' + i).addEventListener('click', async () => {
           document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
           document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
@@ -130,10 +130,11 @@
 
       try {
         const host = document.querySelector('#deviceHostInput').value;
+        const clientId = this.clientId !== undefined ? this.clientId : '5e5ead27-ed60-482d-b3fc-702b28a97404';
         const webApiToken = document.querySelector('#deviceTokenInput').value;
         const payload = {
           host: host,
-          clientId: '5e5ead27-ed60-482d-b3fc-702b28a97404',
+          clientId: clientId,
           clientSecret: this.clientSecret,
           webApiToken: webApiToken,
         };
