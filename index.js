@@ -377,30 +377,29 @@ class xboxTvDevice {
 		this.prepareAccessory();
 	}
 
-	async prepareDirectoryAndFiles() {
+	prepareDirectoryAndFiles() {
 		this.log.debug('Device: %s %s, prepare directory and files.', this.host, this.name);
 
 		try {
 			//check if the directory exists, if not then create it
 			if (fs.existsSync(this.prefDir) == false) {
-				await fsPromises.mkdir(this.prefDir);
+				fs.mkdirSync(this.prefDir);
 			}
 			if (fs.existsSync(this.authTokenFile) == false) {
-				await fsPromises.writeFile(this.authTokenFile, '');
+				fs.writeFileSync(this.authTokenFile, '');
 			}
 			if (fs.existsSync(this.devInfoFile) == false) {
-				await fsPromises.writeFile(this.devInfoFile, '');
+				fs.writeFileSync(this.devInfoFile, '');
 			}
 			if (fs.existsSync(this.inputsFile) == false) {
-				await fsPromises.writeFile(this.inputsFile, '');
+				fs.writeFileSync(this.inputsFile, '');
 			}
 			if (fs.existsSync(this.inputsNamesFile) == false) {
-				await fsPromises.writeFile(this.inputsNamesFile, '');
+				fs.writeFileSync(this.inputsNamesFile, '');
 			}
 			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-				await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
+				fs.writeFileSync(this.inputsTargetVisibilityFile, '');
 			}
-
 		} catch (error) {
 			this.log.error('Device: %s %s, prepare directory and files error: %s', this.host, this.name, error);
 		};
@@ -1083,7 +1082,7 @@ class xboxTvDevice {
 			//get input oneStoreProductId
 			const inputOneStoreProductId = (inputs[j].oneStoreProductId != undefined) ? inputs[j].oneStoreProductId : undefined;
 
-			//get input name		
+			//get input name
 			const inputName = (savedInputsNames[inputTitleId] != undefined) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId] != undefined) ? savedInputsNames[inputOneStoreProductId] : inputs[j].name;
 
 			//get input type
