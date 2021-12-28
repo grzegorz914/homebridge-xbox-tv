@@ -159,8 +159,8 @@ class xboxTvPlatform {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				if (!device.name) {
-					this.log.warn('Device Name Missing');
+				if (!device.name || !device.host || !device.xboxLiveId) {
+					this.log.warn('Device Name, Host or Xbox Live ID Missing');
 				} else {
 					new xboxTvDevice(this.log, device, this.api);
 				}
@@ -187,12 +187,12 @@ class xboxTvDevice {
 
 		//device configuration
 		this.name = config.name || 'Game console';
-		this.host = config.host || '';
+		this.host = config.host;
 		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
 		this.userHash = config.userHash || '';
-		this.xboxLiveId = config.xboxLiveId || '';
+		this.xboxLiveId = config.xboxLiveId;
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.webApiControl = config.webApiControl || false;
 		this.disableLogInfo = config.disableLogInfo || false;
