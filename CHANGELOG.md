@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.0.0 the plugin settings (xboxLiveId) need to be updated.
 
-## [2.0.7] - 2021-12-29
+## [2.0.8] - 2021-12-29
 ### Added
 - prevent load plugin if host or xboxLiveId not set
 - prepare directory and files synchronously
