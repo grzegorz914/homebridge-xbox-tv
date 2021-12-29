@@ -188,11 +188,11 @@ class xboxTvDevice {
 		//device configuration
 		this.name = config.name || 'Game console';
 		this.host = config.host;
+		this.xboxLiveId = config.xboxLiveId;
 		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken || '';
 		this.userHash = config.userHash || '';
-		this.xboxLiveId = config.xboxLiveId;
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.webApiControl = config.webApiControl || false;
 		this.disableLogInfo = config.disableLogInfo || false;
