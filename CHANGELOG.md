@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.0.0 the plugin settings (xboxLiveId) need to be updated.
 
+## [2.0.7] - 2021-12-29
+### Added
+- prevent load plugin if host or xboxLiveId not set
+- prepare directory and files synchronously
+
 ## [2.0.6] - 2021-12-28
 ### Added
 - better handle clientId if not defined in config
