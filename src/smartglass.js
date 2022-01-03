@@ -588,11 +588,13 @@ class SMARTGLASS extends EventEmitter {
         const message = disconnect.pack(this);
         this.sendSocketMessage(message);
 
-        this.isConnected = false;
-        this.requestNum = 0;
-        this.channelTargetId = null;
-        this.channelRequestId = null;
-        this.emit('_on_disconnect', 'Disconnected.');
+        setTimeout(() => {
+            this.isConnected = false;
+            this.requestNum = 0;
+            this.channelTargetId = null;
+            this.channelRequestId = null;
+            this.emit('_on_disconnect', 'Disconnected.');
+        }, 3500);
     };
 
     getRequestNum() {

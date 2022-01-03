@@ -86,9 +86,9 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `userUhs` | Alternate authorization method. |
 | `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
-| `refreshInterval` | Set the console reconnect time in seconds, default is 5 seconds. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `volumeControl` | Here select what a additional volume control mode You want to use (None, Slider, Fan), not yet implemented. |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
@@ -104,7 +104,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `buttons.displayType` | Here select display type in Home app, possible `Switch`, `Button` - selectable in Home app as Light, Fan, Outlet.|
-| `reference`, `oneStoreProductId` | If web Api enabled then all available in `/var/lib/homebridge/xboxTv/inputs_xxxxxx` file. |
+| `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 
 *Example Config:
 
@@ -121,9 +121,10 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"userToken": "",
 			"userUhs": "",
 			"xboxWebApiToken": "",
-			"refreshInterval": 5,
 			"webApiControl": false,
 			"disableLogInfo": false,
+			"disableLogDeviceInfo": false,
+			"enableDebugMode": false,
 			"volumeControl": 0,
 			"switchInfoMenu": false,
 			"getInputsFromDevice": false,
@@ -131,7 +132,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"filterApps": false,
 			"filterSystemApps": false,
 			"filterDlc": false,
-			"enableDebugMode": false,
 			"inputs": [
 						{
 							"name": "A Way Out",

@@ -196,6 +196,8 @@ class xboxTvDevice {
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.webApiControl = config.webApiControl || false;
 		this.disableLogInfo = config.disableLogInfo || false;
+		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
+		this.enableDebugMode = config.enableDebugMode || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
@@ -203,7 +205,6 @@ class xboxTvDevice {
 		this.filterApps = config.filterApps || false;
 		this.filterSystemApps = config.filterSystemApps || false;
 		this.filterDlc = config.filterDlc || false;
-		this.enableDebugMode = config.enableDebugMode || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
@@ -715,12 +716,14 @@ class xboxTvDevice {
 		const serialNumber = this.webApiEnabled ? this.serialNumber : this.xboxLiveId;
 		const firmwareRevision = `${this.majorVersion}.${this.minorVersion}.${this.buildNumber}`;
 
-		this.log('-------- %s --------', this.name);
-		this.log('Manufacturer: %s', manufacturer);
-		this.log('Model: %s', modelName);
-		this.log('Serialnr: %s', serialNumber);
-		this.log('Firmware: %s', firmwareRevision);
-		this.log('----------------------------------');
+		if (!this.disableLogDeviceInfo) {
+			this.log('-------- %s --------', this.name);
+			this.log('Manufacturer: %s', manufacturer);
+			this.log('Model: %s', modelName);
+			this.log('Serialnr: %s', serialNumber);
+			this.log('Firmware: %s', firmwareRevision);
+			this.log('----------------------------------');
+		}
 
 		const devInfoObj = {
 			'manufacturer': manufacturer,

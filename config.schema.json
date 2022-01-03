@@ -70,12 +70,26 @@
 							"required": false
 						},
 						"disableLogInfo": {
-							"title": "Disable Log Info",
+							"title": "Disable log info",
 							"type": "boolean",
 							"default": false,
-							"description": "This disable log info, all values and state will not be displayed in Homebridge console log.",
+							"description": "This disable logging values and states on every it change.",
 							"required": false
-						},
+						  },
+						  "disableLogDeviceInfo": {
+							"title": "Disable log device info",
+							"type": "boolean",
+							"default": false,
+							"description": "This disable log device info by every connections device to the network.",
+							"required": false
+						  },
+						  "enableDebugMode": {
+							"title": "Enable Debug Mode",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
+						  },
 						"webApiControl": {
 							"title": "Enable Web Api",
 							"type": "boolean",
@@ -167,13 +181,6 @@
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
 							}
-						},
-						"enableDebugMode": {
-							"title": "Enable Debug Mode",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable debug mode.",
-							"required": false
 						},
 						"inputs": {
 							"type": "array",
@@ -612,6 +619,7 @@
 				"items": [
 					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
+					"devices[].disableLogDeviceInfo",
 					"devices[].switchInfoMenu",
 					"devices[].volumeControl"
 				]
