@@ -24,7 +24,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Note
 * For versions 2.0.0 and above the minimum required version of Node.js is 14.x.x
-* If upgrade from 1.x.x to 2.x.x and above the *xboxLiveId* need to be set again in config.
+* If upgrade from 1.x.x to 2.x.x and above the `xboxLiveId` need to be set again in config.
 * For versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know Issues
