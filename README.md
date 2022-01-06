@@ -193,7 +193,7 @@ Each accessory needs to be manually paired.
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
 * To solve this problem the plugin counts the number of Services and not allow add more as 100.
-* If You have configured more as 100 Services some inputs or button will not be available in the Home app.
+* If You have configured more as 100 Services some inputs or buttons will not be available in the Home app.
 * The Services in this accessory are:
   * Information.
   * Speaker.
