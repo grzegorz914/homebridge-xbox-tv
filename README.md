@@ -33,8 +33,8 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Troubleshoot
 * If for some reason the device will not be displayed in Home app try this procedure:
    * Go to `./homebridge/persist`
-   * Open the file `AccessoryInfo.xxx` one by one and remove only this one which contain Your device data, something like this: `{"displayName":"Xbox","category":34}`
-   * Also remove the file `IdentifierCashe.xxx` with same name as `AccessoryInfo.xxx`
+   * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`
+   * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`
    * Restart Homebridge and try add it to the Home app again.
 
 ## Features and How To Use Them
