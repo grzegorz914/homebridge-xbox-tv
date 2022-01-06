@@ -30,7 +30,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Know Issues
 * If used with Hoobs, there is a possible configuration incompatibilty.
 
-## Troubleshoot
+# Troubleshoot
 * If for some reason the device will not be displayed in Home app try this procedure:
    * Go to `./homebridge/persist`
    * Open the file `AccessoryInfo.xxx` one by one and remove only this one which contain Your device data, something like this: `{"displayName":"Xbox","category":34}`
