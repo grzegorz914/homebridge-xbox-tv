@@ -288,13 +288,6 @@ class xboxTvDevice {
 			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
 		}
 
-		this.xbox = new Smartglass({
-			host: this.host,
-			xboxLiveId: this.xboxLiveId,
-			userToken: this.userToken,
-			userHash: this.userHash
-		});
-
 		this.xboxWebApi = XboxWebApi({
 			clientId: this.clientId,
 			clientSecret: this.clientSecret,
@@ -304,7 +297,14 @@ class xboxTvDevice {
 
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
 
-		this.xbox.on('_on_connect', (message) => {
+		this.xbox = new Smartglass({
+			host: this.host,
+			xboxLiveId: this.xboxLiveId,
+			userToken: this.userToken,
+			userHash: this.userHash
+		});
+
+		this.xbox.on('connect', (message) => {
 				this.powerState = true;
 
 				if (this.televisionService) {
@@ -326,7 +326,7 @@ class xboxTvDevice {
 			.on('message', (message) => {
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
-			.on('_on_devInfo', async (firmwareRevision) => {
+			.on('devInfo', async (firmwareRevision) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
 					this.log('Manufacturer: %s', this.manufacturer);
@@ -352,7 +352,7 @@ class xboxTvDevice {
 
 				this.firmwareRevision = firmwareRevision;
 			})
-			.on('_on_change', async (decodedMessage, mediaState) => {
+			.on('change', async (decodedMessage, mediaState) => {
 				const appsArray = new Array();
 				const appsCount = decodedMessage.apps.length;
 				for (let i = 0; i < appsCount; i++) {
@@ -402,7 +402,7 @@ class xboxTvDevice {
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
 			})
-			.on('_on_disconnect', (message) => {
+			.on('disconnect', (message) => {
 				this.powerState = false;
 				clearInterval(this.updateWebInstalledApp);
 

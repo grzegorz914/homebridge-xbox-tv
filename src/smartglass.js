@@ -113,14 +113,14 @@ class SMARTGLASS extends EventEmitter {
                 const type = this.response.name;
 
                 if (this.response.packetDecoded.type != 'd00d') {
-                    this.function = `_on_${type}`;
+                    this.function = type;
                 } else {
                     if (this.response.packetDecoded.targetParticipantId != this.participantId) {
                         this.emit('debug', 'Participant id does not match. Ignoring packet.');
                         return;
                     };
 
-                    this.function = `_on_${message.structure.packetDecoded.name}`;
+                    this.function = message.structure.packetDecoded.name;
                     if (this.response.packetDecoded.flags.needAck == true) {
                         this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.');
 
@@ -134,12 +134,12 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
 
-                if (this.function == '_on_json') {
+                if (this.function == 'json') {
                     const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
 
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId != undefined) {
-                        this.emit('debug', `_on_json is fragmented: ${jsonMessage.datagramId}`);
+                        this.emit('debug', `json is fragmented: ${jsonMessage.datagramId}`);
                         if (this.fragments[jsonMessage.datagramId] == undefined) {
                             // Prepare buffer for JSON
                             this.fragments[jsonMessage.datagramId] = {
@@ -171,11 +171,11 @@ class SMARTGLASS extends EventEmitter {
 
                         this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                         if (this.fragments[jsonMessage.datagramId].isValid() == true) {
-                            this.emit('debug', '_on_json: Completed fragmented packet.');
+                            this.emit('debug', 'json: Completed fragmented packet.');
                             this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
                             this.fragments[jsonMessage.datagramId] = undefined;
                         };
-                        this.function = '_on_json_fragment';
+                        this.function = 'json_fragment';
                     };
                 };
                 this.emit(this.function, this.response);
@@ -203,7 +203,7 @@ class SMARTGLASS extends EventEmitter {
             .bind();
 
         //EventEmmiter
-        this.on('_on_discovery', (message) => {
+        this.on('discovery', (message) => {
                 clearInterval(this.boot);
                 this.discoveredXboxs = new Array();
                 this.discoveredXboxs.push(message.packetDecoded);
@@ -250,7 +250,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_connectResponse', (message) => {
+            .on('connectResponse', (message) => {
                 const connectionResult = message.packetDecoded.protectedPayload.connectResult;
                 const participantId = message.packetDecoded.protectedPayload.participantId;
                 this.participantId = participantId;
@@ -299,7 +299,7 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('error', `Connect error: ${errorTable[message.packetDecoded.protectedPayload.connectResult]}`);
                 };
             })
-            .on('_on_channelResponse', (message) => {
+            .on('channelResponse', (message) => {
                 if (message.packetDecoded.protectedPayload.result == 0) {
                     const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
                     const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
@@ -311,7 +311,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_sendCommand', (command) => {
+            .on('sendCommand', (command) => {
                 this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`);
 
                 if (this.channelRequestId == 0) {
@@ -400,7 +400,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_json', (message) => {
+            .on('json', (message) => {
                 const response = JSON.parse(message.packetDecoded.protectedPayload.json);
                 if (response.response == "Error") {
                     this.emit('debug', `Got Error: ${response}`);
@@ -427,7 +427,7 @@ class SMARTGLASS extends EventEmitter {
                     };
                 };
             })
-            .on('_on_status', (message) => {
+            .on('status', (message) => {
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
                     const decodedMessage = message.packetDecoded.protectedPayload;
                     this.emit('debug', decodedMessage)
@@ -435,13 +435,13 @@ class SMARTGLASS extends EventEmitter {
                         this.isConnected = true;
                         this.discoveredXboxs.splice(0, this.xboxsCount);
                         this.xboxsCount = 0;
-                        this.emit('_on_connect', 'Connected.');
+                        this.emit('connect', 'Connected.');
 
                         const majorVersion = decodedMessage.majorVersion;
                         const minorVersion = decodedMessage.minorVersion;
                         const buildNumber = decodedMessage.buildNumber
                         const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                        this.emit('_on_devInfo', firmwareRevision);
+                        this.emit('devInfo', firmwareRevision);
                     };
 
                     if (this.currentApp != decodedMessage.apps[0].aumId) {
@@ -459,7 +459,7 @@ class SMARTGLASS extends EventEmitter {
                         };
                         this.titleId = appsArray[appsCount - 1].titleId;
                         this.currentApp = appsArray[appsCount - 1].reference;
-                        this.emit('_on_change', decodedMessage, this.mediaState);
+                        this.emit('change', decodedMessage, this.mediaState);
                     };
                 };
             });
@@ -480,7 +480,7 @@ class SMARTGLASS extends EventEmitter {
                     const lastBootTime = (Math.trunc(((new Date().getTime()) / 1000) - bootStartTime));
                     this.emit('debug', `Last boot time was ${lastBootTime} seconds ago.`);
                     if (lastBootTime > 15) {
-                        this.emit('_on_disconnected');
+                        this.emit('disconnected');
                         clearInterval(this.boot)
                     };
                 }, 500);
@@ -557,10 +557,10 @@ class SMARTGLASS extends EventEmitter {
                     this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
 
                     setTimeout(() => {
-                        this.emit('_on_sendCommand', command)
+                        this.emit('sendCommand', command)
                     }, 500);
                 } else {
-                    this.emit('_on_sendCommand', command)
+                    this.emit('sendCommand', command)
                 }
                 resolve(true);
             } else {
@@ -600,7 +600,7 @@ class SMARTGLASS extends EventEmitter {
             this.requestNum = 0;
             this.channelTargetId = null;
             this.channelRequestId = null;
-            this.emit('_on_disconnect', 'Disconnected.');
+            this.emit('disconnect', 'Disconnected.');
         }, 3500);
     };
 
