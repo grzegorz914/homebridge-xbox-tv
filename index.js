@@ -231,7 +231,7 @@ class xboxTvDevice {
 		//device
 		this.manufacturer = 'Microsoft';
 		this.modelName = 'Model Name';
-		this.serialNumber = 'Serial Number';
+		this.serialNumber = this.xboxLiveId;
 		this.firmwareRevision = 'Firmware Revision';
 
 		//setup variables
@@ -302,6 +302,8 @@ class xboxTvDevice {
 			userHash: this.userHash
 		});
 
+		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
+
 		this.xbox.on('_on_connect', (message) => {
 				this.powerState = true;
 
@@ -311,7 +313,7 @@ class xboxTvDevice {
 				};
 
 				this.updateWebInstalledApp = setInterval(() => {
-					const getWebApiInstalledApps = (this.webApiControl && this.webApiEnabled) ? this.getWebApiInstalledApps() : false;
+					const getWebApiInstalledApps = this.webApiEnabled ? this.getWebApiInstalledApps() : false;
 				}, 60000);
 				this.log('Device: %s %s, %s', this.host, this.name, message)
 			})
@@ -324,28 +326,20 @@ class xboxTvDevice {
 			.on('message', (message) => {
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
-			.on('_on_devInfo', async (decodedMessage) => {
-				const majorVersion = decodedMessage.majorVersion;
-				const minorVersion = decodedMessage.minorVersion;
-				const buildNumber = decodedMessage.buildNumber;
-
-				const modelName = this.modelName;
-				const serialNumber = this.webApiEnabled ? this.serialNumber : this.xboxLiveId;
-				const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-
+			.on('_on_devInfo', async (firmwareRevision) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
 					this.log('Manufacturer: %s', this.manufacturer);
-					this.log('Model: %s', modelName);
-					this.log('Serialnr: %s', serialNumber);
+					this.log('Model: %s', this.modelName);
+					this.log('Serialnr: %s', this.serialNumber);
 					this.log('Firmware: %s', firmwareRevision);
 					this.log('----------------------------------');
 				}
 
 				const obj = {
 					'manufacturer': this.manufacturer,
-					'modelName': modelName,
-					'serialNumber': serialNumber,
+					'modelName': this.modelName,
+					'serialNumber': this.serialNumber,
 					'firmwareRevision': firmwareRevision
 				};
 				const devInfo = JSON.stringify(obj, null, 2);
@@ -356,8 +350,6 @@ class xboxTvDevice {
 					this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
 				};
 
-				this.modelName = modelName;
-				this.serialNumber = serialNumber;
 				this.firmwareRevision = firmwareRevision;
 			})
 			.on('_on_change', async (decodedMessage, mediaState) => {
@@ -420,8 +412,6 @@ class xboxTvDevice {
 				};
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			});
-
-		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
 
 		//start prepare accessory
 		this.prepareAccessory();
@@ -715,7 +705,7 @@ class xboxTvDevice {
 			const consoleStreamingEnabled = (consoleStatusData.consoleStreamingEnabled == true);
 			const remoteManagementEnabled = (consoleStatusData.remoteManagementEnabled == true);
 
-			this.serialNumber = id;
+			//this.serialNumber = id;
 			this.modelName = consoleType;
 			//this.powerState = powerState;
 			//this.mediaState = playbackState;

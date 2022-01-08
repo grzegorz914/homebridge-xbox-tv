@@ -430,15 +430,21 @@ class SMARTGLASS extends EventEmitter {
             .on('_on_status', (message) => {
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
                     const decodedMessage = message.packetDecoded.protectedPayload;
+                    this.emit('debug', decodedMessage)
                     if (!this.isConnected) {
                         this.isConnected = true;
                         this.discoveredXboxs.splice(0, this.xboxsCount);
                         this.xboxsCount = 0;
                         this.emit('_on_connect', 'Connected.');
-                        this.emit('_on_devInfo', decodedMessage);
+
+                        const majorVersion = decodedMessage.majorVersion;
+                        const minorVersion = decodedMessage.minorVersion;
+                        const buildNumber = decodedMessage.buildNumber
+                        const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+                        this.emit('_on_devInfo', firmwareRevision);
                     };
 
-                    if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
+                    if (this.currentApp != decodedMessage.apps[0].aumId) {
                         const appsArray = new Array();
                         const appsCount = decodedMessage.apps.length;
                         for (let i = 0; i < appsCount; i++) {
