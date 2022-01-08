@@ -428,16 +428,17 @@ class SMARTGLASS extends EventEmitter {
                 };
             })
             .on('_on_status', (message) => {
-                if (!this.isConnected) {
-                    this.isConnected = true;
-                    this.discoveredXboxs.splice(0, this.xboxsCount);
-                    this.xboxsCount = 0;
-                    this.emit('_on_connect', 'Connected.');
-                }
                 if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
-                    if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
-                        const decodedMessage = message.packetDecoded.protectedPayload;
+                    const decodedMessage = message.packetDecoded.protectedPayload;
+                    if (!this.isConnected) {
+                        this.isConnected = true;
+                        this.discoveredXboxs.splice(0, this.xboxsCount);
+                        this.xboxsCount = 0;
+                        this.emit('_on_connect', 'Connected.');
+                        this.emit('_on_devInfo', decodedMessage);
+                    };
 
+                    if (this.currentApp != message.packetDecoded.protectedPayload.apps[0].aumId) {
                         const appsArray = new Array();
                         const appsCount = decodedMessage.apps.length;
                         for (let i = 0; i < appsCount; i++) {
@@ -538,7 +539,7 @@ class SMARTGLASS extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (this.isConnected) {
                 this.emit('debug', 'Send command.');
-                
+
                 if (channelIds[channelName] != this.channelRequestId) {
                     let channelRequest = new Packer('message.channelRequest');
                     channelRequest.set('channelRequestId', channelIds[channelName]);

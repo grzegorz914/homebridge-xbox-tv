@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.0.10] - (08.01.2022)
+### Changed
+-  rebuild device info read and write
+
 ## [2.0.9] - (03.01.2022)
 ### Added
 -  ability to disable log device info by every connections device to the network (Advanced Section)

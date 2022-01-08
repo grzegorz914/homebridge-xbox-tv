@@ -230,12 +230,11 @@ class xboxTvDevice {
 
 		//device
 		this.manufacturer = 'Microsoft';
-		this.modelName = 'Model Name (e.g. Xbox Series S)';
+		this.modelName = 'Model Name';
 		this.serialNumber = 'Serial Number';
 		this.firmwareRevision = 'Firmware Revision';
 
 		//setup variables
-		this.checkDeviceInfo = false;
 		this.webApiEnabled = false;
 
 		this.inputsReference = new Array();
@@ -262,7 +261,32 @@ class xboxTvDevice {
 		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
-		this.prepareDirectoryAndFiles();
+		//check if the directory exists, if not then create it
+		if (fs.existsSync(this.prefDir) == false) {
+			fs.mkdirSync(this.prefDir);
+		}
+		if (fs.existsSync(this.authTokenFile) == false) {
+			fs.writeFileSync(this.authTokenFile, '');
+		}
+		if (fs.existsSync(this.devInfoFile) == false) {
+			const obj = {
+				'manufacturer': this.manufacturer,
+				'modelName': this.modelName,
+				'serialNumber': this.serialNumber,
+				'firmwareRevision': this.firmwareRevision
+			};
+			const devInfo = JSON.stringify(obj, null, 2);
+			fs.writeFileSync(this.devInfoFile, devInfo);
+		}
+		if (fs.existsSync(this.inputsFile) == false) {
+			fs.writeFileSync(this.inputsFile, '');
+		}
+		if (fs.existsSync(this.inputsNamesFile) == false) {
+			fs.writeFileSync(this.inputsNamesFile, '');
+		}
+		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
+		}
 
 		this.xbox = new Smartglass({
 			host: this.host,
@@ -280,7 +304,6 @@ class xboxTvDevice {
 
 		this.xbox.on('_on_connect', (message) => {
 				this.powerState = true;
-				this.checkDeviceInfo = true;
 
 				if (this.televisionService) {
 					this.televisionService
@@ -301,11 +324,43 @@ class xboxTvDevice {
 			.on('message', (message) => {
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
-			.on('_on_change', async (decodedMessage, mediaState) => {
+			.on('_on_devInfo', async (decodedMessage) => {
 				const majorVersion = decodedMessage.majorVersion;
 				const minorVersion = decodedMessage.minorVersion;
 				const buildNumber = decodedMessage.buildNumber;
 
+				const modelName = this.modelName;
+				const serialNumber = this.webApiEnabled ? this.serialNumber : this.xboxLiveId;
+				const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+
+				if (!this.disableLogDeviceInfo) {
+					this.log('-------- %s --------', this.name);
+					this.log('Manufacturer: %s', this.manufacturer);
+					this.log('Model: %s', modelName);
+					this.log('Serialnr: %s', serialNumber);
+					this.log('Firmware: %s', firmwareRevision);
+					this.log('----------------------------------');
+				}
+
+				const obj = {
+					'manufacturer': this.manufacturer,
+					'modelName': modelName,
+					'serialNumber': serialNumber,
+					'firmwareRevision': firmwareRevision
+				};
+				const devInfo = JSON.stringify(obj, null, 2);
+				try {
+					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
+					const debug = this.enableDebugMode ? this.log('Device: %s %s, debug writeDevInfo: %s', this.host, this.name, devInfo) : false;
+				} catch (error) {
+					this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
+				};
+
+				this.modelName = modelName;
+				this.serialNumber = serialNumber;
+				this.firmwareRevision = firmwareRevision;
+			})
+			.on('_on_change', async (decodedMessage, mediaState) => {
 				const appsArray = new Array();
 				const appsCount = decodedMessage.apps.length;
 				for (let i = 0; i < appsCount; i++) {
@@ -350,16 +405,10 @@ class xboxTvDevice {
 					};
 				};
 
-				this.majorVersion = majorVersion;
-				this.minorVersion = minorVersion;
-				this.buildNumber = buildNumber;
-
 				this.volume = volume;
 				this.muteState = muteState;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
-
-				const getDeviceInfo = this.checkDeviceInfo ? this.getDeviceInfo() : false;
 			})
 			.on('_on_disconnect', (message) => {
 				this.powerState = false;
@@ -377,34 +426,6 @@ class xboxTvDevice {
 		//start prepare accessory
 		this.prepareAccessory();
 	}
-
-	prepareDirectoryAndFiles() {
-		this.log.debug('Device: %s %s, prepare directory and files.', this.host, this.name);
-
-		try {
-			//check if the directory exists, if not then create it
-			if (fs.existsSync(this.prefDir) == false) {
-				fs.mkdirSync(this.prefDir);
-			}
-			if (fs.existsSync(this.authTokenFile) == false) {
-				fs.writeFileSync(this.authTokenFile, '');
-			}
-			if (fs.existsSync(this.devInfoFile) == false) {
-				fs.writeFileSync(this.devInfoFile, '');
-			}
-			if (fs.existsSync(this.inputsFile) == false) {
-				fs.writeFileSync(this.inputsFile, '');
-			}
-			if (fs.existsSync(this.inputsNamesFile) == false) {
-				fs.writeFileSync(this.inputsNamesFile, '');
-			}
-			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-				fs.writeFileSync(this.inputsTargetVisibilityFile, '');
-			}
-		} catch (error) {
-			this.log.error('Device: %s %s, prepare directory and files error: %s', this.host, this.name, error);
-		};
-	};
 
 	async getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
@@ -708,40 +729,6 @@ class xboxTvDevice {
 		};
 	}
 
-	async getDeviceInfo() {
-		this.log.debug('Device: %s %s, requesting device info.', this.host, this.name);
-		//display device info
-		const manufacturer = this.manufacturer;
-		const modelName = this.modelName;
-		const serialNumber = this.webApiEnabled ? this.serialNumber : this.xboxLiveId;
-		const firmwareRevision = `${this.majorVersion}.${this.minorVersion}.${this.buildNumber}`;
-
-		if (!this.disableLogDeviceInfo) {
-			this.log('-------- %s --------', this.name);
-			this.log('Manufacturer: %s', manufacturer);
-			this.log('Model: %s', modelName);
-			this.log('Serialnr: %s', serialNumber);
-			this.log('Firmware: %s', firmwareRevision);
-			this.log('----------------------------------');
-		}
-
-		const devInfoObj = {
-			'manufacturer': manufacturer,
-			'modelName': modelName,
-			'serialNumber': serialNumber,
-			'firmwareRevision': firmwareRevision
-		};
-		try {
-			const obj = JSON.stringify(devInfoObj, null, 2);
-			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, obj);
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, debug writeDevInfo: %s', this.host, this.name, obj) : false;
-			this.checkDeviceInfo = false
-		} catch (error) {
-			this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
-			this.checkDeviceInfo = true;
-		};
-	};
-
 	//Prepare accessory
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
@@ -755,12 +742,7 @@ class xboxTvDevice {
 		this.log.debug('prepareInformationService');
 		try {
 			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = (readDevInfo.manufacturer != undefined) ? JSON.parse(readDevInfo) : {
-				'manufacturer': this.manufacturer,
-				'modelName': this.modelName,
-				'serialNumber': this.serialNumber,
-				'firmwareRevision': this.firmwareRevision
-			};
+			const devInfo = JSON.parse(readDevInfo);
 			const debug = this.enableDebugMode ? this.log('Device: %s %s, debug devInfo: %s', this.host, accessoryName, devInfo) : false;
 
 			const manufacturer = devInfo.manufacturer;
