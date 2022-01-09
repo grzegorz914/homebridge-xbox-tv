@@ -54,10 +54,10 @@ class PluginUiServer extends HomebridgePluginUiServer {
         userToken: '',
         userUhs: ''
       });
+      webApiCheck._authentication._tokensFile = authTokenFile;
 
       try {
-        webApiCheck._authentication._tokensFile = authTokenFile;
-        const isAuthenticated = await webApiCheck.isAuthenticated();
+        await webApiCheck.isAuthenticated();
         this.data = {
           info: 'Console already authorized.',
           status: 0

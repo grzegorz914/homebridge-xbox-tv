@@ -294,7 +294,7 @@ class xboxTvDevice {
 			userToken: this.userToken,
 			userHash: this.userHash
 		});
-
+		this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
 		const getWebApiToken = this.webApiControl ? this.getWebApiToken() : false;
 
 		this.xbox = new Smartglass({
@@ -420,8 +420,7 @@ class xboxTvDevice {
 	async getWebApiToken() {
 		this.log.debug('Device: %s %s, preparing web api.', this.host, this.name);
 		try {
-			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
-			const isAuthenticated = await this.xboxWebApi.isAuthenticated();
+			await this.xboxWebApi.isAuthenticated();
 			this.webApiEnabled = true;
 			this.getWebApiInstalledApps();
 			this.log('Device: %s %s, authorized and Web Api enabled.', this.host, this.name);
