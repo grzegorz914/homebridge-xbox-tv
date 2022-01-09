@@ -31,7 +31,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * If used with Hoobs, there is a possible configuration incompatibilty.
 
 ## Troubleshooting
-* If for some reason the device will not be displayed in Home app try this procedure:
+* If for some reason the device is not displayed in HomeKit app try this procedure:
    * Go to `./homebridge/persist`.
    * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`.
    * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
@@ -64,6 +64,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Authorization Manager
 * First of all please use built in Authorization Manager.
 * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
+* Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
 * If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
 
 <p align="left">
