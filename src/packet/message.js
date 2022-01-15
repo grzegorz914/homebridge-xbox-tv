@@ -114,7 +114,7 @@ class MESSAGE {
                     structure: structure,
                     pack(packetStructure) {
                         packetStructure.writeUInt16(this.value.length);
-                        let arrayStructure = Packet[structure];
+                        let arrayStructure = Packet[this.structure];
                         for (let index in this.value) {
                             for (let name in arrayStructure) {
                                 arrayStructure[name].value = this.value[index][name]
@@ -128,7 +128,7 @@ class MESSAGE {
                         const array = new Array();
 
                         for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = Packet[structure];
+                            const arrayStructure = Packet[this.structure];
                             let item = {};
 
                             for (let name in arrayStructure) {
@@ -146,10 +146,9 @@ class MESSAGE {
                     value: value,
                     structure: structure,
                     pack(packetStructure) {
-
                         packetStructure.writeUInt32(this.value.length);
 
-                        let arrayStructure = Packet[structure];
+                        let arrayStructure = Packet[this.structure];
                         for (let index in this.value) {
                             for (let name in arrayStructure) {
                                 arrayStructure[name].value = this.value[index][name]
@@ -163,7 +162,7 @@ class MESSAGE {
                         const array = new Array();
 
                         for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = Packet[structure];
+                            const arrayStructure = Packet[this.structure];
                             let item = {};
 
                             for (let name in arrayStructure) {
@@ -461,14 +460,14 @@ class MESSAGE {
     };
 
     pack(smartglass) {
-        let payload = new PacketStructure();
+        const payload = new PacketStructure();
 
         for (let name in this.structure) {
             this.structure[name].pack(payload);
         };
         smartglass.getRequestNum();
 
-        let header = new PacketStructure();
+        const header = new PacketStructure();
         header.writeBytes(Buffer.from('d00d', 'hex'))
         header.writeUInt16(payload.toBuffer().length);
         header.writeUInt32(smartglass.requestNum);

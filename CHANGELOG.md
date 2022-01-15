@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.0.13] - (15.01.2022)
+
+### Added
+- Network Troubleshooter as defaul input
+
+### Changed
+- removed manual authorization method
+- code cleanup
+- redme update
+
+### Fixed
+- services calculation count
+
 ## [2.0.12] - (09.01.2022)
 ### Changed
 -  code cleanup
@@ -33,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.3] - 2021-12-28
 ### Added
-- Selectable display type of buttons in Home app
+- Selectable display type of buttons in HomeKit app
 
 ## [2.0.2] - 2021-12-28
 ### Changed

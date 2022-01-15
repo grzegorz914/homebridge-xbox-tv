@@ -28,25 +28,25 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * For versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know Issues
-* If used with Hoobs, there is a possible configuration incompatibilty.
+* Console connected to WLAN network some times lose its connection to the network and the *Power ON* command may not work.
 
 ## Troubleshooting
 * If for some reason the device is not displayed in HomeKit app try this procedure:
    * Go to `./homebridge/persist`.
    * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`.
    * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
-   * Restart Homebridge and try add it to the Home app again.
+   * Restart Homebridge and try add it to the HomeKit app again.
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
 * Reboot Console with additional button, rquired `webApiControl` enabled.
-* RC/Media/Pad control is possible with the RC app on iPhone/iPad or with additional buttons.
-* Speaker control is possible using hardware buttons on iPhone/iPad `Speaker Service`.
-* Legacy Volume/Mute control is possible throught extra `lightbulbs`/`fans` or with additional buttons.
+* RC/Media control is possible after you go to the RC app on iPhone/iPad.
+* Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
+* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan` (slider).
 * Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
+* Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
+* Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Record Game DVR with additional button.
-* Siri can be used to control all functions, some functions require create buttons.
-* Home automations and shortcuts can be used for all functions.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a> 
@@ -65,13 +65,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * First of all please use built in Authorization Manager.
 * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
 * Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
-* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode.
+* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode (removed ab v2.1.x).
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
-### Authorization Manual Mode
+### Authorization Manual Mode (removed ab v2.1.x)
 * After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
 * Follow the instructions in the console log.
 * Start new authorization need remove old token first, go to *./homebridge/xboxTv/* and remove token file.
@@ -111,7 +111,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
-| `buttons.displayType` | Here select display type in Home app, possible `Switch`, `Button` - selectable in Home app as Light, Fan, Outlet.|
+| `buttons.displayType` | Here select display type in HomeKit app, possible `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 
 *Example Config:
@@ -194,7 +194,7 @@ Each accessory needs to be manually paired.
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
 * To solve this problem the plugin counts the number of Services and not allow add more as 100.
-* If You have configured more as 100 Services some inputs or buttons will not be available in the Home app.
+* If You have configured more as 100 Services some inputs or buttons will not be available in the HomeKit app.
 * The Services in this accessory are:
   * Information.
   * Speaker.

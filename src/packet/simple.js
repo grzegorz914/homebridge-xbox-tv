@@ -172,7 +172,7 @@ class SIMPLE {
     };
 
     pack(smartglass = false) {
-        let payload = new PacketStructure();
+        const payload = new PacketStructure();
         let packet = payload.toBuffer();
 
         for (let name in this.structure) {

@@ -17,7 +17,7 @@ class STRUCTURE {
     };
 
     writeSGString(data) {
-        let lengthBuffer = Buffer.allocUnsafe(2);
+        const lengthBuffer = Buffer.allocUnsafe(2);
         lengthBuffer.writeUInt16BE(data.length, 0);
 
         const dataBuffer = Buffer.from(data + '\x00');
@@ -55,7 +55,7 @@ class STRUCTURE {
     };
 
     writeUInt8(data) {
-        let tempBuffer = Buffer.allocUnsafe(1);
+        const tempBuffer = Buffer.allocUnsafe(1);
         tempBuffer.writeUInt8(data, 0);
         this.add(tempBuffer);
         return this;
@@ -68,7 +68,7 @@ class STRUCTURE {
     };
 
     writeUInt16(data) {
-        let tempBuffer = Buffer.allocUnsafe(2);
+        const tempBuffer = Buffer.allocUnsafe(2);
         tempBuffer.writeUInt16BE(data, 0);
         this.add(tempBuffer);
         return this;
@@ -81,7 +81,7 @@ class STRUCTURE {
     };
 
     writeUInt32(data) {
-        let tempBuffer = Buffer.allocUnsafe(4);
+        const tempBuffer = Buffer.allocUnsafe(4);
         tempBuffer.writeUInt32BE(data, 0);
         this.add(tempBuffer);
         return this;
@@ -94,7 +94,7 @@ class STRUCTURE {
     };
 
     writeInt32(data) {
-        let tempBuffer = Buffer.allocUnsafe(4);
+        const tempBuffer = Buffer.allocUnsafe(4);
         tempBuffer.writeInt32BE(data, 0);
         this.add(tempBuffer);
         return this;
