@@ -28,7 +28,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * For versions 1.4.0 and above the minimum required version of Homebridge is v1.3.x.
 
 ## Know Issues
-* Console connected to WLAN network some times lose its connection to the network and the *Power ON* command may not work.
+* Console connected to WLAN network some times lose its connection to the network after *Power OFF* and the *Power ON* command may not work.
 
 ## Troubleshooting
 * If for some reason the device is not displayed in HomeKit app try this procedure:
