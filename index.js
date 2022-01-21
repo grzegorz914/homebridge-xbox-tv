@@ -275,7 +275,7 @@ class xboxTvDevice {
 			fs.mkdirSync(this.prefDir);
 		}
 		if (fs.existsSync(this.authTokenFile) == false) {
-			fs.writeFileSync(this.authTokenFile, {});
+			fs.writeFileSync(this.authTokenFile, '');
 		}
 		if (fs.existsSync(this.devInfoFile) == false) {
 			const obj = {
@@ -288,13 +288,13 @@ class xboxTvDevice {
 			fs.writeFileSync(this.devInfoFile, devInfo);
 		}
 		if (fs.existsSync(this.inputsFile) == false) {
-			fs.writeFileSync(this.inputsFile, []);
+			fs.writeFileSync(this.inputsFile, '');
 		}
 		if (fs.existsSync(this.inputsNamesFile) == false) {
-			fs.writeFileSync(this.inputsNamesFile, {});
+			fs.writeFileSync(this.inputsNamesFile, '');
 		}
 		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-			fs.writeFileSync(this.inputsTargetVisibilityFile, {});
+			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
 		}
 
 		this.xboxWebApi = XboxWebApi({
