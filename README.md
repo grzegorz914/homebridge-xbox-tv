@@ -23,9 +23,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm install -g homebridge-xbox-tv` | Plug-In | Required |
 
 ## Note
-* For v1.4.0 and above the minimum required version of Homebridge is 1.3.x.
-* For v2.0.0 and above the minimum required version of Node.js is 14.x.x.
-* If upgrade from 1.x.x to 2.x.x the `xboxLiveId` need to be set again in config.
+* For v1.4.0 and above the required version of Homebridge >= 1.3.x.
+* For v2.0.0 and above the required version of Node.js >= 14.x.x.
+* If upgrade from 1.x.x to 2.x.x the `xboxLiveId` need to be set again.
 
 ## Know Issues
 * Console connected to WLAN network some times lose its connection to the network after *Power OFF* and the *Power ON* command may not work.

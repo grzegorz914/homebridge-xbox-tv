@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.1.1] - (21.01.2022)
+### Changed
+- refactor debug message logging
+- update readme
+
+### Fixed
+- wrong variables
+- removed unnecessary async
+- report unknown message if power on fail
 
 ## [2.1.0] - (21.01.2022)
 ### Added

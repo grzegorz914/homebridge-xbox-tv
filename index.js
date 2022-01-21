@@ -362,7 +362,7 @@ class xboxTvDevice {
 
 				this.firmwareRevision = firmwareRevision;
 			})
-			.on('stateChanged', async (decodedMessage, mediaState) => {
+			.on('stateChanged', (decodedMessage, mediaState) => {
 				const appsArray = new Array();
 				const appsCount = decodedMessage.apps.length;
 				for (let i = 0; i < appsCount; i++) {

@@ -131,8 +131,8 @@ class SMARTGLASS extends EventEmitter {
                             // Prepare buffer for JSON
                             this.fragments[jsonMessage.datagramId] = {
 
-                                getValue: () => {
-                                    const buffer = Buffer.from('');
+                                getValue() {
+                                    let buffer = Buffer.from('');
                                     for (let partial in this.partials) {
                                         buffer = Buffer.concat([
                                             buffer,
@@ -142,22 +142,25 @@ class SMARTGLASS extends EventEmitter {
                                     const bufferDecoded = Buffer(buffer.toString(), 'base64');
                                     return bufferDecoded;
                                 },
-                                isValid: () => {
+                                isValid() {
                                     const json = this.getValue();
+                                    let isValid = false;
                                     try {
                                         JSON.parse(json.toString());
+                                        isValid = true;
                                     } catch (error) {
-                                        return false;
+                                        isValid = false;
+                                        this.emit('error', `Valid packet error: ${error}`);
                                     };
-                                    return true;
+                                    return isValid;
                                 },
                                 partials: {}
                             };
                         };
 
                         this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                        if (this.fragments[jsonMessage.datagramId].isValid() == true) {
-                            this.emit('debug', 'json: Completed fragmented packet.');
+                        if (this.fragments[jsonMessage.datagramId].isValid()) {
+                            this.emit('debug', 'Json completed fragmented packet.');
                             this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
                             this.fragments[jsonMessage.datagramId] = undefined;
                         };
@@ -174,8 +177,8 @@ class SMARTGLASS extends EventEmitter {
                     this.message = decodedMessage;
                 };
 
-                this.emit(this.function, this.response);
                 this.emit('debug', `Received event type: ${this.function}`);
+                this.emit(this.function, this.response);
             })
             .on('listening', () => {
                 const address = this.socket.address();
@@ -256,12 +259,12 @@ class SMARTGLASS extends EventEmitter {
                             const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
                             this.emit('debug', `Start check message timeout, last received was ${lastMessageReceivedTime} seconds ago.`);
                             if (lastMessageReceivedTime == 5) {
+                                this.emit('debug', `Last message was: ${lastMessageReceivedTime} seconds ago, send acknowledge.`);
                                 this.emit('acknowledge');
-                                this.emit('debug', `Last message was ${lastMessageReceivedTime} seconds ago, send acknowledge.`);
                             };
                             if (lastMessageReceivedTime > 12) {
+                                this.emit('debug', `Last message was: ${lastMessageReceivedTime} seconds ago, send disconnect.`);
                                 this.disconnect();
-                                this.emit('debug', `Last message was ${lastMessageReceivedTime} seconds ago, send disconnect.`);
                             };
                         };
                     }, 1000);
@@ -348,6 +351,7 @@ class SMARTGLASS extends EventEmitter {
 
                 if (this.channelRequestId == 0) {
                     if (command in systemMediaCommands) {
+
                         let mediaRequestId = 0;
                         let requestId = '0000000000000000';
                         const requestIdLength = requestId.length;
@@ -359,8 +363,8 @@ class SMARTGLASS extends EventEmitter {
                         mediaCommand.set('command', systemMediaCommands[command]);
                         mediaCommand.setChannel(this.channelTargetId);
                         const message = mediaCommand.pack(this);
-                        this.sendSocketMessage(message);
                         this.emit('debug', `System media send command: ${command}`);
+                        this.sendSocketMessage(message);
                     } else {
                         this.emit('debug', `Unknown media input command: ${command}`);
                     };
@@ -374,8 +378,8 @@ class SMARTGLASS extends EventEmitter {
                         gamepadPress.set('buttons', systemInputCommands[command]);
                         gamepadPress.setChannel(this.channelTargetId);
                         const message = gamepadPress.pack(this);
+                        this.emit('debug', `System input send press, command: ${command}`);
                         this.sendSocketMessage(message);
-                        this.emit('message', `System input send press, command: ${command}`);
 
                         setTimeout(() => {
                             const timeStampUnpress = new Date().getTime();
@@ -384,8 +388,8 @@ class SMARTGLASS extends EventEmitter {
                             gamepadUnpress.set('buttons', systemInputCommands['unpress']);
                             gamepadUnpress.setChannel(this.channelTargetId);
                             const message = gamepadUnpress.pack(this);
-                            this.sendSocketMessage(message);
                             this.emit('debug', `System input send unpress, command: unpress`);
+                            this.sendSocketMessage(message);
                         }, 150);
                     } else {
                         this.emit('debug', `Unknown system input command: ${command}`);
@@ -407,8 +411,8 @@ class SMARTGLASS extends EventEmitter {
                         json.set('json', JSON.stringify(jsonRequest));
                         json.setChannel(this.channelTargetId);
                         const message = json.pack(this);
-                        this.sendSocketMessage(message);
                         this.emit('debug', `TV remote send command: ${command}`);
+                        this.sendSocketMessage(message);
                     } else {
                         this.emit('debug', `Unknown tv remote command: ${command}`);
                     };
@@ -427,35 +431,35 @@ class SMARTGLASS extends EventEmitter {
                         json.set('json', JSON.stringify(jsonRequest));
                         json.setChannel(this.channelTargetId);
                         const message = json.pack(this);
-                        this.sendSocketMessage(message);
                         this.emit('debug', `System config send: ${configName}`);
+                        this.sendSocketMessage(message);
                     };
                 };
             })
             .on('json', (message) => {
                 const response = JSON.parse(message.packetDecoded.protectedPayload.json);
                 if (response.response == "Error") {
-                    this.emit('debug', `Got Error: ${response}`);
+                    this.emit('error', `Json error: ${response}`);
                 } else {
                     if (response.response == 'GetConfiguration') {
-                        this.emit('debug', 'Got tvRemote Configuration.');
                         this.configuration = response.params;
+                        this.emit('debug', `TV remote configuration: ${this.configuration }`);
                     };
                     if (response.response == 'GetHeadendInfo') {
-                        this.emit('debug', 'Got Headend Info.');
                         this.headendInfo = response.params;
+                        this.emit('debug', `Headend info: ${this.headendInfo }`);
                     };
                     if (response.response == 'GetLiveTVInfo') {
-                        this.emit('debug', 'Got Live TV Info.');
                         this.liveTv = response.params;
+                        this.emit('debug', `Live TV info: ${this.liveTv }`);
                     };
                     if (response.response == 'GetTunerLineups') {
-                        this.emit('debug', 'Got Tuner Lineups.');
                         this.tunerLineups = response.params;
+                        this.emit('debug', `Tuner lineups: ${this.tunerLineups }`);
                     };
                     if (response.response == 'GetAppChannelLineups') {
-                        this.emit('debug', 'Got App Channel Lineups.');
                         this.appChannelLineups = response.params;
+                        this.emit('debug', `App channel lineups: ${this.appChannelLineups }`);
                     };
                 };
             })
@@ -479,7 +483,7 @@ class SMARTGLASS extends EventEmitter {
         return new Promise((resolve, reject) => {
             if (!this.isConnected) {
                 this.emit('message', 'Send power On.');
-                const bootStartTime = (new Date().getTime()) / 1000;
+                const powerOnStartTime = (new Date().getTime()) / 1000;
 
                 this.boot = setInterval(() => {
                     const powerOn = new Packer('simple.powerOn');
@@ -487,11 +491,10 @@ class SMARTGLASS extends EventEmitter {
                     const message = powerOn.pack();
                     this.sendSocketMessage(message);
 
-                    const lastBootTime = (Math.trunc(((new Date().getTime()) / 1000) - bootStartTime));
-                    this.emit('debug', `Last boot time was ${lastBootTime} seconds ago.`);
-                    if (lastBootTime > 15) {
-                        this.emit('disconnected');
+                    const lastPowerOnTime = (Math.trunc(((new Date().getTime()) / 1000) - powerOnStartTime));
+                    if (lastPowerOnTime > 15) {
                         clearInterval(this.boot)
+                        this.emit('disconnected', 'Power On failed, please try again.');
                     };
                 }, 500);
 
@@ -533,7 +536,7 @@ class SMARTGLASS extends EventEmitter {
     recordGameDvr() {
         return new Promise((resolve, reject) => {
             if (this.isConnected && this.isAuthorized) {
-                this.emit('debug', 'Send record game.');
+                this.emit('message', 'Send record game.');
 
                 const recordGameDvr = new Packer('message.recordGameDvr');
                 recordGameDvr.set('startTimeDelta', -60);
@@ -563,8 +566,8 @@ class SMARTGLASS extends EventEmitter {
                     channelRequest.set('service', Buffer.from(channelUuids[channelName], 'hex'));
                     channelRequest.set('activityId', 0);
                     const message = channelRequest.pack(this);
-                    this.sendSocketMessage(message);
                     this.emit('debug', `Send channel request name: ${channelName}, id: ${channelIds[channelName]}`);
+                    this.sendSocketMessage(message);
 
                     setTimeout(() => {
                         this.emit('sendCommand', command)
