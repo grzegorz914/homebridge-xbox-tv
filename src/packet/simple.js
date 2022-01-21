@@ -3,14 +3,10 @@ const PacketStructure = require('./structure');
 class SIMPLE {
     constructor(packetFormat, packetData = false) {
         this.type = 'simple';
-        this.name = packetFormat;
-        this.packetData = packetData;
-        this.packetDecoded = false;
-        this.structureProtected = false;
 
         const Type = {
             uInt32(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeUInt32(this.value);
@@ -19,9 +15,10 @@ class SIMPLE {
                         return packetStructure.readUInt32();
                     }
                 }
+                return packet;
             },
             uInt16(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeUInt16(this.value);
@@ -30,9 +27,10 @@ class SIMPLE {
                         return packetStructure.readUInt16();
                     }
                 }
+                return packet;
             },
             bytes(length, value) {
-                return {
+                const packet = {
                     value: value,
                     length: length,
                     pack(packetStructure) {
@@ -42,9 +40,10 @@ class SIMPLE {
                         return packetStructure.readBytes(length);
                     }
                 }
+                return packet;
             },
             sgString(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeSGString(this.value);
@@ -53,6 +52,7 @@ class SIMPLE {
                         return packetStructure.readSGString().toString();
                     }
                 }
+                return packet;
             }
         };
 
@@ -66,7 +66,7 @@ class SIMPLE {
                 minVersion: Type.uInt16('0'),
                 maxVersion: Type.uInt16('2')
             },
-            discovery: {
+            discoveryResponse: {
                 flags: Type.uInt32('0'),
                 clientType: Type.uInt16('0'),
                 name: Type.sgString(),
@@ -82,6 +82,10 @@ class SIMPLE {
                 iv: Type.bytes(16, ''),
                 protectedPayload: Type.bytes()
             },
+            connectResponse: {
+                iv: Type.bytes(16, ''),
+                protectedPayload: Type.bytes()
+            },
             connectRequestProtected: {
                 userHash: Type.sgString(''),
                 jwt: Type.sgString(''),
@@ -89,24 +93,26 @@ class SIMPLE {
                 connectRequestGroupStart: Type.uInt32('0'),
                 connectRequestGroupEnd: Type.uInt32('1')
             },
-            connectResponse: {
-                iv: Type.bytes(16, ''),
-                protectedPayload: Type.bytes()
-            },
             connectResponseProtected: {
                 connectResult: Type.uInt16('1'),
                 pairingState: Type.uInt16('2'),
                 participantId: Type.uInt32('0')
             },
         };
-        this.structure = Packet[packetFormat];
 
+        this.structure = Packet[packetFormat];
         // Load protected payload PacketStructure
         if (this.structure.protectedPayload != undefined) {
             this.protectedPayload = new PacketStructure();
             const protectedStructure = Packet[`${packetFormat}Protected`];
             this.structureProtected = protectedStructure;
-        }
+        };
+
+        this.name = packetFormat;
+        this.structureProtected = this.structureProtected || false;
+        this.packetData = packetData;
+        this.packetDecoded = false;
+
         this.packet = Packet;
         this.packetFormat = packetFormat;
     };
@@ -134,21 +140,19 @@ class SIMPLE {
             type: payload.readBytes(2).toString('hex'),
             payloadLength: payload.readUInt16(),
             version: payload.readUInt16()
-        }
+        };
 
         if (packet.version != '0' && packet.version != '2') {
             packet.protectedPayloadLength = packet.version;
             packet.version = payload.readUInt16();
-        }
+        };
 
         for (let name in this.structure) {
             packet[name] = this.structure[name].unpack(payload);
             this.set(name, packet[name]);
-        }
+        };
 
-        if (packet.type == 'dd02') {
-            this.name = 'powerOn';
-        }
+        this.name = (packet.type == 'dd02') ? 'powerOn' : this.name;
 
         // Lets decrypt the data when the payload is encrypted
         if (packet.protectedPayload != undefined) {
@@ -173,7 +177,8 @@ class SIMPLE {
 
     pack(smartglass = false) {
         const payload = new PacketStructure();
-        let packet = payload.toBuffer();
+        const type = this.name;
+        let packet = '';
 
         for (let name in this.structure) {
             if (name != 'protectedPayload') {
@@ -187,7 +192,7 @@ class SIMPLE {
                     protectedStructure[nameStruct].pack(this.protectedPayload);
                 };
                 this.protectedPayloadLength = this.protectedPayload.toBuffer().length;
-
+                // Pad packet
                 if (this.protectedPayload.toBuffer().length % 16 > 0) {
                     const padStart = this.protectedPayload.toBuffer().length % 16;
                     const padTotal = (16 - padStart);
@@ -201,16 +206,13 @@ class SIMPLE {
             }
         };
 
-        if (this.name == 'powerOn') {
+        if (type == 'powerOn') {
             packet = this.pack1(Buffer.from('DD02', 'hex'), payload.toBuffer(), '');
-        };
-        if (this.name == 'discoveryRequest') {
+        } else if (type == 'discoveryRequest') {
             packet = this.pack1(Buffer.from('DD00', 'hex'), payload.toBuffer(), Buffer.from('0000', 'hex'));
-        };
-        if (this.name == 'discovery') {
+        } else if (type == 'discoveryResponse') {
             packet = this.pack1(Buffer.from('DD01', 'hex'), payload.toBuffer(), '2');
-        };
-        if (this.name == 'connectRequest') {
+        } else if (type == 'connectRequest') {
             packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
 
             // Sign protected payload
@@ -219,15 +221,31 @@ class SIMPLE {
                 packet,
                 Buffer.from(protectedPayloadHash)
             ]);
-        };
-        if (this.name == 'connectResponse') {
+        } else if (type == 'connectResponse') {
             packet = this.pack1(Buffer.from('CC01', 'hex'), payload.toBuffer(), '2')
+            // } else if (type == 'connectRequestProtected') {
+            // Pad packet
+            // if (payload.toBuffer().length > 16) {
+            //     const padStart = payload.toBuffer().length % 16;
+            //    const padTotal = (16 - padStart);
+            //    for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
+            //        payload.writeUInt8(padTotal);
+
+            //    };
+            // };
+
+            // const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getIv());
+            // const encryptedPayloadStructure = new PacketStructure(encryptedPayload)
+            // packet = encryptedPayloadStructure.toBuffer();
+        } else {
+            packet = payload.toBuffer();
         };
         return packet;
     };
 
     pack1(type, payload, version, protectedPayloadLength = false, protectedPayloadLengthReal = 0) {
         let payloadLength = new PacketStructure();
+        let packet = '';
 
         if (protectedPayloadLength !== false) {
             payloadLength.writeUInt16(payload.length - protectedPayloadLengthReal);
@@ -237,7 +255,7 @@ class SIMPLE {
             protectedLength.writeUInt16(protectedPayloadLength);
             protectedLength = protectedLength.toBuffer();
 
-            return Buffer.concat([
+            packet = Buffer.concat([
                 type,
                 payloadLength,
                 protectedLength,
@@ -248,13 +266,14 @@ class SIMPLE {
             payloadLength.writeUInt16(payload.length);
             payloadLength = payloadLength.toBuffer();
 
-            return Buffer.concat([
+            packet = Buffer.concat([
                 type,
                 payloadLength,
                 Buffer.from('\x00' + String.fromCharCode(version)),
                 payload
             ]);
         };
+        return packet;
     };
 };
 module.exports = SIMPLE;

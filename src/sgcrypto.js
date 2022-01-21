@@ -60,10 +60,11 @@ class SGCRYPTO {
         const sha = sha512.update(prePostSalt);
         const secret = sha.digest();
 
-        return {
+        const packet = {
             publicKey: publicKeyClient.toString('hex').slice(2),
             secret: secret.toString('hex')
         };
+        return packet;
     };
 
     getPublicKey() {
@@ -107,8 +108,8 @@ class SGCRYPTO {
 
         let encryptedPayload = cipher.update(data, 'binary', 'binary');
         encryptedPayload += cipher.final('binary');
-
-        return Buffer.from(encryptedPayload, 'binary');
+        const buffer = Buffer.from(encryptedPayload, 'binary');
+        return buffer
     }
 
     decrypt(data, iv, key = false) {
@@ -127,8 +128,8 @@ class SGCRYPTO {
 
         let decryptedPayload = cipher.update(data, 'binary', 'binary');
         decryptedPayload += cipher.final('binary');
-
-        return this.removePadding(Buffer.from(decryptedPayload, 'binary'));
+        const removePadding = this.removePadding(Buffer.from(decryptedPayload, 'binary'));
+        return removePadding;
     };
 
     sign(data) {

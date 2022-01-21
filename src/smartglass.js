@@ -77,7 +77,6 @@ class SMARTGLASS extends EventEmitter {
         this.mediaState = 0;
         this.fragments = {};
 
-        this.xboxsCount = 0;
         this.requestNum = 0;
         this.participantId = false;
         this.targetParticipantId = 0;
@@ -95,6 +94,7 @@ class SMARTGLASS extends EventEmitter {
         this.appChannelLineups = {};
         this.channelTargetId = null;
         this.channelRequestId = null;
+        this.message = {};
 
         //dgram socket
         this.socket = new dgram.createSocket('udp4');
@@ -103,36 +103,22 @@ class SMARTGLASS extends EventEmitter {
                 this.socket.close();
             })
             .on('message', (message, remote) => {
-                this.emit('debug', `Server reveived message from: ${remote.address}:${remote.port}`);
+                this.emit('debug', `Received message from: ${remote.address}:${remote.port}`);
                 this.messageReceivedTime = (new Date().getTime()) / 1000;
                 message = new Packer(message);
                 if (message.structure == false) {
                     return;
                 };
-
                 this.response = message.unpack(this);
-                const type = this.response.name;
 
                 if (this.response.packetDecoded.type != 'd00d') {
-                    this.function = type;
+                    this.function = this.response.name;
                 } else {
                     if (this.response.packetDecoded.targetParticipantId != this.participantId) {
                         this.emit('debug', 'Participant id does not match. Ignoring packet.');
                         return;
                     };
-
                     this.function = message.structure.packetDecoded.name;
-                    if (this.response.packetDecoded.flags.needAck == true) {
-                        this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.');
-
-                        const acknowledge = new Packer('message.acknowledge');
-                        acknowledge.set('lowWatermark', this.requestNum);
-                        acknowledge.structure.structure.processedList.value.push({
-                            id: this.requestNum
-                        });
-                        const message = acknowledge.pack(this);
-                        this.sendSocketMessage(message);
-                    };
                 };
 
                 if (this.function == 'json') {
@@ -140,7 +126,7 @@ class SMARTGLASS extends EventEmitter {
 
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId != undefined) {
-                        this.emit('debug', `json is fragmented: ${jsonMessage.datagramId}`);
+                        this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`);
                         if (this.fragments[jsonMessage.datagramId] == undefined) {
                             // Prepare buffer for JSON
                             this.fragments[jsonMessage.datagramId] = {
@@ -178,22 +164,28 @@ class SMARTGLASS extends EventEmitter {
                         this.function = 'jsonFragment';
                     };
                 };
+
+                if (this.function == 'status') {
+                    const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
+                    if (this.message === decodedMessage) {
+                        this.emit('debug', 'Received unchanged status message.');
+                        return;
+                    };
+                    this.message = decodedMessage;
+                };
+
                 this.emit(this.function, this.response);
-                this.emit('debug', `Emit event type: ${this.function}`);
+                this.emit('debug', `Received event type: ${this.function}`);
             })
             .on('listening', () => {
                 const address = this.socket.address();
                 this.emit('debug', `Server listening: ${address.address}:${address.port}, start discovering.`);
 
-                setInterval(() => {
-                    if (!this.isConnected) {
-                        const discoveryPacket = new Packer('simple.discoveryRequest');
-                        const message = discoveryPacket.pack();
-                        this.sendSocketMessage(message);
-                    };
-                }, 5000);
+                // Start discovery
+                this.startDiscovery();
             })
             .on('close', () => {
+                clearInterval(this.discovery);
                 this.emit('debug', 'Socket closed.');
 
                 setTimeout(() => {
@@ -203,51 +195,47 @@ class SMARTGLASS extends EventEmitter {
             .bind();
 
         //EventEmmiter
-        this.on('discovery', (message) => {
+        this.on('discoveryResponse', (message) => {
                 clearInterval(this.boot);
-                this.discoveredXboxs = new Array();
-                this.discoveredXboxs.push(message.packetDecoded);
-                this.xboxsCount = this.discoveredXboxs.length;
+                const decodedMessage = message.packetDecoded;
 
-                if (this.xboxsCount > 0) {
-                    const certyficate = (this.discoveredXboxs[0].certificate).toString('base64').match(/.{0,64}/g).join('\n');
+                if (decodedMessage != undefined && !this.isConnected) {
+                    this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`);
 
-                    if (!this.isConnected && certyficate != undefined) {
-                        this.emit('debug', 'Discovered, send connect request.');
+                    // Set certyficate
+                    const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-                        // // Set pem
-                        const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
-                        // Set uuid
-                        const uuid4 = Buffer.from(uuidParse.parse(uuid.v4()));
+                    // Set pem
+                    const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-                        // Create public key
-                        const ecKey = jsrsasign.X509.getPublicKeyFromCertPEM(pem);
-                        this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`);
+                    // Set uuid
+                    const uuid4 = Buffer.from(uuidParse.parse(uuid.v4()));
 
-                        const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
-                        this.emit('debug', `Crypto output object: ${object}`);
+                    // Create public key
+                    const ecKey = jsrsasign.X509.getPublicKeyFromCertPEM(pem);
+                    this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`);
 
-                        // Load crypto data
-                        this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
-                        this.emit('debug', `Loading crypto, public key: ${object.publicKey}, and secret: ${object.secret}`);
+                    // Load crypto data
+                    const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
+                    this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
+                    this.emit('debug', `Loading crypto, public key: ${object.publicKey}, and secret: ${object.secret}`);
 
-                        const connectRequest = new Packer('simple.connectRequest');
-                        connectRequest.set('uuid', uuid4);
-                        connectRequest.set('publicKey', this.crypto.getPublicKey());
-                        connectRequest.set('iv', this.crypto.getIv());
+                    const connectRequest = new Packer('simple.connectRequest');
+                    connectRequest.set('uuid', uuid4);
+                    connectRequest.set('publicKey', this.crypto.getPublicKey());
+                    connectRequest.set('iv', this.crypto.getIv());
 
-                        if (this.userHash != undefined && this.userToken != undefined) {
-                            connectRequest.set('userHash', this.userHash, true);
-                            connectRequest.set('jwt', this.userToken, true);
-                            this.isAuthorized = true;
-                            this.emit('debug', 'Connecting using token.');
-                        } else {
-                            this.isAuthorized = false;
-                            this.emit('debug', 'Connecting using anonymous login.');
-                        }
-                        const message = connectRequest.pack(this);
-                        this.sendSocketMessage(message);
-                    };
+                    if (this.userHash != undefined && this.userToken != undefined) {
+                        connectRequest.set('userHash', this.userHash, true);
+                        connectRequest.set('jwt', this.userToken, true);
+                        this.isAuthorized = true;
+                        this.emit('debug', `Connecting using token: ${this.userToken}`);
+                    } else {
+                        this.isAuthorized = false;
+                        this.emit('debug', 'Connecting using anonymous login.');
+                    }
+                    const message = connectRequest.pack(this);
+                    this.sendSocketMessage(message);
                 };
             })
             .on('connectResponse', (message) => {
@@ -268,12 +256,7 @@ class SMARTGLASS extends EventEmitter {
                             const lastMessageReceivedTime = (Math.trunc(((new Date().getTime()) / 1000) - this.messageReceivedTime));
                             this.emit('debug', `Start check message timeout, last received was ${lastMessageReceivedTime} seconds ago.`);
                             if (lastMessageReceivedTime == 5) {
-
-                                let ack = new Packer('message.acknowledge');
-                                ack.set('lowWatermark', this.requestNum);
-                                const ackMessage = ack.pack(this);
-
-                                this.sendSocketMessage(ackMessage);
+                                this.emit('acknowledge');
                                 this.emit('debug', `Last message was ${lastMessageReceivedTime} seconds ago, send acknowledge.`);
                             };
                             if (lastMessageReceivedTime > 12) {
@@ -297,6 +280,55 @@ class SMARTGLASS extends EventEmitter {
                     };
                     this.isConnected = false;
                     this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
+                };
+            })
+            .on('acknowledge', (message) => {
+                this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.');
+
+                const acknowledge = new Packer('message.acknowledge');
+                acknowledge.set('lowWatermark', this.requestNum);
+                acknowledge.structure.structure.processedList.value.push({
+                    id: this.requestNum
+                });
+                const message1 = acknowledge.pack(this);
+                this.sendSocketMessage(message1);
+            })
+            .on('status', (message) => {
+                if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
+                    const decodedMessage = message.packetDecoded.protectedPayload;
+                    this.emit('debug', `Status: ${JSON.stringify(decodedMessage)}`);
+
+                    if (!this.isConnected) {
+                        clearInterval(this.discovery);
+                        this.emit('debug', 'Stop discovery.');
+
+                        this.isConnected = true;
+                        this.emit('connected', 'Connected.');
+
+                        const majorVersion = decodedMessage.majorVersion;
+                        const minorVersion = decodedMessage.minorVersion;
+                        const buildNumber = decodedMessage.buildNumber
+                        const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+                        this.emit('deviceInfo', firmwareRevision);
+                    };
+
+                    if (this.currentApp != decodedMessage.apps[0].aumId) {
+                        const appsArray = new Array();
+                        const appsCount = decodedMessage.apps.length;
+                        for (let i = 0; i < appsCount; i++) {
+                            const titleId = decodedMessage.apps[i].titleId;
+                            const reference = decodedMessage.apps[i].aumId;
+                            const app = {
+                                titleId: titleId,
+                                reference: reference
+                            };
+                            appsArray.push(app);
+                            this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
+                        };
+                        this.titleId = appsArray[appsCount - 1].titleId;
+                        this.currentApp = appsArray[appsCount - 1].reference;
+                        this.emit('stateChanged', decodedMessage, this.mediaState);
+                    };
                 };
             })
             .on('channelResponse', (message) => {
@@ -429,43 +461,18 @@ class SMARTGLASS extends EventEmitter {
             })
             .on('jsonFragment', (message) => {
                 this.emit('debug', `Json fragment: ${message}`);
-            })
-            .on('status', (message) => {
-                if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
-                    const decodedMessage = message.packetDecoded.protectedPayload;
-                    this.emit('debug', `Status: ${decodedMessage}`);
-                    if (!this.isConnected) {
-                        this.isConnected = true;
-                        this.discoveredXboxs.splice(0, this.xboxsCount);
-                        this.xboxsCount = 0;
-                        this.emit('connected', 'Connected.');
-
-                        const majorVersion = decodedMessage.majorVersion;
-                        const minorVersion = decodedMessage.minorVersion;
-                        const buildNumber = decodedMessage.buildNumber
-                        const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                        this.emit('deviceInfo', firmwareRevision);
-                    };
-
-                    if (this.currentApp != decodedMessage.apps[0].aumId) {
-                        const appsArray = new Array();
-                        const appsCount = decodedMessage.apps.length;
-                        for (let i = 0; i < appsCount; i++) {
-                            const titleId = decodedMessage.apps[i].titleId;
-                            const reference = decodedMessage.apps[i].aumId;
-                            const app = {
-                                titleId: titleId,
-                                reference: reference
-                            };
-                            appsArray.push(app);
-                            this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
-                        };
-                        this.titleId = appsArray[appsCount - 1].titleId;
-                        this.currentApp = appsArray[appsCount - 1].reference;
-                        this.emit('stateChanged', decodedMessage, this.mediaState);
-                    };
-                };
             });
+    };
+
+    startDiscovery() {
+        this.emit('debug', 'Start discovery.');
+        this.discovery = setInterval(() => {
+            if (!this.isConnected) {
+                const discoveryPacket = new Packer('simple.discoveryRequest');
+                const message = discoveryPacket.pack();
+                this.sendSocketMessage(message);
+            };
+        }, 5000);
     };
 
     powerOn() {
@@ -579,9 +586,8 @@ class SMARTGLASS extends EventEmitter {
 
     sendSocketMessage(message) {
         if (this.socket) {
-            const offset = 0;
             const messageLength = message.length;
-            this.socket.send(message, offset, messageLength, 5050, this.host, (error, bytes) => {
+            this.socket.send(message, 0, messageLength, 5050, this.host, (error, bytes) => {
                 if (error) {
                     this.emit('error', `Socket send message error: ${error}`);
                 };
@@ -606,6 +612,9 @@ class SMARTGLASS extends EventEmitter {
             this.channelTargetId = null;
             this.channelRequestId = null;
             this.emit('disconnected', 'Disconnected.');
+
+            // Start discovery
+            this.startDiscovery();
         }, 3500);
     };
 
@@ -617,6 +626,7 @@ class SMARTGLASS extends EventEmitter {
     connect() {
         if (!this.socket) {
             this.socket = new dgram.createSocket('udp4');
+            this.socket.bind();
         };
     };
 };

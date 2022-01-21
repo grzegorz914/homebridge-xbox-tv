@@ -1,19 +1,7 @@
 class STRUCTURE {
     constructor(packet) {
-        if (packet == undefined) {
-            packet = Buffer.from('');
-        }
-        this.packet = packet;
-        this.packetLength = packet.length;
+        this.packet = (packet == undefined) ? Buffer.from('') : packet;
         this.offset = 0;
-    };
-
-    setOffset(offset) {
-        this.offset = offset;
-    };
-
-    getOffset() {
-        return this.offset;
     };
 
     writeSGString(data) {
@@ -46,7 +34,7 @@ class STRUCTURE {
 
         if (count == false) {
             data = this.packet.slice(this.offset);
-            this.offset = (this.packetLength);
+            this.offset = this.packet.length;;
         } else {
             data = this.packet.slice(this.offset, this.offset + count);
             this.offset = (this.offset + count);

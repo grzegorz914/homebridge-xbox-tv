@@ -34,7 +34,7 @@ class MESSAGE {
 
         const Type = {
             uInt32(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeUInt32(this.value);
@@ -44,9 +44,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             sInt32(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeInt32(this.value);
@@ -56,9 +57,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             uInt16(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeUInt16(this.value);
@@ -68,9 +70,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             bytes(length, value) {
-                return {
+                const packet = {
                     value: value,
                     length: length,
                     pack(packetStructure) {
@@ -81,9 +84,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             sgString(value) {
-                return {
+                const packet = {
                     value: value,
                     pack(packetStructure) {
                         return packetStructure.writeSGString(this.value);
@@ -93,10 +97,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             flags(length, value) {
-
-                return {
+                const packet = {
                     value: value,
                     length: length,
                     pack(packetStructure) {
@@ -107,9 +111,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             sgArray(structure, value) {
-                return {
+                const packet = {
                     value: value,
                     structure: structure,
                     pack(packetStructure) {
@@ -140,9 +145,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             sgList(structure, value) {
-                return {
+                const packet = {
                     value: value,
                     structure: structure,
                     pack(packetStructure) {
@@ -174,9 +180,10 @@ class MESSAGE {
                         return this.value;
                     }
                 }
+                return packet;
             },
             mapper(map, item) {
-                return {
+                const packet = {
                     item: item,
                     value: false,
                     pack(packetStructure) {
@@ -187,6 +194,7 @@ class MESSAGE {
                         return map[this.value];
                     }
                 }
+                return packet;
             }
         };
 
@@ -339,24 +347,17 @@ class MESSAGE {
 
     readFlags(flags) {
         flags = hexToBin(flags.toString('hex'));
-        let needAck = false;
-        let isFragment = false;
+        const needAck = (flags.slice(2, 3) == 1) ? true : false;
+        const isFragment = (flags.slice(3, 4) == 1) ? true : false;
+        const type = this.getMsgType(parseInt(flags.slice(4, 16), 2));
 
-        if (flags.slice(2, 3) == 1) {
-            needAck = true;
-        };
-
-        if (flags.slice(3, 4) == 1) {
-            isFragment = true;
-        };
-        const type = this.getMsgType(parseInt(flags.slice(4, 16), 2))
-
-        return {
+        const packet = {
             'version': parseInt(flags.slice(0, 2), 2).toString(),
             'needAck': needAck,
             'isFragment': isFragment,
             'type': type
         };
+        return packet;
     };
 
     setFlags(type) {

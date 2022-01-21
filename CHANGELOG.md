@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+
+## [2.1.0] - (21.01.2022)
+### Added
+- check authorization state of console every 10 min. if powered ON and web api control enabled
+- check cosole data and installed apps every 10 min. if powered ON and web api control enabled
+
+### Changed
+- send status message data only if changed
+- debug message logging
+- code refactor
+- code cleanup
+- stability and performance improvements
+
+### Fixed
+- unexpected set authorization to true however the console is not authorized
+- data offset out of range [#133](https://github.com/grzegorz914/homebridge-xbox-tv/issues/133)
+- incorrect client authorization on console
+
 ## [2.0.13] - (15.01.2022)
 
 ### Added
