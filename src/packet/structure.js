@@ -4,6 +4,10 @@ class STRUCTURE {
         this.offset = 0;
     };
 
+    setOffset(offset) {
+        this.offset = offset;
+    };
+
     writeSGString(data) {
         const lengthBuffer = Buffer.allocUnsafe(2);
         lengthBuffer.writeUInt16BE(data.length, 0);

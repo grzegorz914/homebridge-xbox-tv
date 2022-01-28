@@ -253,7 +253,7 @@ class xboxTvDevice {
 
 		this.powerState = false;
 		this.volume = 0;
-		this.muteState = false;
+		this.muteState = true;
 		this.mediaState = 0;
 
 		this.setStartInput = false;
@@ -313,13 +313,6 @@ class xboxTvDevice {
 		});
 
 		this.xbox.on('connected', (message) => {
-				this.powerState = true;
-
-				if (this.televisionService) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, true)
-				};
-
 				if (this.webApiControl) {
 					this.checkAuthorizationState = setInterval(() => {
 						this.getAuthorizationState();
@@ -362,29 +355,15 @@ class xboxTvDevice {
 
 				this.firmwareRevision = firmwareRevision;
 			})
-			.on('stateChanged', (decodedMessage, mediaState) => {
-				const appsArray = new Array();
-				const appsCount = decodedMessage.apps.length;
-				for (let i = 0; i < appsCount; i++) {
-					const titleId = decodedMessage.apps[i].titleId;
-					const reference = decodedMessage.apps[i].aumId;
-					const app = {
-						titleId: titleId,
-						reference: reference
-					};
-					appsArray.push(app);
-				}
-				const titleId = appsArray[appsCount - 1].titleId;
-				const inputReference = appsArray[appsCount - 1].reference;
+			.on('stateChanged', (power, titleId, inputReference, volume, mute, mediaState) => {
 
-				//get states
-				const volume = this.volume;
-				const muteState = this.powerState ? this.muteState : true;
+				const powerState = power;
 				const inputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
 
 				//update characteristics
 				if (this.televisionService) {
 					this.televisionService
+						.updateCharacteristic(Characteristic.Active, powerState)
 						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 
 					if (this.setStartInput) {
@@ -398,31 +377,26 @@ class xboxTvDevice {
 				if (this.speakerService) {
 					this.speakerService
 						.updateCharacteristic(Characteristic.Volume, volume)
-						.updateCharacteristic(Characteristic.Mute, muteState);
+						.updateCharacteristic(Characteristic.Mute, mute);
 					if (this.volumeService && this.volumeControl == 1) {
 						this.volumeService
 							.updateCharacteristic(Characteristic.Brightness, volume)
-							.updateCharacteristic(Characteristic.On, !muteState);
+							.updateCharacteristic(Characteristic.On, !mute);
 					};
 					if (this.volumeServiceFan && this.volumeControl == 2) {
 						this.volumeServiceFan
 							.updateCharacteristic(Characteristic.RotationSpeed, volume)
-							.updateCharacteristic(Characteristic.On, !muteState);
+							.updateCharacteristic(Characteristic.On, !mute);
 					};
 				};
 
+				this.powerState = powerState;
 				this.volume = volume;
-				this.muteState = muteState;
+				this.muteState = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
 			})
 			.on('disconnected', (message) => {
-				this.powerState = false;
-
-				if (this.televisionService) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, false)
-				};
 				const stopInterval = this.webApiControl ? clearInterval(this.checkAuthorizationState) : false;
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			});

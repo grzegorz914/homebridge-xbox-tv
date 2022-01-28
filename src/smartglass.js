@@ -5,6 +5,7 @@ const EOL = require('os').EOL;
 const jsrsasign = require('jsrsasign');
 const EventEmitter = require('events').EventEmitter;
 const Packer = require('./packet/packer');
+const Structure = require('./packet/structure');
 const SGCrypto = require('./sgcrypto');
 
 const systemMediaCommands = {
@@ -70,11 +71,9 @@ class SMARTGLASS extends EventEmitter {
         this.userHash = config.uhs;
 
         this.crypto = new SGCrypto();
+        this.structure = new Structure();
         this.isConnected = false;
         this.isAuthorized = false;
-        this.titleId = '';
-        this.currentApp = '';
-        this.mediaState = 0;
         this.fragments = {};
 
         this.requestNum = 0;
@@ -315,23 +314,25 @@ class SMARTGLASS extends EventEmitter {
                         this.emit('deviceInfo', firmwareRevision);
                     };
 
-                    if (this.currentApp != decodedMessage.apps[0].aumId) {
-                        const appsArray = new Array();
-                        const appsCount = decodedMessage.apps.length;
-                        for (let i = 0; i < appsCount; i++) {
-                            const titleId = decodedMessage.apps[i].titleId;
-                            const reference = decodedMessage.apps[i].aumId;
-                            const app = {
-                                titleId: titleId,
-                                reference: reference
-                            };
-                            appsArray.push(app);
-                            this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
+                    const appsArray = new Array();
+                    const appsCount = decodedMessage.apps.length;
+                    for (let i = 0; i < appsCount; i++) {
+                        const titleId = decodedMessage.apps[i].titleId;
+                        const reference = decodedMessage.apps[i].aumId;
+                        const app = {
+                            titleId: titleId,
+                            reference: reference
                         };
-                        this.titleId = appsArray[appsCount - 1].titleId;
-                        this.currentApp = appsArray[appsCount - 1].reference;
-                        this.emit('stateChanged', decodedMessage, this.mediaState);
-                    };
+                        appsArray.push(app);
+                        this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
+                    }
+                    const power = this.isConnected;
+                    const volume = 0;
+                    const mute = power ? power : true;
+                    const titleId = appsArray[appsCount - 1].titleId;
+                    const inputReference = appsArray[appsCount - 1].reference;
+                    const mediaState = 0;
+                    this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
                 };
             })
             .on('channelResponse', (message) => {
@@ -472,6 +473,7 @@ class SMARTGLASS extends EventEmitter {
         this.emit('debug', 'Start discovery.');
         this.discovery = setInterval(() => {
             if (!this.isConnected) {
+                this.structure.setOffset(0);
                 const discoveryPacket = new Packer('simple.discoveryRequest');
                 const message = discoveryPacket.pack();
                 this.sendSocketMessage(message);
@@ -486,6 +488,7 @@ class SMARTGLASS extends EventEmitter {
                 const powerOnStartTime = (new Date().getTime()) / 1000;
 
                 this.boot = setInterval(() => {
+                    this.structure.setOffset(0);
                     const powerOn = new Packer('simple.powerOn');
                     powerOn.set('liveId', this.xboxLiveId);
                     const message = powerOn.pack();
@@ -610,10 +613,12 @@ class SMARTGLASS extends EventEmitter {
         this.sendSocketMessage(message);
 
         setTimeout(() => {
+            this.structure.setOffset(0);
             this.isConnected = false;
             this.requestNum = 0;
             this.channelTargetId = null;
             this.channelRequestId = null;
+            this.emit('stateChanged', false, 0, 0, 0, true, 0);
             this.emit('disconnected', 'Disconnected.');
 
             // Start discovery
