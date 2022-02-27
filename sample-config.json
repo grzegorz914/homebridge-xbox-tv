@@ -30,7 +30,7 @@
 			"disableLogDeviceInfo": false,
 			"enableDebugMode": false,
 			"volumeControl": 0,
-			"switchInfoMenu": false,
+			"infoButtonCommand": "nexus",
 			"getInputsFromDevice": false,
 			"filterGames": false,
 			"filterApps": false,
@@ -82,7 +82,15 @@
 					"oneStoreProductId": "oneStoreProductId",
 					"displayType": 0
 				}
-			]
+			],
+			"enableMqtt": false,
+			"mqttHost": "192.168.1.33",
+			"mqttPort": 1883,
+			"mqttPrefix": "home/denon",
+			"mqttAuth": false,
+			"mqttUser": "user",
+			"mqttPass": "password",
+			"mqttDebug": false
 		}]
 	}]
 }

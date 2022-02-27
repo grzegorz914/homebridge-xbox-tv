@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.2.0] - (27.02.2022)
+## Added
+- MQTT Client, publish all device data
+- possibility to set custom command for Info button in RC
+
+## Changes
+- update dependencies
+- code refactor
+
 ## [2.1.3] - (28.01.2022)
 ### Fixed
 - offset out of range

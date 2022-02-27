@@ -5,7 +5,6 @@ const EOL = require('os').EOL;
 const jsrsasign = require('jsrsasign');
 const EventEmitter = require('events').EventEmitter;
 const Packer = require('./packet/packer');
-const Structure = require('./packet/structure');
 const SGCrypto = require('./sgcrypto');
 
 const systemMediaCommands = {
@@ -71,7 +70,6 @@ class SMARTGLASS extends EventEmitter {
         this.userHash = config.uhs;
 
         this.crypto = new SGCrypto();
-        this.structure = new Structure();
         this.isConnected = false;
         this.isAuthorized = false;
         this.fragments = {};
@@ -94,107 +92,6 @@ class SMARTGLASS extends EventEmitter {
         this.channelTargetId = null;
         this.channelRequestId = null;
         this.message = {};
-
-        //dgram socket
-        this.socket = new dgram.createSocket('udp4');
-        this.socket.on('error', (error) => {
-                this.emit('error', `Socket error: ${error}`);
-                this.socket.close();
-            })
-            .on('message', (message, remote) => {
-                this.emit('debug', `Received message from: ${remote.address}:${remote.port}`);
-                this.messageReceivedTime = (new Date().getTime()) / 1000;
-                message = new Packer(message);
-                if (message.structure == false) {
-                    return;
-                };
-                this.response = message.unpack(this);
-
-                if (this.response.packetDecoded.type != 'd00d') {
-                    this.function = this.response.name;
-                } else {
-                    if (this.response.packetDecoded.targetParticipantId != this.participantId) {
-                        this.emit('debug', 'Participant id does not match. Ignoring packet.');
-                        return;
-                    };
-                    this.function = message.structure.packetDecoded.name;
-                };
-
-                if (this.function == 'json') {
-                    const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
-
-                    // Check if JSON is fragmented
-                    if (jsonMessage.datagramId != undefined) {
-                        this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`);
-                        if (this.fragments[jsonMessage.datagramId] == undefined) {
-                            // Prepare buffer for JSON
-                            this.fragments[jsonMessage.datagramId] = {
-
-                                getValue() {
-                                    let buffer = Buffer.from('');
-                                    for (let partial in this.partials) {
-                                        buffer = Buffer.concat([
-                                            buffer,
-                                            Buffer.from(this.partials[partial])
-                                        ])
-                                    };
-                                    const bufferDecoded = Buffer(buffer.toString(), 'base64');
-                                    return bufferDecoded;
-                                },
-                                isValid() {
-                                    const json = this.getValue();
-                                    let isValid = false;
-                                    try {
-                                        JSON.parse(json.toString());
-                                        isValid = true;
-                                    } catch (error) {
-                                        isValid = false;
-                                        this.emit('error', `Valid packet error: ${error}`);
-                                    };
-                                    return isValid;
-                                },
-                                partials: {}
-                            };
-                        };
-
-                        this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                        if (this.fragments[jsonMessage.datagramId].isValid()) {
-                            this.emit('debug', 'Json completed fragmented packet.');
-                            this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
-                            this.fragments[jsonMessage.datagramId] = undefined;
-                        };
-                        this.function = 'jsonFragment';
-                    };
-                };
-
-                if (this.function == 'status') {
-                    const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
-                    if (this.message === decodedMessage) {
-                        this.emit('debug', 'Received unchanged status message.');
-                        return;
-                    };
-                    this.message = decodedMessage;
-                };
-
-                this.emit('debug', `Received event type: ${this.function}`);
-                this.emit(this.function, this.response);
-            })
-            .on('listening', () => {
-                const address = this.socket.address();
-                this.emit('debug', `Server listening: ${address.address}:${address.port}, start discovering.`);
-
-                // Start discovery
-                this.startDiscovery();
-            })
-            .on('close', () => {
-                clearInterval(this.discovery);
-                this.emit('debug', 'Socket closed.');
-
-                setTimeout(() => {
-                    this.connect();
-                }, 5000);
-            })
-            .bind();
 
         //EventEmmiter
         this.on('discoveryResponse', (message) => {
@@ -333,6 +230,7 @@ class SMARTGLASS extends EventEmitter {
                     const inputReference = appsArray[appsCount - 1].reference;
                     const mediaState = 0;
                     this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
+                    this.emit('mqtt', 'State', JSON.stringify(decodedMessage, null, 2));
                 };
             })
             .on('channelResponse', (message) => {
@@ -467,18 +365,147 @@ class SMARTGLASS extends EventEmitter {
             .on('jsonFragment', (message) => {
                 this.emit('debug', `Json fragment: ${message}`);
             });
+
+        this.connect();
+    };
+
+    connect() {
+        this.socket = new dgram.createSocket('udp4');
+        this.socket.on('error', (error) => {
+                this.emit('error', `Socket error: ${error}`);
+                clearInterval(this.checkConnection);
+                clearInterval(this.discovery);
+                this.socket.close();
+            })
+            .on('message', (message, remote) => {
+                this.emit('debug', `Received message from: ${remote.address}:${remote.port}`);
+                this.messageReceivedTime = (new Date().getTime()) / 1000;
+                message = new Packer(message);
+                if (message.structure == false) {
+                    return;
+                };
+                this.response = message.unpack(this);
+
+                if (this.response.packetDecoded.type != 'd00d') {
+                    this.function = this.response.name;
+                } else {
+                    if (this.response.packetDecoded.targetParticipantId != this.participantId) {
+                        this.emit('debug', 'Participant id does not match. Ignoring packet.');
+                        return;
+                    };
+                    this.function = message.structure.packetDecoded.name;
+                };
+
+                if (this.function == 'json') {
+                    const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
+
+                    // Check if JSON is fragmented
+                    if (jsonMessage.datagramId != undefined) {
+                        this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`);
+                        if (this.fragments[jsonMessage.datagramId] == undefined) {
+                            // Prepare buffer for JSON
+                            this.fragments[jsonMessage.datagramId] = {
+
+                                getValue() {
+                                    let buffer = Buffer.from('');
+                                    for (let partial in this.partials) {
+                                        buffer = Buffer.concat([
+                                            buffer,
+                                            Buffer.from(this.partials[partial])
+                                        ])
+                                    };
+                                    const bufferDecoded = Buffer(buffer.toString(), 'base64');
+                                    return bufferDecoded;
+                                },
+                                isValid() {
+                                    const json = this.getValue();
+                                    let isValid = false;
+                                    try {
+                                        JSON.parse(json.toString());
+                                        isValid = true;
+                                    } catch (error) {
+                                        isValid = false;
+                                        this.emit('error', `Valid packet error: ${error}`);
+                                    };
+                                    return isValid;
+                                },
+                                partials: {}
+                            };
+                        };
+
+                        this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+                        if (this.fragments[jsonMessage.datagramId].isValid()) {
+                            this.emit('debug', 'Json completed fragmented packet.');
+                            this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
+                            this.fragments[jsonMessage.datagramId] = undefined;
+                        };
+                        this.function = 'jsonFragment';
+                    };
+                };
+
+                if (this.function == 'status') {
+                    const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
+                    if (this.message === decodedMessage) {
+                        this.emit('debug', 'Received unchanged status message.');
+                        return;
+                    };
+                    this.message = decodedMessage;
+                };
+
+                this.emit('debug', `Received event type: ${this.function}`);
+                this.emit(this.function, this.response);
+            })
+            .on('listening', () => {
+                const address = this.socket.address();
+                this.emit('debug', `Server start listening: ${address.address}:${address.port}.`);
+
+                // Start discovery
+                this.startDiscovery();
+            })
+            .on('close', () => {
+                this.emit('debug', 'Socket closed.');
+
+                this.isConnected = false;
+                this.requestNum = 0;
+                this.channelTargetId = null;
+                this.channelRequestId = null;
+                this.emit('stateChanged', false, 0, 0, 0, true, 0);
+                this.emit('disconnected', 'Disconnected.');
+
+                //reconnect
+                this.reconnect();
+            })
+            .bind();
+    };
+
+    reconnect() {
+        this.connect();
     };
 
     startDiscovery() {
         this.emit('debug', 'Start discovery.');
         this.discovery = setInterval(() => {
             if (!this.isConnected) {
-                this.structure.setOffset(0);
                 const discoveryPacket = new Packer('simple.discoveryRequest');
                 const message = discoveryPacket.pack();
                 this.sendSocketMessage(message);
             };
         }, 5000);
+    };
+
+    getRequestNum() {
+        this.requestNum++;
+        this.emit('debug', `Request number set to: ${this.requestNum}`);
+    };
+
+    sendSocketMessage(message) {
+        const messageLength = message.length;
+        this.socket.send(message, 0, messageLength, 5050, this.host, (error, bytes) => {
+            if (error) {
+                this.emit('error', `Socket send message error: ${error}`);
+            };
+            this.emit('debug', `Socket send ${bytes} bytes.`);
+        });
     };
 
     powerOn() {
@@ -488,7 +515,6 @@ class SMARTGLASS extends EventEmitter {
                 const powerOnStartTime = (new Date().getTime()) / 1000;
 
                 this.boot = setInterval(() => {
-                    this.structure.setOffset(0);
                     const powerOn = new Packer('simple.powerOn');
                     powerOn.set('liveId', this.xboxLiveId);
                     const message = powerOn.pack();
@@ -497,6 +523,7 @@ class SMARTGLASS extends EventEmitter {
                     const lastPowerOnTime = (Math.trunc(((new Date().getTime()) / 1000) - powerOnStartTime));
                     if (lastPowerOnTime > 15) {
                         clearInterval(this.boot)
+                        this.emit('stateChanged', false, 0, 0, 0, true, 0);
                         this.emit('disconnected', 'Power On failed, please try again.');
                     };
                 }, 500);
@@ -508,29 +535,6 @@ class SMARTGLASS extends EventEmitter {
                 reject({
                     status: 'error',
                     error: 'Already connected.'
-                });
-            };
-        });
-    };
-
-    powerOff() {
-        return new Promise((resolve, reject) => {
-            if (this.isConnected) {
-                this.emit('message', 'Send power Off.');
-
-                const powerOff = new Packer('message.powerOff');
-                powerOff.set('liveId', this.xboxLiveId);
-                const message = powerOff.pack(this);
-                this.sendSocketMessage(message);
-
-                setTimeout(() => {
-                    this.disconnect();
-                    resolve(true);
-                }, 3500);
-            } else {
-                reject({
-                    status: 'error',
-                    error: 'Already disconnected.'
                 });
             };
         });
@@ -588,23 +592,33 @@ class SMARTGLASS extends EventEmitter {
         });
     };
 
+    powerOff() {
+        return new Promise((resolve, reject) => {
+            if (this.isConnected) {
+                this.emit('message', 'Send power Off.');
 
+                const powerOff = new Packer('message.powerOff');
+                powerOff.set('liveId', this.xboxLiveId);
+                const message = powerOff.pack(this);
+                this.sendSocketMessage(message);
 
-    sendSocketMessage(message) {
-        if (this.socket) {
-            const messageLength = message.length;
-            this.socket.send(message, 0, messageLength, 5050, this.host, (error, bytes) => {
-                if (error) {
-                    this.emit('error', `Socket send message error: ${error}`);
-                };
-                this.emit('debug', `Socket send ${bytes} bytes.`);
-            });
-        };
+                setTimeout(() => {
+                    this.disconnect();
+                    resolve(true);
+                }, 3500);
+            } else {
+                reject({
+                    status: 'error',
+                    error: 'Already disconnected.'
+                });
+            };
+        });
     };
 
     disconnect() {
         this.emit('debug', 'Disconnecting...');
         clearInterval(this.checkConnection);
+        clearInterval(this.discovery);
 
         const disconnect = new Packer('message.disconnect');
         disconnect.set('reason', 4);
@@ -612,30 +626,10 @@ class SMARTGLASS extends EventEmitter {
         const message = disconnect.pack(this);
         this.sendSocketMessage(message);
 
+        //colose socket
         setTimeout(() => {
-            this.structure.setOffset(0);
-            this.isConnected = false;
-            this.requestNum = 0;
-            this.channelTargetId = null;
-            this.channelRequestId = null;
-            this.emit('stateChanged', false, 0, 0, 0, true, 0);
-            this.emit('disconnected', 'Disconnected.');
-
-            // Start discovery
-            this.startDiscovery();
+            this.socket.close();
         }, 3500);
-    };
-
-    getRequestNum() {
-        this.requestNum++;
-        this.emit('debug', `Request number set to: ${this.requestNum}`);
-    };
-
-    connect() {
-        if (!this.socket) {
-            this.socket = new dgram.createSocket('udp4');
-            this.socket.bind();
-        };
     };
 };
 module.exports = SMARTGLASS;

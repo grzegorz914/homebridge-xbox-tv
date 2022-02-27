@@ -6,9 +6,7 @@ const fsPromises = fs.promises;
 
 const XboxWebApi = require('xbox-webapi');
 const Smartglass = require('./src/smartglass');
-const {
-	format
-} = require('path');
+const mqttClient = require('./src/mqtt.js');
 
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
@@ -202,12 +200,11 @@ class xboxTvDevice {
 		this.userToken = config.userToken;
 		this.userHash = config.userHash;
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
-		this.webApiControl = config.webApiControl || false;
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
 		this.volumeControl = config.volumeControl || 0;
-		this.switchInfoMenu = config.switchInfoMenu || false;
+		this.infoButtonCommand = config.infoButtonCommand || 'nexus';
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
 		this.filterGames = config.filterGames || false;
 		this.filterApps = config.filterApps || false;
@@ -215,6 +212,14 @@ class xboxTvDevice {
 		this.filterDlc = config.filterDlc || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
+		this.enableMqtt = config.enableMqtt || false;
+		this.mqttHost = config.mqttHost;
+		this.mqttPort = config.mqttPort || 1883;
+		this.mqttPrefix = config.mqttPrefix;
+		this.mqttAuth = config.mqttAuth || false;
+		this.mqttUser = config.mqttUser;
+		this.mqttPasswd = config.mqttPasswd;
+		this.mqttDebug = config.mqttDebug || false;
 
 		//add configured inputs to the default inputs
 		const inputsArr = new Array();
@@ -255,9 +260,6 @@ class xboxTvDevice {
 		this.volume = 0;
 		this.muteState = true;
 		this.mediaState = 0;
-
-		this.setStartInput = false;
-		this.startInputIdentifier = 0;
 		this.inputIdentifier = 0;
 
 		this.pictureMode = 0;
@@ -297,6 +299,36 @@ class xboxTvDevice {
 			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
 		}
 
+		//mqtt client
+		this.mqttClient = new mqttClient({
+			enabled: this.enableMqtt,
+			host: this.mqttHost,
+			port: this.mqttPort,
+			prefix: this.mqttPrefix,
+			topic: this.name,
+			auth: this.mqttAuth,
+			user: this.mqttUser,
+			passwd: this.mqttPasswd,
+			debug: this.mqttDebug
+		});
+
+		this.mqttClient.on('connected', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('error', (error) => {
+				this.log('Device: %s %s, %s', this.host, this.name, error);
+			})
+			.on('debug', (message) => {
+				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
+			})
+			.on('message', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('disconnected', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			});
+
+		//web api client
 		this.xboxWebApi = XboxWebApi({
 			clientId: this.clientId,
 			clientSecret: this.clientSecret,
@@ -305,6 +337,7 @@ class xboxTvDevice {
 		});
 		const checkAuthorizationState = this.webApiControl ? this.getAuthorizationState() : false
 
+		//xbox client
 		this.xbox = new Smartglass({
 			host: this.host,
 			xboxLiveId: this.xboxLiveId,
@@ -365,13 +398,6 @@ class xboxTvDevice {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, powerState)
 						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-
-					if (this.setStartInput) {
-						setTimeout(() => {
-							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
-							this.setStartInput = false;
-						}, 1200);
-					}
 				};
 
 				if (this.speakerService) {
@@ -395,6 +421,9 @@ class xboxTvDevice {
 				this.muteState = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
+			})
+			.on('mqtt', (topic, message) => {
+				this.mqttClient.send(topic, message);
 			})
 			.on('disconnected', (message) => {
 				const stopInterval = this.webApiControl ? clearInterval(this.checkAuthorizationState) : false;
@@ -753,14 +782,12 @@ class xboxTvDevice {
 				const setTelevision = (inputOneStoreProductId === 'Television');
 				const setApp = ((inputOneStoreProductId != undefined && inputOneStoreProductId != '0') && !setDashboard && !setTelevision);
 				try {
-					const setInput = (this.powerState && this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
+					const setInput = (this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Input successful, input: %s, reference: %s, product Id: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
 					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, set Input error: %s', this.host, accessoryName, error);
 				};
-				this.setStartInput = !this.powerState;
-				this.startInputIdentifier = inputIdentifier;
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
@@ -816,7 +843,7 @@ class xboxTvDevice {
 						channelName = 'systemMedia';
 						break;
 					case Characteristic.RemoteKey.INFORMATION:
-						command = this.switchInfoMenu ? 'nexus' : 'view';
+						command = this.infoButtonCommand;
 						channelName = 'systemInput';
 						break;
 				};

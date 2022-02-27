@@ -13,7 +13,7 @@ const Types = {
 class PACKER {
     constructor(type) {
         const packetType = type.slice(0, 2).toString('hex');
-        let structure = '';
+        this.packetStructure = '';
         if (packetType in Types) {
             const packetValue = type;
             type = Types[packetType];

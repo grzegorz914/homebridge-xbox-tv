@@ -104,10 +104,10 @@ class MESSAGE {
                     value: value,
                     length: length,
                     pack(packetStructure) {
-                        return packetStructure.writeBytes(this.setFlags(this.value));
+                        return packetStructure.writeBytes(setFlags(this.value));
                     },
                     unpack(packetStructure) {
-                        this.value = this.readFlags(packetStructure.readBytes(this.length));
+                        this.value = readFlags(packetStructure.readBytes(this.length));
                         return this.value;
                     }
                 }

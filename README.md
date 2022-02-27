@@ -47,6 +47,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Record Game DVR with additional button.
+* MQTT Client publisch all available data from device.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a> 
@@ -98,7 +99,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `volumeControl` | Here select what a additional volume control mode You want to use (None, Slider, Fan), not yet implemented. |
-| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
@@ -112,6 +113,14 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `buttons.displayType` | Here select display type in HomeKit app, possible `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
+| `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
+| `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
+| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
+| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty.) |
+| `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
+| `mqttUser` | Here set the MQTT Broker user. |
+| `mqttPasswd` | Here set the MQTT Broker password. |
+| `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 
 *Example Config:
@@ -134,7 +143,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 			"disableLogDeviceInfo": false,
 			"enableDebugMode": false,
 			"volumeControl": 0,
-			"switchInfoMenu": false,
+			"infoButtonCommand": "nexus",
 			"getInputsFromDevice": false,
 			"filterGames": false,
 			"filterApps": false,
@@ -176,7 +185,15 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 							"oneStoreProductId": "oneStoreProductId",
 							"displayType": 0
 						},
-					]
+					],
+            "enableMqtt": false,
+            "mqttHost": "192.168.1.33",
+            "mqttPort": 1883,
+            "mqttPrefix": "home/xbox",
+            "mqttAuth": false,
+            "mqttUser": "user",
+            "mqttPass": "password",
+             "mqttDebug": false
 		}
 	]
 }

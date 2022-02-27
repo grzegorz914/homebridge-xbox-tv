@@ -1,6 +1,7 @@
 class STRUCTURE {
     constructor(packet) {
         this.packet = (packet == undefined) ? Buffer.from('') : packet;
+        this.totalLength = this.packet.length;
         this.offset = 0;
     };
 
@@ -9,15 +10,14 @@ class STRUCTURE {
     };
 
     writeSGString(data) {
-        const lengthBuffer = Buffer.allocUnsafe(2);
-        lengthBuffer.writeUInt16BE(data.length, 0);
-
-        const dataBuffer = Buffer.from(data + '\x00');
-        this.add(Buffer.concat([
-            lengthBuffer,
-            dataBuffer
+        const bufferLength = Buffer.allocUnsafe(2);
+        bufferLength.writeUInt16BE(data.length, 0);
+        const buffer = Buffer.from(data + '\x00');
+        const packet = this.add(Buffer.concat([
+            bufferLength,
+            buffer
         ]));
-        return this;
+        return packet;
     };
 
     readSGString() {
@@ -28,9 +28,9 @@ class STRUCTURE {
     };
 
     writeBytes(data, type) {
-        const dataBuffer = Buffer.from(data, type);
-        this.add(dataBuffer);
-        return this;
+        const buffer = Buffer.from(data, type);
+        const packet = this.add(buffer);
+        return packet;
     };
 
     readBytes(count = false) {
@@ -38,7 +38,7 @@ class STRUCTURE {
 
         if (count == false) {
             data = this.packet.slice(this.offset);
-            this.offset = this.packet.length;;
+            this.offset = this.totalLength;
         } else {
             data = this.packet.slice(this.offset, this.offset + count);
             this.offset = (this.offset + count);
@@ -47,10 +47,10 @@ class STRUCTURE {
     };
 
     writeUInt8(data) {
-        const tempBuffer = Buffer.allocUnsafe(1);
-        tempBuffer.writeUInt8(data, 0);
-        this.add(tempBuffer);
-        return this;
+        const buffer = Buffer.allocUnsafe(1);
+        buffer.writeUInt8(data, 0);
+        const packet = this.add(buffer);
+        return packet;
     };
 
     readUInt8() {
@@ -60,10 +60,10 @@ class STRUCTURE {
     };
 
     writeUInt16(data) {
-        const tempBuffer = Buffer.allocUnsafe(2);
-        tempBuffer.writeUInt16BE(data, 0);
-        this.add(tempBuffer);
-        return this;
+        const buffer = Buffer.allocUnsafe(2);
+        buffer.writeUInt16BE(data, 0);
+        const packet = this.add(buffer);
+        return packet;
     };
 
     readUInt16() {
@@ -73,10 +73,10 @@ class STRUCTURE {
     };
 
     writeUInt32(data) {
-        const tempBuffer = Buffer.allocUnsafe(4);
-        tempBuffer.writeUInt32BE(data, 0);
-        this.add(tempBuffer);
-        return this;
+        const buffer = Buffer.allocUnsafe(4);
+        buffer.writeUInt32BE(data, 0);
+        const packet = this.add(buffer);
+        return packet;
     };
 
     readUInt32() {
@@ -86,10 +86,10 @@ class STRUCTURE {
     };
 
     writeInt32(data) {
-        const tempBuffer = Buffer.allocUnsafe(4);
-        tempBuffer.writeInt32BE(data, 0);
-        this.add(tempBuffer);
-        return this;
+        const buffer = Buffer.allocUnsafe(4);
+        buffer.writeInt32BE(data, 0);
+        const packet = this.add(buffer);
+        return packet;
     };
 
     readInt32() {

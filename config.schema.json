@@ -70,35 +70,35 @@
 							"required": false
 						},
 						"disableLogInfo": {
-							"title": "Disable log info",
+							"title": "Disable Log Info",
 							"type": "boolean",
 							"default": false,
 							"description": "This disable logging values and states on every it change.",
 							"required": false
-						  },
-						  "disableLogDeviceInfo": {
-							"title": "Disable log device info",
+						},
+						"disableLogDeviceInfo": {
+							"title": "Disable Log Device Info",
 							"type": "boolean",
 							"default": false,
 							"description": "This disable log device info by every connections device to the network.",
 							"required": false
-						  },
-						  "enableDebugMode": {
-							"title": "Enable Debug Mode",
+						},
+						"enableDebugMode": {
+							"title": "Debug",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable debug mode.",
 							"required": false
-						  },
+						},
 						"webApiControl": {
-							"title": "Enable Web Api",
+							"title": "Web Api",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable possibility to control Xbox over Web Api.",
 							"required": false
 						},
 						"volumeControl": {
-							"title": "Volume Control Mode",
+							"title": "Volume Control",
 							"type": "integer",
 							"minimum": 0,
 							"maximum": 2,
@@ -125,12 +125,24 @@
 							],
 							"required": true
 						},
-						"switchInfoMenu": {
-							"title": "Switch Info/Menu",
-							"type": "boolean",
-							"default": false,
-							"description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
-							"required": false
+						"infoButtonCommand": {
+							"title": "Info Button",
+							"type": "string",
+							"oneOf": [{
+									"title": "View",
+									"enum": [
+										"view"
+									]
+								},
+								{
+									"title": "Nexus",
+									"enum": [
+										"nexus"
+									]
+								}
+							],
+							"description": "Here select the function of info button in RC.",
+							"required": true
 						},
 						"getInputsFromDevice": {
 							"title": "Load Inputs From Device",
@@ -532,6 +544,84 @@
 									}
 								}
 							}
+						},
+						"enableMqtt": {
+							"title": "Enable",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable MQTT client."
+						},
+						"mqttHost": {
+							"title": "IP/Hostname",
+							"type": "string",
+							"placeholder": "ip or hostname",
+							"required": true,
+							"format": "hostname",
+							"description": "Here set the IP/Hostname of MQTT Broker.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
+						},
+						"mqttPort": {
+							"title": "Port",
+							"type": "integer",
+							"placeholder": 1883,
+							"required": true,
+							"description": "Here set the port of MQTT Broker.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
+						},
+						"mqttPrefix": {
+							"title": "Prefix",
+							"type": "string",
+							"placeholder": "home/xbox",
+							"required": false,
+							"description": "Here set the prefix.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
+						},
+						"mqttAuth": {
+							"title": "Authorization",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable authorization for MQTT Broker.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
+						},
+						"mqttUser": {
+							"title": "User",
+							"type": "string",
+							"placeholder": "user",
+							"required": false,
+							"description": "Here set the user of MQTT Broker.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
+							}
+						},
+						"mqttPasswd": {
+							"title": "Password",
+							"type": "string",
+							"placeholder": "password",
+							"required": false,
+							"description": "Here set the password of MQTT Broker.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
+							}
+						},
+						"mqttDebug": {
+							"title": "Debug",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable debug mode for MQTT.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
 						}
 					}
 				}
@@ -596,6 +686,23 @@
 			{
 				"key": "devices[]",
 				"type": "section",
+				"title": "MQTT Client",
+				"expandable": true,
+				"expanded": false,
+				"items": [
+					"devices[].enableMqtt",
+					"devices[].mqttHost",
+					"devices[].mqttPort",
+					"devices[].mqttPrefix",
+					"devices[].mqttAuth",
+					"devices[].mqttUser",
+					"devices[].mqttPasswd",
+					"devices[].mqttDebug"
+				]
+			},
+			{
+				"key": "devices[]",
+				"type": "section",
 				"title": "Web Api Settings",
 				"expandable": true,
 				"expanded": false,
@@ -620,7 +727,7 @@
 					"devices[].enableDebugMode",
 					"devices[].disableLogInfo",
 					"devices[].disableLogDeviceInfo",
-					"devices[].switchInfoMenu",
+					"devices[].infoButtonCommand",
 					"devices[].volumeControl"
 				]
 			}
