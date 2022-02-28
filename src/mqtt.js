@@ -27,12 +27,10 @@ class MQTTCLIENT extends EventEmitter {
             }
             const url = `mqtt://${this.mqttHost}:${this.mqttPort}`;
             this.mqttClient = await MQTT.connectAsync(url, options);
-
             this.isConnected = true;
             this.emit('connected', 'MQTT Connected.');
         } catch (error) {
-            this.isConnected = false;
-            this.emit('error', error);
+            this.emit('error', `MQTT Connect error: ${error}`);
         };
     };
 
@@ -46,13 +44,8 @@ class MQTTCLIENT extends EventEmitter {
             await this.mqttClient.publish(fullTopic, message);
             const emitDebug = this.mqttDebug ? this.emit('debug', `MQTT publish: ${fullTopic}: ${message}`) : false;
         } catch (error) {
-            await this.mqttClient.end();
             this.isConnected = false;
-            this.emit('disconnected', 'MQTT Disconnected, trying to reconnect.');
-
-            setTimeout(() => {
-                this.connect();
-            }, 5000);
+            this.emit('error', `MQTT Publish error: ${error}`);
         };
     };
 };
