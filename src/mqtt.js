@@ -30,6 +30,7 @@ class MQTTCLIENT extends EventEmitter {
             this.isConnected = true;
             this.emit('connected', 'MQTT Connected.');
         } catch (error) {
+            this.isConnected = false;
             this.emit('error', `MQTT Connect error: ${error}`);
         };
     };
@@ -44,7 +45,6 @@ class MQTTCLIENT extends EventEmitter {
             await this.mqttClient.publish(fullTopic, message);
             const emitDebug = this.mqttDebug ? this.emit('debug', `MQTT publish: ${fullTopic}: ${message}`) : false;
         } catch (error) {
-            this.isConnected = false;
             this.emit('error', `MQTT Publish error: ${error}`);
         };
     };

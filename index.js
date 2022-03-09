@@ -195,6 +195,7 @@ class xboxTvDevice {
 		this.name = config.name || 'Game console';
 		this.host = config.host;
 		this.xboxLiveId = config.xboxLiveId;
+		this.webApiControl = config.webApiControl || false;
 		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
 		this.clientSecret = config.clientSecret || false;
 		this.userToken = config.userToken;

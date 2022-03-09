@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.2.2] - (09.03.2022)
+## Changed
+- MQTT Client connection process
+
+## Fixed
+- webApiControl switch state
+
 ## [2.2.0] - (27.02.2022)
 ## Added
 - MQTT Client, publish all device data
