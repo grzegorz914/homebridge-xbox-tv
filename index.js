@@ -5,7 +5,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 
 const XboxWebApi = require('xbox-webapi');
-const Smartglass = require('./src/smartglass');
+const Smartglass = require('./src/smartglass.js');
 const mqttClient = require('./src/mqtt.js');
 
 const PLUGIN_NAME = 'homebridge-xbox-tv';
@@ -330,13 +330,19 @@ class xboxTvDevice {
 			});
 
 		//web api client
-		this.xboxWebApi = XboxWebApi({
-			clientId: this.clientId,
-			clientSecret: this.clientSecret,
-			userToken: this.userToken,
-			uhs: this.userHash
-		});
-		const checkAuthorizationState = this.webApiControl ? this.getAuthorizationState() : false
+		if (this.webApiControl) {
+			this.xboxWebApi = XboxWebApi({
+				clientId: this.clientId,
+				clientSecret: this.clientSecret,
+				userToken: this.userToken,
+				uhs: this.userHash
+			});
+			this.getAuthorizationState();
+
+			setInterval(() => {
+				this.getAuthorizationState();
+			}, 600000);
+		};
 
 		//xbox client
 		this.xbox = new Smartglass({
@@ -347,11 +353,6 @@ class xboxTvDevice {
 		});
 
 		this.xbox.on('connected', (message) => {
-				if (this.webApiControl) {
-					this.checkAuthorizationState = setInterval(() => {
-						this.getAuthorizationState();
-					}, 600000);
-				};
 				this.log('Device: %s %s, %s', this.host, this.name, message)
 			})
 			.on('error', (error) => {
@@ -427,7 +428,6 @@ class xboxTvDevice {
 				this.mqttClient.send(topic, message);
 			})
 			.on('disconnected', (message) => {
-				const stopInterval = this.webApiControl ? clearInterval(this.checkAuthorizationState) : false;
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			});
 
@@ -441,7 +441,7 @@ class xboxTvDevice {
 			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
 			await this.xboxWebApi.isAuthenticated();
 			this.webApiEnabled = true;
-			this.log('Device: %s %s, Authorized and Web Api enabled.', this.host, this.name);
+			const debug = this.enableDebugMode ? this.log('Device: %s %s, Authorized and Web Api enabled.', this.host, this.name) : false;
 
 			try {
 				this.log.debug('Device: %s %s, requesting web api console data.', this.host, this.name);
@@ -690,7 +690,7 @@ class xboxTvDevice {
 				const locale = consoleStatusData.locale;
 				const region = consoleStatusData.region;
 				const consoleType = CONSOLES_NAME[consoleStatusData.consoleType];
-				const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] != 0); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+				const powerState = (CONSOLE_POWER_STATE[consoleStatusData.powerState] == 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
 				const playbackState = (CONSOLE_PLAYBACK_STATE[consoleStatusData.playbackState] == 1); // 0 - Stopped, 1 - Playng, 2 - Paused
 				const loginState = consoleStatusData.loginState;
 				const focusAppAumid = consoleStatusData.focusAppAumid;
@@ -759,7 +759,9 @@ class xboxTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					const setPower = (state && !this.powerState) ? await this.xbox.powerOn() : (!state && this.powerState) ? await this.xbox.powerOff() : false;
+					//const setPower = this.webApiEnabled ? (!this.powerState && state) ? await this.xboxWebApi.getProvider('smartglass').powerOn(this.xboxLiveId) : (this.powerState && !state) ? this.xboxWebApi.getProvider('smartglass').powerOff(this.xboxLiveId) : false : false;
+					const setPower = (!this.powerState && state) ? await this.xbox.powerOn() : (this.powerState && !state) ? await this.xbox.powerOff() : false;
+					this.powerState = (this.powerState != state) ? state : this.powerState;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power successful, %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				} catch (error) {
 					this.log.error('Device: %s %s, set Power, error: %s', this.host, accessoryName, error);
@@ -849,7 +851,7 @@ class xboxTvDevice {
 						break;
 				};
 				try {
-					const sendCommand = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
+					const sendCommand = (this.powerState && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, set Remote Key command error: %s', this.host, accessoryName, error);
@@ -886,7 +888,7 @@ class xboxTvDevice {
 			.onSet(async (command) => {
 				switch (command) {
 					case Characteristic.PowerModeSelection.SHOW:
-						command = this.switchInfoMenu ? 'nexus' : 'view';
+						command = 'nexus';
 						break;
 					case Characteristic.PowerModeSelection.HIDE:
 						command = 'b';
@@ -894,7 +896,7 @@ class xboxTvDevice {
 				};
 				try {
 					const channelName = 'systemInput';
-					const setPowerModeSelection = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
+					const setPowerModeSelection = (this.powerState && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, set Power Mode Selection command error: %s', this.host, accessoryName, error);
@@ -921,7 +923,7 @@ class xboxTvDevice {
 				};
 				try {
 					const channelName = 'tvRemote';
-					const setVolume = this.powerState ? await this.xbox.sendCommand(channelName, command) : false;
+					const setVolume = (this.powerState && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume command successful: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, set Volume command error: %s', this.host, accessoryName, error);
@@ -949,9 +951,7 @@ class xboxTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					const command = 'volMute';
-					const channelName = 'tvRemote';
-					const toggleMute = (this.powerState && state != this.muteState) ? await this.xbox.sendCommand(channelName, command) : false;
+					const toggleMute = (this.powerState && this.webApiEnabled) ? state ? await this.xboxWebApi.getProvider('smartglass').mute(this.xboxLiveId) : await this.xboxWebApi.getProvider('smartglass').unmute(this.xboxLiveId) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				} catch (error) {
 					this.log.error('Device: %s %s, set Mute error: %s', this.host, accessoryName, error);
@@ -1170,10 +1170,10 @@ class xboxTvDevice {
 						const setTelevision = (buttonOneStoreProductId === 'Television');
 						const setApp = ((buttonOneStoreProductId != undefined && buttonOneStoreProductId != '0') && !setDashboard && !setTelevision);
 						try {
-							const setCommand = (this.powerState && state && buttonMode <= 2) ? await this.xbox.sendCommand(channelName, command) : false
-							const recordGameDvr = (this.powerState && state && this.webApiControl && this.webApiEnabled && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
-							const rebootConsole = (this.powerState && state && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
-							const setAppInput = (this.powerState && state && buttonMode == 5 && this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
+							const setCommand = (this.powerState && state && this.webApiEnabled && buttonMode <= 2) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false
+							const recordGameDvr = (this.powerState && state && buttonMode == 3) ? await this.xbox.recordGameDvr() : false;
+							const rebootConsole = (this.powerState && state && this.webApiEnabled && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
+							const setAppInput = (this.powerState && state && this.webApiEnabled && buttonMode == 5) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set button successful, name: %s, command: %s', this.host, accessoryName, buttonName, buttonCommand);
 						} catch (error) {
 							this.log.error('Device: %s %s, set button error, name: %s, error: %s', this.host, accessoryName, buttonName, error);
