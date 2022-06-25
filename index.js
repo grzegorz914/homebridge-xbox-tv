@@ -247,6 +247,7 @@ class xboxTvDevice {
 		this.modelName = 'Model Name';
 		this.serialNumber = this.xboxLiveId;
 		this.firmwareRevision = 'Firmware Revision';
+		this.devInfo = '';
 
 		//setup variables
 		this.webApiEnabled = false;
@@ -349,7 +350,10 @@ class xboxTvDevice {
 			host: this.host,
 			xboxLiveId: this.xboxLiveId,
 			userToken: this.userToken,
-			uhs: this.userHash
+			uhs: this.userHash,
+			infoLog: this.disableLogInfo,
+			debugLog: this.enableDebugMode,
+			mqttEnabled: this.enableMqtt
 		});
 
 		this.xbox.on('connected', (message) => {
@@ -359,10 +363,10 @@ class xboxTvDevice {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
 			.on('debug', (message) => {
-				const debug = this.enableDebugMode ? this.log('Device: %s %s, %s', this.host, this.name, message) : false;
+				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('message', (message) => {
-				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('deviceInfo', async (firmwareRevision) => {
 				if (!this.disableLogDeviceInfo) {
@@ -388,6 +392,7 @@ class xboxTvDevice {
 					this.log.error('Device: %s %s, get Device Info error: %s', this.host, this.name, error);
 				};
 
+				this.devInfo = devInfo;
 				this.firmwareRevision = firmwareRevision;
 			})
 			.on('stateChanged', (power, titleId, inputReference, volume, mute, mediaState) => {
@@ -423,6 +428,7 @@ class xboxTvDevice {
 				this.muteState = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
+				this.mqttClient.send('Info', this.devInfo);
 			})
 			.on('mqtt', (topic, message) => {
 				this.mqttClient.send(topic, message);
@@ -851,7 +857,7 @@ class xboxTvDevice {
 						break;
 				};
 				try {
-					const sendCommand = (this.powerState && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
+					const sendCommand = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : await this.xbox.sendCommand(channelName, command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, Remote Key command successful: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, set Remote Key command error: %s', this.host, accessoryName, error);
@@ -896,7 +902,7 @@ class xboxTvDevice {
 				};
 				try {
 					const channelName = 'systemInput';
-					const setPowerModeSelection = (this.powerState && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
+					const setPowerModeSelection = this.powerState ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : await this.xbox.sendCommand(channelName, command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power Mode Selection command successful: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, set Power Mode Selection command error: %s', this.host, accessoryName, error);
