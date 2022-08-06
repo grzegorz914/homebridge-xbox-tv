@@ -1,3 +1,5 @@
+"use strict";
+
 const PacketStructure = require('./structure');
 
 class SIMPLE {

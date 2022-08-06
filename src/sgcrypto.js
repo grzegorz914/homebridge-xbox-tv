@@ -1,4 +1,6 @@
-const crypto = require('crypto');
+"use strict";
+
+const Crypto = require('crypto');
 const EC = require('elliptic').ec;
 
 class SGCRYPTO {
@@ -42,7 +44,7 @@ class SGCRYPTO {
     };
 
     signPublicKey(publicKey) {
-        const sha512 = crypto.createHash("sha512");
+        const sha512 = Crypto.createHash("sha512");
 
         // Generate keys
         const key1 = this.ec.genKeyPair();
@@ -103,7 +105,7 @@ class SGCRYPTO {
             key = this.getEncryptionKey();
         };
 
-        let cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
+        const cipher = Crypto.createCipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
         let encryptedPayload = cipher.update(data, 'binary', 'binary');
@@ -123,7 +125,7 @@ class SGCRYPTO {
             iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
         };
 
-        let cipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+        const cipher = Crypto.createDecipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
         let decryptedPayload = cipher.update(data, 'binary', 'binary');
@@ -133,7 +135,7 @@ class SGCRYPTO {
     };
 
     sign(data) {
-        let hashHmac = crypto.createHmac('sha256', this.getHashKey());
+        const hashHmac = Crypto.createHmac('sha256', this.getHashKey());
         hashHmac.update(data, 'binary', 'binary');
         const protectedPayloadHash = hashHmac.digest('binary');
         const protectedPayloadHashBuffer = Buffer.from(protectedPayloadHash, 'binary');

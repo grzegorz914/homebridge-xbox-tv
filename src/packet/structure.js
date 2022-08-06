@@ -1,3 +1,5 @@
+"use strict";
+
 class STRUCTURE {
     constructor(packet) {
         this.packet = (packet == undefined) ? Buffer.from('') : packet;
