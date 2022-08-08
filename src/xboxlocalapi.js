@@ -263,7 +263,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     const debug = this.debugLog ? this.emit('debug', `Status: ${JSON.stringify(decodedMessage)}`) : false;
 
                     if (!this.isConnected) {
-                        this.isConnected = true;
                         this.emit('connected', 'Connected.');
 
                         const majorVersion = decodedMessage.majorVersion;
@@ -272,6 +271,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
                         this.emit('deviceInfo', firmwareRevision);
                     };
+                    this.isConnected = true;
 
                     const appsArray = new Array();
                     const appsCount = decodedMessage.apps.length;
@@ -447,9 +447,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
     powerOn() {
         return new Promise((resolve, reject) => {
-            const info = this.infoLog ? false : this.emit('message', 'Send power On.');
-
             if (!this.isConnected) {
+                const info = this.infoLog ? false : this.emit('message', 'Send power On.');
                 this.setPowerOn = setInterval(() => {
                     try {
                         this.sendPowerOn();
@@ -474,7 +473,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 }, 15000);
             } else {
                 reject({
-                    status: 'Console already connected.'
+                    status: 'Console already On.'
                 });
             };
         });
@@ -487,15 +486,14 @@ class XBOXLOCALAPI extends EventEmitter {
             const message = powerOn.pack();
             await this.sendSocketMessage(message);
         } catch (error) {
-            this.emit('error', `Send power on error: ${error}`)
+            this.emit('error', `Send power On error: ${error}`)
         };
     };
 
     powerOff() {
         return new Promise(async (resolve, reject) => {
-            const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
-
             if (this.isConnected) {
+                const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
                 try {
                     const powerOff = new Packer('message.powerOff');
                     powerOff.set('liveId', this.xboxLiveId);
@@ -514,7 +512,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             } else {
                 reject({
-                    status: 'Console already disconnected.'
+                    status: 'Console already Off.'
                 });
             };
         });
@@ -522,9 +520,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
     recordGameDvr() {
         return new Promise(async (resolve, reject) => {
-            const info = this.infoLog ? false : this.emit('message', 'Send record game.');
-
             if (this.isConnected && this.isAuthorized) {
+                const info = this.infoLog ? false : this.emit('message', 'Send record game.');
                 try {
                     const recordGameDvr = new Packer('message.recordGameDvr');
                     recordGameDvr.set('startTimeDelta', -60);
@@ -548,9 +545,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
     sendCommand(channelName, command) {
         return new Promise(async (resolve, reject) => {
-            const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-
             if (this.isConnected) {
+                const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
                 if (CONSTANS.channelIds[channelName] != this.channelRequestId) {
                     try {
                         const channelRequest = new Packer('message.channelRequest');
@@ -586,24 +582,27 @@ class XBOXLOCALAPI extends EventEmitter {
     };
 
     async disconnect() {
-        const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
+        if (this.isConnected) {
+            const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
+            try {
+                const disconnect = new Packer('message.disconnect');
+                disconnect.set('reason', 4);
+                disconnect.set('errorCode', 0);
+                const message = disconnect.pack(this);
+                await this.sendSocketMessage(message);
 
-        try {
-            const disconnect = new Packer('message.disconnect');
-            disconnect.set('reason', 4);
-            disconnect.set('errorCode', 0);
-            const message = disconnect.pack(this);
-            await this.sendSocketMessage(message);
-
-            clearTimeout(this.closeConnection);
-            this.isConnected = false;
-            this.requestNum = 0;
-            this.channelTargetId = null;
-            this.channelRequestId = null;
-            this.emit('stateChanged', false, 0, 0, 0, true, 0);
-            this.emit('disconnected', 'Disconnected.');
-        } catch (error) {
-            this.emit('error', `Send disconnect error: ${error}`)
+                clearTimeout(this.closeConnection);
+                this.isConnected = false;
+                this.requestNum = 0;
+                this.channelTargetId = null;
+                this.channelRequestId = null;
+                this.emit('stateChanged', false, 0, 0, 0, true, 0);
+                this.emit('disconnected', 'Disconnected.');
+            } catch (error) {
+                this.emit('error', `Send disconnect error: ${error}`)
+            };
+        } else {
+            const debug = this.debugLog ? this.emit('debug', 'Console already disconnected.') : false;
         };
     };
 
@@ -614,7 +613,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
     sendSocketMessage(message) {
         return new Promise((resolve, reject) => {
-            const offset = '0';
+            const offset = 0;
             const length = message.byteLength;
 
             this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
