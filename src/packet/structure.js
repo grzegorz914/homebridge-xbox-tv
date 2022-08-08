@@ -2,7 +2,9 @@
 
 class STRUCTURE {
     constructor(packet) {
-        this.packet = (packet == undefined) ? Buffer.from('') : packet;
+        packet = (packet == undefined) ? Buffer.from('') : packet;
+        this.packet = packet;
+        this.totalLength = packet.length;
         this.offset = 0;
     };
 
@@ -21,7 +23,7 @@ class STRUCTURE {
     readSGString() {
         const dataLength = this.readUInt16();
         const data = this.packet.slice(this.offset, this.offset + dataLength);
-        this.offset = this.offset + 1 + dataLength;
+        this.offset = (this.offset + 1 + dataLength);
         return data;
     };
 
@@ -35,12 +37,11 @@ class STRUCTURE {
         let data = '';
 
         if (count == false) {
-            const totalLength = this.packet.length;
             data = this.packet.slice(this.offset);
-            this.offset = totalLength;
+            this.offset = this.totalLength;
         } else {
             data = this.packet.slice(this.offset, this.offset + count);
-            this.offset = this.offset + count;
+            this.offset = (this.offset + count);
         };
         return data;
     };
@@ -54,7 +55,7 @@ class STRUCTURE {
 
     readUInt8() {
         const data = this.packet.readUInt8BE(this.offset);
-        this.offset = this.offset + 1;
+        this.offset = (this.offset + 1);
         return data;
     };
 
@@ -67,7 +68,7 @@ class STRUCTURE {
 
     readUInt16() {
         const data = this.packet.readUInt16BE(this.offset);
-        this.offset = this.offset + 2;
+        this.offset = (this.offset + 2);
         return data;
     };
 
@@ -80,7 +81,7 @@ class STRUCTURE {
 
     readUInt32() {
         const data = this.packet.readUInt32BE(this.offset);
-        this.offset = this.offset + 4;
+        this.offset = (this.offset + 4);
         return data;
     };
 
@@ -93,7 +94,7 @@ class STRUCTURE {
 
     readInt32() {
         const data = this.packet.readInt32BE(this.offset);
-        this.offset = this.offset + 4;
+        this.offset = (this.offset + 4);
         return data;
     };
 
@@ -107,11 +108,10 @@ class STRUCTURE {
     };
 
     add(data) {
-        const packet = Buffer.concat([
+        this.packet = Buffer.concat([
             this.packet,
             data
         ]);
-        this.packet = packet;
     };
 };
 module.exports = STRUCTURE;
