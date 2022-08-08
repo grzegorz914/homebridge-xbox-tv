@@ -8,6 +8,7 @@
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv)
 [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv)
+[![npm](https://img.shields.io/npm/v/homebridge-xbox-tv/beta.svg?style=flat-square)](https://www.npmjs.com/package/homebridge-xbox-tv)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
@@ -32,7 +33,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Troubleshooting
 * If for some reason the device is not displayed in HomeKit app try this procedure:
-   * Go to `./homebridge/persist`.
+   * Go to `./homebridge/persist` or `/var/lib/homebridge/persist` for RPI.
    * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`.
    * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
    * Restart Homebridge and try add it to the HomeKit app again.
@@ -77,8 +78,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Follow the instructions in the console log.
 * Start new authorization need remove old token first, go to *./homebridge/xboxTv/* and remove token file.
 
-## Configuration
-Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+### Configuration
+* Run this plugin as a child bridge (Highly Recommended).
+* Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin (Highly Recommended). 
+* The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
@@ -199,13 +202,13 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 }
 ```
 
-## Adding to HomeKit
+### Adding to HomeKit
 Each accessory needs to be manually paired. 
 1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
-2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
-3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*. 
-4. Select your Your accessory. 
-5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
+2. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
+3. Tap *Add Accessory*, and select *I Don't Have a Code, Cannot Scan* or *More options*. 
+4. Select Your accessory and press add anyway. 
+5. Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
 6. Complete the accessory setup.
 
 ## Limitations
