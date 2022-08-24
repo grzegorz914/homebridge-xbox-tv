@@ -1,22 +1,16 @@
+"use strict";
+
 const SimplePacket = require('./simple');
 const MessagePacket = require('./message');
-
-const Types = {
-    d00d: 'message',
-    cc00: 'simple.connectRequest',
-    cc01: 'simple.connectResponse',
-    dd00: 'simple.discoveryRequest',
-    dd01: 'simple.discoveryResponse',
-    dd02: 'simple.powerOn',
-};
+const CONSTANS = require('../constans.json');
 
 class PACKER {
     constructor(type) {
         const packetType = type.slice(0, 2).toString('hex');
         this.packetStructure = '';
-        if (packetType in Types) {
+        if (packetType in CONSTANS.Types) {
             const packetValue = type;
-            type = Types[packetType];
+            type = CONSTANS.Types[packetType];
             this.packetStructure = this.loadPacketStructure(type, packetValue);
         } else {
             this.packetStructure = this.loadPacketStructure(type);

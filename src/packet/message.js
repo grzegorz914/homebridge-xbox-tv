@@ -1,28 +1,8 @@
+"use strict";
+
 const PacketStructure = require('./structure');
-const hexToBin = require('hex-to-binary');
-
-const playbackStatus = {
-    0: 'Closed',
-    1: 'Changing',
-    2: 'Stopped',
-    3: 'Playing',
-    4: 'Paused'
-};
-
-const mediaTypes = {
-    0: 'No Media',
-    1: 'Music',
-    2: 'Video',
-    3: 'Image',
-    4: 'Conversation',
-    5: 'Game'
-};
-
-const soundStatus = {
-    0: 'Muted',
-    1: 'Low',
-    2: 'Full'
-};
+const HexToBin = require('hex-to-binary');
+const CONSTANS = require('../constans.json');
 
 class MESSAGE {
     constructor(type, packetData = false) {
@@ -254,10 +234,10 @@ class MESSAGE {
                 titleId: Type.uInt32('0'),
                 aumId: Type.sgString(),
                 assetId: Type.sgString(),
-                mediaType: Type.mapper(mediaTypes, Type.uInt16('0')),
-                soundLevel: Type.mapper(soundStatus, Type.uInt16('0')),
+                mediaType: Type.mapper(CONSTANS.MediaTypes, Type.uInt16('0')),
+                soundLevel: Type.mapper(CONSTANS.SoundStatus, Type.uInt16('0')),
                 enabledCommands: Type.uInt32('0'),
-                playbackStatus: Type.mapper(playbackStatus, Type.uInt16('0')),
+                playbackStatus: Type.mapper(CONSTANS.PlaybackStatus, Type.uInt16('0')),
                 rate: Type.uInt32('0'),
                 position: Type.bytes(8, ''),
                 enabmediaStart: Type.bytes(8, ''),
@@ -346,7 +326,7 @@ class MESSAGE {
     };
 
     readFlags(flags) {
-        flags = hexToBin(flags.toString('hex'));
+        flags = HexToBin(flags.toString('hex'));
         const needAck = (flags.slice(2, 3) == 1) ? true : false;
         const isFragment = (flags.slice(3, 4) == 1) ? true : false;
         const type = this.getMsgType(parseInt(flags.slice(4, 16), 2));

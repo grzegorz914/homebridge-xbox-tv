@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
-## [2.2.4] - (xx.04.2022)
+## [2.3.0] - (24.08.2022)
 ## Changed
-- fixed MQTT device info
-- refactor send debug and info log
+- fix MQTT device info
+- refactor debug and info log
 - refactor send mqtt message
 - bump dependencies
+- code cleanup
+- added Xbox Guide as default input
+- fix [#137](https://github.com/grzegorz914/homebridge-xbox-tv/issues/137)
 
 ## [2.2.2] - (09.03.2022)
 ## Changed
