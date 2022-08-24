@@ -33,7 +33,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Troubleshooting
 * If for some reason the device is not displayed in HomeKit app try this procedure:
-   * Go to `./homebridge/persist` or `/var/lib/homebridge/persist` for RPI.
+   * Go to `./homebridge/persist` macOS or `/var/lib/homebridge/persist` for RPI.
    * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`.
    * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
    * Restart Homebridge and try add it to the HomeKit app again.
@@ -60,23 +60,17 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ## Configuration Console
 * [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
   * Profile & System > Settings > General > Power mode & startup
-* Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
+  * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 
 ## Authorization Manager
 * First of all please use built in Authorization Manager.
-* Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
-* Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
-* If for some reason you cannot use Authorization Manager, please use Authorization Manual Mode (removed ab v2.0.13).
+  * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
+  * Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
-
-### Authorization Manual Mode (removed ab v2.0.13)
-* After enable `webApiControl` option, restart the plugin and go to Homebridge console log.
-* Follow the instructions in the console log.
-* Start new authorization need remove old token first, go to *./homebridge/xboxTv/* and remove token file.
 
 ### Configuration
 * Run this plugin as a child bridge (Highly Recommended).
@@ -108,7 +102,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterSystemApps` | If enabled, System Apps (Accessory, Microsoft Store, Television) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store` are created by default. |
+| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
 | `inputs.reference` | Required to identify current running app. |
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.type` | Here select from available types. |
@@ -203,13 +197,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ```
 
 ### Adding to HomeKit
-Each accessory needs to be manually paired. 
-1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
-2. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
-3. Tap *Add Accessory*, and select *I Don't Have a Code, Cannot Scan* or *More options*. 
-4. Select Your accessory and press add anyway. 
-5. Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
-6. Complete the accessory setup.
+* Each accessory needs to be manually paired. 
+  * Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
+  * Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
+  * Tap *Add Accessory*, and select *I Don't Have a Code, Cannot Scan* or *More options*. 
+  * Select Your accessory and press add anyway. 
+  * Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
+  * Complete the accessory setup.
 
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.

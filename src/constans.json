@@ -82,6 +82,14 @@
             "oneStoreProductId": "MicrosoftStore",
             "type": "HOME_SCREEN",
             "contentType": "systemApp"
+        },
+        {
+            "name": "Xbox Guide",
+            "titleId": "1052052983",
+            "reference": "Xbox.Guide_8wekyb3d8bbwe!Xbox.Guide.Application",
+            "oneStoreProductId": "XboxGuide",
+            "type": "HOME_SCREEN",
+            "contentType": "systemApp"
         }
     ],
     "InputSourceTypes": ["OTHER", "HOME_SCREEN", "TUNER", "HDMI", "COMPOSITE_VIDEO", "S_VIDEO", "COMPONENT_VIDEO", "DVI", "AIRPLAY", "USB", "APPLICATION"],

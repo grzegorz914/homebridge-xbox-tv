@@ -8,6 +8,7 @@ const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
 const Packer = require('./packet/packer');
 const SGCrypto = require('./sgcrypto');
+const Ping = require('ping');
 const CONSTANS = require('./constans.json');
 
 class XBOXLOCALAPI extends EventEmitter {
@@ -45,6 +46,14 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channelTargetId = null;
         this.channelRequestId = null;
         this.message = {};
+
+        this.power = false;
+        this.volume = 0;
+        this.mute = true;
+        this.titleId = '';
+        this.reference = '';
+        this.mediaState = 0;
+        this.emitDevInfo = true;
 
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
@@ -117,8 +126,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     };
                 };
 
-                clearTimeout(this.closeConnection);
-
                 if (this.function == 'status') {
                     const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
                     if (this.message === decodedMessage) {
@@ -137,13 +144,15 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 setInterval(async () => {
                     if (!this.isConnected) {
-                        try {
+                        const state = await Ping.promise.probe(this.host, {
+                            timeout: 3
+                        });
+                        const debug = this.debugLog ? this.emit('debug', `Ping state: ${JSON.stringify(state, null, 2)}`) : false;
+                        if (state.alive) {
                             const discoveryPacket = new Packer('simple.discoveryRequest');
                             const message = discoveryPacket.pack();
                             await this.sendSocketMessage(message);
-                        } catch (error) {
-                            const debug = this.debugLog ? this.emit('debug', `Send discovery error: ${error}`) : false
-                        };
+                        }
                     };
                 }, 5000);
             })
@@ -209,7 +218,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 if (connectionResult == 0) {
                     const debug = this.debugLog ? this.emit('debug', 'Connect response received.') : false;
-                    const debug1 = this.debugLog ? this.emit('debug', 'Stop discovery.') : false;
+                    this.isConnected = true;
 
                     try {
                         const localJoin = new Packer('message.localJoin');
@@ -231,7 +240,6 @@ class XBOXLOCALAPI extends EventEmitter {
                         8: 'Sign-in timeout.',
                         9: 'Sign-in required.'
                     };
-                    this.isConnected = false;
                     this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
                 };
             })
@@ -250,6 +258,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     this.emit('error', `Send acknowledge error: ${error}`)
                 };
 
+                clearTimeout(this.closeConnection);
                 if (this.isConnected) {
                     this.closeConnection = setTimeout(() => {
                         const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
@@ -258,41 +267,41 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('status', (message) => {
-                if (message.packetDecoded.protectedPayload.apps[0] != undefined) {
+                if (message.packetDecoded.protectedPayload != undefined) {
                     const decodedMessage = message.packetDecoded.protectedPayload;
-                    const debug = this.debugLog ? this.emit('debug', `Status: ${JSON.stringify(decodedMessage)}`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
 
-                    if (!this.isConnected) {
-                        this.emit('connected', 'Connected.');
-
+                    if (this.emitDevInfo) {
                         const majorVersion = decodedMessage.majorVersion;
                         const minorVersion = decodedMessage.minorVersion;
-                        const buildNumber = decodedMessage.buildNumber
+                        const buildNumber = decodedMessage.buildNumber;
+                        const locale = decodedMessage.locale;
                         const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                        this.emit('deviceInfo', firmwareRevision);
+                        this.emit('connected', 'Connected.');
+                        this.emit('deviceInfo', firmwareRevision, locale);
+                        this.emitDevInfo = false;
                     };
-                    this.isConnected = true;
 
-                    const appsArray = new Array();
-                    const appsCount = decodedMessage.apps.length;
-                    for (let i = 0; i < appsCount; i++) {
-                        const titleId = decodedMessage.apps[i].titleId;
-                        const reference = decodedMessage.apps[i].aumId;
-                        const app = {
-                            titleId: titleId,
-                            reference: reference
-                        };
-                        appsArray.push(app);
-                        const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
-                    }
-                    const power = this.isConnected;
+                    const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
+                    const power = true;
                     const volume = 0;
                     const mute = power ? power : true;
-                    const titleId = appsArray[appsCount - 1].titleId;
-                    const inputReference = appsArray[appsCount - 1].reference;
                     const mediaState = 0;
-                    this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
-                    const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(decodedMessage, null, 2)) : false;
+                    const titleId = (appsCount == 1) ? decodedMessage.apps[0].titleId : (appsCount == 2) ? decodedMessage.apps[1].titleId : this.titleId;
+                    const inputReference = (appsCount == 1) ? decodedMessage.apps[0].reference : (appsCount == 2) ? decodedMessage.apps[1].reference : this.reference;
+
+                    if (this.power != power || this.titleId != titleId || this.inputReference != inputReference || this.volume != volume || this.mute != mute || this.mediaState != mediaState) {
+                        this.power = power;
+                        this.titleId = titleId;
+                        this.reference = inputReference;
+                        this.volume = volume;
+                        this.mute = mute;
+                        this.mediaState = mediaState;
+
+                        this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
+                        const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
+                        const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(decodedMessage, null, 2)) : false;
+                    };
                 };
             }).on('channelResponse', (message) => {
                 if (message.packetDecoded.protectedPayload.result == 0) {
@@ -582,27 +591,28 @@ class XBOXLOCALAPI extends EventEmitter {
     };
 
     async disconnect() {
-        if (this.isConnected) {
-            const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
-            try {
-                const disconnect = new Packer('message.disconnect');
-                disconnect.set('reason', 4);
-                disconnect.set('errorCode', 0);
-                const message = disconnect.pack(this);
-                await this.sendSocketMessage(message);
+        const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
+        clearTimeout(this.closeConnection);
 
-                clearTimeout(this.closeConnection);
+        try {
+            const disconnect = new Packer('message.disconnect');
+            disconnect.set('reason', 4);
+            disconnect.set('errorCode', 0);
+            const message = disconnect.pack(this);
+            await this.sendSocketMessage(message);
+            this.emit('disconnected', 'Disconnected.');
+
+            setTimeout(() => {
                 this.isConnected = false;
                 this.requestNum = 0;
                 this.channelTargetId = null;
                 this.channelRequestId = null;
+                this.power = false;
+                this.emitDevInfo = true;
                 this.emit('stateChanged', false, 0, 0, 0, true, 0);
-                this.emit('disconnected', 'Disconnected.');
-            } catch (error) {
-                this.emit('error', `Send disconnect error: ${error}`)
-            };
-        } else {
-            const debug = this.debugLog ? this.emit('debug', 'Console already disconnected.') : false;
+            }, 3000);
+        } catch (error) {
+            this.emit('error', `Send disconnect error: ${error}`)
         };
     };
 
