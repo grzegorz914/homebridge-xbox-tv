@@ -21,7 +21,7 @@
 							"required": true
 						},
 						"host": {
-							"title": "Address IP",
+							"title": "IP/Hostname",
 							"type": "string",
 							"placeholder": "192.168.1.6",
 							"format": "hostname",

@@ -32,18 +32,18 @@ class XBOXPLATFORM {
 		}
 		this.log = log;
 		this.api = api;
-		this.devicesConfig = config.devices;
+		this.devices = config.devices;
 		this.accessories = [];
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
-			const devicesCount = this.devicesConfig.length;
+			const devicesCount = this.devices.length;
 			for (let i = 0; i < devicesCount; i++) {
-				const deviceConfig = this.devicesConfig[i];
-				if (!deviceConfig.name || !deviceConfig.host || !deviceConfig.xboxLiveId) {
+				const device = this.devices[i];
+				if (!device.name || !device.host || !device.xboxLiveId) {
 					this.log.warn('Device Name, Host or Xbox Live ID Missing');
 				} else {
-					new XBOXDEVICE(this.log, this.api, deviceConfig);
+					new XBOXDEVICE(this.log, this.api, device);
 				}
 			}
 		});
@@ -67,7 +67,7 @@ class XBOXDEVICE {
 		this.config = config;
 
 		//device configuration
-		this.name = config.name || 'Game console';
+		this.name = config.name;
 		this.host = config.host;
 		this.xboxLiveId = config.xboxLiveId;
 		this.webApiControl = config.webApiControl || false;
@@ -188,8 +188,8 @@ class XBOXDEVICE {
 		});
 
 		this.mqtt.on('connected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
-			})
+			this.log('Device: %s %s, %s', this.host, this.name, message);
+		})
 			.on('error', (error) => {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
@@ -230,8 +230,8 @@ class XBOXDEVICE {
 		});
 
 		this.xboxLocalApi.on('connected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message)
-			})
+			this.log('Device: %s %s, %s', this.host, this.name, message)
+		})
 			.on('error', (error) => {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
@@ -1003,15 +1003,17 @@ class XBOXDEVICE {
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonServices');
 			for (let i = 0; i < maxButtonsCount; i++) {
+				//button 
+				const button = buttons[i];
 
 				//get button command
-				const buttonCommand = (buttons[i].command != undefined) ? buttons[i].command : '';
+				const buttonCommand = (button.command != undefined) ? button.command : '';
 
 				//get button name
-				const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttonCommand;
+				const buttonName = (button.name != undefined) ? button.name : buttonCommand;
 
 				//get button display type
-				const buttonDisplayType = (buttons[i].displayType != undefined) ? buttons[i].displayType : 0;
+				const buttonDisplayType = (button.displayType != undefined) ? button.displayType : 0;
 
 				//get button mode
 				let buttonMode = 0;
@@ -1038,7 +1040,7 @@ class XBOXDEVICE {
 				};
 
 				//get button inputOneStoreProductId
-				const buttonOneStoreProductId = (buttons[i].oneStoreProductId != undefined) ? buttons[i].oneStoreProductId : '0';
+				const buttonOneStoreProductId = (button.oneStoreProductId != undefined) ? button.oneStoreProductId : '0';
 
 				const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
 				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
@@ -1069,6 +1071,6 @@ class XBOXDEVICE {
 		}
 
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-		const debug3 = this.enableDebugMode ? this.log(`Device: ${ this.host} ${accessoryName}, published as external accessory.`) : false;
+		const debug3 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, published as external accessory.`) : false;
 	}
 };
