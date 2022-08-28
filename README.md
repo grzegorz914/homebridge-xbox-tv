@@ -75,7 +75,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ### Configuration
 * Run this plugin as a child bridge (Highly Recommended).
 * Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin (Highly Recommended). 
-* The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+* The sample configuration can be edited and used manually as an alternative. 
+* See the `sample-config.json` file in this repository or copy the example below into your config.json file, making the apporpriate changes before saving it. 
+* Be sure to always make a backup copy of your config.json file before making any changes to it.saving it.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
