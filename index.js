@@ -88,7 +88,7 @@ class XBOXDEVICE {
 		this.filterDlc = config.filterDlc || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
-		this.enableMqtt = config.enableMqtt || false;
+		this.mqttEnabled = config.enableMqtt || false;
 		this.mqttHost = config.mqttHost;
 		this.mqttPort = config.mqttPort || 1883;
 		this.mqttPrefix = config.mqttPrefix;
@@ -176,7 +176,7 @@ class XBOXDEVICE {
 
 		//mqtt client
 		this.mqtt = new Mqtt({
-			enabled: this.enableMqtt,
+			enabled: this.mqttEnabled,
 			host: this.mqttHost,
 			port: this.mqttPort,
 			prefix: this.mqttPrefix,
@@ -226,7 +226,7 @@ class XBOXDEVICE {
 			uhs: this.userHash,
 			infoLog: this.disableLogInfo,
 			debugLog: this.enableDebugMode,
-			mqttEnabled: this.enableMqtt
+			mqttEnabled: this.mqttEnabled
 		});
 
 		this.xboxLocalApi.on('connected', (message) => {
