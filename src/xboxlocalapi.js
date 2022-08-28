@@ -21,7 +21,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.userHash = config.uhs;
         this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
-        this.mqttEnabled = config.enableMqtt;
+        this.mqttEnabled = config.mqttEnabled;
 
         this.crypto = new SGCrypto();
         this.isConnected = false;
