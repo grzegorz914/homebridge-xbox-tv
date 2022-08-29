@@ -191,7 +191,7 @@ class XBOXDEVICE {
 			this.log('Device: %s %s, %s', this.host, this.name, message);
 		})
 			.on('error', (error) => {
-				this.log('Device: %s %s, %s', this.host, this.name, error);
+				this.log.error('Device: %s %s, %s', this.host, this.name, error);
 			})
 			.on('debug', (message) => {
 				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
@@ -225,22 +225,12 @@ class XBOXDEVICE {
 			userToken: this.userToken,
 			uhs: this.userHash,
 			infoLog: this.disableLogInfo,
-			debugLog: this.enableDebugMode,
-			mqttEnabled: this.mqttEnabled
+			debugLog: this.enableDebugMode
 		});
 
 		this.xboxLocalApi.on('connected', (message) => {
 			this.log('Device: %s %s, %s', this.host, this.name, message)
 		})
-			.on('error', (error) => {
-				this.log('Device: %s %s, %s', this.host, this.name, error);
-			})
-			.on('debug', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
-			})
-			.on('message', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
-			})
 			.on('deviceInfo', async (firmwareRevision, locale) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
@@ -256,11 +246,13 @@ class XBOXDEVICE {
 						'manufacturer': this.manufacturer,
 						'modelName': this.modelName,
 						'serialNumber': this.serialNumber,
-						'firmwareRevision': firmwareRevision
+						'firmwareRevision': firmwareRevision,
+						'locale': locale
 					};
 					const devInfo = JSON.stringify(obj, null, 2);
 					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 					const debug = this.enableDebugMode ? this.log('Device: %s %s, debug saved device info: %s', this.host, this.name, devInfo) : false;
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Info', obj) : false;
 				} catch (error) {
 					this.log.error('Device: %s %s, device info error: %s', this.host, this.name, error);
 				};
@@ -269,6 +261,14 @@ class XBOXDEVICE {
 			})
 			.on('stateChanged', (power, titleId, inputReference, volume, mute, mediaState) => {
 				const inputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
+				const obj = {
+					'power': power,
+					'titleId': titleId,
+					'app': inputReference,
+					'volume': volume,
+					'mute': mute,
+					'mediaState': mediaState,
+				};
 
 				//update characteristics
 				if (this.televisionService) {
@@ -298,7 +298,16 @@ class XBOXDEVICE {
 				this.muteState = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
-				this.mqtt.send('Info', this.devInfo);
+				const mqtt = this.mqttEnabled ? this.mqtt.send('State', obj) : false;
+			})
+			.on('error', (error) => {
+				this.log.error('Device: %s %s, %s', this.host, this.name, error);
+			})
+			.on('debug', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('message', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('mqtt', (topic, message) => {
 				this.mqtt.send(topic, message);

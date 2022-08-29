@@ -21,7 +21,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.userHash = config.uhs;
         this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
-        this.mqttEnabled = config.mqttEnabled;
 
         this.crypto = new SGCrypto();
         this.isConnected = false;
@@ -300,7 +299,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
                         this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
                         const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
-                        const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(decodedMessage, null, 2)) : false;
                     };
                 };
             }).on('channelResponse', (message) => {

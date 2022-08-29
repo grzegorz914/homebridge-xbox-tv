@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.3.3] - (29.08.2022)
+## Changed
+- cleanup
+- rebuild mqtt topics
+
 ## [2.3.2] - (28.08.2022)
 ## Changed
 - fix publish MQTT message
