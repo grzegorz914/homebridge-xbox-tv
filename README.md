@@ -20,25 +20,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | Package | Installation | Role | Required |
 | --- | --- | --- | --- |
 | [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
-| [Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Web User Interface | Recommended |
-| [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | `npm install -g homebridge-xbox-tv` | Plug-In | Required |
+| [Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Homebridge Web User Interface | Recommended |
+| [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | [Plug-In Wiki](https://github.com/grzegorz914/homebridge-xbox-tv/wiki) | Homebridge Plug-In | Required |
 
-## Note
-* For v1.4.0 and above the required version of Homebridge >= 1.3.x.
-* For v2.0.0 and above the required version of Node.js >= 14.x.x.
-* If upgrade from 1.x.x to 2.x.x the `xboxLiveId` need to be set again.
-
-## Know Issues
-* Console connected to WLAN network some times lose its connection to the network after *Power OFF* and the *Power ON* command may not work.
-
-## Troubleshooting
-* If for some reason the device is not displayed in HomeKit app try this procedure:
-   * Go to `./homebridge/persist` macOS or `/var/lib/homebridge/persist` for RPI.
-   * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Xbox"}`.
-   * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
-   * Restart Homebridge and try add it to the HomeKit app again.
-
-## Features and How To Use Them
+## About the plugin
 * Power ON/OFF short press tile in HomeKit app.
 * Reboot Console with additional button, rquired `webApiControl` enabled.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
@@ -197,30 +182,3 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 	]
 }
 ```
-
-### Adding to HomeKit
-* Each accessory needs to be manually paired. 
-  * Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
-  * Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
-  * Tap *Add Accessory*, and select *I Don't Have a Code, Cannot Scan* or *More options*. 
-  * Select Your accessory and press add anyway. 
-  * Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
-  * Complete the accessory setup.
-
-## Limitations
-* That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
-* To solve this problem the plugin counts the number of Services and not allow add more as 100.
-* If You have configured more as 100 Services some inputs or buttons will not be available in the HomeKit app.
-* The Services in this accessory are:
-  * Information.
-  * Speaker.
-  * Lightbulb.
-  * Fan.
-  * Television.
-  * Inputs, which may range from 6 to 100 as each input is 1 service.
-  * Buttons, which may range from 6 to 100 as each button is 1 service.
-
-## [What's New](https://github.com/grzegorz914/homebridge-xbox-tv/blob/master/CHANGELOG.md)
-
-## Development
-* Pull request and help in development highly appreciated.
