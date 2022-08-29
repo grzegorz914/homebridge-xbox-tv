@@ -23,7 +23,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Homebridge Web User Interface | Recommended |
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | [Plug-In Wiki](https://github.com/grzegorz914/homebridge-xbox-tv/wiki) | Homebridge Plug-In | Required |
 
-## About the plugin
+## About The Plugin
 * Power ON/OFF short press tile in HomeKit app.
 * Reboot Console with additional button, rquired `webApiControl` enabled.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
