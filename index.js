@@ -187,7 +187,7 @@ class XBOXDEVICE {
 			debug: this.mqttDebug
 		});
 
-		this.mqttClient.on('connected', (message) => {
+		this.mqtt.on('connected', (message) => {
 			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
 			.on('error', (error) => {
