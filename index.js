@@ -1,16 +1,14 @@
 'use strict';
-
 const path = require('path');
 const fs = require('fs');
 const fsPromises = fs.promises;
-
-const XboxWebApi = require('xbox-webapi');
+const xboxWebApi = require('xbox-webapi');
 const XboxLocalApi = require('./src/xboxlocalapi.js');
 const Mqtt = require('./src/mqtt.js');
-const CONSTANS = require('./src/constans.json');
 
 const PLUGIN_NAME = 'homebridge-xbox-tv';
 const PLATFORM_NAME = 'XboxTv';
+const CONSTANS = require('./src/constans.json');
 
 let Accessory, Characteristic, Service, Categories, UUID;
 
@@ -103,20 +101,7 @@ class XBOXDEVICE {
 		for (let i = 0; i < defaultInputsCount; i++) {
 			inputsArr.push(CONSTANS.DefaultInputs[i]);
 		}
-		const inputsCount = this.inputs.length;
-		for (let j = 0; j < inputsCount; j++) {
-			const input = this.inputs[j];
-			const obj = {
-				'name': input.name,
-				'titleId': input.titleId,
-				'reference': input.reference,
-				'oneStoreProductId': input.oneStoreProductId,
-				'type': input.type,
-				'contentType': 'Game'
-			}
-			inputsArr.push(obj);
-		}
-		this.inputs = inputsArr;
+		this.inputs = [...inputsArr, ...this.inputs];
 
 		//device
 		this.manufacturer = 'Microsoft';
@@ -205,7 +190,7 @@ class XBOXDEVICE {
 
 		//web api client
 		if (this.webApiControl) {
-			this.xboxWebApi = XboxWebApi({
+			this.xboxWebApi = xboxWebApi({
 				clientId: this.clientId,
 				clientSecret: this.clientSecret,
 				userToken: this.userToken,
@@ -310,7 +295,7 @@ class XBOXDEVICE {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			})
 			.on('mqtt', (topic, message) => {
-				this.mqttClient.send(topic, message);
+				this.mqtt.send(topic, message);
 			})
 			.on('disconnected', (message) => {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);

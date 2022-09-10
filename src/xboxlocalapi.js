@@ -1,5 +1,4 @@
 "use strict";
-
 const Dgram = require('dgram');
 const UuIdParse = require('uuid-parse');
 const UuId = require('uuid');

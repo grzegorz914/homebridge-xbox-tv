@@ -300,6 +300,37 @@
 											}
 										],
 										"required": true
+									},
+									"contentType": {
+										"title": "Content Type",
+										"type": "string",
+										"description": "Here select source input type.",
+										"oneOf": [{
+												"title": "Game",
+												"enum": [
+													"Game"
+												]
+											},
+											{
+												"title": "Application",
+												"enum": [
+													"App"
+												]
+											},
+											{
+												"title": "System Appliction",
+												"enum": [
+													"System App"
+												]
+											},
+											{
+												"title": "Dlc",
+												"enum": [
+													"Dlc"
+												]
+											}
+										],
+										"required": true
 									}
 								}
 							}
@@ -657,7 +688,8 @@
 							"devices[].inputs[].name",
 							"devices[].inputs[].reference",
 							"devices[].inputs[].oneStoreProductId",
-							"devices[].inputs[].type"
+							"devices[].inputs[].type",
+							"devices[].inputs[].contentType"
 						],
 						"condition": {
 							"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
