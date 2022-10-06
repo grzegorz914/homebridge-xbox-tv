@@ -42,12 +42,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 		<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Remote control interface" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" width="135" /></a>
 </p>
 
-## Configuration Console
-* [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
-  * Profile & System > Settings > General > Power mode & startup
-  * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
-  * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
-
 ## Authorization Manager
 * First of all please use built in Authorization Manager.
   * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
@@ -57,12 +51,16 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
-### Configuration
+## Configuration
+* [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
+  * Profile & System > Settings > General > Power mode & startup
+  * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
+  * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 * Run this plugin as a [Child Bridge](https://github.com/homebridge/homebridge/wiki/Child-Bridges) (Highly Recommended), this prevent crash Homebridge if plugin crashes.
 * Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin (Highly Recommended). 
 * The sample configuration can be edited and used manually as an alternative. 
 * See the `sample-config.json` file in this repository or copy the example below into your config.json file, making the apporpriate changes before saving it. 
-* Be sure to always make a backup copy of your config.json file before making any changes to it.saving it.
+* Be sure to always make a backup copy of your config.json file before making any changes to it.saving it.  
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
