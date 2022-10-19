@@ -175,7 +175,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
             "mqttAuth": false,
             "mqttUser": "user",
             "mqttPass": "password",
-             "mqttDebug": false
+            "mqttDebug": false
 		}
 	]
 }
