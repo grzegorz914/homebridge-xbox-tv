@@ -7,6 +7,7 @@ const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
 const Packer = require('./packet/packer');
 const SGCrypto = require('./sgcrypto');
+const Ping = require('ping');
 const CONSTANS = require('./constans.json');
 
 class XBOXLOCALAPI extends EventEmitter {
@@ -55,8 +56,8 @@ class XBOXLOCALAPI extends EventEmitter {
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
         this.socket.on('error', (error) => {
-            this.emit('error', `Socket error: ${error}`);
-        })
+                this.emit('error', `Socket error: ${error}`);
+            })
             .on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
 
@@ -139,9 +140,17 @@ class XBOXLOCALAPI extends EventEmitter {
                 const address = this.socket.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
 
-                setInterval(() => {
+                setInterval(async () => {
                     if (!this.isConnected) {
-                        this.emit('discovery');
+                        const state = await Ping.promise.probe(this.host, {
+                            timeout: 3
+                        });
+                        const debug = this.debugLog ? this.emit('debug', `Ping state: ${JSON.stringify(state, null, 2)}`) : false;
+                        if (state.alive) {
+                            const discoveryPacket = new Packer('simple.discoveryRequest');
+                            const message = discoveryPacket.pack();
+                            await this.sendSocketMessage(message);
+                        }
                     };
                 }, 5000);
             })
@@ -151,12 +160,7 @@ class XBOXLOCALAPI extends EventEmitter {
             .bind();
 
         //EventEmmiter
-        this.on('discovery', async () => {
-            const discoveryPacket = new Packer('simple.discoveryRequest');
-            const message = discoveryPacket.pack();
-            await this.sendSocketMessage(message);
-        })
-            .on('discoveryResponse', async (message) => {
+        this.on('discoveryResponse', async (message) => {
                 clearInterval(this.setPowerOn);
                 const decodedMessage = message.packetDecoded;
 
@@ -248,16 +252,16 @@ class XBOXLOCALAPI extends EventEmitter {
                     });
                     const message = acknowledge.pack(this);
                     await this.sendSocketMessage(message);
-
-                    clearTimeout(this.closeConnection);
-                    if (this.isConnected) {
-                        this.closeConnection = setTimeout(() => {
-                            const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
-                            this.disconnect();
-                        }, 12000);
-                    };
                 } catch (error) {
                     this.emit('error', `Send acknowledge error: ${error}`)
+                };
+
+                clearTimeout(this.closeConnection);
+                if (this.isConnected) {
+                    this.closeConnection = setTimeout(() => {
+                        const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
+                        this.disconnect();
+                    }, 12000);
                 };
             })
             .on('status', (message) => {
@@ -422,23 +426,23 @@ class XBOXLOCALAPI extends EventEmitter {
                 } else {
                     if (response.response == 'GetConfiguration') {
                         this.configuration = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `TV remote configuration: ${this.configuration}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `TV remote configuration: ${this.configuration }`) : false;
                     };
                     if (response.response == 'GetHeadendInfo') {
                         this.headendInfo = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Headend info: ${this.headendInfo}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Headend info: ${this.headendInfo }`) : false;
                     };
                     if (response.response == 'GetLiveTVInfo') {
                         this.liveTv = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Live TV info: ${this.liveTv}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Live TV info: ${this.liveTv }`) : false;
                     };
                     if (response.response == 'GetTunerLineups') {
                         this.tunerLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Tuner lineups: ${this.tunerLineups}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Tuner lineups: ${this.tunerLineups }`) : false;
                     };
                     if (response.response == 'GetAppChannelLineups') {
                         this.appChannelLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `App channel lineups: ${this.appChannelLineups}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `App channel lineups: ${this.appChannelLineups }`) : false;
                     };
                 };
             })

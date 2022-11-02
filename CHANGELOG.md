@@ -9,10 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.7] - (02.11.2022)
 ## Changed
-- code refactor
-
-## [2.3.6] - (10.09.2022)
-## Changed
 - cleanup
 - added content type properties to inputs
 - bump dependencies
