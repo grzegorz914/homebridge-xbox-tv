@@ -237,7 +237,7 @@ class XBOXDEVICE {
 					const devInfo = JSON.stringify(obj, null, 2);
 					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug saved Info: ${devInfo}`) : false;
-					const mqtt = this.mqttEnabled ? this.mqtt.send('Info', obj) : false;
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Info', devInfo) : false;
 				} catch (error) {
 					this.log.error('Device: %s %s, device info error: %s', this.host, this.name, error);
 				};
@@ -283,7 +283,7 @@ class XBOXDEVICE {
 				this.mute = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
-				const mqtt = this.mqttEnabled ? this.mqtt.send('State', obj) : false;
+				const mqtt = this.mqttEnabled ? this.mqtt.send('State', JSON.stringify(obj, null, 2)) : false;
 			})
 			.on('error', (error) => {
 				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);

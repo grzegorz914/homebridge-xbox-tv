@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.3.9] - (28.11.2022)
+## Changed
+- fix [#143](https://github.com/grzegorz914/homebridge-xbox-tv/issues/143)
+- update dependencies
+
 ## [2.3.8] - (02.11.2022)
 ## Changed
 - fix error with 2.3.7
