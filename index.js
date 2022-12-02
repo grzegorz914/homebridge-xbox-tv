@@ -246,14 +246,14 @@ class XBOXDEVICE {
 			})
 			.on('stateChanged', (power, titleId, inputReference, volume, mute, mediaState) => {
 				const inputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
-				const obj = {
+				const obj = JSON.stringify({
 					'power': power,
 					'titleId': titleId,
 					'app': inputReference,
 					'volume': volume,
 					'mute': mute,
 					'mediaState': mediaState,
-				};
+				}, null, 2);
 
 				//update characteristics
 				if (this.televisionService) {
@@ -283,7 +283,7 @@ class XBOXDEVICE {
 				this.mute = mute;
 				this.mediaState = mediaState;
 				this.inputIdentifier = inputIdentifier;
-				const mqtt = this.mqttEnabled ? this.mqtt.send('State', JSON.stringify(obj, null, 2)) : false;
+				const mqtt = this.mqttEnabled ? this.mqtt.send('State', obj) : false;
 			})
 			.on('error', (error) => {
 				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
@@ -293,9 +293,6 @@ class XBOXDEVICE {
 			})
 			.on('message', (message) => {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
-			})
-			.on('mqtt', (topic, message) => {
-				this.mqtt.send(topic, message);
 			})
 			.on('disconnected', (message) => {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
