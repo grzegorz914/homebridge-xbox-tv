@@ -1048,10 +1048,12 @@ class XBOXDEVICE {
 							const rebootConsole = (this.power && state && this.webApiEnabled && buttonMode == 4) ? await this.xboxWebApi.getProvider('smartglass').reboot(this.xboxLiveId) : false;
 							const setAppInput = (this.power && state && this.webApiEnabled && buttonMode == 5) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, buttonOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set button successful, name: %s, command: %s', this.host, accessoryName, buttonName, buttonCommand);
-							buttonService.updateCharacteristic(Characteristic.On, false);
+
+							setTimeout(() => {
+								const setChar = (state && this.power) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+							}, 300)
 						} catch (error) {
 							this.log.error('Device: %s %s, set button error, name: %s, error: %s', this.host, accessoryName, buttonName, error);
-							buttonService.updateCharacteristic(Characteristic.On, false);
 						};
 					});
 				accessory.addService(buttonService);
