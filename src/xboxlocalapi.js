@@ -316,7 +316,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`) : false;
 
                 if (this.channelRequestId == 0) {
-                    if (command in CONSTANS.systemMediaCommands) {
+                    if (command in CONSTANS.SystemMediaCommands) {
                         try {
                             let mediaRequestId = 0;
                             let requestId = '0000000000000000';
@@ -326,7 +326,7 @@ class XBOXLOCALAPI extends EventEmitter {
                             const mediaCommand = new Packer('message.mediaCommand');
                             mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
                             mediaCommand.set('titleId', 0);
-                            mediaCommand.set('command', CONSTANS.systemMediaCommands[command]);
+                            mediaCommand.set('command', CONSTANS.SystemMediaCommands[command]);
                             mediaCommand.setChannel(this.channelTargetId);
                             const message = mediaCommand.pack(this);
                             const debug = this.debugLog ? this.emit('debug', `System media send command: ${command}`) : false;
@@ -340,12 +340,12 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 if (this.channelRequestId == 1) {
-                    if (command in CONSTANS.systemInputCommands) {
+                    if (command in CONSTANS.SystemInputCommands) {
                         try {
                             const timeStampPress = new Date().getTime();
                             const gamepadPress = new Packer('message.gamepad');
                             gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
-                            gamepadPress.set('buttons', CONSTANS.systemInputCommands[command]);
+                            gamepadPress.set('buttons', CONSTANS.SystemInputCommands[command]);
                             gamepadPress.setChannel(this.channelTargetId);
                             const message = gamepadPress.pack(this);
                             const debug = this.debugLog ? this.emit('debug', `System input send press, command: ${command}`) : false;
@@ -355,7 +355,7 @@ class XBOXLOCALAPI extends EventEmitter {
                                 const timeStampUnpress = new Date().getTime();
                                 const gamepadUnpress = new Packer('message.gamepad');
                                 gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
-                                gamepadUnpress.set('buttons', CONSTANS.systemInputCommands['unpress']);
+                                gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
                                 gamepadUnpress.setChannel(this.channelTargetId);
                                 const message = gamepadUnpress.pack(this);
                                 const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
@@ -372,14 +372,14 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 if (this.channelRequestId == 2) {
-                    if (command in CONSTANS.tvRemoteCommands) {
+                    if (command in CONSTANS.TvRemoteCommands) {
                         try {
                             let messageNum = 0;
                             const jsonRequest = {
                                 msgid: `2ed6c0fd.${messageNum++}`,
                                 request: 'SendKey',
                                 params: {
-                                    button_id: CONSTANS.tvRemoteCommands[command],
+                                    button_id: CONSTANS.TvRemoteCommands[command],
                                     device_id: null
                                 }
                             };
@@ -398,10 +398,10 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 if (this.channelRequestId == 3) {
-                    const configNamesCount = CONSTANS.configNames.length;
+                    const configNamesCount = CONSTANS.ConfigNames.length;
                     for (let i = 0; i < configNamesCount; i++) {
                         try {
-                            const configName = CONSTANS.configNames[i];
+                            const configName = CONSTANS.ConfigNames[i];
                             const jsonRequest = {
                                 msgid: `2ed6c0fd.${i}`,
                                 request: configName,
@@ -553,15 +553,15 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
                 const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-                if (CONSTANS.channelIds[channelName] != this.channelRequestId) {
+                if (CONSTANS.ChannelIds[channelName] != this.channelRequestId) {
                     try {
                         const channelRequest = new Packer('message.channelRequest');
-                        channelRequest.set('channelRequestId', CONSTANS.channelIds[channelName]);
+                        channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
                         channelRequest.set('titleId', 0);
-                        channelRequest.set('service', Buffer.from(CONSTANS.channelUuids[channelName], 'hex'));
+                        channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
                         channelRequest.set('activityId', 0);
                         const message = channelRequest.pack(this);
-                        const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.channelIds[channelName]}`) : false;
+                        const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
                         await this.sendSocketMessage(message);
 
                         setTimeout(() => {
