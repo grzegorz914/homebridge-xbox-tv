@@ -108,7 +108,6 @@ class XBOXDEVICE {
 		this.modelName = 'Model Name';
 		this.serialNumber = this.xboxLiveId;
 		this.firmwareRevision = 'Firmware Revision';
-		this.devInfo = '';
 
 		//setup variables
 		this.webApiEnabled = false;
@@ -127,7 +126,6 @@ class XBOXDEVICE {
 
 		this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
 		this.authTokenFile = `${this.prefDir}/authToken_${this.host.split('.').join('')}`;
-		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
 		this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
 		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
@@ -138,16 +136,6 @@ class XBOXDEVICE {
 		}
 		if (fs.existsSync(this.authTokenFile) == false) {
 			fs.writeFileSync(this.authTokenFile, '');
-		}
-		if (fs.existsSync(this.devInfoFile) == false) {
-			const obj = {
-				'manufacturer': this.manufacturer,
-				'modelName': this.modelName,
-				'serialNumber': this.serialNumber,
-				'firmwareRevision': this.firmwareRevision
-			};
-			const devInfo = JSON.stringify(obj, null, 2);
-			fs.writeFileSync(this.devInfoFile, devInfo);
 		}
 		if (fs.existsSync(this.inputsFile) == false) {
 			fs.writeFileSync(this.inputsFile, '');
@@ -226,20 +214,12 @@ class XBOXDEVICE {
 					this.log('----------------------------------');
 				}
 
-				try {
-					const obj = {
-						'manufacturer': this.manufacturer,
-						'modelName': this.modelName,
-						'serialNumber': this.serialNumber,
-						'firmwareRevision': firmwareRevision,
-						'locale': locale
-					};
-					const devInfo = JSON.stringify(obj, null, 2);
-					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
-					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug saved Info: ${devInfo}`) : false;
-					const mqtt = this.mqttEnabled ? this.mqtt.send('Info', devInfo) : false;
-				} catch (error) {
-					this.log.error('Device: %s %s, device info error: %s', this.host, this.name, error);
+				if (this.informationService) {
+					this.informationService
+						.updateCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+						.updateCharacteristic(Characteristic.Model, this.modelName)
+						.updateCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+						.updateCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
 				};
 
 				this.firmwareRevision = firmwareRevision;
@@ -595,26 +575,18 @@ class XBOXDEVICE {
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 		accessory.context.device = this.config.device;
 
-		try {
-			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = JSON.parse(readDevInfo);
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, debug devInfo: %s', this.host, this.name, devInfo) : false;
+		//Pinformation service
+		this.log.debug('prepareInformationService');
+		const manufacturer = this.manufacturer;
+		const modelName = this.modelName;
+		const serialNumber = this.serialNumber;
+		const firmwareRevision = this.firmwareRevision;
 
-			const manufacturer = devInfo.manufacturer || 'Undefined';
-			const modelName = devInfo.modelName || 'Undefined';
-			const serialNumber = devInfo.serialNumber || 'Undefined';
-			const firmwareRevision = devInfo.firmwareRevision || 'Undefined';
-
-			//Pinformation service
-			this.log.debug('prepareInformationService');
-			accessory.getService(Service.AccessoryInformation)
-				.setCharacteristic(Characteristic.Manufacturer, manufacturer)
-				.setCharacteristic(Characteristic.Model, modelName)
-				.setCharacteristic(Characteristic.SerialNumber, serialNumber)
-				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-		} catch (error) {
-			this.log.error('Device: %s %s, read devInfo error: %s', this.host, this.name, error);
-		};
+		this.informationService = accessory.getService(Service.AccessoryInformation)
+			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+			.setCharacteristic(Characteristic.Model, modelName)
+			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
 
 		//Prepare television service
 		this.log.debug('prepareTelevisionService');
