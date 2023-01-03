@@ -56,81 +56,75 @@ class XBOXLOCALAPI extends EventEmitter {
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
         this.socket.on('error', (error) => {
-                this.emit('error', `Socket error: ${error}`);
-            })
+            this.emit('error', `Socket error: ${error}`);
+        })
             .on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
 
                 message = new Packer(message);
-                if (message.structure == false) {
+                if (message.structure === false) {
                     return;
                 };
                 this.response = message.unpack(this);
+                this.function = this.response.name;
 
-                if (this.response.packetDecoded.type != 'd00d') {
-                    this.function = this.response.name;
-                } else {
-                    if (this.response.packetDecoded.targetParticipantId != this.participantId) {
+                if (this.response.packetDecoded.type === 'd00d') {
+                    if (this.response.packetDecoded.targetParticipantId !== this.participantId) {
                         const debug1 = this.debugLog ? this.emit('debug', 'Participant id does not match. Ignoring packet.') : false;
                         return;
                     };
                     this.function = message.structure.packetDecoded.name;
-                };
+                }
 
-                if (this.function == 'json') {
-                    const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
+                switch (this.function) {
+                    case 'json':
+                        const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
 
-                    // Check if JSON is fragmented
-                    if (jsonMessage.datagramId != undefined) {
-                        const debug = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
-                        if (this.fragments[jsonMessage.datagramId] == undefined) {
-                            // Prepare buffer for JSON
-                            this.fragments[jsonMessage.datagramId] = {
+                        // Check if JSON is fragmented
+                        if (jsonMessage.datagramId !== undefined) {
+                            const debug = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
+                            if (!this.fragments[jsonMessage.datagramId]) {
+                                this.fragments[jsonMessage.datagramId] = {
+                                    partials: {},
+                                    getValue() {
+                                        let buffer = Buffer.from('');
+                                        for (const partial in this.partials) {
+                                            buffer = Buffer.concat([buffer, Buffer.from(this.partials[partial])]);
+                                        }
+                                        const bufferDecoded = Buffer(buffer.toString(), 'base64');
+                                        return bufferDecoded;
+                                    },
+                                    isValid() {
+                                        const json = this.getValue();
+                                        let isValid = false;
+                                        try {
+                                            JSON.parse(json.toString());
+                                            isValid = true;
+                                        } catch (error) {
+                                            this.emit('error', `Valid packet error: ${error}`);
+                                        }
+                                        return isValid;
+                                    },
+                                };
+                            }
 
-                                getValue() {
-                                    let buffer = Buffer.from('');
-                                    for (let partial in this.partials) {
-                                        buffer = Buffer.concat([
-                                            buffer,
-                                            Buffer.from(this.partials[partial])
-                                        ])
-                                    };
-                                    const bufferDecoded = Buffer(buffer.toString(), 'base64');
-                                    return bufferDecoded;
-                                },
-                                isValid() {
-                                    const json = this.getValue();
-                                    let isValid = false;
-                                    try {
-                                        JSON.parse(json.toString());
-                                        isValid = true;
-                                    } catch (error) {
-                                        isValid = false;
-                                        this.emit('error', `Valid packet error: ${error}`);
-                                    };
-                                    return isValid;
-                                },
-                                partials: {}
-                            };
+                            this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+                            if (this.fragments[jsonMessage.datagramId].isValid()) {
+                                const debug = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
+                                this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
+                                delete this.fragments[jsonMessage.datagramId];
+                            }
+                            this.function = 'jsonFragment';
                         };
-
-                        this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                        if (this.fragments[jsonMessage.datagramId].isValid()) {
-                            const debug = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
-                            this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
-                            this.fragments[jsonMessage.datagramId] = undefined;
+                        break;
+                    case 'status':
+                        const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
+                        if (this.message === decodedMessage) {
+                            const debug = this.debugLog ? this.emit('debug', 'Received unchanged status message.') : false;
+                            return;
                         };
-                        this.function = 'jsonFragment';
-                    };
-                };
-
-                if (this.function == 'status') {
-                    const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
-                    if (this.message === decodedMessage) {
-                        const debug = this.debugLog ? this.emit('debug', 'Received unchanged status message.') : false;
-                        return;
-                    };
-                    this.message = decodedMessage;
+                        this.message = decodedMessage;
+                        break;
                 };
 
                 const debug1 = this.debugLog ? this.emit('debug', `Received event type: ${this.function}`) : false;
@@ -140,18 +134,21 @@ class XBOXLOCALAPI extends EventEmitter {
                 const address = this.socket.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
 
-                setInterval(async () => {
-                    if (!this.isConnected) {
-                        const state = await Ping.promise.probe(this.host, {
-                            timeout: 3
-                        });
-                        const debug = this.debugLog ? this.emit('debug', `Ping state: ${JSON.stringify(state, null, 2)}`) : false;
-                        if (state.alive) {
-                            const discoveryPacket = new Packer('simple.discoveryRequest');
-                            const message = discoveryPacket.pack();
-                            await this.sendSocketMessage(message);
-                        }
-                    };
+                const pingInterval = setInterval(async () => {
+                    if (this.isConnected) {
+                        return;
+                    }
+
+                    const state = await Ping.promise.probe(this.host, { timeout: 3 });
+                    const debug = this.debugLog ? this.emit('debug', `Ping state: ${JSON.stringify(state, null, 2)}`) : false;
+
+                    if (!state.alive) {
+                        return;
+                    }
+
+                    const discoveryPacket = new Packer('simple.discoveryRequest');
+                    const message = discoveryPacket.pack();
+                    await this.sendSocketMessage(message);
                 }, 5000);
             })
             .on('close', () => {
@@ -161,71 +158,59 @@ class XBOXLOCALAPI extends EventEmitter {
 
         //EventEmmiter
         this.on('discoveryResponse', async (message) => {
-                clearInterval(this.setPowerOn);
-                const decodedMessage = message.packetDecoded;
+            clearInterval(this.setPowerOn);
+            const decodedMessage = message.packetDecoded;
 
-                if (decodedMessage != undefined && !this.isConnected) {
-                    const debug = this.debugLog ? this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`) : false;
+            if (decodedMessage !== undefined && !this.isConnected) {
+                const debug = this.debugLog ? this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`) : false;
 
-                    // Set certyficate
-                    const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
+                // Set certyficate
+                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-                    // Set pem
-                    const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+                // Set pem
+                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-                    // Set uuid
-                    const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
+                // Set uuid
+                const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
 
-                    // Create public key
-                    const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
-                    const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
+                // Create public key
+                const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
+                const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
 
-                    // Load crypto data
-                    const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
-                    this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
-                    const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${object.publicKey}, and secret: ${object.secret}`) : false;
+                // Load crypto data
+                const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
+                this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
+                const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${object.publicKey}, and secret: ${object.secret}`) : false;
 
-                    const connectRequest = new Packer('simple.connectRequest');
-                    connectRequest.set('uuid', uuid4);
-                    connectRequest.set('publicKey', this.crypto.getPublicKey());
-                    connectRequest.set('iv', this.crypto.getIv());
+                const connectRequest = new Packer('simple.connectRequest');
+                connectRequest.set('uuid', uuid4);
+                connectRequest.set('publicKey', this.crypto.getPublicKey());
+                connectRequest.set('iv', this.crypto.getIv());
 
-                    if (this.userHash != undefined && this.userToken != undefined) {
-                        connectRequest.set('userHash', this.userHash, true);
-                        connectRequest.set('jwt', this.userToken, true);
-                        this.isAuthorized = true;
-                        const debug = this.debugLog ? this.emit('debug', `Connecting using token: ${this.userToken}`) : false;
-                    } else {
-                        this.isAuthorized = false;
-                        const debug = this.debugLog ? this.emit('debug', 'Connecting using anonymous login.') : false;
-                    }
+                if (this.userHash !== undefined && this.userToken !== undefined) {
+                    connectRequest.set('userHash', this.userHash, true);
+                    connectRequest.set('jwt', this.userToken, true);
+                    this.isAuthorized = true;
+                    const debug = this.debugLog ? this.emit('debug', `Connecting using token: ${this.userToken}`) : false;
+                }
+                const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
 
-                    try {
-                        const message = connectRequest.pack(this);
-                        await this.sendSocketMessage(message);
-                    } catch (error) {
-                        this.emit('error', `Send connect request error: ${error}`)
-                    };
+                try {
+                    const message = connectRequest.pack(this);
+                    await this.sendSocketMessage(message);
+                } catch (error) {
+                    this.emit('error', `Send connect request error: ${error}`)
                 };
-            })
+            };
+        })
             .on('connectResponse', async (message) => {
+                const debug = this.debugLog ? this.emit('debug', 'Connect response received.') : false;
                 const connectionResult = message.packetDecoded.protectedPayload.connectResult;
                 const participantId = message.packetDecoded.protectedPayload.participantId;
                 this.participantId = participantId;
                 this.sourceParticipantId = participantId;
 
-                if (connectionResult == 0) {
-                    const debug = this.debugLog ? this.emit('debug', 'Connect response received.') : false;
-                    this.isConnected = true;
-
-                    try {
-                        const localJoin = new Packer('message.localJoin');
-                        const message = localJoin.pack(this);
-                        await this.sendSocketMessage(message);
-                    } catch (error) {
-                        this.emit('error', `Send local join error: ${error}`)
-                    };
-                } else {
+                if (connectionResult !== 0) {
                     const errorTable = {
                         0: 'Success.',
                         1: 'Pending login. Reconnect to complete.',
@@ -239,6 +224,16 @@ class XBOXLOCALAPI extends EventEmitter {
                         9: 'Sign-in required.'
                     };
                     this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
+                    return;
+                };
+
+                this.isConnected = true;
+                try {
+                    const localJoin = new Packer('message.localJoin');
+                    const message = localJoin.pack(this);
+                    await this.sendSocketMessage(message);
+                } catch (error) {
+                    this.emit('error', `Send local join error: ${error}`)
                 };
             })
             .on('acknowledge', async () => {
@@ -265,7 +260,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('status', (message) => {
-                if (message.packetDecoded.protectedPayload != undefined) {
+                if (message.packetDecoded.protectedPayload !== undefined) {
                     const decodedMessage = message.packetDecoded.protectedPayload;
                     const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
 
@@ -281,14 +276,14 @@ class XBOXLOCALAPI extends EventEmitter {
                     };
 
                     const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
-                    const power = true;
+                    const power = this.isConnected;
                     const volume = 0;
                     const mute = power ? power : true;
                     const mediaState = 0;
-                    const titleId = (appsCount == 1) ? decodedMessage.apps[0].titleId : (appsCount == 2) ? decodedMessage.apps[1].titleId : this.titleId;
-                    const inputReference = (appsCount == 1) ? decodedMessage.apps[0].aumId : (appsCount == 2) ? decodedMessage.apps[1].aumId : this.reference;
+                    const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
+                    const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.reference;
 
-                    if (this.power != power || this.titleId != titleId || this.inputReference != inputReference || this.volume != volume || this.mute != mute || this.mediaState != mediaState) {
+                    if (this.power !== power || this.titleId !== titleId || this.inputReference !== inputReference || this.volume !== volume || this.mute !== mute || this.mediaState !== mediaState) {
                         this.power = power;
                         this.titleId = titleId;
                         this.reference = inputReference;
@@ -301,12 +296,12 @@ class XBOXLOCALAPI extends EventEmitter {
                     };
                 };
             }).on('channelResponse', (message) => {
-                if (message.packetDecoded.protectedPayload.result == 0) {
+                if (message.packetDecoded.protectedPayload.result === 0) {
                     const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
                     const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
                     const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${channelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
 
-                    if (channelTargetId != this.channelTargetId) {
+                    if (channelTargetId !== this.channelTargetId) {
                         this.channelTargetId = channelTargetId;
                         this.channelRequestId = channelRequestId;
                     };
@@ -315,8 +310,13 @@ class XBOXLOCALAPI extends EventEmitter {
             .on('sendCommand', async (command) => {
                 const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`) : false;
 
-                if (this.channelRequestId == 0) {
-                    if (command in CONSTANS.SystemMediaCommands) {
+                switch (this.channelRequestId) {
+                    case 0:
+                        if (!(command in CONSTANS.SystemMediaCommands)) {
+                            const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
+                            return;
+                        }
+
                         try {
                             let mediaRequestId = 0;
                             let requestId = '0000000000000000';
@@ -334,13 +334,13 @@ class XBOXLOCALAPI extends EventEmitter {
                         } catch (error) {
                             this.emit('error', `Send media command error: ${error}`)
                         };
-                    } else {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
-                    };
-                };
+                        break;
+                    case 1:
+                        if (!(command in CONSTANS.SystemInputCommands)) {
+                            const debug = this.debugLog ? this.emit('debug', `Unknown system input command: ${command}`) : false;
+                            return;
+                        };
 
-                if (this.channelRequestId == 1) {
-                    if (command in CONSTANS.SystemInputCommands) {
                         try {
                             const timeStampPress = new Date().getTime();
                             const gamepadPress = new Packer('message.gamepad');
@@ -366,13 +366,13 @@ class XBOXLOCALAPI extends EventEmitter {
                         } catch (error) {
                             this.emit('error', `Send system input command press error: ${error}`)
                         };
-                    } else {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown system input command: ${command}`) : false;
-                    };
-                };
+                        break;
+                    case 2:
+                        if (!(command in CONSTANS.TvRemoteCommands)) {
+                            const debug = this.debugLog ? this.emit('debug', `Unknown tv remote command: ${command}`) : false;
+                            return
+                        };
 
-                if (this.channelRequestId == 2) {
-                    if (command in CONSTANS.TvRemoteCommands) {
                         try {
                             let messageNum = 0;
                             const jsonRequest = {
@@ -392,57 +392,53 @@ class XBOXLOCALAPI extends EventEmitter {
                         } catch (error) {
                             this.emit('error', `Send tv remote command error: ${error}`)
                         };
-                    } else {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown tv remote command: ${command}`) : false;
-                    };
-                };
-
-                if (this.channelRequestId == 3) {
-                    const configNamesCount = CONSTANS.ConfigNames.length;
-                    for (let i = 0; i < configNamesCount; i++) {
-                        try {
-                            const configName = CONSTANS.ConfigNames[i];
-                            const jsonRequest = {
-                                msgid: `2ed6c0fd.${i}`,
-                                request: configName,
-                                params: null
+                        break;
+                    case 3:
+                        const configNames = CONSTANS.ConfigNames;
+                        for (const configName of configNames) {
+                            try {
+                                const jsonRequest = {
+                                    msgid: `2ed6c0fd.${i}`,
+                                    request: configName,
+                                    params: null
+                                };
+                                const json = new Packer('message.json');
+                                json.set('json', JSON.stringify(jsonRequest));
+                                json.setChannel(this.channelTargetId);
+                                const message = json.pack(this);
+                                const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
+                                await this.sendSocketMessage(message);
+                            } catch (error) {
+                                this.emit('error', `Send json error: ${error}`)
                             };
-                            const json = new Packer('message.json');
-                            json.set('json', JSON.stringify(jsonRequest));
-                            json.setChannel(this.channelTargetId);
-                            const message = json.pack(this);
-                            const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
-                            await this.sendSocketMessage(message);
-                        } catch (error) {
-                            this.emit('error', `Send json error: ${error}`)
                         };
-                    };
+                        break;
                 };
             })
             .on('json', (message) => {
                 const response = JSON.parse(message.packetDecoded.protectedPayload.json);
-                if (response.response == "Error") {
+                if (response.response === "Error") {
                     this.emit('error', `Json error: ${response}`);
                 } else {
-                    if (response.response == 'GetConfiguration') {
+                    if (response.response === 'GetConfiguration') {
                         this.configuration = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `TV remote configuration: ${this.configuration }`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `TV remote configuration: ${this.configuration}`) : false;
                     };
-                    if (response.response == 'GetHeadendInfo') {
+                    if (response.response === 'GetHeadendInfo') {
                         this.headendInfo = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Headend info: ${this.headendInfo }`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Headend info: ${this.headendInfo}`) : false;
                     };
-                    if (response.response == 'GetLiveTVInfo') {
+                    if (response.response === 'GetLiveTVInfo') {
                         this.liveTv = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Live TV info: ${this.liveTv }`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Live TV info: ${this.liveTv}`) : false;
                     };
-                    if (response.response == 'GetTunerLineups') {
+                    if (response.response === 'GetTunerLineups') {
                         this.tunerLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Tuner lineups: ${this.tunerLineups }`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Tuner lineups: ${this.tunerLineups}`) : false;
                     };
-                    if (response.response == 'GetAppChannelLineups') {
+                    if (response.response === 'GetAppChannelLineups') {
                         this.appChannelLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `App channel lineups: ${this.appChannelLineups }`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `App channel lineups: ${this.appChannelLineups}`) : false;
                     };
                 };
             })
@@ -553,7 +549,7 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
                 const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-                if (CONSTANS.ChannelIds[channelName] != this.channelRequestId) {
+                if (CONSTANS.ChannelIds[channelName] !== this.channelRequestId) {
                     try {
                         const channelRequest = new Packer('message.channelRequest');
                         channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
@@ -624,7 +620,7 @@ class XBOXLOCALAPI extends EventEmitter {
             const length = message.byteLength;
 
             this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
-                if (error == null) {
+                if (error === null) {
                     const debug = this.debugLog ? this.emit('debug', `Socket send ${bytes} bytes.`) : false;
                     resolve(true);
                 } else {
