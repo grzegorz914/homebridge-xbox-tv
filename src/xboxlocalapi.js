@@ -126,7 +126,8 @@ class XBOXLOCALAPI extends EventEmitter {
                         const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
                         clearTimeout(this.closeConnection)
                         this.closeConnection = false;
-                    } else {
+                    }
+                    if (!this.closeConnection) {
                         const debug = this.debugLog ? this.emit('debug', `Set timeout to: 12 seconds`) : false;
                         this.closeConnection = setTimeout(() => {
                             const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
