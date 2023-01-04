@@ -45,14 +45,15 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channelRequestId = null;
         this.message = {};
 
+        this.firstRun = true;
+        this.emitDevInfo = true;
+        this.closeConnection = false;
         this.power = false;
         this.volume = 0;
         this.mute = true;
         this.titleId = '';
         this.inputReference = '';
         this.mediaState = 0;
-        this.emitDevInfo = true;
-        this.closeConnection = false;
 
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
@@ -281,7 +282,8 @@ class XBOXLOCALAPI extends EventEmitter {
                     const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
                     const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
 
-                    if (this.power !== power || this.titleId !== titleId || this.inputReference !== inputReference || this.volume !== volume || this.mute !== mute || this.mediaState !== mediaState) {
+                    if (this.firstRun || this.power !== power || this.titleId !== titleId || this.inputReference !== inputReference || this.volume !== volume || this.mute !== mute || this.mediaState !== mediaState) {
+                        this.firstRun = false;
                         this.power = power;
                         this.titleId = titleId;
                         this.inputReference = inputReference;
@@ -599,12 +601,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.requestNum = 0;
                 this.channelTargetId = null;
                 this.channelRequestId = null;
-                this.power = false;
-                this.volume = 0;
-                this.mute = true;
-                this.titleId = '';
-                this.inputReference = '';
-                this.mediaState = 0;
+                this.firstRun = true;
                 this.emitDevInfo = true;
                 this.emit('stateChanged', false, 0, 0, 0, true, 0);
             }, 3000);
