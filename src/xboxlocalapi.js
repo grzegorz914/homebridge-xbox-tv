@@ -600,6 +600,11 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.channelTargetId = null;
                 this.channelRequestId = null;
                 this.power = false;
+                this.volume = 0;
+                this.mute = true;
+                this.titleId = '';
+                this.inputReference = '';
+                this.mediaState = 0;
                 this.emitDevInfo = true;
                 this.emit('stateChanged', false, 0, 0, 0, true, 0);
             }, 3000);
