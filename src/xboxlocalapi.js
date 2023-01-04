@@ -52,6 +52,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.inputReference = '';
         this.mediaState = 0;
         this.emitDevInfo = true;
+        this.closeConnection = false;
 
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
@@ -117,6 +118,20 @@ class XBOXLOCALAPI extends EventEmitter {
                             this.function = 'jsonFragment';
                         };
                         break;
+                };
+
+                if (this.isConnected) {
+                    if (this.closeConnection) {
+                        const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
+                        clearTimeout(this.closeConnection)
+                        this.closeConnection = false;
+                    } else {
+                        const debug = this.debugLog ? this.emit('debug', `Set timeout to: 12 seconds`) : false;
+                        this.closeConnection = setTimeout(() => {
+                            const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
+                            this.disconnect();
+                        }, 12000);
+                    };
                 };
 
                 const debug1 = this.debugLog ? this.emit('debug', `Received event type: ${this.function}`) : false;
@@ -229,15 +244,6 @@ class XBOXLOCALAPI extends EventEmitter {
             })
             .on('acknowledge', async () => {
                 const debug = this.debugLog ? this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.') : false;
-                if (this.isConnected) {
-                    this.closeConnection = setTimeout(() => {
-                        const debug = this.debugLog ? this.emit('debug', `Last message was: ${this.closeConnection / 1000} seconds ago, send disconnect.`) : false;
-                        this.disconnect();
-                    }, 12000);
-
-                    const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
-                    clearTimeout(this.closeConnection);
-                };
 
                 try {
                     const acknowledge = new Packer('message.acknowledge');
@@ -252,7 +258,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('status', (message) => {
-                if (message.packetDecoded.protectedPayload !== undefined) {
+                if (message.packetDecoded.protectedPayload) {
                     const decodedMessage = message.packetDecoded.protectedPayload;
                     const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
 
@@ -578,6 +584,7 @@ class XBOXLOCALAPI extends EventEmitter {
     async disconnect() {
         const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
         clearTimeout(this.closeConnection);
+        this.closeConnection = false;
 
         try {
             const disconnect = new Packer('message.disconnect');

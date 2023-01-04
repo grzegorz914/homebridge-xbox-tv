@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
+## [2.3.16] - (04.01.2023)
+## Changes
+- fix wrong state after power Off
+- fix display current app
+- fix save target visibility
+- fix save custom names 
+
+## [2.3.15] - (04.01.2023)
+## Changes
+- fix #147 #148
 
 ## [2.3.14] - (03.01.2023)
 ## Changes

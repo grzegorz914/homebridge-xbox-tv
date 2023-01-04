@@ -220,6 +220,7 @@ class XBOXDEVICE {
 			})
 			.on('stateChanged', (power, titleId, inputReference, volume, mute, mediaState) => {
 				const inputIdentifier = this.inputsReference.indexOf(inputReference) >= 0 ? this.inputsReference.indexOf(inputReference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
+
 				const obj = JSON.stringify({
 					'power': power,
 					'titleId': titleId,
@@ -611,7 +612,7 @@ class XBOXDEVICE {
 				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
 				const setDashboard = (inputOneStoreProductId === 'Dashboard' || inputOneStoreProductId === 'Settings' || inputOneStoreProductId === 'SettingsTv' || inputOneStoreProductId === 'Accessory' || inputOneStoreProductId === 'Screensaver' || inputOneStoreProductId === 'NetworkTroubleshooter' || inputOneStoreProductId === 'XboxGuide');
 				const setTelevision = (inputOneStoreProductId === 'Television');
-				const setApp = ((inputOneStoreProductId !== undefined && inputOneStoreProductId !== '0') && !setDashboard && !setTelevision);
+				const setApp = ((inputOneStoreProductId && inputOneStoreProductId !== '0') && !setDashboard && !setTelevision);
 				try {
 					const setInput = (this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Input successful, input: %s, reference: %s, product Id: %s', this.host, accessoryName, inputName, inputReference, inputOneStoreProductId);
@@ -867,25 +868,25 @@ class XBOXDEVICE {
 			const input = inputs[j];
 
 			//get title Id
-			const inputTitleId = (input.titleId !== undefined) ? input.titleId : undefined;
+			const inputTitleId = (input.titleId) ? input.titleId : undefined;
 
 			//get input reference
-			const inputReference = (input.reference !== undefined) ? input.reference : undefined;
+			const inputReference = (input.reference) ? input.reference : undefined;
 
 			//get input oneStoreProductId
-			const inputOneStoreProductId = (input.oneStoreProductId !== undefined) ? input.oneStoreProductId : undefined;
+			const inputOneStoreProductId = (input.oneStoreProductId) ? input.oneStoreProductId : undefined;
 
 			//get input name
-			const inputName = (savedInputsNames[inputTitleId] !== undefined) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference] !== undefined) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId] !== undefined) ? savedInputsNames[inputOneStoreProductId] : input.name;
+			const inputName = (savedInputsNames[inputTitleId]) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference]) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId]) ? savedInputsNames[inputOneStoreProductId] : input.name;
 
 			//get input type
-			const inputType = (input.type !== undefined) ? CONSTANS.InputSourceTypes.indexOf(input.type) : 10;
+			const inputType = (input.type) ? CONSTANS.InputSourceTypes.indexOf(input.type) : 10;
 
 			//get input configured
 			const isConfigured = 1;
 
 			//get input visibility state
-			const currentVisibility = (savedTargetVisibility[inputTitleId] !== undefined) ? savedTargetVisibility[inputTitleId] : (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : (savedTargetVisibility[inputOneStoreProductId] !== undefined) ? savedTargetVisibility[inputOneStoreProductId] : 0;
+			const currentVisibility = (savedTargetVisibility[inputTitleId]) ? savedTargetVisibility[inputTitleId] : (savedTargetVisibility[inputReference]) ? savedTargetVisibility[inputReference] : (savedTargetVisibility[inputOneStoreProductId]) ? savedTargetVisibility[inputOneStoreProductId] : 0;
 			const targetVisibility = currentVisibility;
 
 			const inputService = new Service.InputSource(inputName, `Input ${j}`);
@@ -900,10 +901,9 @@ class XBOXDEVICE {
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
-					const nameIdentifier = (inputTitleId !== undefined) ? inputTitleId : (inputReference !== undefined) ? inputReference : (inputOneStoreProductId !== undefined) ? inputOneStoreProductId : false;
-					let newName = savedInputsNames;
-					newName[nameIdentifier] = name;
-					const newCustomName = JSON.stringify(newName, null, 2);
+					const nameIdentifier = (inputTitleId) ? inputTitleId : (inputReference) ? inputReference : (inputOneStoreProductId) ? inputOneStoreProductId : false;
+					savedInputsNames[nameIdentifier] = name;
+					const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 					try {
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, saved new Input name successful, name: %s, product Id: %s', this.host, accessoryName, newCustomName, inputOneStoreProductId);
@@ -915,10 +915,9 @@ class XBOXDEVICE {
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onSet(async (state) => {
-					const targetVisibilityIdentifier = (inputTitleId !== undefined) ? inputTitleId : (inputReference !== undefined) ? inputReference : (inputOneStoreProductId !== undefined) ? inputOneStoreProductId : false;
-					let newState = savedTargetVisibility;
-					newState[targetVisibilityIdentifier] = state;
-					const newTargetVisibility = JSON.stringify(newState, null, 2);
+					const targetVisibilityIdentifier = (inputTitleId) ? inputTitleId : (inputReference) ? inputReference : (inputOneStoreProductId) ? inputOneStoreProductId : false;
+					savedTargetVisibility[targetVisibilityIdentifier] = state;
+					const newTargetVisibility = JSON.stringify(savedTargetVisibility, null, 2);
 					try {
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, saved new Target Visibility successful, input: %s, state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
@@ -951,13 +950,13 @@ class XBOXDEVICE {
 				const button = buttons[i];
 
 				//get button command
-				const buttonCommand = (button.command !== undefined) ? button.command : '';
+				const buttonCommand = (button.command) ? button.command : '';
 
 				//get button name
-				const buttonName = (button.name !== undefined) ? button.name : buttonCommand;
+				const buttonName = (button.name) ? button.name : buttonCommand;
 
 				//get button display type
-				const buttonDisplayType = (button.displayType !== undefined) ? button.displayType : 0;
+				const buttonDisplayType = (button.displayType) ? button.displayType : 0;
 
 				//get button mode
 				let buttonMode = 0;
@@ -984,7 +983,7 @@ class XBOXDEVICE {
 				};
 
 				//get button inputOneStoreProductId
-				const buttonOneStoreProductId = (button.oneStoreProductId !== undefined) ? button.oneStoreProductId : '0';
+				const buttonOneStoreProductId = (button.oneStoreProductId) ? button.oneStoreProductId : '0';
 
 				const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
 				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
@@ -997,7 +996,7 @@ class XBOXDEVICE {
 					.onSet(async (state) => {
 						const setDashboard = (buttonOneStoreProductId === 'Dashboard' || buttonOneStoreProductId === 'Settings' || buttonOneStoreProductId === 'SettingsTv' || buttonOneStoreProductId === 'Accessory' || buttonOneStoreProductId === 'Screensaver' || buttonOneStoreProductId === 'NetworkTroubleshooter' || buttonOneStoreProductId === 'XboxGuide');
 						const setTelevision = (buttonOneStoreProductId === 'Television');
-						const setApp = ((buttonOneStoreProductId !== undefined && buttonOneStoreProductId !== '0') && !setDashboard && !setTelevision);
+						const setApp = ((buttonOneStoreProductId && buttonOneStoreProductId !== '0') && !setDashboard && !setTelevision);
 						try {
 							const setCommand = (this.power && state && this.webApiEnabled && buttonMode <= 2) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false
 							const recordGameDvr = (this.power && state && buttonMode === 3) ? await this.xboxLocalApi.recordGameDvr() : false;
