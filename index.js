@@ -105,6 +105,7 @@ class XBOXDEVICE {
 		//setup variables
 		this.webApiEnabled = false;
 
+		this.inputsArr = new Array();
 		this.inputsReference = new Array();
 		this.inputsOneStoreProductId = new Array();
 		this.inputsName = new Array();
@@ -560,7 +561,6 @@ class XBOXDEVICE {
 		const accessoryUUID = UUID.generate(this.xboxLiveId);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
-		accessory.context.device = this.config.device;
 
 		//Pinformation service
 		this.log.debug('prepareInformationService');
@@ -849,20 +849,17 @@ class XBOXDEVICE {
 
 		//check available inputs and filter costom inputs
 		const allInputs = (this.getInputsFromDevice && savedInputs.length > 0) ? savedInputs : this.inputs;
-		const inputsArr = new Array();
-		const allInputsCount = allInputs.length;
-		for (let i = 0; i < allInputsCount; i++) {
-			const input = allInputs[i];
+		for (const input of allInputs) {
 			const contentType = input.contentType;
 			const filterGames = this.filterGames ? (contentType !== 'Game') : true;
 			const filterApps = this.filterApps ? (contentType !== 'App') : true;
 			const filterSystemApps = this.filterSystemApps ? (contentType !== 'systemApp') : true;
 			const filterDlc = this.filterDlc ? (contentType !== 'Dlc') : true;
-			const push = (this.getInputsFromDevice) ? (filterGames && filterApps && filterSystemApps && filterDlc) ? inputsArr.push(input) : false : inputsArr.push(input);
+			const push = (this.getInputsFromDevice) ? (filterGames && filterApps && filterSystemApps && filterDlc) ? this.inputsArr.push(input) : false : this.inputsArr.push(input);
 		}
 
 		//check available inputs and possible inputs count (max 93)
-		const inputs = inputsArr;
+		const inputs = this.inputsArr;
 		const inputsCount = inputs.length;
 		const maxInputsCount = (inputsCount < 93) ? inputsCount : 93;
 		for (let j = 0; j < maxInputsCount; j++) {

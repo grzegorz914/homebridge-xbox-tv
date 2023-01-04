@@ -49,7 +49,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.volume = 0;
         this.mute = true;
         this.titleId = '';
-        this.reference = '';
+        this.inputReference = '';
         this.mediaState = 0;
         this.emitDevInfo = true;
 
@@ -81,7 +81,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
 
                         // Check if JSON is fragmented
-                        if (jsonMessage.datagramId !== undefined) {
+                        if (jsonMessage.datagramId) {
                             const debug = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
                             if (!this.fragments[jsonMessage.datagramId]) {
                                 this.fragments[jsonMessage.datagramId] = {
@@ -116,14 +116,6 @@ class XBOXLOCALAPI extends EventEmitter {
                             }
                             this.function = 'jsonFragment';
                         };
-                        break;
-                    case 'status':
-                        const decodedMessage = JSON.stringify(this.response.packetDecoded.protectedPayload);
-                        if (this.message === decodedMessage) {
-                            const debug = this.debugLog ? this.emit('debug', 'Received unchanged status message.') : false;
-                            return;
-                        };
-                        this.message = decodedMessage;
                         break;
                 };
 
@@ -161,7 +153,7 @@ class XBOXLOCALAPI extends EventEmitter {
             clearInterval(this.setPowerOn);
             const decodedMessage = message.packetDecoded;
 
-            if (decodedMessage !== undefined && !this.isConnected) {
+            if (decodedMessage && !this.isConnected) {
                 const debug = this.debugLog ? this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`) : false;
 
                 // Set certyficate
@@ -187,11 +179,10 @@ class XBOXLOCALAPI extends EventEmitter {
                 connectRequest.set('publicKey', this.crypto.getPublicKey());
                 connectRequest.set('iv', this.crypto.getIv());
 
-                if (this.userHash !== undefined && this.userToken !== undefined) {
+                if (this.userHash && this.userToken) {
                     connectRequest.set('userHash', this.userHash, true);
                     connectRequest.set('jwt', this.userToken, true);
                     this.isAuthorized = true;
-                    const debug = this.debugLog ? this.emit('debug', `Connecting using token: ${this.userToken}`) : false;
                 }
                 const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
 
@@ -238,6 +229,15 @@ class XBOXLOCALAPI extends EventEmitter {
             })
             .on('acknowledge', async () => {
                 const debug = this.debugLog ? this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.') : false;
+                if (this.isConnected) {
+                    this.closeConnection = setTimeout(() => {
+                        const debug = this.debugLog ? this.emit('debug', `Last message was: ${this.closeConnection / 1000} seconds ago, send disconnect.`) : false;
+                        this.disconnect();
+                    }, 12000);
+
+                    const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
+                    clearTimeout(this.closeConnection);
+                };
 
                 try {
                     const acknowledge = new Packer('message.acknowledge');
@@ -249,14 +249,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     await this.sendSocketMessage(message);
                 } catch (error) {
                     this.emit('error', `Send acknowledge error: ${error}`)
-                };
-
-                clearTimeout(this.closeConnection);
-                if (this.isConnected) {
-                    this.closeConnection = setTimeout(() => {
-                        const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
-                        this.disconnect();
-                    }, 12000);
                 };
             })
             .on('status', (message) => {
@@ -276,17 +268,17 @@ class XBOXLOCALAPI extends EventEmitter {
                     };
 
                     const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
-                    const power = this.isConnected;
+                    const power = true;
                     const volume = 0;
                     const mute = power ? power : true;
                     const mediaState = 0;
                     const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
-                    const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.reference;
+                    const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
 
                     if (this.power !== power || this.titleId !== titleId || this.inputReference !== inputReference || this.volume !== volume || this.mute !== mute || this.mediaState !== mediaState) {
                         this.power = power;
                         this.titleId = titleId;
-                        this.reference = inputReference;
+                        this.inputReference = inputReference;
                         this.volume = volume;
                         this.mute = mute;
                         this.mediaState = mediaState;
