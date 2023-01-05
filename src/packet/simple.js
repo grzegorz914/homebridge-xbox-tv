@@ -104,7 +104,7 @@ class SIMPLE {
 
         this.structure = Packet[packetFormat];
         // Load protected payload PacketStructure
-        if (this.structure.protectedPayload != undefined) {
+        if (this.structure.protectedPayload !== undefined) {
             this.protectedPayload = new PacketStructure();
             const protectedStructure = Packet[`${packetFormat}Protected`];
             this.structureProtected = protectedStructure;
@@ -120,14 +120,14 @@ class SIMPLE {
     };
 
     set(key, value, isProtected = false) {
-        if (isProtected == false) {
+        if (!isProtected) {
             this.structure[key].value = value;
-            if (this.structure[key].length != undefined) {
+            if (this.structure[key].length !== undefined) {
                 this.structure[key].length = value.length;
             };
         } else {
             this.structureProtected[key].value = value;
-            if (this.structureProtected[key].length != undefined) {
+            if (this.structureProtected[key].length !== undefined) {
                 this.structureProtected[key].length = value.length;
             };
         };
@@ -157,7 +157,7 @@ class SIMPLE {
         this.name = (packet.type == 'dd02') ? 'powerOn' : this.name;
 
         // Lets decrypt the data when the payload is encrypted
-        if (packet.protectedPayload != undefined) {
+        if (packet.protectedPayload !== undefined) {
 
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
             packet.signature = packet.protectedPayload.slice(-32);
@@ -188,7 +188,7 @@ class SIMPLE {
             } else {
                 let protectedStructure = this.structureProtected;
                 for (let nameStruct in protectedStructure) {
-                    if (this.structure.protectedPayload.value != undefined) {
+                    if (this.structure.protectedPayload.value !== undefined) {
                         protectedStructure[nameStruct].value = this.structure.protectedPayload.value[nameStruct];
                     };
                     protectedStructure[nameStruct].pack(this.protectedPayload);
@@ -249,7 +249,7 @@ class SIMPLE {
         let payloadLength = new PacketStructure();
         let packet = '';
 
-        if (protectedPayloadLength !== false) {
+        if (protectedPayloadLength) {
             payloadLength.writeUInt16(payload.length - protectedPayloadLengthReal);
             payloadLength = payloadLength.toBuffer();
 

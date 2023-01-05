@@ -24,26 +24,15 @@ class XBOXLOCALAPI extends EventEmitter {
         this.crypto = new SGCrypto();
         this.isConnected = false;
         this.isAuthorized = false;
-        this.fragments = {};
 
         this.requestNum = 0;
         this.participantId = false;
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
         this.iv = false;
-        this.function = '';
 
         //channelManager
-        this.channelClientId = 0;
-        this.channelCommand = '';
-        this.configuration = {};
-        this.headendInfo = {};
-        this.liveTv = {};
-        this.tunerLineups = {};
-        this.appChannelLineups = {};
-        this.channelTargetId = null;
-        this.channelRequestId = null;
-        this.message = {};
+        this.mediaRequestId = 0;
 
         this.firstRun = true;
         this.emitDevInfo = true;
@@ -54,6 +43,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.titleId = '';
         this.inputReference = '';
         this.mediaState = 0;
+        this.command = ';'
 
         //dgram socket
         this.socket = new Dgram.createSocket('udp4');
@@ -67,26 +57,27 @@ class XBOXLOCALAPI extends EventEmitter {
                 if (message.structure === false) {
                     return;
                 };
-                this.response = message.unpack(this);
-                this.function = this.response.name;
+                let response = message.unpack(this);
+                let functionName = response.name;
 
-                if (this.response.packetDecoded.type === 'd00d') {
-                    if (this.response.packetDecoded.targetParticipantId !== this.participantId) {
+                if (response.packetDecoded.type === 'd00d') {
+                    if (response.packetDecoded.targetParticipantId !== this.participantId) {
                         const debug1 = this.debugLog ? this.emit('debug', 'Participant id does not match. Ignoring packet.') : false;
                         return;
                     };
-                    this.function = message.structure.packetDecoded.name;
+                    functionName = message.structure.packetDecoded.name;
                 }
 
-                switch (this.function) {
+                switch (functionName) {
                     case 'json':
-                        const jsonMessage = JSON.parse(this.response.packetDecoded.protectedPayload.json)
+                        const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json)
 
                         // Check if JSON is fragmented
                         if (jsonMessage.datagramId) {
                             const debug = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
-                            if (!this.fragments[jsonMessage.datagramId]) {
-                                this.fragments[jsonMessage.datagramId] = {
+                            const fragments = {};
+                            if (!fragments[jsonMessage.datagramId]) {
+                                fragments[jsonMessage.datagramId] = {
                                     partials: {},
                                     getValue() {
                                         let buffer = Buffer.from('');
@@ -110,34 +101,23 @@ class XBOXLOCALAPI extends EventEmitter {
                                 };
                             }
 
-                            this.fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                            if (this.fragments[jsonMessage.datagramId].isValid()) {
+                            fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+                            if (fragments[jsonMessage.datagramId].isValid()) {
                                 const debug = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
-                                this.response.packetDecoded.protectedPayload.json = this.fragments[jsonMessage.datagramId].getValue().toString();
-                                delete this.fragments[jsonMessage.datagramId];
+                                response.packetDecoded.protectedPayload.json = fragments[jsonMessage.datagramId].getValue().toString();
+                                delete fragments[jsonMessage.datagramId];
                             }
-                            this.function = 'jsonFragment';
+                            functionName = 'jsonFragment';
                         };
+                        break;
+                    case 'jsonFragment':
+                        const debug = this.debugLog ? this.emit('debug', `Json fragment: ${response}`) : false;
                         break;
                 };
 
-                if (this.isConnected) {
-                    if (this.closeConnection) {
-                        const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
-                        clearTimeout(this.closeConnection)
-                        this.closeConnection = false;
-                    }
-                    if (!this.closeConnection) {
-                        const debug = this.debugLog ? this.emit('debug', `Set timeout to: 12 seconds`) : false;
-                        this.closeConnection = setTimeout(() => {
-                            const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
-                            this.disconnect();
-                        }, 12000);
-                    };
-                };
-
-                const debug1 = this.debugLog ? this.emit('debug', `Received event type: ${this.function}`) : false;
-                this.emit(this.function, this.response);
+                const debug1 = this.debugLog ? this.emit('debug', `Received event type: ${functionName}`) : false;
+                this.emit('connectionWatch');
+                this.emit(functionName, response);
             })
             .on('listening', () => {
                 const address = this.socket.address();
@@ -168,8 +148,8 @@ class XBOXLOCALAPI extends EventEmitter {
         //EventEmmiter
         this.on('discoveryResponse', async (message) => {
             clearInterval(this.setPowerOn);
-            const decodedMessage = message.packetDecoded;
 
+            const decodedMessage = message.packetDecoded;
             if (decodedMessage && !this.isConnected) {
                 const debug = this.debugLog ? this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`) : false;
 
@@ -235,6 +215,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     return;
                 };
 
+                this.emit('debug', `Connect success.`);
                 this.isConnected = true;
                 try {
                     const localJoin = new Packer('message.localJoin');
@@ -260,58 +241,62 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('status', (message) => {
-                if (message.packetDecoded.protectedPayload) {
-                    const decodedMessage = message.packetDecoded.protectedPayload;
-                    const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
-
-                    if (this.emitDevInfo) {
-                        const majorVersion = decodedMessage.majorVersion;
-                        const minorVersion = decodedMessage.minorVersion;
-                        const buildNumber = decodedMessage.buildNumber;
-                        const locale = decodedMessage.locale;
-                        const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                        this.emit('connected', 'Connected.');
-                        this.emit('deviceInfo', firmwareRevision, locale);
-                        this.emitDevInfo = false;
-                    };
-
-                    const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
-                    const power = true;
-                    const volume = 0;
-                    const mute = power ? power : true;
-                    const mediaState = 0;
-                    const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
-                    const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
-
-                    if (this.firstRun || this.power !== power || this.titleId !== titleId || this.inputReference !== inputReference || this.volume !== volume || this.mute !== mute || this.mediaState !== mediaState) {
-                        this.firstRun = false;
-                        this.power = power;
-                        this.titleId = titleId;
-                        this.inputReference = inputReference;
-                        this.volume = volume;
-                        this.mute = mute;
-                        this.mediaState = mediaState;
-
-                        this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
-                        const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
-                    };
+                if (!message.packetDecoded.protectedPayload) {
+                    return;
                 };
-            }).on('channelResponse', (message) => {
-                if (message.packetDecoded.protectedPayload.result === 0) {
-                    const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
-                    const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
-                    const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${channelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
 
-                    if (channelTargetId !== this.channelTargetId) {
-                        this.channelTargetId = channelTargetId;
-                        this.channelRequestId = channelRequestId;
-                    };
+                const decodedMessage = message.packetDecoded.protectedPayload;
+                const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
+
+                if (this.emitDevInfo) {
+                    const majorVersion = decodedMessage.majorVersion;
+                    const minorVersion = decodedMessage.minorVersion;
+                    const buildNumber = decodedMessage.buildNumber;
+                    const locale = decodedMessage.locale;
+                    const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+                    this.emit('connected', 'Connected.');
+                    this.emit('deviceInfo', firmwareRevision, locale);
+                    this.emitDevInfo = false;
                 };
+
+                const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
+                const power = true;
+                const volume = 0;
+                const mute = power ? power : true;
+                const mediaState = 0;
+                const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
+                const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
+
+                if (!this.firstRun && this.power === power && this.titleId === titleId && this.inputReference === inputReference && this.volume === volume && this.mute === mute && this.mediaState === mediaState) {
+                    return;
+                };
+
+                this.firstRun = false;
+                this.power = power;
+                this.titleId = titleId;
+                this.inputReference = inputReference;
+                this.volume = volume;
+                this.mute = mute;
+                this.mediaState = mediaState;
+
+                this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
+                const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
             })
-            .on('sendCommand', async (command) => {
-                const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${channelNames[this.channelRequestId]}, request id: ${this.channelRequestId}, command: ${command}`) : false;
+            .on('channelResponse', (message) => {
+                if (message.packetDecoded.protectedPayload.result !== '0') {
+                    return;
+                };
 
-                switch (this.channelRequestId) {
+                const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+                const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
+                const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
+
+                this.emit('sendCommand', channelRequestId, this.command);
+            })
+            .on('sendCommand', async (channelRequestId, command) => {
+                const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, command: ${command}`) : false;
+
+                switch (channelRequestId) {
                     case 0:
                         if (!(command in CONSTANS.SystemMediaCommands)) {
                             const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
@@ -319,16 +304,16 @@ class XBOXLOCALAPI extends EventEmitter {
                         }
 
                         try {
-                            let mediaRequestId = 0;
+                            this.mediaRequestId++;
                             let requestId = '0000000000000000';
                             const requestIdLength = requestId.length;
-                            requestId = (requestId + mediaRequestId++).slice(-requestIdLength);
+                            requestId = (requestId + this.mediaRequestId).slice(-requestIdLength);
 
                             const mediaCommand = new Packer('message.mediaCommand');
                             mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
                             mediaCommand.set('titleId', 0);
                             mediaCommand.set('command', CONSTANS.SystemMediaCommands[command]);
-                            mediaCommand.setChannel(this.channelTargetId);
+                            mediaCommand.setChannel('0');
                             const message = mediaCommand.pack(this);
                             const debug = this.debugLog ? this.emit('debug', `System media send command: ${command}`) : false;
                             await this.sendSocketMessage(message);
@@ -343,27 +328,29 @@ class XBOXLOCALAPI extends EventEmitter {
                         };
 
                         try {
-                            const timeStampPress = new Date().getTime();
+                            const timeStampPress = new Date().getTime().toString();
                             const gamepadPress = new Packer('message.gamepad');
-                            gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress.toString()}`, 'hex'));
+                            gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress}`, 'hex'));
                             gamepadPress.set('buttons', CONSTANS.SystemInputCommands[command]);
-                            gamepadPress.setChannel(this.channelTargetId);
+                            gamepadPress.setChannel('1');
                             const message = gamepadPress.pack(this);
                             const debug = this.debugLog ? this.emit('debug', `System input send press, command: ${command}`) : false;
-                            await this.sendSocketMessage(message);
+                            const status = await this.sendSocketMessage(message);
 
-                            try {
-                                const timeStampUnpress = new Date().getTime();
-                                const gamepadUnpress = new Packer('message.gamepad');
-                                gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress.toString()}`, 'hex'));
-                                gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
-                                gamepadUnpress.setChannel(this.channelTargetId);
-                                const message = gamepadUnpress.pack(this);
-                                const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
-                                await this.sendSocketMessage(message);
-                            } catch (error) {
-                                this.emit('error', `Send system input command unpress error: ${error}`)
-                            };
+                            if (status) {
+                                try {
+                                    const timeStampUnpress = new Date().getTime().toString();
+                                    const gamepadUnpress = new Packer('message.gamepad');
+                                    gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress}`, 'hex'));
+                                    gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
+                                    gamepadUnpress.setChannel('1');
+                                    const message = gamepadUnpress.pack(this);
+                                    const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
+                                    await this.sendSocketMessage(message);
+                                } catch (error) {
+                                    this.emit('error', `Send system input command unpress error: ${error}`)
+                                };
+                            }
                         } catch (error) {
                             this.emit('error', `Send system input command press error: ${error}`)
                         };
@@ -386,7 +373,7 @@ class XBOXLOCALAPI extends EventEmitter {
                             };
                             const json = new Packer('message.json');
                             json.set('json', JSON.stringify(jsonRequest));
-                            json.setChannel(this.channelTargetId);
+                            json.setChannel('2');
                             const message = json.pack(this);
                             const debug = this.debugLog ? this.emit('debug', `TV remote send command: ${command}`) : false;
                             await this.sendSocketMessage(message);
@@ -405,7 +392,7 @@ class XBOXLOCALAPI extends EventEmitter {
                                 };
                                 const json = new Packer('message.json');
                                 json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel(this.channelTargetId);
+                                json.setChannel('3');
                                 const message = json.pack(this);
                                 const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
                                 await this.sendSocketMessage(message);
@@ -416,36 +403,22 @@ class XBOXLOCALAPI extends EventEmitter {
                         break;
                 };
             })
-            .on('json', (message) => {
-                const response = JSON.parse(message.packetDecoded.protectedPayload.json);
-                if (response.response === "Error") {
-                    this.emit('error', `Json error: ${response}`);
-                } else {
-                    if (response.response === 'GetConfiguration') {
-                        this.configuration = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `TV remote configuration: ${this.configuration}`) : false;
-                    };
-                    if (response.response === 'GetHeadendInfo') {
-                        this.headendInfo = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Headend info: ${this.headendInfo}`) : false;
-                    };
-                    if (response.response === 'GetLiveTVInfo') {
-                        this.liveTv = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Live TV info: ${this.liveTv}`) : false;
-                    };
-                    if (response.response === 'GetTunerLineups') {
-                        this.tunerLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `Tuner lineups: ${this.tunerLineups}`) : false;
-                    };
-                    if (response.response === 'GetAppChannelLineups') {
-                        this.appChannelLineups = response.params;
-                        const debug = this.debugLog ? this.emit('debug', `App channel lineups: ${this.appChannelLineups}`) : false;
+            .on('connectionWatch', () => {
+                if (this.isConnected) {
+                    if (this.closeConnection) {
+                        const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
+                        clearTimeout(this.closeConnection)
+                        this.closeConnection = false;
+                    }
+                    if (!this.closeConnection) {
+                        const debug = this.debugLog ? this.emit('debug', `Set timeout to: 12 seconds`) : false;
+                        this.closeConnection = setTimeout(() => {
+                            const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
+                            this.disconnect();
+                        }, 12000);
                     };
                 };
             })
-            .on('jsonFragment', (message) => {
-                const debug = this.debugLog ? this.emit('debug', `Json fragment: ${message}`) : false;
-            });
     };
 
     powerOn() {
@@ -550,30 +523,21 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
                 const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-                if (CONSTANS.ChannelIds[channelName] !== this.channelRequestId) {
-                    try {
-                        const channelRequest = new Packer('message.channelRequest');
-                        channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
-                        channelRequest.set('titleId', 0);
-                        channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
-                        channelRequest.set('activityId', 0);
-                        const message = channelRequest.pack(this);
-                        const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
-                        await this.sendSocketMessage(message);
-
-                        setTimeout(() => {
-                            this.emit('sendCommand', command)
-                        }, 500);
-                        resolve(true);
-                    } catch (error) {
-                        reject({
-                            status: `Send command: ${command} error.`,
-                            error: error
-                        });
-                    }
-                } else {
+                this.command = command;
+                try {
+                    const channelRequest = new Packer('message.channelRequest');
+                    channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
+                    channelRequest.set('titleId', 0);
+                    channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
+                    channelRequest.set('activityId', 0);
+                    const message = channelRequest.pack(this);
+                    const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
+                    await this.sendSocketMessage(message);
+                    resolve(true);
+                } catch (error) {
                     reject({
-                        status: `Send command: ${command} ignored, channel request id duplicated.`
+                        status: `Send command: ${command} error.`,
+                        error: error
                     });
                 }
             } else {
@@ -600,8 +564,7 @@ class XBOXLOCALAPI extends EventEmitter {
             setTimeout(() => {
                 this.isConnected = false;
                 this.requestNum = 0;
-                this.channelTargetId = null;
-                this.channelRequestId = null;
+                this.mediaRequestId = 0;
                 this.firstRun = true;
                 this.emitDevInfo = true;
                 this.emit('stateChanged', false, 0, 0, 0, true, 0);

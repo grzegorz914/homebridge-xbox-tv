@@ -327,8 +327,8 @@ class MESSAGE {
 
     readFlags(flags) {
         flags = HexToBin(flags.toString('hex'));
-        const needAck = (flags.slice(2, 3) == 1) ? true : false;
-        const isFragment = (flags.slice(3, 4) == 1) ? true : false;
+        const needAck = (flags.slice(2, 3) === 1);
+        const isFragment = (flags.slice(3, 4) === 1);
         const type = this.getMsgType(parseInt(flags.slice(4, 16), 2));
 
         const packet = {
@@ -391,7 +391,7 @@ class MESSAGE {
     };
 
     set(key, value, subkey = false) {
-        if (subkey == false) {
+        if (!subkey) {
             this.structure[key].value = value;
         } else {
             this.structure[subkey][key].value = value;
@@ -421,7 +421,7 @@ class MESSAGE {
         packet.signature = packet.protectedPayload.slice(-32);
 
         // Lets decrypt the data when the payload is encrypted
-        if (packet.protectedPayload != undefined) {
+        if (packet.protectedPayload) {
             const key = smartglass.crypto.encrypt(this.packetData.slice(0, 16), smartglass.crypto.getIv());
 
             let decryptedPayload = smartglass.crypto.decrypt(packet.protectedPayload, key);

@@ -36,7 +36,7 @@ class STRUCTURE {
     readBytes(count = false) {
         let data = '';
 
-        if (count == false) {
+        if (!count) {
             data = this.packet.slice(this.offset);
             this.offset = this.totalLength;
         } else {
