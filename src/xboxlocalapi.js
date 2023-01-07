@@ -24,19 +24,15 @@ class XBOXLOCALAPI extends EventEmitter {
         this.crypto = new SGCrypto();
         this.isConnected = false;
         this.isAuthorized = false;
+        this.heartBeatConnection = false;
 
         this.requestNum = 0;
-        this.participantId = false;
+        this.participantId = 0;
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
-        this.iv = false;
-
-        //channelManager
         this.mediaRequestId = 0;
-
         this.firstRun = true;
         this.emitDevInfo = true;
-        this.closeConnection = false;
         this.power = false;
         this.volume = 0;
         this.mute = true;
@@ -49,6 +45,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.socket = new Dgram.createSocket('udp4');
         this.socket.on('error', (error) => {
             this.emit('error', `Socket error: ${error}`);
+            this.socket.close();
         })
             .on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
@@ -115,8 +112,9 @@ class XBOXLOCALAPI extends EventEmitter {
                         break;
                 };
 
-                const debug1 = this.debugLog ? this.emit('debug', `Received event type: ${functionName}`) : false;
-                this.emit('connectionWatch');
+                this.heartBeatStartTime = Date.now();
+                const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
+                const debug2 = this.debugLog ? this.emit('debug', `Received event type: ${functionName}`) : false;
                 this.emit(functionName, response);
             })
             .on('listening', () => {
@@ -150,53 +148,52 @@ class XBOXLOCALAPI extends EventEmitter {
             clearInterval(this.setPowerOn);
 
             const decodedMessage = message.packetDecoded;
-            if (decodedMessage && !this.isConnected) {
-                const debug = this.debugLog ? this.emit('debug', `Discovered: ${JSON.stringify(decodedMessage)}, send connect request.`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(decodedMessage)}.`) : false;
+            if (!decodedMessage || this.isConnected) {
+                const debug = this.debugLog ? this.emit('debug', `Decoded message undefined or console already connected`) : false;
+                return;
+            };
 
-                // Set certyficate
-                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
+            // Set certyficate
+            const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-                // Set pem
-                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+            // Set pem
+            const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-                // Set uuid
-                const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
+            // Set uuid
+            const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
 
-                // Create public key
-                const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
-                const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
+            // Create public key
+            const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
+            const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
 
-                // Load crypto data
-                const object = this.crypto.signPublicKey(ecKey.pubKeyHex);
-                this.crypto.load(Buffer.from(object.publicKey, 'hex'), Buffer.from(object.secret, 'hex'));
-                const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${object.publicKey}, and secret: ${object.secret}`) : false;
+            // Load crypto data
+            const { publicKey, secret } = this.crypto.signPublicKey(ecKey.pubKeyHex);
+            this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
+            const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
 
-                const connectRequest = new Packer('simple.connectRequest');
-                connectRequest.set('uuid', uuid4);
-                connectRequest.set('publicKey', this.crypto.getPublicKey());
-                connectRequest.set('iv', this.crypto.getIv());
+            const connectRequest = new Packer('simple.connectRequest');
+            connectRequest.set('uuid', uuid4);
+            connectRequest.set('publicKey', this.crypto.getPublicKey());
+            connectRequest.set('iv', this.crypto.getIv());
 
-                if (this.userHash && this.userToken) {
-                    connectRequest.set('userHash', this.userHash, true);
-                    connectRequest.set('jwt', this.userToken, true);
-                    this.isAuthorized = true;
-                }
-                const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
+            if (this.userHash && this.userToken) {
+                connectRequest.set('userHash', this.userHash, true);
+                connectRequest.set('jwt', this.userToken, true);
+                this.isAuthorized = true;
+            }
+            const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
 
-                try {
-                    const message = connectRequest.pack(this);
-                    await this.sendSocketMessage(message);
-                } catch (error) {
-                    this.emit('error', `Send connect request error: ${error}`)
-                };
+            try {
+                const message = connectRequest.pack(this);
+                await this.sendSocketMessage(message);
+            } catch (error) {
+                this.emit('error', `Send connect request error: ${error}`)
             };
         })
             .on('connectResponse', async (message) => {
-                const debug = this.debugLog ? this.emit('debug', 'Connect response received.') : false;
                 const connectionResult = message.packetDecoded.protectedPayload.connectResult;
-                const participantId = message.packetDecoded.protectedPayload.participantId;
-                this.participantId = participantId;
-                this.sourceParticipantId = participantId;
+                const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
 
                 if (connectionResult !== 0) {
                     const errorTable = {
@@ -215,8 +212,11 @@ class XBOXLOCALAPI extends EventEmitter {
                     return;
                 };
 
-                this.emit('debug', `Connect success.`);
+                const participantId = message.packetDecoded.protectedPayload.participantId;
+                this.participantId = participantId;
+                this.sourceParticipantId = participantId;
                 this.isConnected = true;
+
                 try {
                     const localJoin = new Packer('message.localJoin');
                     const message = localJoin.pack(this);
@@ -226,7 +226,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('acknowledge', async () => {
-                const debug = this.debugLog ? this.emit('debug', 'Packet needs to be acknowledged, send acknowledge.') : false;
+                const debug = this.debugLog ? this.emit('debug', 'Packet send acknowledge.') : false;
 
                 try {
                     const acknowledge = new Packer('message.acknowledge');
@@ -241,12 +241,11 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             })
             .on('status', (message) => {
-                if (!message.packetDecoded.protectedPayload) {
-                    return;
-                };
-
                 const decodedMessage = message.packetDecoded.protectedPayload;
                 const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
+                if (!decodedMessage) {
+                    return;
+                };
 
                 if (this.emitDevInfo) {
                     const majorVersion = decodedMessage.majorVersion;
@@ -403,55 +402,52 @@ class XBOXLOCALAPI extends EventEmitter {
                         break;
                 };
             })
-            .on('connectionWatch', () => {
-                if (this.isConnected) {
-                    if (this.closeConnection) {
-                        const debug = this.debugLog ? this.emit('debug', `Clear timeout: ${this.closeConnection} ms`) : false;
-                        clearTimeout(this.closeConnection)
-                        this.closeConnection = false;
-                    }
-                    if (!this.closeConnection) {
-                        const debug = this.debugLog ? this.emit('debug', `Set timeout to: 12 seconds`) : false;
-                        this.closeConnection = setTimeout(() => {
-                            const debug = this.debugLog ? this.emit('debug', `Last message was: 12 seconds ago, send disconnect.`) : false;
-                            this.disconnect();
-                        }, 12000);
-                    };
-                };
+            .on('heartBeat', () => {
+                if (this.heartBeatConnection) {
+                    return;
+                }
+
+                const debug = this.debugLog ? this.emit('debug', `Start heart beat.`) : false;
+                this.heartBeatConnection = setInterval(() => {
+                    const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
+                    const debug = this.debugLog ? this.emit('debug', `Last heart beat was: ${elapse} sec ago.`) : false;
+                    const disconnect = elapse >= 12 ? this.disconnect() : false;
+                }, 1000);
             })
     };
 
     powerOn() {
         return new Promise((resolve, reject) => {
-            if (!this.isConnected) {
-                const info = this.infoLog ? false : this.emit('message', 'Send power On.');
-                this.setPowerOn = setInterval(() => {
-                    try {
-                        this.sendPowerOn();
-                    } catch (error) {
-                        reject({
-                            status: 'Send power On error.',
-                            error: error
-                        });
-                    };
-                }, 600);
-
-                setTimeout(() => {
-                    resolve(true);
-                }, 3500);
-
-                setTimeout(() => {
-                    if (!this.isConnected) {
-                        clearInterval(this.setPowerOn);
-                        this.emit('stateChanged', false, 0, 0, 0, true, 0);
-                        this.emit('disconnected', 'Power On failed, please try again.');
-                    }
-                }, 15000);
-            } else {
+            if (this.isConnected) {
                 reject({
                     status: 'Console already On.'
                 });
+                return
             };
+
+            const info = this.infoLog ? false : this.emit('message', 'Send power On.');
+            this.setPowerOn = setInterval(() => {
+                try {
+                    this.sendPowerOn();
+                } catch (error) {
+                    reject({
+                        status: 'Send power On error.',
+                        error: error
+                    });
+                };
+            }, 600);
+
+            setTimeout(() => {
+                resolve(true);
+            }, 3500);
+
+            setTimeout(() => {
+                if (!this.isConnected) {
+                    clearInterval(this.setPowerOn);
+                    this.emit('stateChanged', false, 0, 0, 0, true, 0);
+                    this.emit('disconnected', 'Power On failed, please try again.');
+                }
+            }, 15000);
         });
     };
 
@@ -468,27 +464,28 @@ class XBOXLOCALAPI extends EventEmitter {
 
     powerOff() {
         return new Promise(async (resolve, reject) => {
-            if (this.isConnected) {
-                const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
-                try {
-                    const powerOff = new Packer('message.powerOff');
-                    powerOff.set('liveId', this.xboxLiveId);
-                    const message = powerOff.pack(this);
-                    await this.sendSocketMessage(message);
-
-                    setTimeout(() => {
-                        this.disconnect();
-                        resolve(true);
-                    }, 3500);
-                } catch (error) {
-                    reject({
-                        status: 'Send power Off error.',
-                        error: error
-                    });
-                };
-            } else {
+            if (!this.isConnected) {
                 reject({
                     status: 'Console already Off.'
+                });
+                return
+            };
+
+            const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
+            try {
+                const powerOff = new Packer('message.powerOff');
+                powerOff.set('liveId', this.xboxLiveId);
+                const message = powerOff.pack(this);
+                await this.sendSocketMessage(message);
+
+                setTimeout(() => {
+                    this.disconnect();
+                    resolve(true);
+                }, 3500);
+            } catch (error) {
+                reject({
+                    status: 'Send power Off error.',
+                    error: error
                 });
             };
         });
@@ -496,24 +493,25 @@ class XBOXLOCALAPI extends EventEmitter {
 
     recordGameDvr() {
         return new Promise(async (resolve, reject) => {
-            if (this.isConnected && this.isAuthorized) {
-                const info = this.infoLog ? false : this.emit('message', 'Send record game.');
-                try {
-                    const recordGameDvr = new Packer('message.recordGameDvr');
-                    recordGameDvr.set('startTimeDelta', -60);
-                    recordGameDvr.set('endTimeDelta', 0);
-                    const message = recordGameDvr.pack(this);
-                    await this.sendSocketMessage(message);
-                    resolve(true);
-                } catch (error) {
-                    reject({
-                        status: 'Send record game error.',
-                        error: error
-                    });
-                };
-            } else {
+            if (!this.isConnected || !this.isAuthorized) {
                 reject({
                     status: `Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`
+                });
+                return;
+            };
+
+            const info = this.infoLog ? false : this.emit('message', 'Send record game.');
+            try {
+                const recordGameDvr = new Packer('message.recordGameDvr');
+                recordGameDvr.set('startTimeDelta', -60);
+                recordGameDvr.set('endTimeDelta', 0);
+                const message = recordGameDvr.pack(this);
+                await this.sendSocketMessage(message);
+                resolve(true);
+            } catch (error) {
+                reject({
+                    status: 'Send record game error.',
+                    error: error
                 });
             };
         });
@@ -521,37 +519,38 @@ class XBOXLOCALAPI extends EventEmitter {
 
     sendCommand(channelName, command) {
         return new Promise(async (resolve, reject) => {
-            if (this.isConnected) {
-                const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-                this.command = command;
-                try {
-                    const channelRequest = new Packer('message.channelRequest');
-                    channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
-                    channelRequest.set('titleId', 0);
-                    channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
-                    channelRequest.set('activityId', 0);
-                    const message = channelRequest.pack(this);
-                    const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
-                    await this.sendSocketMessage(message);
-                    resolve(true);
-                } catch (error) {
-                    reject({
-                        status: `Send command: ${command} error.`,
-                        error: error
-                    });
-                }
-            } else {
+            if (!this.isConnected) {
                 reject({
                     status: `Console not connected, send command: ${command} ignored.`
                 });
+                return;
             };
+
+            const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
+            this.command = command;
+            try {
+                const channelRequest = new Packer('message.channelRequest');
+                channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
+                channelRequest.set('titleId', 0);
+                channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
+                channelRequest.set('activityId', 0);
+                const message = channelRequest.pack(this);
+                const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
+                await this.sendSocketMessage(message);
+                resolve(true);
+            } catch (error) {
+                reject({
+                    status: `Send command: ${command} error.`,
+                    error: error
+                });
+            }
         });
     };
 
     async disconnect() {
         const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
-        clearTimeout(this.closeConnection);
-        this.closeConnection = false;
+        clearInterval(this.heartBeatConnection);
+        this.heartBeatConnection = false;
 
         try {
             const disconnect = new Packer('message.disconnect');
@@ -564,6 +563,9 @@ class XBOXLOCALAPI extends EventEmitter {
             setTimeout(() => {
                 this.isConnected = false;
                 this.requestNum = 0;
+                this.participantId = 0;
+                this.targetParticipantId = 0;
+                this.sourceParticipantId = 0;
                 this.mediaRequestId = 0;
                 this.firstRun = true;
                 this.emitDevInfo = true;
@@ -585,12 +587,12 @@ class XBOXLOCALAPI extends EventEmitter {
             const length = message.byteLength;
 
             this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
-                if (error === null) {
-                    const debug = this.debugLog ? this.emit('debug', `Socket send ${bytes} bytes.`) : false;
-                    resolve(true);
-                } else {
+                if (error) {
                     reject(error);
-                };
+                    return;
+                }
+                const debug = this.debugLog ? this.emit('debug', `Socket send ${bytes} bytes.`) : false;
+                resolve(true);
             });
         });
     };

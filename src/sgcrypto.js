@@ -6,7 +6,6 @@ const EC = require('elliptic').ec;
 class SGCRYPTO {
     constructor() {
 
-        this.ec = new EC('p256');
         this.publicKey = Buffer.from('', 'hex');
         this.secret = Buffer.from('', 'hex');
         this.encryptionKey = false;
@@ -16,10 +15,12 @@ class SGCRYPTO {
     };
 
     load(publicKey, secret) {
-        if (publicKey != undefined && secret != undefined) {
-            this.publicKey = Buffer.from(publicKey);
-            this.secret = Buffer.from(secret);
-        };
+        if (!publicKey || !secret) {
+            throw new Error('Both public key and secret are required for loading.');
+        }
+
+        this.publicKey = Buffer.from(publicKey);
+        this.secret = Buffer.from(secret);
 
         const data = {
             'aes_key': Buffer.from(this.secret.slice(0, 16)),
@@ -44,11 +45,12 @@ class SGCRYPTO {
     };
 
     signPublicKey(publicKey) {
-        const sha512 = Crypto.createHash("sha512");
+        const ec = new EC('p256');
+        const sha512 = Crypto.createHash('sha512');
 
         // Generate keys
-        const key1 = this.ec.genKeyPair();
-        const key2 = this.ec.keyFromPublic(publicKey, 'hex');
+        const key1 = ec.genKeyPair();
+        const key2 = ec.keyFromPublic(publicKey, 'hex');
 
         const shared1 = key1.derive(key2.getPublic());
         const derivedSecret = Buffer.from(shared1.toString(16), 'hex');
@@ -56,17 +58,16 @@ class SGCRYPTO {
 
         const preSalt = Buffer.from('d637f1aae2f0418c', 'hex');
         const postSalt = Buffer.from('a8f81a574e228ab7', 'hex');
-        const prePostSalt = Buffer.from(preSalt.toString('hex') + derivedSecret.toString('hex') + postSalt.toString('hex'), 'hex');
+        const prePostSalt = Buffer.concat([preSalt, derivedSecret, postSalt]);
 
         // Hash shared secret
         const sha = sha512.update(prePostSalt);
         const secret = sha.digest();
 
-        const packet = {
+        return {
             publicKey: publicKeyClient.toString('hex').slice(2),
-            secret: secret.toString('hex')
+            secret: secret.toString('hex'),
         };
-        return packet;
     };
 
     getPublicKey() {
@@ -97,41 +98,38 @@ class SGCRYPTO {
     encrypt(data, key = false, iv = false) {
         data = Buffer.from(data);
 
-        if (!iv) {
-            iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
-        };
-
         if (!key) {
             key = this.getEncryptionKey();
-        };
+        }
+
+        if (!iv) {
+            iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
+        }
 
         const cipher = Crypto.createCipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
         let encryptedPayload = cipher.update(data, 'binary', 'binary');
         encryptedPayload += cipher.final('binary');
-        const buffer = Buffer.from(encryptedPayload, 'binary');
-        return buffer
+        return Buffer.from(encryptedPayload, 'binary');
     }
 
     decrypt(data, iv, key = false) {
-        data = this.addPadding(data);
-
         if (!key) {
             key = this.getEncryptionKey();
-        };
+        }
 
         if (!iv) {
             iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
-        };
+        }
 
+        const paddedData = this.addPadding(data);
         const cipher = Crypto.createDecipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
-        let decryptedPayload = cipher.update(data, 'binary', 'binary');
+        let decryptedPayload = cipher.update(paddedData, 'binary', 'binary');
         decryptedPayload += cipher.final('binary');
-        const removePadding = this.removePadding(Buffer.from(decryptedPayload, 'binary'));
-        return removePadding;
+        return this.removePadding(Buffer.from(decryptedPayload, 'binary'));
     };
 
     sign(data) {
@@ -148,9 +146,8 @@ class SGCRYPTO {
 
         if (payloadLength > 0 && payloadLength < 16) {
             return Buffer.from(payload.slice(0, payload.length - payloadLength));
-        } else {
-            return payload;
-        };
+        }
+        return payload;
     };
 
     addPadding(payload) {

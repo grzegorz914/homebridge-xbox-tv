@@ -60,7 +60,7 @@ class MESSAGE {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readBytes(length);
+                        this.value = packetStructure.readBytes(this.length);
                         return this.value;
                     }
                 }
@@ -129,15 +129,14 @@ class MESSAGE {
             },
             sgList(structure, value) {
                 const packet = {
-                    value: value,
-                    structure: structure,
+                    value,
+                    structure,
                     pack(packetStructure) {
                         packetStructure.writeUInt32(this.value.length);
-
-                        let arrayStructure = Packet[this.structure];
-                        for (let index in this.value) {
-                            for (let name in arrayStructure) {
-                                arrayStructure[name].value = this.value[index][name]
+                        const arrayStructure = Packet[this.structure];
+                        for (const item of this.value) {
+                            for (const name in arrayStructure) {
+                                arrayStructure[name].value = item[name];
                                 packetStructure = arrayStructure[name].pack(packetStructure);
                             }
                         }
@@ -145,13 +144,11 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         const arrayCount = packetStructure.readUInt32();
-                        const array = new Array();
-
+                        const array = [];
                         for (let i = 0; i < arrayCount; i++) {
                             const arrayStructure = Packet[this.structure];
-                            let item = {};
-
-                            for (let name in arrayStructure) {
+                            const item = {};
+                            for (const name in arrayStructure) {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
                             }
                             array.push(item);
@@ -159,12 +156,12 @@ class MESSAGE {
                         this.value = array;
                         return this.value;
                     }
-                }
+                };
                 return packet;
             },
             mapper(map, item) {
-                const packet = {
-                    item: item,
+                return {
+                    item,
                     value: false,
                     pack(packetStructure) {
                         return item.pack(packetStructure);
@@ -173,8 +170,7 @@ class MESSAGE {
                         this.value = item.unpack(packetStructure);
                         return map[this.value];
                     }
-                }
-                return packet;
+                };
             }
         };
 
@@ -327,15 +323,15 @@ class MESSAGE {
 
     readFlags(flags) {
         flags = HexToBin(flags.toString('hex'));
-        const needAck = (flags.slice(2, 3) === 1);
-        const isFragment = (flags.slice(3, 4) === 1);
+        const needAck = flags.slice(2, 3) === '1';
+        const isFragment = flags.slice(3, 4) === '1';
         const type = this.getMsgType(parseInt(flags.slice(4, 16), 2));
 
         const packet = {
-            'version': parseInt(flags.slice(0, 2), 2).toString(),
-            'needAck': needAck,
-            'isFragment': isFragment,
-            'type': type
+            version: parseInt(flags.slice(0, 2), 2).toString(),
+            needAck,
+            isFragment,
+            type
         };
         return packet;
     };
@@ -395,8 +391,8 @@ class MESSAGE {
             this.structure[key].value = value;
         } else {
             this.structure[subkey][key].value = value;
-        };
-    };
+        }
+    }
 
     unpack(smartglass = undefined) {
         const payload = new PacketStructure(this.packetData);
@@ -445,11 +441,11 @@ class MESSAGE {
 
         for (let name in this.structure) {
             this.structure[name].pack(payload);
-        };
+        }
         smartglass.getRequestNum();
 
         const header = new PacketStructure();
-        header.writeBytes(Buffer.from('d00d', 'hex'))
+        header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(payload.toBuffer().length);
         header.writeUInt32(smartglass.requestNum);
         header.writeUInt32(smartglass.targetParticipantId);
@@ -459,11 +455,11 @@ class MESSAGE {
 
         if (payload.toBuffer().length % 16 > 0) {
             const padStart = payload.toBuffer().length % 16;
-            const padTotal = (16 - padStart);
-            for (let paddingNum = (padStart + 1); paddingNum <= 16; paddingNum++) {
+            const padTotal = 16 - padStart;
+            for (let paddingNum = padStart + 1; paddingNum <= 16; paddingNum++) {
                 payload.writeUInt8(padTotal);
-            };
-        };
+            }
+        }
 
         const key = smartglass.crypto.encrypt(header.toBuffer().slice(0, 16), smartglass.crypto.getIv());
         const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getEncryptionKey(), key);

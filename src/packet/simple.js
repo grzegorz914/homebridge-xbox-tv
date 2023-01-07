@@ -39,7 +39,7 @@ class SIMPLE {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readBytes(length);
+                        return packetStructure.readBytes(this.length);
                     }
                 }
                 return packet;
@@ -124,14 +124,14 @@ class SIMPLE {
             this.structure[key].value = value;
             if (this.structure[key].length !== undefined) {
                 this.structure[key].length = value.length;
-            };
+            }
         } else {
             this.structureProtected[key].value = value;
             if (this.structureProtected[key].length !== undefined) {
                 this.structureProtected[key].length = value.length;
-            };
-        };
-    };
+            }
+        }
+    }
 
     unpack(smartglass = undefined) {
         const Packet = this.packet;
@@ -144,21 +144,19 @@ class SIMPLE {
             version: payload.readUInt16()
         };
 
-        if (packet.version != '0' && packet.version != '2') {
+        if (packet.version !== 0 && packet.version !== 2) {
             packet.protectedPayloadLength = packet.version;
             packet.version = payload.readUInt16();
-        };
+        }
 
         for (let name in this.structure) {
             packet[name] = this.structure[name].unpack(payload);
             this.set(name, packet[name]);
-        };
+        }
 
-        this.name = (packet.type == 'dd02') ? 'powerOn' : this.name;
+        this.name = (packet.type === 'dd02') ? 'powerOn' : this.name;
 
-        // Lets decrypt the data when the payload is encrypted
         if (packet.protectedPayload !== undefined) {
-
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
             packet.signature = packet.protectedPayload.slice(-32);
 
@@ -169,13 +167,14 @@ class SIMPLE {
             packet.protectedPayload = {};
 
             for (let name in protectedStructure) {
-                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload)
+                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
                 this.set('protectedPayload', packet.protectedPayload);
-            };
-        };
+            }
+        }
+
         this.packetDecoded = packet;
         return this;
-    };
+    }
 
     pack(smartglass = false) {
         const payload = new PacketStructure();
@@ -183,64 +182,72 @@ class SIMPLE {
         let packet = '';
 
         for (let name in this.structure) {
-            if (name != 'protectedPayload') {
-                this.structure[name].pack(payload);
-            } else {
-                let protectedStructure = this.structureProtected;
-                for (let nameStruct in protectedStructure) {
-                    if (this.structure.protectedPayload.value !== undefined) {
-                        protectedStructure[nameStruct].value = this.structure.protectedPayload.value[nameStruct];
-                    };
-                    protectedStructure[nameStruct].pack(this.protectedPayload);
-                };
-                this.protectedPayloadLength = this.protectedPayload.toBuffer().length;
+            switch (name) {
+                case 'protectedPayload':
+                    let protectedStructure = this.structureProtected;
+                    for (let nameStruct in protectedStructure) {
+                        if (this.structure.protectedPayload.value !== undefined) {
+                            protectedStructure[nameStruct].value = this.structure.protectedPayload.value[nameStruct];
+                        }
+                        protectedStructure[nameStruct].pack(this.protectedPayload);
+                    }
+                    this.protectedPayloadLength = this.protectedPayload.toBuffer().length;
+
+                    // Pad packet
+                    if (this.protectedPayload.toBuffer().length % 16 > 0) {
+                        const padStart = this.protectedPayload.toBuffer().length % 16;
+                        const padTotal = 16 - padStart;
+                        for (let paddingnum = padStart + 1; paddingnum <= 16; paddingnum++) {
+                            this.protectedPayload.writeUInt8(padTotal);
+                        }
+                    }
+                    this.protectedPayloadLengthReal = this.protectedPayload.toBuffer().length;
+                    const encryptedPayload = smartglass.crypto.encrypt(this.protectedPayload.toBuffer(), smartglass.crypto.getEncryptionKey(), this.structure.iv.value);
+                    payload.writeBytes(encryptedPayload);
+                    break;
+                default:
+                    this.structure[name].pack(payload);
+            }
+        }
+
+        switch (type) {
+            case 'powerOn':
+                packet = this.pack1(Buffer.from('DD02', 'hex'), payload.toBuffer(), '');
+                break;
+            case 'discoveryRequest':
+                packet = this.pack1(Buffer.from('DD00', 'hex'), payload.toBuffer(), Buffer.from('0000', 'hex'));
+                break;
+            case 'discoveryResponse':
+                packet = this.pack1(Buffer.from('DD01', 'hex'), payload.toBuffer(), '2');
+                break;
+            case 'connectRequest':
+                packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
+                // Sign protected payload
+                const protectedPayloadHash = smartglass.crypto.sign(packet);
+                packet = Buffer.concat([
+                    packet,
+                    Buffer.from(protectedPayloadHash)
+                ]);
+                break;
+            case 'connectResponse':
+                packet = this.pack1(Buffer.from('CC01', 'hex'), payload.toBuffer(), '2')
+                break;
+            case 'connectRequestProtected':
                 // Pad packet
-                if (this.protectedPayload.toBuffer().length % 16 > 0) {
-                    const padStart = this.protectedPayload.toBuffer().length % 16;
+                if (payload.toBuffer().length > 16) {
+                    const padStart = payload.toBuffer().length % 16;
                     const padTotal = (16 - padStart);
                     for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
-                        this.protectedPayload.writeUInt8(padTotal);
+                        payload.writeUInt8(padTotal);
                     };
                 };
-                this.protectedPayloadLengthReal = this.protectedPayload.toBuffer().length;
-                const encryptedPayload = smartglass.crypto.encrypt(this.protectedPayload.toBuffer(), smartglass.crypto.getEncryptionKey(), this.structure.iv.value);
-                payload.writeBytes(encryptedPayload);
-            }
-        };
 
-        if (type == 'powerOn') {
-            packet = this.pack1(Buffer.from('DD02', 'hex'), payload.toBuffer(), '');
-        } else if (type == 'discoveryRequest') {
-            packet = this.pack1(Buffer.from('DD00', 'hex'), payload.toBuffer(), Buffer.from('0000', 'hex'));
-        } else if (type == 'discoveryResponse') {
-            packet = this.pack1(Buffer.from('DD01', 'hex'), payload.toBuffer(), '2');
-        } else if (type == 'connectRequest') {
-            packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
-
-            // Sign protected payload
-            const protectedPayloadHash = smartglass.crypto.sign(packet);
-            packet = Buffer.concat([
-                packet,
-                Buffer.from(protectedPayloadHash)
-            ]);
-        } else if (type == 'connectResponse') {
-            packet = this.pack1(Buffer.from('CC01', 'hex'), payload.toBuffer(), '2')
-            // } else if (type == 'connectRequestProtected') {
-            // Pad packet
-            // if (payload.toBuffer().length > 16) {
-            //     const padStart = payload.toBuffer().length % 16;
-            //    const padTotal = (16 - padStart);
-            //    for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
-            //        payload.writeUInt8(padTotal);
-
-            //    };
-            // };
-
-            // const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getIv());
-            // const encryptedPayloadStructure = new PacketStructure(encryptedPayload)
-            // packet = encryptedPayloadStructure.toBuffer();
-        } else {
-            packet = payload.toBuffer();
+                const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getIv());
+                const encryptedPayloadStructure = new PacketStructure(encryptedPayload)
+                packet = encryptedPayloadStructure.toBuffer();
+                break;
+            default:
+                packet = payload.toBuffer();
         };
         return packet;
     };
@@ -271,10 +278,10 @@ class SIMPLE {
             packet = Buffer.concat([
                 type,
                 payloadLength,
-                Buffer.from('\x00' + String.fromCharCode(version)),
+                Buffer.from([0, version]),
                 payload
             ]);
-        };
+        }
         return packet;
     };
 };
