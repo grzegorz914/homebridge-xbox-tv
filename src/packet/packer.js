@@ -1,5 +1,4 @@
 "use strict";
-
 const SimplePacket = require('./simple');
 const MessagePacket = require('./message');
 const CONSTANS = require('../constans.json');

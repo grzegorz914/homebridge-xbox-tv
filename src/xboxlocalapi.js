@@ -7,14 +7,15 @@ const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
 const Packer = require('./packet/packer');
 const SGCrypto = require('./sgcrypto');
-const Ping = require('ping');
 const CONSTANS = require('./constans.json');
+const Ping = require('ping');
 
 class XBOXLOCALAPI extends EventEmitter {
     constructor(config) {
         super();
 
         this.host = config.host;
+        this.port = config.dgramPort;
         this.xboxLiveId = config.xboxLiveId;
         this.userToken = config.userToken;
         this.userHash = config.uhs;
@@ -31,23 +32,16 @@ class XBOXLOCALAPI extends EventEmitter {
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
         this.mediaRequestId = 0;
-        this.firstRun = true;
         this.emitDevInfo = true;
-        this.power = false;
-        this.volume = 0;
-        this.mute = true;
-        this.titleId = '';
-        this.inputReference = '';
-        this.mediaState = 0;
-        this.command = ';'
+        this.command = '';
 
         //dgram socket
-        this.socket = new Dgram.createSocket('udp4');
-        this.socket.on('error', (error) => {
-            this.emit('error', `Socket error: ${error}`);
-            this.socket.close();
-        })
-            .on('message', (message, remote) => {
+        this.connect = () => {
+            this.client = new Dgram.createSocket('udp4');
+            this.client.on('error', (error) => {
+                this.emit('error', `Socket error: ${error}`);
+                this.client.close();
+            }).on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
 
                 message = new Packer(message);
@@ -67,41 +61,37 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 switch (functionName) {
                     case 'json':
-                        const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json)
+                        // Object to hold fragments 
+                        const fragments = {};
+                        const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json);
 
                         // Check if JSON is fragmented
                         if (jsonMessage.datagramId) {
-                            const debug = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
-                            const fragments = {};
+                            const debug1 = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
+
                             if (!fragments[jsonMessage.datagramId]) {
                                 fragments[jsonMessage.datagramId] = {
                                     partials: {},
                                     getValue() {
-                                        let buffer = Buffer.from('');
-                                        for (const partial in this.partials) {
-                                            buffer = Buffer.concat([buffer, Buffer.from(this.partials[partial])]);
-                                        }
-                                        const bufferDecoded = Buffer(buffer.toString(), 'base64');
-                                        return bufferDecoded;
+                                        const buffer = Buffer.concat(Object.values(this.partials).map(partial => Buffer.from(partial)));
+                                        return buffer.toString();
                                     },
                                     isValid() {
-                                        const json = this.getValue();
-                                        let isValid = false;
                                         try {
-                                            JSON.parse(json.toString());
-                                            isValid = true;
+                                            JSON.parse(this.getValue());
+                                            return true;
                                         } catch (error) {
                                             this.emit('error', `Valid packet error: ${error}`);
+                                            return false;
                                         }
-                                        return isValid;
-                                    },
+                                    }
                                 };
                             }
 
                             fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                             if (fragments[jsonMessage.datagramId].isValid()) {
-                                const debug = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
-                                response.packetDecoded.protectedPayload.json = fragments[jsonMessage.datagramId].getValue().toString();
+                                const debug2 = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
+                                response.packetDecoded.protectedPayload.json = fragments[jsonMessage.datagramId].getValue();
                                 delete fragments[jsonMessage.datagramId];
                             }
                             functionName = 'jsonFragment';
@@ -116,18 +106,17 @@ class XBOXLOCALAPI extends EventEmitter {
                 const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
                 const debug2 = this.debugLog ? this.emit('debug', `Received event type: ${functionName}`) : false;
                 this.emit(functionName, response);
-            })
-            .on('listening', () => {
-                const address = this.socket.address();
+            }).on('listening', () => {
+                const address = this.client.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
 
-                const pingInterval = setInterval(async () => {
+                setInterval(async () => {
                     if (this.isConnected) {
                         return;
                     }
 
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
-                    const debug = this.debugLog ? this.emit('debug', `Ping state: ${JSON.stringify(state, null, 2)}`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Ping console: ${state.alive ? 'Online' : 'Offline'}`) : false;
 
                     if (!state.alive) {
                         return;
@@ -137,11 +126,13 @@ class XBOXLOCALAPI extends EventEmitter {
                     const message = discoveryPacket.pack();
                     await this.sendSocketMessage(message);
                 }, 5000);
-            })
-            .on('close', () => {
+            }).on('close', () => {
                 const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
-            })
-            .bind();
+
+                this.isConnected = false;
+                this.reconnect();
+            }).bind();
+        };
 
         //EventEmmiter
         this.on('discoveryResponse', async (message) => {
@@ -190,245 +181,258 @@ class XBOXLOCALAPI extends EventEmitter {
             } catch (error) {
                 this.emit('error', `Send connect request error: ${error}`)
             };
-        })
-            .on('connectResponse', async (message) => {
-                const connectionResult = message.packetDecoded.protectedPayload.connectResult;
-                const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
+        }).on('connectResponse', async (message) => {
+            const connectionResult = message.packetDecoded.protectedPayload.connectResult;
+            const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
 
-                if (connectionResult !== 0) {
-                    const errorTable = {
-                        0: 'Success.',
-                        1: 'Pending login. Reconnect to complete.',
-                        2: 'Unknown error.',
-                        3: 'No anonymous connections.',
-                        4: 'Device limit exceeded.',
-                        5: 'Remote connect is disabled on the console.',
-                        6: 'User authentication failed.',
-                        7: 'Sign-in failed.',
-                        8: 'Sign-in timeout.',
-                        9: 'Sign-in required.'
+            if (connectionResult !== 0) {
+                const errorTable = {
+                    0: 'Success.',
+                    1: 'Pending login. Reconnect to complete.',
+                    2: 'Unknown error.',
+                    3: 'No anonymous connections.',
+                    4: 'Device limit exceeded.',
+                    5: 'Remote connect is disabled on the console.',
+                    6: 'User authentication failed.',
+                    7: 'Sign-in failed.',
+                    8: 'Sign-in timeout.',
+                    9: 'Sign-in required.'
+                };
+                this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
+                return;
+            };
+
+            const participantId = message.packetDecoded.protectedPayload.participantId;
+            this.participantId = participantId;
+            this.sourceParticipantId = participantId;
+            this.isConnected = true;
+
+            try {
+                const localJoin = new Packer('message.localJoin');
+                const message = localJoin.pack(this);
+                await this.sendSocketMessage(message);
+            } catch (error) {
+                this.emit('error', `Send local join error: ${error}`)
+            };
+        }).on('acknowledge', async () => {
+            const debug = this.debugLog ? this.emit('debug', 'Packet send acknowledge.') : false;
+
+            try {
+                const acknowledge = new Packer('message.acknowledge');
+                acknowledge.set('lowWatermark', this.requestNum);
+                acknowledge.structure.structure.processedList.value.push({
+                    id: this.requestNum
+                });
+                const message = acknowledge.pack(this);
+                await this.sendSocketMessage(message);
+            } catch (error) {
+                this.emit('error', `Send acknowledge error: ${error}`)
+            };
+        }).on('status', (message) => {
+            const decodedMessage = message.packetDecoded.protectedPayload;
+            const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
+            if (!decodedMessage) {
+                return;
+            };
+
+            if (this.emitDevInfo) {
+                const majorVersion = decodedMessage.majorVersion;
+                const minorVersion = decodedMessage.minorVersion;
+                const buildNumber = decodedMessage.buildNumber;
+                const locale = decodedMessage.locale;
+                const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+                this.emit('connected', 'Connected.');
+                this.emit('deviceInfo', firmwareRevision, locale);
+                this.emitDevInfo = false;
+            };
+
+            const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
+            const power = true;
+            const volume = 0;
+            const mute = power ? power : true;
+            const mediaState = 0;
+            const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
+            const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
+
+            if (appsCount === 0) {
+                return;
+            };
+
+            this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
+            const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
+        }).on('channelResponse', (message) => {
+            if (message.packetDecoded.protectedPayload.result !== '0') {
+                return;
+            };
+
+            const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
+            const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
+            const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
+
+            this.emit('sendCommand', channelRequestId, this.command);
+        }).on('sendCommand', async (channelRequestId, command) => {
+            const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, command: ${command}`) : false;
+
+            switch (channelRequestId) {
+                case 0:
+                    if (!(command in CONSTANS.SystemMediaCommands)) {
+                        const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
+                        return;
+                    }
+
+                    try {
+                        this.mediaRequestId++;
+                        let requestId = '0000000000000000';
+                        const requestIdLength = requestId.length;
+                        requestId = (requestId + this.mediaRequestId).slice(-requestIdLength);
+
+                        const mediaCommand = new Packer('message.mediaCommand');
+                        mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                        mediaCommand.set('titleId', 0);
+                        mediaCommand.set('command', CONSTANS.SystemMediaCommands[command]);
+                        mediaCommand.setChannel('0');
+                        const message = mediaCommand.pack(this);
+                        const debug = this.debugLog ? this.emit('debug', `System media send command: ${command}`) : false;
+                        await this.sendSocketMessage(message);
+                    } catch (error) {
+                        this.emit('error', `Send media command error: ${error}`)
                     };
-                    this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
-                    return;
-                };
+                    break;
+                case 1:
+                    if (!(command in CONSTANS.SystemInputCommands)) {
+                        const debug = this.debugLog ? this.emit('debug', `Unknown system input command: ${command}`) : false;
+                        return;
+                    };
 
-                const participantId = message.packetDecoded.protectedPayload.participantId;
-                this.participantId = participantId;
-                this.sourceParticipantId = participantId;
-                this.isConnected = true;
+                    try {
+                        const timeStampPress = new Date().getTime().toString();
+                        const gamepadPress = new Packer('message.gamepad');
+                        gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress}`, 'hex'));
+                        gamepadPress.set('buttons', CONSTANS.SystemInputCommands[command]);
+                        gamepadPress.setChannel('1');
+                        const message = gamepadPress.pack(this);
+                        const debug = this.debugLog ? this.emit('debug', `System input send press, command: ${command}`) : false;
+                        const status = await this.sendSocketMessage(message);
 
-                try {
-                    const localJoin = new Packer('message.localJoin');
-                    const message = localJoin.pack(this);
-                    await this.sendSocketMessage(message);
-                } catch (error) {
-                    this.emit('error', `Send local join error: ${error}`)
-                };
-            })
-            .on('acknowledge', async () => {
-                const debug = this.debugLog ? this.emit('debug', 'Packet send acknowledge.') : false;
-
-                try {
-                    const acknowledge = new Packer('message.acknowledge');
-                    acknowledge.set('lowWatermark', this.requestNum);
-                    acknowledge.structure.structure.processedList.value.push({
-                        id: this.requestNum
-                    });
-                    const message = acknowledge.pack(this);
-                    await this.sendSocketMessage(message);
-                } catch (error) {
-                    this.emit('error', `Send acknowledge error: ${error}`)
-                };
-            })
-            .on('status', (message) => {
-                const decodedMessage = message.packetDecoded.protectedPayload;
-                const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
-                if (!decodedMessage) {
-                    return;
-                };
-
-                if (this.emitDevInfo) {
-                    const majorVersion = decodedMessage.majorVersion;
-                    const minorVersion = decodedMessage.minorVersion;
-                    const buildNumber = decodedMessage.buildNumber;
-                    const locale = decodedMessage.locale;
-                    const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                    this.emit('connected', 'Connected.');
-                    this.emit('deviceInfo', firmwareRevision, locale);
-                    this.emitDevInfo = false;
-                };
-
-                const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
-                const power = true;
-                const volume = 0;
-                const mute = power ? power : true;
-                const mediaState = 0;
-                const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
-                const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
-
-                if (!this.firstRun && this.power === power && this.titleId === titleId && this.inputReference === inputReference && this.volume === volume && this.mute === mute && this.mediaState === mediaState) {
-                    return;
-                };
-
-                this.firstRun = false;
-                this.power = power;
-                this.titleId = titleId;
-                this.inputReference = inputReference;
-                this.volume = volume;
-                this.mute = mute;
-                this.mediaState = mediaState;
-
-                this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
-                const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
-            })
-            .on('channelResponse', (message) => {
-                if (message.packetDecoded.protectedPayload.result !== '0') {
-                    return;
-                };
-
-                const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
-                const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
-                const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
-
-                this.emit('sendCommand', channelRequestId, this.command);
-            })
-            .on('sendCommand', async (channelRequestId, command) => {
-                const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, command: ${command}`) : false;
-
-                switch (channelRequestId) {
-                    case 0:
-                        if (!(command in CONSTANS.SystemMediaCommands)) {
-                            const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
-                            return;
+                        if (status) {
+                            try {
+                                const timeStampUnpress = new Date().getTime().toString();
+                                const gamepadUnpress = new Packer('message.gamepad');
+                                gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress}`, 'hex'));
+                                gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
+                                gamepadUnpress.setChannel('1');
+                                const message = gamepadUnpress.pack(this);
+                                const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
+                                await this.sendSocketMessage(message);
+                            } catch (error) {
+                                this.emit('error', `Send system input command unpress error: ${error}`)
+                            };
                         }
+                    } catch (error) {
+                        this.emit('error', `Send system input command press error: ${error}`)
+                    };
+                    break;
+                case 2:
+                    if (!(command in CONSTANS.TvRemoteCommands)) {
+                        const debug = this.debugLog ? this.emit('debug', `Unknown tv remote command: ${command}`) : false;
+                        return
+                    };
 
-                        try {
-                            this.mediaRequestId++;
-                            let requestId = '0000000000000000';
-                            const requestIdLength = requestId.length;
-                            requestId = (requestId + this.mediaRequestId).slice(-requestIdLength);
-
-                            const mediaCommand = new Packer('message.mediaCommand');
-                            mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                            mediaCommand.set('titleId', 0);
-                            mediaCommand.set('command', CONSTANS.SystemMediaCommands[command]);
-                            mediaCommand.setChannel('0');
-                            const message = mediaCommand.pack(this);
-                            const debug = this.debugLog ? this.emit('debug', `System media send command: ${command}`) : false;
-                            await this.sendSocketMessage(message);
-                        } catch (error) {
-                            this.emit('error', `Send media command error: ${error}`)
-                        };
-                        break;
-                    case 1:
-                        if (!(command in CONSTANS.SystemInputCommands)) {
-                            const debug = this.debugLog ? this.emit('debug', `Unknown system input command: ${command}`) : false;
-                            return;
-                        };
-
-                        try {
-                            const timeStampPress = new Date().getTime().toString();
-                            const gamepadPress = new Packer('message.gamepad');
-                            gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress}`, 'hex'));
-                            gamepadPress.set('buttons', CONSTANS.SystemInputCommands[command]);
-                            gamepadPress.setChannel('1');
-                            const message = gamepadPress.pack(this);
-                            const debug = this.debugLog ? this.emit('debug', `System input send press, command: ${command}`) : false;
-                            const status = await this.sendSocketMessage(message);
-
-                            if (status) {
-                                try {
-                                    const timeStampUnpress = new Date().getTime().toString();
-                                    const gamepadUnpress = new Packer('message.gamepad');
-                                    gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress}`, 'hex'));
-                                    gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
-                                    gamepadUnpress.setChannel('1');
-                                    const message = gamepadUnpress.pack(this);
-                                    const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
-                                    await this.sendSocketMessage(message);
-                                } catch (error) {
-                                    this.emit('error', `Send system input command unpress error: ${error}`)
-                                };
+                    try {
+                        let messageNum = 0;
+                        const jsonRequest = {
+                            msgid: `2ed6c0fd.${messageNum++}`,
+                            request: 'SendKey',
+                            params: {
+                                button_id: CONSTANS.TvRemoteCommands[command],
+                                device_id: null
                             }
-                        } catch (error) {
-                            this.emit('error', `Send system input command press error: ${error}`)
                         };
-                        break;
-                    case 2:
-                        if (!(command in CONSTANS.TvRemoteCommands)) {
-                            const debug = this.debugLog ? this.emit('debug', `Unknown tv remote command: ${command}`) : false;
-                            return
-                        };
-
+                        const json = new Packer('message.json');
+                        json.set('json', JSON.stringify(jsonRequest));
+                        json.setChannel('2');
+                        const message = json.pack(this);
+                        const debug = this.debugLog ? this.emit('debug', `TV remote send command: ${command}`) : false;
+                        await this.sendSocketMessage(message);
+                    } catch (error) {
+                        this.emit('error', `Send tv remote command error: ${error}`)
+                    };
+                    break;
+                case 3:
+                    const configNames = CONSTANS.ConfigNames;
+                    for (const configName of configNames) {
                         try {
-                            let messageNum = 0;
                             const jsonRequest = {
-                                msgid: `2ed6c0fd.${messageNum++}`,
-                                request: 'SendKey',
-                                params: {
-                                    button_id: CONSTANS.TvRemoteCommands[command],
-                                    device_id: null
-                                }
+                                msgid: `2ed6c0fd.${i}`,
+                                request: configName,
+                                params: null
                             };
                             const json = new Packer('message.json');
                             json.set('json', JSON.stringify(jsonRequest));
-                            json.setChannel('2');
+                            json.setChannel('3');
                             const message = json.pack(this);
-                            const debug = this.debugLog ? this.emit('debug', `TV remote send command: ${command}`) : false;
+                            const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
                             await this.sendSocketMessage(message);
                         } catch (error) {
-                            this.emit('error', `Send tv remote command error: ${error}`)
+                            this.emit('error', `Send json error: ${error}`)
                         };
-                        break;
-                    case 3:
-                        const configNames = CONSTANS.ConfigNames;
-                        for (const configName of configNames) {
-                            try {
-                                const jsonRequest = {
-                                    msgid: `2ed6c0fd.${i}`,
-                                    request: configName,
-                                    params: null
-                                };
-                                const json = new Packer('message.json');
-                                json.set('json', JSON.stringify(jsonRequest));
-                                json.setChannel('3');
-                                const message = json.pack(this);
-                                const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
-                                await this.sendSocketMessage(message);
-                            } catch (error) {
-                                this.emit('error', `Send json error: ${error}`)
-                            };
-                        };
-                        break;
-                };
-            })
-            .on('heartBeat', () => {
-                if (this.heartBeatConnection) {
-                    return;
-                }
+                    };
+                    break;
+            };
+        }).on('heartBeat', () => {
+            if (this.heartBeatConnection) {
+                return;
+            }
 
-                const debug = this.debugLog ? this.emit('debug', `Start heart beat.`) : false;
-                this.heartBeatConnection = setInterval(() => {
-                    const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
-                    const debug = this.debugLog ? this.emit('debug', `Last heart beat was: ${elapse} sec ago.`) : false;
-                    const disconnect = elapse >= 12 ? this.disconnect() : false;
-                }, 1000);
-            })
+            const debug = this.debugLog ? this.emit('debug', `Start heart beat.`) : false;
+            this.heartBeatConnection = setInterval(() => {
+                const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
+                const debug = this.debugLog ? this.emit('debug', `Last heart beat was: ${elapse} sec ago.`) : false;
+                const disconnect = elapse >= 12 ? this.disconnect() : false;
+            }, 1000);
+        }).on('disconnected', async () => {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            this.isConnected = false;
+            this.requestNum = 0;
+            this.participantId = 0;
+            this.targetParticipantId = 0;
+            this.sourceParticipantId = 0;
+            this.mediaRequestId = 0;
+            this.emitDevInfo = true;
+            this.emit('stateChanged', false, 0, 0, 0, true, 0);
+        });
+
+        this.connect();
+    };
+
+    async reconnect() {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        this.connect();
     };
 
     powerOn() {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
                 reject({
                     status: 'Console already On.'
                 });
-                return
+                return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send power On.');
+            let i = 0;
             this.setPowerOn = setInterval(() => {
                 try {
+                    if (i >= 12 && !this.isConnected) {
+                        clearInterval(this.setPowerOn);
+                        this.emit('stateChanged', false, 0, 0, 0, true, 0);
+                        this.emit('disconnected', 'Power On failed, please try again.');
+                        return;
+                    };
+
                     this.sendPowerOn();
+                    i++;
+                    resolve(true);
                 } catch (error) {
                     reject({
                         status: 'Send power On error.',
@@ -436,18 +440,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     });
                 };
             }, 600);
-
-            setTimeout(() => {
-                resolve(true);
-            }, 3500);
-
-            setTimeout(() => {
-                if (!this.isConnected) {
-                    clearInterval(this.setPowerOn);
-                    this.emit('stateChanged', false, 0, 0, 0, true, 0);
-                    this.emit('disconnected', 'Power On failed, please try again.');
-                }
-            }, 15000);
         });
     };
 
@@ -468,7 +460,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 reject({
                     status: 'Console already Off.'
                 });
-                return
+                return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
@@ -478,10 +470,9 @@ class XBOXLOCALAPI extends EventEmitter {
                 const message = powerOff.pack(this);
                 await this.sendSocketMessage(message);
 
-                setTimeout(() => {
-                    this.disconnect();
-                    resolve(true);
-                }, 3500);
+                await new Promise(resolve => setTimeout(resolve, 3500));
+                await this.disconnect();
+                resolve(true);
             } catch (error) {
                 reject({
                     status: 'Send power Off error.',
@@ -547,38 +538,33 @@ class XBOXLOCALAPI extends EventEmitter {
         });
     };
 
-    async disconnect() {
-        const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
-        clearInterval(this.heartBeatConnection);
-        this.heartBeatConnection = false;
+    disconnect() {
+        return new Promise(async (resolve, reject) => {
+            const debug = this.debugLog ? this.emit('debug', 'Disconnecting...') : false;
+            clearInterval(this.heartBeatConnection);
+            this.heartBeatConnection = false;
 
-        try {
-            const disconnect = new Packer('message.disconnect');
-            disconnect.set('reason', 4);
-            disconnect.set('errorCode', 0);
-            const message = disconnect.pack(this);
-            await this.sendSocketMessage(message);
-            this.emit('disconnected', 'Disconnected.');
-
-            setTimeout(() => {
-                this.isConnected = false;
-                this.requestNum = 0;
-                this.participantId = 0;
-                this.targetParticipantId = 0;
-                this.sourceParticipantId = 0;
-                this.mediaRequestId = 0;
-                this.firstRun = true;
-                this.emitDevInfo = true;
-                this.emit('stateChanged', false, 0, 0, 0, true, 0);
-            }, 3000);
-        } catch (error) {
-            this.emit('error', `Send disconnect error: ${error}`)
-        };
+            try {
+                const disconnect = new Packer('message.disconnect');
+                disconnect.set('reason', 4);
+                disconnect.set('errorCode', 0);
+                const message = disconnect.pack(this);
+                await this.sendSocketMessage(message);
+                this.emit('disconnected', 'Disconnected.');
+                resolve(true);
+            } catch (error) {
+                reject({
+                    status: `Send disconnect error.`,
+                    error: error
+                });
+            };
+        });
     };
 
     getRequestNum() {
         this.requestNum++;
         const debug = this.debugLog ? this.emit('debug', `Request number set to: ${this.requestNum}`) : false;
+        return this.requestNum;
     };
 
     sendSocketMessage(message) {
@@ -586,12 +572,21 @@ class XBOXLOCALAPI extends EventEmitter {
             const offset = 0;
             const length = message.byteLength;
 
-            this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
+            this.client.send(message, offset, length, 5050, this.host, (error, bytes) => {
                 if (error) {
                     reject(error);
                     return;
                 }
-                const debug = this.debugLog ? this.emit('debug', `Socket send ${bytes} bytes.`) : false;
+                const sendMessage = {
+                    16: 'Discovery',
+                    25: 'Power On',
+                    74: 'Acknowledge',
+                    90: 'Power Off',
+                    122: 'Local Join',
+                    170: 'Connect Request'
+                }
+                const debug = this.debugLog ? this.emit('debug', `Socket send ${sendMessage[bytes]}.`) : false;
+                this.bytes = bytes;
                 resolve(true);
             });
         });

@@ -35,6 +35,7 @@ class XBOXPLATFORM {
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
+			let i = 0;
 			for (const device of devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
 					this.log.warn('Device Name, Host or Xbox Live ID Missing');
@@ -106,12 +107,12 @@ class XBOXDEVICE {
 		this.webApiEnabled = false;
 		this.firstRun = true;
 
-		this.inputsArr = new Array();
-		this.inputsReference = new Array();
-		this.inputsOneStoreProductId = new Array();
-		this.inputsName = new Array();
-		this.inputsTitleId = new Array();
-		this.inputsType = new Array();
+		this.inputsArr = [];
+		this.inputsReference = [];
+		this.inputsOneStoreProductId = [];
+		this.inputsName = [];
+		this.inputsTitleId = [];
+		this.inputsType = [];
 
 		this.power = false;
 		this.volume = 0;
@@ -311,24 +312,24 @@ class XBOXDEVICE {
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getConsolesListData, result: ${getConsolesListData.result[0]}, ${getConsolesListData.result[0].storageDevices[0]}`) : false
 				const consolesListData = getConsolesListData.result;
 
-				this.consolesId = new Array();
-				this.consolesName = new Array();
-				this.consolesLocale = new Array();
-				this.consolesRegion = new Array();
-				this.consolesConsoleType = new Array();
-				this.consolesPowerState = new Array();
-				this.consolesDigitalAssistantRemoteControlEnabled = new Array();
-				this.consolesConsoleStreamingEnabled = new Array();
-				this.consolesRemoteManagementEnabled = new Array();
-				this.consolesWirelessWarning = new Array();
-				this.consolesOutOfHomeWarning = new Array();
+				this.consolesId = [];
+				this.consolesName = [];
+				this.consolesLocale = [];
+				this.consolesRegion = [];
+				this.consolesConsoleType = [];
+				this.consolesPowerState = [];
+				this.consolesDigitalAssistantRemoteControlEnabled = [];
+				this.consolesConsoleStreamingEnabled = [];
+				this.consolesRemoteManagementEnabled = [];
+				this.consolesWirelessWarning = [];
+				this.consolesOutOfHomeWarning = [];
 
-				this.consolesStorageDeviceId = new Array();
-				this.consolesStorageDeviceName = new Array();
-				this.consolesIsDefault = new Array();
-				this.consolesFreeSpaceBytes = new Array();
-				this.consolesTotalSpaceBytes = new Array();
-				this.consolesIsGen9Compatible = new Array();
+				this.consolesStorageDeviceId = [];
+				this.consolesStorageDeviceName = [];
+				this.consolesIsDefault = [];
+				this.consolesFreeSpaceBytes = [];
+				this.consolesTotalSpaceBytes = [];
+				this.consolesIsGen9Compatible = [];
 
 				const consolesList = consolesListData;
 				for (const console of consolesList) {
@@ -389,12 +390,12 @@ class XBOXDEVICE {
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getUserProfileData, result: ${JSON.stringify(getUserProfileData.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.profileUsers[0].settings[0], null, 2)}`) : false
 				const userProfileData = getUserProfileData.profileUsers;
 
-				this.userProfileId = new Array();
-				this.userProfileHostId = new Array();
-				this.userProfileIsSponsoredUser = new Array();
+				this.userProfileId = [];
+				this.userProfileHostId = [];
+				this.userProfileIsSponsoredUser = [];
 
-				this.userProfileSettingsId = new Array();
-				this.userProfileSettingsValue = new Array();
+				this.userProfileSettingsId = [];
+				this.userProfileSettingsValue = [];
 
 				const profileUsers = userProfileData;
 				for (const userProfile of profileUsers) {
@@ -486,12 +487,12 @@ class XBOXDEVICE {
 				const deviceId = getStorageDevicesData.deviceId;
 				const agentUserId = getStorageDevicesData.agentUserId;
 
-				this.storageDeviceId = new Array();
-				this.storageDeviceName = new Array();
-				this.isDefault = new Array();
-				this.freeSpaceBytes = new Array();
-				this.totalSpaceBytes = new Array();
-				this.isGen9Compatible = new Array();
+				this.storageDeviceId = [];
+				this.storageDeviceName = [];
+				this.isDefault = [];
+				this.freeSpaceBytes = [];
+				this.totalSpaceBytes = [];
+				this.isGen9Compatible = [];
 
 				const storageDevices = storageDeviceData;
 				for (const storageDevice of storageDevices) {
@@ -556,7 +557,7 @@ class XBOXDEVICE {
 	}
 
 	//Prepare accessory
-	async prepareAccessory() {
+	prepareAccessory() {
 		this.log.debug('prepareAccessory');
 
 		//accessory
@@ -616,7 +617,7 @@ class XBOXDEVICE {
 				const setTelevision = (inputOneStoreProductId === 'Television');
 				const setApp = ((inputOneStoreProductId && inputOneStoreProductId !== '0') && !setDashboard && !setTelevision);
 				try {
-					const setInput = (this.webApiEnabled) ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
+					const setInput = this.webApiEnabled ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Input successful, input: ${inputName},, reference: ${inputReference}, product Id: ${inputOneStoreProductId}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Input error: ${error}`);

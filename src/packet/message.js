@@ -1,5 +1,4 @@
 "use strict";
-
 const PacketStructure = require('./structure');
 const HexToBin = require('hex-to-binary');
 const CONSTANS = require('../constans.json');
@@ -394,7 +393,7 @@ class MESSAGE {
         }
     }
 
-    unpack(smartglass = undefined) {
+    unpack(xboxlocalapi = undefined) {
         const payload = new PacketStructure(this.packetData);
         const Packet = this.packet;
 
@@ -418,9 +417,9 @@ class MESSAGE {
 
         // Lets decrypt the data when the payload is encrypted
         if (packet.protectedPayload) {
-            const key = smartglass.crypto.encrypt(this.packetData.slice(0, 16), smartglass.crypto.getIv());
+            const key = xboxlocalapi.crypto.encrypt(this.packetData.slice(0, 16), xboxlocalapi.crypto.getIv());
 
-            let decryptedPayload = smartglass.crypto.decrypt(packet.protectedPayload, key);
+            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, key);
             packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
             decryptedPayload = new PacketStructure(decryptedPayload);
 
@@ -436,20 +435,19 @@ class MESSAGE {
         return this;
     };
 
-    pack(smartglass) {
+    pack(xboxlocalapi) {
         const payload = new PacketStructure();
 
         for (let name in this.structure) {
             this.structure[name].pack(payload);
         }
-        smartglass.getRequestNum();
 
         const header = new PacketStructure();
         header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(payload.toBuffer().length);
-        header.writeUInt32(smartglass.requestNum);
-        header.writeUInt32(smartglass.targetParticipantId);
-        header.writeUInt32(smartglass.sourceParticipantId);
+        header.writeUInt32(xboxlocalapi.getRequestNum());
+        header.writeUInt32(xboxlocalapi.targetParticipantId);
+        header.writeUInt32(xboxlocalapi.sourceParticipantId);
         header.writeBytes(this.setFlags(this.name));
         header.writeBytes(this.channelId);
 
@@ -461,15 +459,15 @@ class MESSAGE {
             }
         }
 
-        const key = smartglass.crypto.encrypt(header.toBuffer().slice(0, 16), smartglass.crypto.getIv());
-        const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getEncryptionKey(), key);
+        const key = xboxlocalapi.crypto.encrypt(header.toBuffer().slice(0, 16), xboxlocalapi.crypto.getIv());
+        const encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), xboxlocalapi.crypto.getEncryptionKey(), key);
 
         let packet = Buffer.concat([
             header.toBuffer(),
             encryptedPayload
         ]);
 
-        const protectedPayloadHash = smartglass.crypto.sign(packet);
+        const protectedPayloadHash = xboxlocalapi.crypto.sign(packet);
         packet = Buffer.concat([
             packet,
             Buffer.from(protectedPayloadHash)

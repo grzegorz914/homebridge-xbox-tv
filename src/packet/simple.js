@@ -1,5 +1,4 @@
 "use strict";
-
 const PacketStructure = require('./structure');
 
 class SIMPLE {
@@ -133,7 +132,7 @@ class SIMPLE {
         }
     }
 
-    unpack(smartglass = undefined) {
+    unpack(xboxlocalapi = undefined) {
         const Packet = this.packet;
         const packetFormat = this.packetFormat;
         const payload = new PacketStructure(this.packetData);
@@ -160,7 +159,7 @@ class SIMPLE {
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
             packet.signature = packet.protectedPayload.slice(-32);
 
-            let decryptedPayload = smartglass.crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
+            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
             decryptedPayload = new PacketStructure(decryptedPayload);
 
             const protectedStructure = Packet[`${packetFormat}Protected`];
@@ -176,7 +175,7 @@ class SIMPLE {
         return this;
     }
 
-    pack(smartglass = false) {
+    pack(xboxlocalapi = false) {
         const payload = new PacketStructure();
         const type = this.name;
         let packet = '';
@@ -202,7 +201,7 @@ class SIMPLE {
                         }
                     }
                     this.protectedPayloadLengthReal = this.protectedPayload.toBuffer().length;
-                    const encryptedPayload = smartglass.crypto.encrypt(this.protectedPayload.toBuffer(), smartglass.crypto.getEncryptionKey(), this.structure.iv.value);
+                    const encryptedPayload = xboxlocalapi.crypto.encrypt(this.protectedPayload.toBuffer(), xboxlocalapi.crypto.getEncryptionKey(), this.structure.iv.value);
                     payload.writeBytes(encryptedPayload);
                     break;
                 default:
@@ -223,7 +222,7 @@ class SIMPLE {
             case 'connectRequest':
                 packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
                 // Sign protected payload
-                const protectedPayloadHash = smartglass.crypto.sign(packet);
+                const protectedPayloadHash = xboxlocalapi.crypto.sign(packet);
                 packet = Buffer.concat([
                     packet,
                     Buffer.from(protectedPayloadHash)
@@ -242,7 +241,7 @@ class SIMPLE {
                     };
                 };
 
-                const encryptedPayload = smartglass.crypto.encrypt(payload.toBuffer(), smartglass.crypto.getIv());
+                const encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), xboxlocalapi.crypto.getIv());
                 const encryptedPayloadStructure = new PacketStructure(encryptedPayload)
                 packet = encryptedPayloadStructure.toBuffer();
                 break;
