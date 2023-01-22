@@ -28,7 +28,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.heartBeatConnection = false;
 
         this.requestNum = 0;
-        this.participantId = 0;
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
         this.mediaRequestId = 0;
@@ -48,64 +47,60 @@ class XBOXLOCALAPI extends EventEmitter {
                 if (message.structure === false) {
                     return;
                 };
-                let response = message.unpack(this);
-                let functionName = response.name;
+                let eventMessage = message.unpack(this);
+                let eventType = eventMessage.packetType;
 
-                if (response.packetDecoded.type === 'd00d') {
-                    if (response.packetDecoded.targetParticipantId !== this.participantId) {
+                if (eventMessage.packetDecoded.type === 'd00d') {
+                    if (eventMessage.packetDecoded.targetParticipantId !== this.targetParticipantId) {
                         const debug1 = this.debugLog ? this.emit('debug', 'Participant id does not match. Ignoring packet.') : false;
                         return;
                     };
-                    functionName = message.structure.packetDecoded.name;
+                    eventType = message.structure.packetDecoded.type;
                 }
 
-                switch (functionName) {
-                    case 'json':
-                        // Object to hold fragments 
-                        const fragments = {};
-                        const jsonMessage = JSON.parse(response.packetDecoded.protectedPayload.json);
+                if (eventType === 'json') {
+                    // Object to hold fragments 
+                    const fragments = {};
+                    const jsonMessage = JSON.parse(eventMessage.packetDecoded.protectedPayload.json);
 
-                        // Check if JSON is fragmented
-                        if (jsonMessage.datagramId) {
-                            const debug1 = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
+                    // Check if JSON is fragmented
+                    if (jsonMessage.datagramId) {
+                        const debug1 = this.debugLog ? this.emit('debug', `Json message is fragmented: ${jsonMessage.datagramId}`) : false;
 
-                            if (!fragments[jsonMessage.datagramId]) {
-                                fragments[jsonMessage.datagramId] = {
-                                    partials: {},
-                                    getValue() {
-                                        const buffer = Buffer.concat(Object.values(this.partials).map(partial => Buffer.from(partial)));
-                                        return buffer.toString();
-                                    },
-                                    isValid() {
-                                        try {
-                                            JSON.parse(this.getValue());
-                                            return true;
-                                        } catch (error) {
-                                            this.emit('error', `Valid packet error: ${error}`);
-                                            return false;
-                                        }
+                        if (!fragments[jsonMessage.datagramId]) {
+                            fragments[jsonMessage.datagramId] = {
+                                partials: {},
+                                getValue() {
+                                    const buffer = Buffer.concat(Object.values(this.partials).map(partial => Buffer.from(partial)));
+                                    return buffer.toString();
+                                },
+                                isValid() {
+                                    try {
+                                        JSON.parse(this.getValue());
+                                        return true;
+                                    } catch (error) {
+                                        this.emit('error', `Valid packet error: ${error}`);
+                                        return false;
                                     }
-                                };
-                            }
+                                }
+                            };
+                        }
 
-                            fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                            if (fragments[jsonMessage.datagramId].isValid()) {
-                                const debug2 = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
-                                response.packetDecoded.protectedPayload.json = fragments[jsonMessage.datagramId].getValue();
-                                delete fragments[jsonMessage.datagramId];
-                            }
-                            functionName = 'jsonFragment';
-                        };
-                        break;
-                    case 'jsonFragment':
-                        const debug = this.debugLog ? this.emit('debug', `Json fragment: ${response}`) : false;
-                        break;
+                        fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+                        if (fragments[jsonMessage.datagramId].isValid()) {
+                            const debug2 = this.debugLog ? this.emit('debug', 'Json completed fragmented packet.') : false;
+                            eventMessage.packetDecoded.protectedPayload.json = fragments[jsonMessage.datagramId].getValue();
+                            delete fragments[jsonMessage.datagramId];
+                        }
+                        eventType = 'jsonFragment';
+                        const debug = this.debugLog ? this.emit('debug', `Json fragment: ${eventMessage}`) : false;
+                    };
                 };
 
                 this.heartBeatStartTime = Date.now();
                 const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
-                const debug2 = this.debugLog ? this.emit('debug', `Received event type: ${functionName}`) : false;
-                this.emit(functionName, response);
+                const debug2 = this.debugLog ? this.emit('debug', `Received event type: ${eventType}`) : false;
+                this.emit(eventType, eventMessage);
             }).on('listening', () => {
                 const address = this.client.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
@@ -123,7 +118,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     }
 
                     const discoveryPacket = new Packer('simple.discoveryRequest');
-                    const message = discoveryPacket.pack();
+                    const message = discoveryPacket.pack(this);
                     await this.sendSocketMessage(message);
                 }, 5000);
             }).on('close', () => {
@@ -136,8 +131,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
         //EventEmmiter
         this.on('discoveryResponse', async (message) => {
-            clearInterval(this.setPowerOn);
-
             const decodedMessage = message.packetDecoded;
             const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(decodedMessage)}.`) : false;
             if (!decodedMessage || this.isConnected) {
@@ -203,7 +196,7 @@ class XBOXLOCALAPI extends EventEmitter {
             };
 
             const participantId = message.packetDecoded.protectedPayload.participantId;
-            this.participantId = participantId;
+            this.targetParticipantId = participantId;
             this.sourceParticipantId = participantId;
             this.isConnected = true;
 
@@ -230,7 +223,7 @@ class XBOXLOCALAPI extends EventEmitter {
             };
         }).on('status', (message) => {
             const decodedMessage = message.packetDecoded.protectedPayload;
-            const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Status message: ${JSON.stringify(decodedMessage, null, 2)}`) : false;
             if (!decodedMessage) {
                 return;
             };
@@ -394,7 +387,6 @@ class XBOXLOCALAPI extends EventEmitter {
             await new Promise(resolve => setTimeout(resolve, 3000));
             this.isConnected = false;
             this.requestNum = 0;
-            this.participantId = 0;
             this.targetParticipantId = 0;
             this.sourceParticipantId = 0;
             this.mediaRequestId = 0;
@@ -413,41 +405,37 @@ class XBOXLOCALAPI extends EventEmitter {
     powerOn() {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
-                reject({
-                    status: 'Console already On.'
-                });
+                this.emit('message', 'Console already On.');
+                resolve(true);
                 return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send power On.');
-            let i = 0;
-            this.setPowerOn = setInterval(() => {
-                try {
-                    if (i >= 12 && !this.isConnected) {
-                        clearInterval(this.setPowerOn);
-                        this.emit('stateChanged', false, 0, 0, 0, true, 0);
-                        this.emit('disconnected', 'Power On failed, please try again.');
+            try {
+                for (let i = 0; i < 12; i++) {
+                    if (this.isConnected) {
+                        resolve(true);
                         return;
-                    };
-
+                    }
                     this.sendPowerOn();
-                    i++;
+                    await new Promise(resolve => setTimeout(resolve, 600));
                     resolve(true);
-                } catch (error) {
-                    reject({
-                        status: 'Send power On error.',
-                        error: error
-                    });
-                };
-            }, 600);
-        });
+                }
+                this.emit('disconnected', 'Power On failed, please try again.');
+            } catch (error) {
+                reject({
+                    status: 'Send power On error.',
+                    error: error
+                });
+            };
+        }, 600);
     };
 
     async sendPowerOn() {
         try {
             const powerOn = new Packer('simple.powerOn');
             powerOn.set('liveId', this.xboxLiveId);
-            const message = powerOn.pack();
+            const message = powerOn.pack(this);
             await this.sendSocketMessage(message);
         } catch (error) {
             this.emit('error', `Send power On error: ${error}`)

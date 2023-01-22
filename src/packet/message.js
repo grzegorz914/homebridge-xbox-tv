@@ -6,7 +6,7 @@ const CONSTANS = require('../constans.json');
 class MESSAGE {
     constructor(type, packetData = false) {
         this.type = 'message';
-        this.name = type;
+        this.packetType = type;
         this.packetData = packetData;
         this.packetDecoded = false;
         this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
@@ -99,8 +99,8 @@ class MESSAGE {
                     pack(packetStructure) {
                         packetStructure.writeUInt16(this.value.length);
                         let arrayStructure = Packet[this.structure];
-                        for (let index in this.value) {
-                            for (let name in arrayStructure) {
+                        for (const index in this.value) {
+                            for (const name in arrayStructure) {
                                 arrayStructure[name].value = this.value[index][name]
                                 packetStructure = arrayStructure[name].pack(packetStructure);
                             }
@@ -109,13 +109,13 @@ class MESSAGE {
                     },
                     unpack(packetStructure) {
                         const arrayCount = packetStructure.readUInt16();
-                        const array = new Array();
+                        const array = [];
 
                         for (let i = 0; i < arrayCount; i++) {
                             const arrayStructure = Packet[this.structure];
-                            let item = {};
+                            const item = {};
 
-                            for (let name in arrayStructure) {
+                            for (const name in arrayStructure) {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
                             }
                             array.push(item);
@@ -128,8 +128,8 @@ class MESSAGE {
             },
             sgList(structure, value) {
                 const packet = {
-                    value,
-                    structure,
+                    value: value,
+                    structure: structure,
                     pack(packetStructure) {
                         packetStructure.writeUInt32(this.value.length);
                         const arrayStructure = Packet[this.structure];
@@ -144,9 +144,11 @@ class MESSAGE {
                     unpack(packetStructure) {
                         const arrayCount = packetStructure.readUInt32();
                         const array = [];
+
                         for (let i = 0; i < arrayCount; i++) {
                             const arrayStructure = Packet[this.structure];
                             const item = {};
+
                             for (const name in arrayStructure) {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
                             }
@@ -381,10 +383,6 @@ class MESSAGE {
         return messageFlags[type];
     };
 
-    setChannel(channelId) {
-        this.channelId = Buffer.from(channelId);
-    };
-
     set(key, value, subkey = false) {
         if (!subkey) {
             this.structure[key].value = value;
@@ -392,6 +390,10 @@ class MESSAGE {
             this.structure[subkey][key].value = value;
         }
     }
+
+    setChannel(channelId) {
+        this.channelId = Buffer.from(channelId);
+    };
 
     unpack(xboxlocalapi = undefined) {
         const payload = new PacketStructure(this.packetData);
@@ -407,11 +409,8 @@ class MESSAGE {
             channelId: payload.readBytes(8),
             protectedPayload: payload.readBytes()
         };
-        this.setChannel(packet.channelId);
 
-        packet.name = packet.flags.type;
-        this.name = packet.flags.type;
-
+        packet.type = packet.flags.type;
         packet.protectedPayload = Buffer.from(packet.protectedPayload.slice(0, -32));
         packet.signature = packet.protectedPayload.slice(-32);
 
@@ -423,22 +422,25 @@ class MESSAGE {
             packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
             decryptedPayload = new PacketStructure(decryptedPayload);
 
-            this.structure = Packet[packet.name];
-            const protectedStructure = Packet[packet.name];
+            this.structure = Packet[packet.type];
+            const protectedStructure = Packet[packet.type];
             packet['protectedPayload'] = {};
 
-            for (let name in protectedStructure) {
+            for (const name in protectedStructure) {
                 packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
             };
         };
+        this.setChannel(packet.channelId);
+        this.packetType = packet.type;
         this.packetDecoded = packet;
+
         return this;
     };
 
     pack(xboxlocalapi) {
         const payload = new PacketStructure();
 
-        for (let name in this.structure) {
+        for (const name in this.structure) {
             this.structure[name].pack(payload);
         }
 
@@ -448,7 +450,7 @@ class MESSAGE {
         header.writeUInt32(xboxlocalapi.getRequestNum());
         header.writeUInt32(xboxlocalapi.targetParticipantId);
         header.writeUInt32(xboxlocalapi.sourceParticipantId);
-        header.writeBytes(this.setFlags(this.name));
+        header.writeBytes(this.setFlags(this.packetType));
         header.writeBytes(this.channelId);
 
         if (payload.toBuffer().length % 16 > 0) {

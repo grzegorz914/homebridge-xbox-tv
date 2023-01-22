@@ -136,8 +136,7 @@ class SGCRYPTO {
         const hashHmac = Crypto.createHmac('sha256', this.getHashKey());
         hashHmac.update(data, 'binary', 'binary');
         const protectedPayloadHash = hashHmac.digest('binary');
-        const protectedPayloadHashBuffer = Buffer.from(protectedPayloadHash, 'binary');
-        return protectedPayloadHashBuffer
+        return Buffer.from(protectedPayloadHash, 'binary');
     };
 
     removePadding(payload) {

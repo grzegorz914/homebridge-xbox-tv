@@ -35,7 +35,6 @@ class XBOXPLATFORM {
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
-			let i = 0;
 			for (const device of devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
 					this.log.warn('Device Name, Host or Xbox Live ID Missing');

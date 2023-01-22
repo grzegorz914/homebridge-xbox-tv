@@ -4,6 +4,10 @@ const PacketStructure = require('./structure');
 class SIMPLE {
     constructor(packetFormat, packetData = false) {
         this.type = 'simple';
+        this.packetType = packetFormat;
+        this.packetFormat = packetFormat;
+        this.packetData = packetData;
+        this.packetDecoded = false;
 
         const Type = {
             uInt32(value) {
@@ -100,6 +104,7 @@ class SIMPLE {
                 participantId: Type.uInt32('0')
             },
         };
+        this.packet = Packet;
 
         this.structure = Packet[packetFormat];
         // Load protected payload PacketStructure
@@ -108,14 +113,7 @@ class SIMPLE {
             const protectedStructure = Packet[`${packetFormat}Protected`];
             this.structureProtected = protectedStructure;
         };
-
-        this.name = packetFormat;
         this.structureProtected = this.structureProtected || false;
-        this.packetData = packetData;
-        this.packetDecoded = false;
-
-        this.packet = Packet;
-        this.packetFormat = packetFormat;
     };
 
     set(key, value, isProtected = false) {
@@ -148,12 +146,10 @@ class SIMPLE {
             packet.version = payload.readUInt16();
         }
 
-        for (let name in this.structure) {
+        for (const name in this.structure) {
             packet[name] = this.structure[name].unpack(payload);
             this.set(name, packet[name]);
         }
-
-        this.name = (packet.type === 'dd02') ? 'powerOn' : this.name;
 
         if (packet.protectedPayload !== undefined) {
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
@@ -165,26 +161,28 @@ class SIMPLE {
             const protectedStructure = Packet[`${packetFormat}Protected`];
             packet.protectedPayload = {};
 
-            for (let name in protectedStructure) {
+            for (const name in protectedStructure) {
                 packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
                 this.set('protectedPayload', packet.protectedPayload);
             }
         }
 
+        this.packetType = (packet.type === 'dd02') ? 'powerOn' : this.packetType;
         this.packetDecoded = packet;
+
         return this;
     }
 
     pack(xboxlocalapi = false) {
         const payload = new PacketStructure();
-        const type = this.name;
+        const type = this.packetType;
         let packet = '';
 
-        for (let name in this.structure) {
+        for (const name in this.structure) {
             switch (name) {
                 case 'protectedPayload':
                     let protectedStructure = this.structureProtected;
-                    for (let nameStruct in protectedStructure) {
+                    for (const nameStruct in protectedStructure) {
                         if (this.structure.protectedPayload.value !== undefined) {
                             protectedStructure[nameStruct].value = this.structure.protectedPayload.value[nameStruct];
                         }

@@ -15,7 +15,6 @@ class PACKER {
             this.packetStructure = this.loadPacketStructure(type);
         };
         this.structure = this.packetStructure;
-        this.type = type;
     };
 
     loadPacketStructure(type, value = false) {
@@ -32,12 +31,12 @@ class PACKER {
         this.structure.set(key, value, protectedPayload);
     };
 
-    pack(smartglass = undefined) {
-        return this.packetStructure.pack(smartglass);
+    pack(xboxlocalapi = undefined) {
+        return this.packetStructure.pack(xboxlocalapi);
     };
 
-    unpack(smartglass = undefined) {
-        return this.packetStructure.unpack(smartglass);
+    unpack(xboxlocalapi = undefined) {
+        return this.packetStructure.unpack(xboxlocalapi);
     };
 
     setChannel(channelId) {
