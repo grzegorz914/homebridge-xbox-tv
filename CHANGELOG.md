@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
+
+## [2.4.0] - (24.01.2023)
+## Changes
+- added Power Sensor for use with automations (active if power is ON)
+- added Input Sensor for use with automations (activ on every Input change)
+- added Screen Saver Sensor for use with automations (active on change to Screen Saver)
+- added custom Inputs Sensor based on reference for use with automations (active on change to Input)
+- config.schema updated
+- cleanup
+
 ## [2.3.16] - (04.01.2023)
 ## Changes
 - fix wrong state after power Off

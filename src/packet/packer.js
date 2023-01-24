@@ -7,6 +7,7 @@ class PACKER {
     constructor(type) {
         const packetType = type.slice(0, 2).toString('hex');
         this.packetStructure = '';
+
         if (packetType in CONSTANS.Types) {
             const packetValue = type;
             type = CONSTANS.Types[packetType];
@@ -31,16 +32,16 @@ class PACKER {
         this.structure.set(key, value, protectedPayload);
     };
 
+    setChannel(channelId) {
+        this.structure.setChannel(channelId);
+    };
+
     pack(xboxlocalapi = undefined) {
         return this.packetStructure.pack(xboxlocalapi);
     };
 
     unpack(xboxlocalapi = undefined) {
         return this.packetStructure.unpack(xboxlocalapi);
-    };
-
-    setChannel(channelId) {
-        this.structure.setChannel(channelId);
     };
 };
 module.exports = PACKER;

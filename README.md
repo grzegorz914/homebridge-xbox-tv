@@ -95,6 +95,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
 | `buttons.displayType` | Here select display type in HomeKit app, possible `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
+| `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations (active if power is ON). |
+| `sensorInput`| If enabled, then the Input will be exposed as a `Motion Sensor` to use with automations (activ on every Input change). |
+| `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor` to use with automations (active on change to Screen Saver). |
+| `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
+| `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application`, `Microsoft.XboxDevices_8wekyb3d8bbwe!App` to be exposed as sensor. | 
+| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
@@ -168,6 +174,16 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 							"displayType": 0
 						},
 					],
+			"sensorPower": false,
+            "sensorInput": false,
+            "sensorScreenSaver": false,
+			"sensorInputs": [
+                {
+                    "name": "Dashboard",
+                    "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+                    "displayType": 0
+                }
+            ],		
             "enableMqtt": false,
             "mqttHost": "192.168.1.33",
             "mqttPort": 1883,

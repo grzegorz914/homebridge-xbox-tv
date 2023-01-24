@@ -102,9 +102,9 @@
 							"type": "integer",
 							"minimum": 0,
 							"maximum": 2,
-							"default": 0,
 							"description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
-							"oneOf": [{
+							"oneOf": [
+								{
 									"title": "None",
 									"enum": [
 										0
@@ -128,7 +128,8 @@
 						"infoButtonCommand": {
 							"title": "Info Button",
 							"type": "string",
-							"oneOf": [{
+							"oneOf": [
+								{
 									"title": "View",
 									"enum": [
 										"view"
@@ -232,7 +233,8 @@
 										"title": "Type",
 										"type": "string",
 										"description": "Here select source input type.",
-										"oneOf": [{
+										"oneOf": [
+											{
 												"title": "Other",
 												"enum": [
 													"OTHER"
@@ -305,7 +307,8 @@
 										"title": "Content Type",
 										"type": "string",
 										"description": "Here select source input type.",
-										"oneOf": [{
+										"oneOf": [
+											{
 												"title": "Game",
 												"enum": [
 													"Game"
@@ -351,7 +354,8 @@
 									"command": {
 										"title": "Command / Mode",
 										"type": "string",
-										"oneOf": [{
+										"oneOf": [
+											{
 												"title": "Media Play",
 												"enum": [
 													"play"
@@ -557,7 +561,8 @@
 									"displayType": {
 										"title": "Display Type",
 										"type": "integer",
-										"oneOf": [{
+										"oneOf": [
+											{
 												"title": "Button",
 												"enum": [
 													0
@@ -571,6 +576,83 @@
 											}
 										],
 										"description": "Here select display type in HomeKit app",
+										"required": true
+									}
+								}
+							}
+						},
+						"sensorPower": {
+							"title": "Power",
+							"type": "boolean",
+							"default": false,
+							"description": "This expose Power as a Motion Sensor to use with automations.",
+							"required": false
+						},
+						"sensorInput": {
+							"title": "Input",
+							"type": "boolean",
+							"default": false,
+							"description": "This expose Input as a Motion Sensor to use with automations.",
+							"required": false
+						  },
+						"sensorScreenSaver": {
+							"title": "Screen Saver",
+							"type": "boolean",
+							"default": false,
+							"description": "This expose Screen Saver as a Motion Sensor to use with automations.",
+							"required": false
+						},
+						"sensorInputs": {
+							"type": "array",
+							"items": {
+								"title": "Inputs",
+								"type": "object",
+								"description": "Here create Input/App Sensors based on reference, sensor will active if switch to it.",
+								"properties": {
+									"name": {
+										"title": "Name",
+										"type": "string",
+										"placeholder": "Name",
+										"description": "Here set Your own name.",
+										"required": true
+									},
+									"reference": {
+										"title": "Reference",
+										"type": "string",
+										"placeholder": "Input/App reference",
+										"description": "Here set the Input/App reference.",
+										"required": true
+									},
+									"displayType": {
+										"title": "Type",
+										"type": "integer",
+										"oneOf": [
+											{
+												"title": "None",
+												"enum": [
+													-1
+												]
+											},
+											{
+												"title": "Motion Sensor",
+												"enum": [
+													0
+												]
+											},
+											{
+												"title": "Occupancy Sensor",
+												"enum": [
+													1
+												]
+											},
+											{
+												"title": "Contact Sensor",
+												"enum": [
+													2
+												]
+											}
+										],
+										"description": "Here select sensor type to be exposed in HomeKit app.",
 										"required": true
 									}
 								}
@@ -659,110 +741,145 @@
 			}
 		}
 	},
-	"layout": [{
-		"key": "devices",
-		"type": "tabarray",
-		"title": "{{ value.name || 'new device' }}",
-		"items": [
-			"devices[].name",
-			"devices[].host",
-			"devices[].xboxLiveId",
-			"devices[].webApiControl",
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Inputs",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].getInputsFromDevice",
-					"devices[].filterGames",
-					"devices[].filterApps",
-					"devices[].filterSystemApps",
-					"devices[].filterDlc",
-					{
-						"key": "devices[].inputs",
-						"type": "tabarray",
-						"title": "{{ value.name || 'new input' }}",
-						"items": [
-							"devices[].inputs[].name",
-							"devices[].inputs[].reference",
-							"devices[].inputs[].oneStoreProductId",
-							"devices[].inputs[].type",
-							"devices[].inputs[].contentType"
-						],
-						"condition": {
-							"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
-						}
-					}
-				]
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Buttons",
-				"expandable": true,
-				"expanded": false,
-				"items": [{
-					"key": "devices[].buttons",
-					"type": "tabarray",
-					"title": "{{ value.name || 'new button' }}",
+	"layout": [
+		{
+			"key": "devices",
+			"type": "tabarray",
+			"title": "{{ value.name || 'new device' }}",
+			"items": [
+				"devices[].name",
+				"devices[].host",
+				"devices[].xboxLiveId",
+				"devices[].webApiControl",
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Inputs",
+					"expandable": true,
+					"expanded": false,
 					"items": [
-						"devices[].buttons[].name",
-						"devices[].buttons[].command",
-						"devices[].buttons[].oneStoreProductId",
-						"devices[].buttons[].displayType"
+						"devices[].getInputsFromDevice",
+						"devices[].filterGames",
+						"devices[].filterApps",
+						"devices[].filterSystemApps",
+						"devices[].filterDlc",
+						{
+							"key": "devices[].inputs",
+							"type": "tabarray",
+							"title": "{{ value.name || 'new input' }}",
+							"items": [
+								"devices[].inputs[].name",
+								"devices[].inputs[].reference",
+								"devices[].inputs[].oneStoreProductId",
+								"devices[].inputs[].type",
+								"devices[].inputs[].contentType"
+							],
+							"condition": {
+								"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
+							}
+						}
 					]
-				}]
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Web Api Settings",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].clientId",
-					"devices[].clientSecret",
-					"devices[].xboxWebApiToken",
-					"devices[].userToken",
-					"devices[].userHash"
-				],
-				"condition": {
-					"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Buttons",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						{
+							"key": "devices[].buttons",
+							"type": "tabarray",
+							"title": "{{ value.name || 'new button' }}",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].command",
+								"devices[].buttons[].oneStoreProductId",
+								"devices[].buttons[].displayType"
+							]
+						}
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Sensors",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].sensorPower",
+						"devices[].sensorScreenSaver",
+						{
+							"key": "devices[]",
+							"type": "section",
+							"title": "Inputs",
+							"expandable": true,
+							"expanded": false,
+							"items": [
+								"devices[].sensorInput",
+								{
+									"key": "devices[].sensorInputs",
+									"type": "tabarray",
+									"title": "{{ value.name || 'new input sensor' }}",
+									"items": [
+										"devices[].sensorInputs[].name",
+										"devices[].sensorInputs[].reference",
+										"devices[].sensorInputs[].displayType"
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Web Api",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].clientId",
+						"devices[].clientSecret",
+						"devices[].xboxWebApiToken",
+						"devices[].userToken",
+						"devices[].userHash"
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+					}
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "Advanced Settings",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].enableDebugMode",
+						"devices[].disableLogInfo",
+						"devices[].disableLogDeviceInfo",
+						"devices[].infoButtonCommand",
+						"devices[].volumeControl"
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "MQTT",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].enableMqtt",
+						"devices[].mqttHost",
+						"devices[].mqttPort",
+						"devices[].mqttPrefix",
+						"devices[].mqttAuth",
+						"devices[].mqttUser",
+						"devices[].mqttPasswd",
+						"devices[].mqttDebug"
+					]
 				}
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "Advanced Settings",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].enableDebugMode",
-					"devices[].disableLogInfo",
-					"devices[].disableLogDeviceInfo",
-					"devices[].infoButtonCommand",
-					"devices[].volumeControl"
-				]
-			},
-			{
-				"key": "devices[]",
-				"type": "section",
-				"title": "MQTT",
-				"expandable": true,
-				"expanded": false,
-				"items": [
-					"devices[].enableMqtt",
-					"devices[].mqttHost",
-					"devices[].mqttPort",
-					"devices[].mqttPrefix",
-					"devices[].mqttAuth",
-					"devices[].mqttUser",
-					"devices[].mqttPasswd",
-					"devices[].mqttDebug"
-				]
-			}
-		]
-	}]
+			]
+		}
+	]
 }

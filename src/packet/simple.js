@@ -8,6 +8,7 @@ class SIMPLE {
         this.packetFormat = packetFormat;
         this.packetData = packetData;
         this.packetDecoded = false;
+        this.structureProtected = false;
 
         const Type = {
             uInt32(value) {
@@ -105,15 +106,13 @@ class SIMPLE {
             },
         };
         this.packet = Packet;
-
         this.structure = Packet[packetFormat];
+
         // Load protected payload PacketStructure
         if (this.structure.protectedPayload !== undefined) {
             this.protectedPayload = new PacketStructure();
-            const protectedStructure = Packet[`${packetFormat}Protected`];
-            this.structureProtected = protectedStructure;
+            this.structureProtected = Packet[`${packetFormat}Protected`];
         };
-        this.structureProtected = this.structureProtected || false;
     };
 
     set(key, value, isProtected = false) {
