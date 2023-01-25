@@ -179,7 +179,7 @@
 							"title": "Hide System Apps",
 							"type": "boolean",
 							"default": false,
-							"description": "If enabled, System Apps (Accessory, TV) will not be displayed on the list of inputs.",
+							"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"

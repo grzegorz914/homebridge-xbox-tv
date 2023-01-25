@@ -110,7 +110,6 @@ class XBOXDEVICE {
 		this.webApiEnabled = false;
 		this.firstRun = true;
 
-		this.inputsArr = [];
 		this.inputsReference = [];
 		this.inputsOneStoreProductId = [];
 		this.inputsName = [];
@@ -471,28 +470,27 @@ class XBOXDEVICE {
 				const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxLiveId);
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getInstalledAppsData: ${JSON.stringify(getInstalledAppsData.result, null, 2)}`) : false
 
-				const inputsArr = CONSTANS.DefaultInputs.slice();
-
 				//get installed inputs/apps from web
-				const inputsData = getInstalledAppsData.result;
-				const inputs = inputsData;
-				for (const input of inputs) {
-					const oneStoreProductId = input.oneStoreProductId;
-					const titleId = input.titleId;
-					const aumid = input.aumid;
-					const lastActiveTime = input.lastActiveTime;
-					const isGame = (input.isGame === true);
-					const name = input.name;
-					const contentType = input.contentType;
-					const instanceId = input.instanceId;
-					const storageDeviceId = input.storageDeviceId;
-					const uniqueId = input.uniqueId;
-					const legacyProductId = input.legacyProductId;
-					const version = input.version;
-					const sizeInBytes = input.sizeInBytes;
-					const installTime = input.installTime;
-					const updateTime = input.updateTime;
-					const parentId = input.parentId;
+				const appsArr = [];
+				const appsData = getInstalledAppsData.result;
+				const apps = appsData;
+				for (const app of apps) {
+					const oneStoreProductId = app.oneStoreProductId;
+					const titleId = app.titleId;
+					const aumid = app.aumid;
+					const lastActiveTime = app.lastActiveTime;
+					const isGame = (app.isGame === true);
+					const name = app.name;
+					const contentType = app.contentType;
+					const instanceId = app.instanceId;
+					const storageDeviceId = app.storageDeviceId;
+					const uniqueId = app.uniqueId;
+					const legacyProductId = app.legacyProductId;
+					const version = app.version;
+					const sizeInBytes = app.sizeInBytes;
+					const installTime = app.installTime;
+					const updateTime = app.updateTime;
+					const parentId = app.parentId;
 					const type = 'APPLICATION';
 
 					const inputsObj = {
@@ -503,15 +501,17 @@ class XBOXDEVICE {
 						'type': type,
 						'contentType': contentType
 					};
-					inputsArr.push(inputsObj);
+					appsArr.push(inputsObj);
 				};
+
+				const inputsArr = [...CONSTANS.DefaultInputs, ...appsArr];
 				const obj = JSON.stringify(inputsArr, null, 2);
 				const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
-				const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved inputs/apps list: ${obj}`) : false
+				const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps list: ${obj}`) : false
 				resolve(true);
 			} catch (error) {
 				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, with liveId: ${this.xboxLiveId}, get Installed Apps error: ${error}`);
+				this.log.error(`Device: ${this.host} ${this.name}, with liveId: ${this.xboxLiveId}, get installed apps error: ${error}`);
 			};
 		});
 	}
@@ -925,21 +925,22 @@ class XBOXDEVICE {
 		const savedInputsTargetVisibility = ((fs.readFileSync(this.inputsTargetVisibilityFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility successful, states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
-		//check available inputs and filter costom inputs
+		//check available inputs and filter custom unnecessary inputs
 		const allInputs = (this.getInputsFromDevice && savedInputs.length > 0) ? savedInputs : this.inputs;
+		const filteredInputsArr = [];
 		for (const input of allInputs) {
 			const contentType = input.contentType;
-			const filterGames = this.filterGames ? (contentType !== 'Game') : true;
-			const filterApps = this.filterApps ? (contentType !== 'App') : true;
-			const filterSystemApps = this.filterSystemApps ? (contentType !== 'systemApp') : true;
-			const filterDlc = this.filterDlc ? (contentType !== 'Dlc') : true;
-			const push = (this.getInputsFromDevice) ? (filterGames && filterApps && filterSystemApps && filterDlc) ? this.inputsArr.push(input) : false : this.inputsArr.push(input);
+			const filterGames = this.filterGames ? (this.filterGames && contentType === 'Game') : false;
+			const filterApps = this.filterApps ? (contentType === 'App') : false;
+			const filterSystemApps = this.filterSystemApps ? (contentType === 'systemApp') : false;
+			const filterDlc = this.filterDlc ? (contentType === 'Dlc') : false;
+			const push = this.getInputsFromDevice ? (!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false : filteredInputsArr.push(input);
 		}
 
-		//check available inputs and possible inputs count (max 93)
-		const inputs = this.inputsArr;
+		//check available inputs and possible inputs count (max 90)
+		const inputs = filteredInputsArr;
 		const inputsCount = inputs.length;
-		const maxInputsCount = (inputsCount < 93) ? inputsCount : 93;
+		const maxInputsCount = (inputsCount < 90) ? inputsCount : 90;
 		for (let j = 0; j < maxInputsCount; j++) {
 			//get input 
 			const input = inputs[j];
@@ -1017,7 +1018,7 @@ class XBOXDEVICE {
 		//prepare sonsor service
 		const inputsSensors = this.sensorInputs;
 		const inputsSensorsCount = inputsSensors.length;
-		const availableInputsSensorsCount = 94 - maxInputsCount;
+		const availableInputsSensorsCount = 90 - maxInputsCount;
 		const maxInputsSensorsCount = (availableInputsSensorsCount > 0) ? (availableInputsSensorsCount > inputsSensorsCount) ? inputsSensorsCount : availableInputsSensorsCount : 0;
 		if (maxInputsSensorsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
@@ -1053,10 +1054,10 @@ class XBOXDEVICE {
 		}
 
 		//Prepare buttons services
-		//check available buttons and possible buttons count (max 94)
+		//check available buttons and possible buttons count (max 90)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = (94 - (maxInputsCount + maxInputsSensorsCount));
+		const availableButtonsCount = (90 - (maxInputsCount + maxInputsSensorsCount));
 		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount >= buttonsCount) ? buttonsCount : availableButtonsCount : 0;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonServices');
