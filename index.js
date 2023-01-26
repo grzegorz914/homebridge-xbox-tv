@@ -115,8 +115,9 @@ class XBOXDEVICE {
 		this.inputsName = [];
 		this.inputsTitleId = [];
 		this.inputsType = [];
-		this.inputsSensorsReference = [];
-		this.inputsSensorsDisplayType = [];
+
+		this.sensorInputsReference = [];
+		this.sensorInputsDisplayType = [];
 
 		this.power = false;
 		this.volume = 0;
@@ -282,13 +283,13 @@ class XBOXDEVICE {
 					this.sensorScreenSaverState = state;
 				}
 
-				if (this.inputSensorServices) {
-					const servicesCount = this.inputSensorServices.length;
+				if (this.sensorInputsServices) {
+					const servicesCount = this.sensorInputsServices.length;
 					for (let i = 0; i < servicesCount; i++) {
-						const state = power ? (this.inputsSensorsReference[i] === reference) : false;
-						const displayType = this.inputsSensorsDisplayType[i];
+						const state = power ? (this.sensorInputsReference[i] === reference) : false;
+						const displayType = this.sensorInputsDisplayType[i];
 						const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-						this.inputSensorServices[i]
+						this.sensorInputsServices[i]
 							.updateCharacteristic(characteristicType, state);
 					}
 				}
@@ -1016,39 +1017,40 @@ class XBOXDEVICE {
 		}
 
 		//prepare sonsor service
-		const inputsSensors = this.sensorInputs;
-		const inputsSensorsCount = inputsSensors.length;
-		const availableInputsSensorsCount = 90 - maxInputsCount;
-		const maxInputsSensorsCount = (availableInputsSensorsCount > 0) ? (availableInputsSensorsCount > inputsSensorsCount) ? inputsSensorsCount : availableInputsSensorsCount : 0;
-		if (maxInputsSensorsCount > 0) {
+		const sensorInputs = this.sensorInputs;
+		const sensorInputsCount = sensorInputs.length;
+		const availableSensorInputsCount = 90 - maxInputsCount;
+		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
+		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
-			this.inputSensorServices = [];
-			for (let i = 0; i < maxInputsSensorsCount; i++) {
+			this.sensorInputsServices = [];
+			for (let i = 0; i < maxSensorInputsCount; i++) {
 				//get sensor
-				const inputSensor = inputsSensors[i];
+				const sensorInput = sensorInputs[i];
 
 				//get sensor name		
-				const inputSensorName = inputSensor.name;
+				const sensorInputName = sensorInput.name;
 
 				//get sensor reference
-				const inputSensorReference = inputSensor.reference;
+				const sensorInputReference = sensorInput.reference;
 
 				//get sensor display type
-				const inputSensorDisplayType = inputSensor.displayType || -1;
+				const sensorInputDisplayType = sensorInput.displayType || -1;
 
-				if (inputSensorDisplayType >= 0) {
-					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][inputSensorDisplayType];
-					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][inputSensorDisplayType];
-					const inputSensorService = new serviceType(`${accessoryName} ${inputSensorName}`, `Sensor ${inputSensorName}`);
-					inputSensorService.getCharacteristic(characteristicType)
+				if (sensorInputDisplayType >= 0) {
+					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
+					const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${sensorInputName}`);
+					sensorInputService.getCharacteristic(characteristicType)
 						.onGet(async () => {
-							const state = this.power ? (this.reference === inputSensorReference) : false;
+							const state = this.power ? (this.reference === sensorInputReference) : false;
 							return state;
 						});
 
-					this.inputsSensorsReference.push(inputSensorReference);
-					this.inputSensorServices.push(inputSensorService);
-					accessory.addService(this.inputSensorServices[i]);
+					this.sensorInputsReference.push(sensorInputReference);
+					this.sensorInputsDisplayType.push(sensorInputDisplayType);
+					this.sensorInputsServices.push(sensorInputService);
+					accessory.addService(this.sensorInputsServices[i]);
 				}
 			}
 		}
@@ -1057,7 +1059,7 @@ class XBOXDEVICE {
 		//check available buttons and possible buttons count (max 90)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = (90 - (maxInputsCount + maxInputsSensorsCount));
+		const availableButtonsCount = (90 - (maxInputsCount + maxSensorInputsCount));
 		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount >= buttonsCount) ? buttonsCount : availableButtonsCount : 0;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonServices');
