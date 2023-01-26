@@ -938,10 +938,10 @@ class XBOXDEVICE {
 			const push = this.getInputsFromDevice ? (!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false : filteredInputsArr.push(input);
 		}
 
-		//check available inputs and possible inputs count (max 90)
+		//check available inputs and possible inputs count (max 80)
 		const inputs = filteredInputsArr;
 		const inputsCount = inputs.length;
-		const maxInputsCount = (inputsCount < 90) ? inputsCount : 90;
+		const maxInputsCount = (inputsCount < 80) ? inputsCount : 80;
 		for (let j = 0; j < maxInputsCount; j++) {
 			//get input 
 			const input = inputs[j];
@@ -1019,7 +1019,7 @@ class XBOXDEVICE {
 		//prepare sonsor service
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const availableSensorInputsCount = 90 - maxInputsCount;
+		const availableSensorInputsCount = 80 - maxInputsCount;
 		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
@@ -1056,10 +1056,10 @@ class XBOXDEVICE {
 		}
 
 		//Prepare buttons services
-		//check available buttons and possible buttons count (max 90)
+		//check available buttons and possible buttons count (max 80)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = (90 - (maxInputsCount + maxSensorInputsCount));
+		const availableButtonsCount = (80 - (maxInputsCount + maxSensorInputsCount));
 		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount >= buttonsCount) ? buttonsCount : availableButtonsCount : 0;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonServices');
