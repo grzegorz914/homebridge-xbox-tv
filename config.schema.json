@@ -809,14 +809,14 @@
 					"items": [
 						"devices[].sensorPower",
 						"devices[].sensorScreenSaver",
+						"devices[].sensorInput",
 						{
 							"key": "devices[]",
 							"type": "section",
-							"title": "Inputs",
+							"title": "Custom Inputs",
 							"expandable": true,
 							"expanded": false,
 							"items": [
-								"devices[].sensorInput",
 								{
 									"key": "devices[].sensorInputs",
 									"type": "tabarray",
