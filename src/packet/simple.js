@@ -43,7 +43,7 @@ class SIMPLE {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readBytes(this.length);
+                        return packetStructure.readBytes(length);
                     }
                 }
                 return packet;

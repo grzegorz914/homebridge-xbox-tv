@@ -240,16 +240,16 @@ class XBOXLOCALAPI extends EventEmitter {
             };
 
             const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
+            if (appsCount === 0) {
+                return;
+            };
+
             const power = true;
             const volume = 0;
             const mute = power ? power : true;
             const mediaState = 0;
             const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
             const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
-
-            if (appsCount === 0) {
-                return;
-            };
 
             this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
             const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;

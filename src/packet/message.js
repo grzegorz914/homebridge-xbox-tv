@@ -59,7 +59,7 @@ class MESSAGE {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readBytes(this.length);
+                        this.value = packetStructure.readBytes(length);
                         return this.value;
                     }
                 }
@@ -162,7 +162,7 @@ class MESSAGE {
             },
             mapper(map, item) {
                 return {
-                    item,
+                    item: item,
                     value: false,
                     pack(packetStructure) {
                         return item.pack(packetStructure);

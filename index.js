@@ -209,7 +209,7 @@ class XBOXDEVICE {
 		this.xboxLocalApi.on('connected', (message) => {
 			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
-			.on('deviceInfo', async (firmwareRevision, locale) => {
+			.on('deviceInfo', async (firmwareRevision) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
 					this.log('Manufacturer: %s', this.manufacturer);
@@ -230,7 +230,7 @@ class XBOXDEVICE {
 				this.firmwareRevision = firmwareRevision;
 			})
 			.on('stateChanged', (power, titleId, reference, volume, mute, mediaState) => {
-				const inputIdentifier = this.inputsReference.indexOf(reference) >= 0 ? this.inputsReference.indexOf(reference) : this.inputsTitleId.indexOf(titleId) >= 0 ? this.inputsTitleId.indexOf(titleId) : this.inputIdentifier;
+				const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputsTitleId.includes(titleId) ? this.inputsTitleId.findIndex(index => index === titleId) : this.inputIdentifier;
 
 				const obj = JSON.stringify({
 					'power': power,
@@ -661,7 +661,7 @@ class XBOXDEVICE {
 					const setInput = this.webApiEnabled ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Input successful, input: ${inputName},, reference: ${inputReference}, product Id: ${inputOneStoreProductId}`);
 				} catch (error) {
-					this.log.error(`Device: ${this.host} ${accessoryName}, set Input error: ${error}`);
+					this.log.error(`Device: ${this.host} ${accessoryName}, set Input error: ${JSON.stringify(error, null, 2)}`);
 				};
 			});
 
@@ -917,7 +917,7 @@ class XBOXDEVICE {
 		//Prepare inputs services
 		this.log.debug('prepareInputServices');
 
-		const savedInputs = ((fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : [];
+		const savedInputs = (this.getInputsFromDevice && (fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
 		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs successful, inpits: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
@@ -927,9 +927,8 @@ class XBOXDEVICE {
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility successful, states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and filter custom unnecessary inputs
-		const allInputs = (this.getInputsFromDevice && savedInputs.length > 0) ? savedInputs : this.inputs;
 		const filteredInputsArr = [];
-		for (const input of allInputs) {
+		for (const input of savedInputs) {
 			const contentType = input.contentType;
 			const filterGames = this.filterGames ? (this.filterGames && contentType === 'Game') : false;
 			const filterApps = this.filterApps ? (contentType === 'App') : false;
@@ -1056,7 +1055,6 @@ class XBOXDEVICE {
 		}
 
 		//Prepare buttons services
-		//check available buttons and possible buttons count (max 80)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
 		const availableButtonsCount = (80 - (maxInputsCount + maxSensorInputsCount));
