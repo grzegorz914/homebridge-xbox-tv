@@ -111,16 +111,17 @@ class XBOXLOCALAPI extends EventEmitter {
                     }
 
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
-                    const debug = this.debugLog ? this.emit('debug', `Ping console: ${state.alive ? 'Online' : 'Offline'}`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Ping console, state: ${state.alive ? 'Online' : 'Offline'}`) : false;
 
                     if (!state.alive) {
+                        this.emit('stateChanged', false, 0, true, 0, -1, -1);
                         return;
                     }
 
                     const discoveryPacket = new Packer('simple.discoveryRequest');
                     const message = discoveryPacket.pack(this);
                     await this.sendSocketMessage(message);
-                }, 5000);
+                }, 10000);
             }).on('close', () => {
                 const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
 
@@ -248,11 +249,11 @@ class XBOXLOCALAPI extends EventEmitter {
             const volume = 0;
             const mute = power ? power : true;
             const mediaState = 0;
-            const titleId = (appsCount === 1) ? decodedMessage.apps[0].titleId : (appsCount === 2) ? decodedMessage.apps[1].titleId : this.titleId;
-            const inputReference = (appsCount === 1) ? decodedMessage.apps[0].aumId : (appsCount === 2) ? decodedMessage.apps[1].aumId : this.inputReference;
+            const titleId = appsCount >= 2 ? decodedMessage.apps[1].titleId : decodedMessage.apps[0].titleId;
+            const reference = appsCount >= 2 ? decodedMessage.apps[1].aumId : decodedMessage.apps[0].aumId;
 
-            this.emit('stateChanged', power, titleId, inputReference, volume, mute, mediaState);
-            const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${inputReference}`) : false;
+            this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
+            const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
         }).on('channelResponse', (message) => {
             if (message.packetDecoded.protectedPayload.result !== '0') {
                 return;
@@ -378,9 +379,20 @@ class XBOXLOCALAPI extends EventEmitter {
             }
 
             const debug = this.debugLog ? this.emit('debug', `Start heart beat.`) : false;
-            this.heartBeatConnection = setInterval(() => {
+            this.heartBeatConnection = setInterval(async () => {
                 const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
                 const debug = this.debugLog ? this.emit('debug', `Last heart beat was: ${elapse} sec ago.`) : false;
+                if (elapse > 5 && elapse < 6) {
+                    try {
+                        const acknowledge = new Packer('message.acknowledge');
+                        acknowledge.set('lowWatermark', this.requestNum);
+                        const message = acknowledge.pack(this);
+                        await this.sendSocketMessage(message);
+                    } catch (error) {
+                        this.emit('error', `Send acknowledge error: ${error}`)
+                    };
+                }
+
                 const disconnect = elapse >= 12 ? this.disconnect() : false;
             }, 1000);
         }).on('disconnected', async () => {
@@ -391,7 +403,7 @@ class XBOXLOCALAPI extends EventEmitter {
             this.sourceParticipantId = 0;
             this.mediaRequestId = 0;
             this.emitDevInfo = true;
-            this.emit('stateChanged', false, 0, 0, 0, true, 0);
+            this.emit('stateChanged', false, 0, true, 0, -1, -1);
         });
 
         this.connect();
@@ -428,7 +440,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     error: error
                 });
             };
-        }, 600);
+        });
     };
 
     async sendPowerOn() {
