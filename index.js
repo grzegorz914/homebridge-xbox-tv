@@ -181,17 +181,6 @@ class XBOXDEVICE {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			});
 
-		//web api client
-		if (this.webApiControl) {
-			this.xboxWebApi = xboxWebApi({
-				clientId: this.clientId,
-				clientSecret: this.clientSecret,
-				userToken: this.userToken,
-				uhs: this.userHash
-			});
-			this.getAuthorizationState();
-		};
-
 		//xbox client
 		this.xboxLocalApi = new XboxLocalApi({
 			host: this.host,
@@ -312,8 +301,19 @@ class XBOXDEVICE {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			});
 
-		//start prepare accessory
-		this.prepareAccessory();
+		//web api client
+		if (this.webApiControl) {
+			this.xboxWebApi = xboxWebApi({
+				clientId: this.clientId,
+				clientSecret: this.clientSecret,
+				userToken: this.userToken,
+				uhs: this.userHash
+			});
+			this.getAuthorizationState();
+			this.prepareAccessory();
+		} else {
+			this.prepareAccessory();
+		}
 	}
 
 	async updateAuthorization() {
@@ -485,7 +485,7 @@ class XBOXDEVICE {
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getInstalledAppsData: ${JSON.stringify(getInstalledAppsData.result, null, 2)}`) : false
 
 				//get installed apps
-				const appsArr = CONSTANS.DefaultInputs;
+				const appsArr = [];
 				const apps = getInstalledAppsData.result;
 				for (const app of apps) {
 					const oneStoreProductId = app.oneStoreProductId;
@@ -517,7 +517,7 @@ class XBOXDEVICE {
 					appsArr.push(inputsObj);
 				};
 
-				const obj = JSON.stringify(appsArr, null, 2);
+				const obj = JSON.stringify([...CONSTANS.DefaultInputs, ...appsArr], null, 2);
 				const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
 				const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps list: ${obj}`) : false
 
@@ -938,14 +938,14 @@ class XBOXDEVICE {
 		//Prepare inputs services
 		this.log.debug('prepareInputServices');
 
-		const savedInputs = this.getInputsFromDevice && fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
-		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs successful, inpits: ${JSON.stringify(savedInputs, null, 2)}`) : false;
+		const savedInputs = this.getInputsFromDevice ? fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs : this.inputs;
+		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
 		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
-		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved custom Inputs Names successful, names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
+		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved custom Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
 		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
-		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility successful, states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
+		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Inputs Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and filter custom unnecessary inputs
 		const filteredInputsArr = [];
