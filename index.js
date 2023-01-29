@@ -190,10 +190,6 @@ class XBOXDEVICE {
 				uhs: this.userHash
 			});
 			this.getAuthorizationState();
-
-			setInterval(() => {
-				this.getAuthorizationState();
-			}, 600000);
 		};
 
 		//xbox client
@@ -320,28 +316,41 @@ class XBOXDEVICE {
 		this.prepareAccessory();
 	}
 
+	async updateAuthorization() {
+		await new Promise(resolve => setTimeout(resolve, 60000));
+		this.getAuthorizationState();
+	};
+
 	async getAuthorizationState() {
 		try {
 			this.log.debug(`Device: ${this.host} ${this.name}, requesting authorization state.`);
 			this.xboxWebApi._authentication._tokensFile = this.authTokenFile;
-			await this.xboxWebApi.isAuthenticated();
-			this.webApiEnabled = true;
-			const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, Authorized and Web Api enabled.`) : false;
+			this.webApiEnabled = this.xboxWebApi.isAuthenticated() ? true : false;
+
+			if (!this.webApiEnabled) {
+				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, not authorized and web Api disabled, please use Authorization Manager.`) : false;
+				return;
+			};
 
 			try {
 				this.log.debug(`Device: ${this.host} ${this.name}, requesting web api console data.`);
+				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, authorized and web Api enabled.`) : false;
 				//await this.getWebApiConsolesList();
 				//await this.getWebApiUserProfile();
 				await this.getWebApiInstalledApps();
 				//await this.getWebApiStorageDevices();
 				const remoteManagementEnabled = await this.getWebApiConsoleStatus();
-				const debug = !remoteManagementEnabled ? this.log(`Device: ${this.host} ${this.name}, remote management not enabled, please check your console settings!!!.`) : false;
+				const debug1 = !remoteManagementEnabled ? this.log(`Device: ${this.host} ${this.name}, remote management not enabled, please check your console settings!!!.`) : false;
+
+				this.updateAuthorization();
 			} catch (error) {
-				this.log.error(`Device: ${this.host} ${this.name}, get web api console data error: ${error}`)
+				this.log.error(`Device: ${this.host} ${this.name}, get web api console data error: ${error}, recheck in 60se.`)
+				this.updateAuthorization();
 			};
 		} catch (error) {
+			this.log.error(`Device: ${this.host} ${this.name}, check authorization state error: ${error}, recheck in 60se.`);
 			this.webApiEnabled = false;
-			this.log.error(`Device: ${this.host} ${this.name}, not authorized, please use Authorization Manager.`);
+			this.updateAuthorization();
 		};
 	};
 
@@ -352,7 +361,7 @@ class XBOXDEVICE {
 				const getConsolesListData = await this.xboxWebApi.getProvider('smartglass').getConsolesList();
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getConsolesListData, result: ${getConsolesListData.result[0]}, ${getConsolesListData.result[0].storageDevices[0]}`) : false
 
-				//get consoles list from web
+				//get consoles list
 				this.consolesId = [];
 				this.consolesName = [];
 				this.consolesLocale = [];
@@ -415,10 +424,12 @@ class XBOXDEVICE {
 						this.consolesIsGen9Compatible.push(isGen9Compatible);
 					}
 				}
+
+				//mqtt
+				const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', JSON.stringify(consolesList, null, 2)) : false;
 				resolve(true);
 			} catch (error) {
-				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, get Consoles List error: ${error}`)
+				reject(`get consoles list error: ${error}`);
 			};
 		});
 	}
@@ -430,7 +441,7 @@ class XBOXDEVICE {
 				const getUserProfileData = await this.xboxWebApi.getProvider('profile').getUserProfile();
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getUserProfileData, result: ${JSON.stringify(getUserProfileData.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.profileUsers[0].settings[0], null, 2)}`) : false
 
-				//get user profiles from web
+				//get user profiles
 				this.userProfileId = [];
 				this.userProfileHostId = [];
 				this.userProfileIsSponsoredUser = [];
@@ -456,10 +467,12 @@ class XBOXDEVICE {
 						this.userProfileSettingsValue.push(value);
 					};
 				};
+
+				//mqtt
+				const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', JSON.stringify(profileUsers, null, 2)) : false;
 				resolve(true);
 			} catch (error) {
-				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, get User Profile error: ${error}`)
+				reject(`get user profile error: ${error}`);
 			};
 		});
 	}
@@ -471,7 +484,7 @@ class XBOXDEVICE {
 				const getInstalledAppsData = await this.xboxWebApi.getProvider('smartglass').getInstalledApps(this.xboxLiveId);
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getInstalledAppsData: ${JSON.stringify(getInstalledAppsData.result, null, 2)}`) : false
 
-				//get installed inputs/apps from web
+				//get installed apps
 				const appsArr = CONSTANS.DefaultInputs;
 				const apps = getInstalledAppsData.result;
 				for (const app of apps) {
@@ -507,10 +520,12 @@ class XBOXDEVICE {
 				const obj = JSON.stringify(appsArr, null, 2);
 				const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
 				const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps list: ${obj}`) : false
+
+				//mqtt
+				const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', JSON.stringify(appsArr, null, 2)) : false;
 				resolve(true);
 			} catch (error) {
-				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, with liveId: ${this.xboxLiveId}, get installed apps error: ${error}`);
+				reject(`Console with liveId: ${this.xboxLiveId}, get installed apps error: ${error}`);
 			};
 		});
 	}
@@ -522,7 +537,7 @@ class XBOXDEVICE {
 				const getStorageDevicesData = await this.xboxWebApi.getProvider('smartglass').getStorageDevices(this.xboxLiveId);
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getStorageDevicesData, result: ${JSON.stringify(getStorageDevicesData, null, 2)}`) : false
 
-				//get istorage devices from web
+				//get console storages
 				this.storageDeviceId = [];
 				this.storageDeviceName = [];
 				this.isDefault = [];
@@ -548,10 +563,12 @@ class XBOXDEVICE {
 					this.totalSpaceBytes.push(totalSpaceBytes);
 					this.isGen9Compatible.push(isGen9Compatible);
 				};
+
+				//mqtt
+				const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', JSON.stringify(storageDevices, null, 2)) : false;
 				resolve(true);
 			} catch (error) {
-				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, with liveId: ${this.xboxLiveId}, get Storage Devices error: ${error}`);
+				reject(`Console with liveId: ${this.xboxLiveId}, get storage devices error: ${error}`);
 			};
 		});
 	}
@@ -562,8 +579,9 @@ class XBOXDEVICE {
 			try {
 				const getConsoleStatusData = await this.xboxWebApi.getProvider('smartglass').getConsoleStatus(this.xboxLiveId);
 				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, debug getConsoleStatusData, result: ${JSON.stringify(getConsoleStatusData, null, 2)}`) : false
-				const consoleStatusData = getConsoleStatusData;
 
+				//get console status
+				const consoleStatusData = getConsoleStatusData;
 				const id = consoleStatusData.id;
 				const name = consoleStatusData.name;
 				const locale = consoleStatusData.locale;
@@ -586,10 +604,12 @@ class XBOXDEVICE {
 					this.informationService
 						.setCharacteristic(Characteristic.Model, this.modelName)
 				};
+
+				//mqtt
+				const mqtt = this.mqttEnabled ? this.mqtt.send('Status', JSON.stringify(consoleStatusData, null, 2)) : false;
 				resolve(remoteManagementEnabled);
 			} catch (error) {
-				reject(error);
-				this.log.error(`Device: ${this.host} ${this.name}, with liveId: ${this.xboxLiveId}, get Console Status error: ${error}`);
+				reject(`Console with liveId: ${this.xboxLiveId}, get status error: ${error}`);
 			};
 		});
 	}
@@ -648,13 +668,14 @@ class XBOXDEVICE {
 				return inputIdentifier;
 			})
 			.onSet(async (inputIdentifier) => {
-				const inputName = this.inputsName[inputIdentifier];
-				const inputReference = this.inputsReference[inputIdentifier];
-				const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-				const setDashboard = inputOneStoreProductId === 'Dashboard' || inputOneStoreProductId === 'Settings' || inputOneStoreProductId === 'SettingsTv' || inputOneStoreProductId === 'Accessory' || inputOneStoreProductId === 'Screensaver' || inputOneStoreProductId === 'NetworkTroubleshooter' || inputOneStoreProductId === 'XboxGuide';
-				const setTelevision = inputOneStoreProductId === 'Television';
-				const setApp = (inputOneStoreProductId && inputOneStoreProductId !== '0') && !setDashboard && !setTelevision;
 				try {
+					const inputName = this.inputsName[inputIdentifier];
+					const inputReference = this.inputsReference[inputIdentifier];
+					const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+					const setDashboard = inputOneStoreProductId === 'Dashboard' || inputOneStoreProductId === 'Settings' || inputOneStoreProductId === 'SettingsTv' || inputOneStoreProductId === 'Accessory' || inputOneStoreProductId === 'Screensaver' || inputOneStoreProductId === 'NetworkTroubleshooter' || inputOneStoreProductId === 'XboxGuide';
+					const setTelevision = inputOneStoreProductId === 'Television';
+					const setApp = (inputOneStoreProductId && inputOneStoreProductId !== '0') && !setDashboard && !setTelevision;
+
 					const setInput = this.webApiEnabled ? setApp ? await this.xboxWebApi.getProvider('smartglass').launchApp(this.xboxLiveId, inputOneStoreProductId) : setDashboard ? await this.xboxWebApi.getProvider('smartglass').launchDashboard(this.xboxLiveId) : setTelevision ? await this.xboxWebApi.getProvider('smartglass').launchOneGuide(this.xboxLiveId) : false : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Input successful, input: ${inputName},, reference: ${inputReference}, product Id: ${inputOneStoreProductId}`);
 				} catch (error) {
@@ -664,62 +685,63 @@ class XBOXDEVICE {
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.onSet(async (command) => {
-				let channelName;
-				switch (command) {
-					case Characteristic.RemoteKey.REWIND:
-						command = 'rewind';
-						channelName = 'systemMedia';
-						break;
-					case Characteristic.RemoteKey.FAST_FORWARD:
-						command = 'fastForward';
-						channelName = 'systemMedia';
-						break;
-					case Characteristic.RemoteKey.NEXT_TRACK:
-						command = 'nextTrack';
-						channelName = 'systemMedia';
-						break;
-					case Characteristic.RemoteKey.PREVIOUS_TRACK:
-						command = 'prevTrack';
-						channelName = 'systemMedia';
-						break;
-					case Characteristic.RemoteKey.ARROW_UP:
-						command = 'up';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.ARROW_DOWN:
-						command = 'down';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.ARROW_LEFT:
-						command = 'left';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.ARROW_RIGHT:
-						command = 'right';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.SELECT:
-						command = 'a';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.BACK:
-						command = 'b';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.EXIT:
-						command = 'nexus';
-						channelName = 'systemInput';
-						break;
-					case Characteristic.RemoteKey.PLAY_PAUSE:
-						command = 'playpause';
-						channelName = 'systemMedia';
-						break;
-					case Characteristic.RemoteKey.INFORMATION:
-						command = this.infoButtonCommand;
-						channelName = 'systemInput';
-						break;
-				};
 				try {
+					let channelName;
+					switch (command) {
+						case Characteristic.RemoteKey.REWIND:
+							command = 'rewind';
+							channelName = 'systemMedia';
+							break;
+						case Characteristic.RemoteKey.FAST_FORWARD:
+							command = 'fastForward';
+							channelName = 'systemMedia';
+							break;
+						case Characteristic.RemoteKey.NEXT_TRACK:
+							command = 'nextTrack';
+							channelName = 'systemMedia';
+							break;
+						case Characteristic.RemoteKey.PREVIOUS_TRACK:
+							command = 'prevTrack';
+							channelName = 'systemMedia';
+							break;
+						case Characteristic.RemoteKey.ARROW_UP:
+							command = 'up';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.ARROW_DOWN:
+							command = 'down';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.ARROW_LEFT:
+							command = 'left';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.ARROW_RIGHT:
+							command = 'right';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.SELECT:
+							command = 'a';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.BACK:
+							command = 'b';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.EXIT:
+							command = 'nexus';
+							channelName = 'systemInput';
+							break;
+						case Characteristic.RemoteKey.PLAY_PAUSE:
+							command = 'playpause';
+							channelName = 'systemMedia';
+							break;
+						case Characteristic.RemoteKey.INFORMATION:
+							command = this.infoButtonCommand;
+							channelName = 'systemInput';
+							break;
+					};
+
 					const sendCommand = this.power ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false//await this.xboxLocalApi.sendCommand(channelName, command) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, Remote Key command successful: ${command}`);
 				} catch (error) {
@@ -755,15 +777,16 @@ class XBOXDEVICE {
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
-				switch (command) {
-					case Characteristic.PowerModeSelection.SHOW:
-						command = 'nexus';
-						break;
-					case Characteristic.PowerModeSelection.HIDE:
-						command = 'b';
-						break;
-				};
 				try {
+					switch (command) {
+						case Characteristic.PowerModeSelection.SHOW:
+							command = 'nexus';
+							break;
+						case Characteristic.PowerModeSelection.HIDE:
+							command = 'b';
+							break;
+					};
+
 					const channelName = 'systemInput';
 					const setPowerModeSelection = this.power ? this.webApiEnabled ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false//await this.xboxLocalApi.sendCommand(channelName, command) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power Mode Selection command successful: ${command}`);
@@ -782,15 +805,16 @@ class XBOXDEVICE {
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE)
 			.getCharacteristic(Characteristic.VolumeSelector)
 			.onSet(async (command) => {
-				switch (command) {
-					case Characteristic.VolumeSelector.INCREMENT:
-						command = 'volUp';
-						break;
-					case Characteristic.VolumeSelector.DECREMENT:
-						command = 'volDown';
-						break;
-				};
 				try {
+					switch (command) {
+						case Characteristic.VolumeSelector.INCREMENT:
+							command = 'volUp';
+							break;
+						case Characteristic.VolumeSelector.DECREMENT:
+							command = 'volDown';
+							break;
+					};
+
 					const channelName = 'tvRemote';
 					const setVolume = (this.power && this.webApiEnabled) ? await this.xboxWebApi.getProvider('smartglass').sendButtonPress(this.xboxLiveId, command) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Volume command successful: ${command}`);
@@ -914,13 +938,13 @@ class XBOXDEVICE {
 		//Prepare inputs services
 		this.log.debug('prepareInputServices');
 
-		const savedInputs = (this.getInputsFromDevice && (fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
+		const savedInputs = this.getInputsFromDevice && fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
 		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs successful, inpits: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
-		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
+		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved custom Inputs Names successful, names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
-		const savedInputsTargetVisibility = ((fs.readFileSync(this.inputsTargetVisibilityFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
+		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility successful, states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and filter custom unnecessary inputs
@@ -937,7 +961,7 @@ class XBOXDEVICE {
 		//check available inputs and possible inputs count (max 80)
 		const inputs = filteredInputsArr;
 		const inputsCount = inputs.length;
-		const maxInputsCount = (inputsCount < 80) ? inputsCount : 80;
+		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
 		for (let i = 0; i < maxInputsCount; i++) {
 			//get input 
 			const input = inputs[i];
@@ -952,7 +976,7 @@ class XBOXDEVICE {
 			const inputOneStoreProductId = input.oneStoreProductId || 'undefined';
 
 			//get input name
-			const inputName = (savedInputsNames[inputTitleId]) ? savedInputsNames[inputTitleId] : (savedInputsNames[inputReference]) ? savedInputsNames[inputReference] : (savedInputsNames[inputOneStoreProductId]) ? savedInputsNames[inputOneStoreProductId] : input.name;
+			const inputName = savedInputsNames[inputTitleId] ? savedInputsNames[inputTitleId] : savedInputsNames[inputReference] ? savedInputsNames[inputReference] : savedInputsNames[inputOneStoreProductId] ? savedInputsNames[inputOneStoreProductId] : input.name;
 
 			//get input type
 			const inputType = CONSTANS.InputSourceTypes.includes(input.type) ? CONSTANS.InputSourceTypes.findIndex(index => index === input.type) : 10;
@@ -961,7 +985,7 @@ class XBOXDEVICE {
 			const isConfigured = 1;
 
 			//get input visibility state
-			const currentVisibility = (savedInputsTargetVisibility[inputTitleId]) ? savedInputsTargetVisibility[inputTitleId] : (savedInputsTargetVisibility[inputReference]) ? savedInputsTargetVisibility[inputReference] : (savedInputsTargetVisibility[inputOneStoreProductId]) ? savedInputsTargetVisibility[inputOneStoreProductId] : 0;
+			const currentVisibility = savedInputsTargetVisibility[inputTitleId] ? savedInputsTargetVisibility[inputTitleId] : savedInputsTargetVisibility[inputReference] ? savedInputsTargetVisibility[inputReference] : savedInputsTargetVisibility[inputOneStoreProductId] ? savedInputsTargetVisibility[inputOneStoreProductId] : 0;
 			const targetVisibility = currentVisibility;
 
 			const inputService = new Service.InputSource(inputName, `Input ${i}`);
@@ -976,12 +1000,12 @@ class XBOXDEVICE {
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
-					const nameIdentifier = (inputTitleId) ? inputTitleId : (inputReference) ? inputReference : (inputOneStoreProductId) ? inputOneStoreProductId : false;
-					savedInputsNames[nameIdentifier] = name;
-					const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 					try {
+						const nameIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
+						savedInputsNames[nameIdentifier] = name;
+						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name successful, name: ${newCustomName}, product Id: ${inputOneStoreProductId}`);
+						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name successful, name: ${name}, product Id: ${inputOneStoreProductId}`);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, saved new Input Name error: ${error}`);
 					}
@@ -990,10 +1014,10 @@ class XBOXDEVICE {
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onSet(async (state) => {
-					const targetVisibilityIdentifier = (inputTitleId) ? inputTitleId : (inputReference) ? inputReference : (inputOneStoreProductId) ? inputOneStoreProductId : false;
-					savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
-					const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 					try {
+						const targetVisibilityIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
+						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
+						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Target Visibility successful, input: ${inputName}, state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
@@ -1016,7 +1040,7 @@ class XBOXDEVICE {
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
 		const availableSensorInputsCount = 80 - maxInputsCount;
-		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
+		const maxSensorInputsCount = availableSensorInputsCount > 0 ? (availableSensorInputsCount > sensorInputsCount ? sensorInputsCount : availableSensorInputsCount) : 0;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
 			this.sensorInputsServices = [];
@@ -1054,8 +1078,8 @@ class XBOXDEVICE {
 		//Prepare buttons services
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = (80 - (maxInputsCount + maxSensorInputsCount));
-		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount >= buttonsCount) ? buttonsCount : availableButtonsCount : 0;
+		const availableButtonsCount = 80 - (maxInputsCount + maxSensorInputsCount);
+		const maxButtonsCount = availableButtonsCount > 0 ? (availableButtonsCount >= buttonsCount ? buttonsCount : availableButtonsCount) : 0;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonServices');
 			for (let i = 0; i < maxButtonsCount; i++) {

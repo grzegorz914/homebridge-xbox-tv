@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.5.0] - (29.01.2023)
+## Changes
+- update logging 
+- added new mqtt topics *Consoles List*, *Profile*, *Apps*, *Storages*, *Status*
+- bump dependencies
+- stability improwements
+- config.schema updated
+- cleanup
+
 ## [2.4.0] - (24.01.2023)
 ## Changes
 - added Power Sensor for use with automations (active if power is ON)

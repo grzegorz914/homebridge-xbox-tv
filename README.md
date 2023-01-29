@@ -33,7 +33,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Record Game DVR with additional button.
-* MQTT publisch topic *Info*, *State* as payload JSON data.
+* MQTT publisch topic *Info*, *State*, *Consoles List*, *Profile*, *Apps*, *Storages*, *Status* as payload JSON data.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a> 
