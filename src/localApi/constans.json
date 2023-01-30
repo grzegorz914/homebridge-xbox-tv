@@ -1,0 +1,174 @@
+{
+    "ConsoleName": {
+        "XboxSeriesX": "Xbox Series X",
+        "XboxSeriesS": "Xbox Series S",
+        "XboxOne": "Xbox One",
+        "XboxOneS": "Xbox One S",
+        "XboxOneX": "Xbox One X"
+    },
+    "ConsolePowerState": {
+        "Off": 0,
+        "On": 1,
+        "ConnectedStandby": 2,
+        "SystemUpdate": 3,
+        "Unknown": 4
+    },
+    "ConsolePlaybackState": {
+        "Stopped": 0,
+        "Playing": 1,
+        "Paused": 2,
+        "Unknown": 3
+    },
+    "DefaultInputs": [{
+            "name": "Screensaver",
+            "titleId": "851275400",
+            "reference": "Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application",
+            "oneStoreProductId": "Screensaver",
+            "type": "HOME_SCREEN",
+            "contentType": "Dashboard"
+        },
+        {
+            "name": "Dashboard",
+            "titleId": "750323071",
+            "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+            "oneStoreProductId": "Dashboard",
+            "type": "HOME_SCREEN",
+            "contentType": "Dashboard"
+        },
+        {
+            "name": "Settings",
+            "titleId": "1837352387",
+            "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
+            "oneStoreProductId": "Settings",
+            "type": "HOME_SCREEN",
+            "contentType": "Dashboard"
+        },
+        {
+            "name": "Television",
+            "titleId": "371594669",
+            "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
+            "oneStoreProductId": "Television",
+            "type": "HDMI",
+            "contentType": "systemApp"
+        },
+        {
+            "name": "Settings TV",
+            "titleId": "2019308066",
+            "reference": "Microsoft.Xbox.TvSettings_8wekyb3d8bbwe!Microsoft.Xbox.TvSettings.Application",
+            "oneStoreProductId": "SettingsTv",
+            "type": "HOME_SCREEN",
+            "contentType": "Dashboard"
+        },
+        {
+            "name": "Accessory",
+            "titleId": "758407307",
+            "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
+            "oneStoreProductId": "Accessory",
+            "type": "HOME_SCREEN",
+            "contentType": "systemApp"
+        },
+        {
+            "name": "Network Troubleshooter",
+            "titleId": "1614319806",
+            "reference": "Xbox.NetworkTroubleshooter_8wekyb3d8bbwe!Xbox.NetworkTroubleshooter.Application",
+            "oneStoreProductId": "NetworkTroubleshooter",
+            "type": "HOME_SCREEN",
+            "contentType": "systemApp"
+        },
+        {
+            "name": "Microsoft Store",
+            "titleId": "1864271209",
+            "reference": "Microsoft.storify_8wekyb3d8bbwe!App",
+            "oneStoreProductId": "MicrosoftStore",
+            "type": "HOME_SCREEN",
+            "contentType": "Dashboard"
+        },
+        {
+            "name": "Xbox Guide",
+            "titleId": "1052052983",
+            "reference": "Xbox.Guide_8wekyb3d8bbwe!Xbox.Guide.Application",
+            "oneStoreProductId": "XboxGuide",
+            "type": "HOME_SCREEN",
+            "contentType": "systemApp"
+        }
+    ],
+    "InputSourceTypes": ["OTHER", "HOME_SCREEN", "TUNER", "HDMI", "COMPOSITE_VIDEO", "S_VIDEO", "COMPONENT_VIDEO", "DVI", "AIRPLAY", "USB", "APPLICATION"],
+    "SystemMediaCommands": {
+        "play": 2,
+        "pause": 4,
+        "playpause": 8,
+        "stop": 16,
+        "record": 32,
+        "nextTrack": 64,
+        "prevTrack": 128,
+        "fastForward": 256,
+        "rewind": 512,
+        "channelUp": 1024,
+        "channelDown": 2048,
+        "back": 4096,
+        "view": 8192,
+        "menu": 16384,
+        "seek": 32786
+    },
+    "SystemInputCommands": {
+        "unpress": 0,
+        "nexus": 2,
+        "view1": 4,
+        "menu1": 8,
+        "a": 16,
+        "b": 32,
+        "x": 64,
+        "y": 128,
+        "up": 256,
+        "down": 512,
+        "left": 1024,
+        "right": 2048
+    },
+    "TvRemoteCommands": {
+        "volUp": "btn.vol_up",
+        "volDown": "btn.vol_down",
+        "volMute": "btn.vol_mute"
+    },
+    "ChannelIds": {
+        "systemMedia": 0,
+        "systemInput": 1,
+        "tvRemote": 2,
+        "sysConfig": 3
+    },
+    "ChannelUuids": {
+        "systemMedia": "48a9ca24eb6d4e128c43d57469edd3cd",
+        "systemInput": "fa20b8ca66fb46e0adb60b978a59d35f",
+        "tvRemote": "d451e3b360bb4c71b3dbf994b1aca3a7",
+        "sysConfig": "d451e3b360bb4c71b3dbf994b1aca3a7"
+    },
+    "ChannelNames": ["systemMedia", "systemInput", "tvRemote", "sysConfig"],
+    "ConfigNames": ["GetConfiguration", "GetHeadendInfo", "GetLiveTVInfo", "GetTunerLineups", "GetAppChannelLineups"],
+    "PlaybackStatus": {
+        "0": "Closed",
+        "1": "Changing",
+        "2": "Stopped",
+        "3": "Playing",
+        "4": "Paused"
+    },
+    "MediaTypes": {
+        "0": "No Media",
+        "1": "Music",
+        "2": "Video",
+        "3": "Image",
+        "4": "Conversation",
+        "5": "Game"
+    },
+    "SoundStatus": {
+        "0": "Muted",
+        "1": "Low",
+        "2": "Full"
+    },
+    "Types": {
+        "d00d": "message",
+        "cc00": "simple.connectRequest",
+        "cc01": "simple.connectResponse",
+        "dd00": "simple.discoveryRequest",
+        "dd01": "simple.discoveryResponse",
+        "dd02": "simple.powerOn"
+    }
+}

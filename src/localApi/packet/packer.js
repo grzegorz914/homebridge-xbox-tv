@@ -1,6 +1,6 @@
 "use strict";
-const SimplePacket = require('./simple');
-const MessagePacket = require('./message');
+const SimplePacket = require('./simple.js');
+const MessagePacket = require('./message.js');
 const CONSTANS = require('../constans.json');
 
 class PACKER {

@@ -4,7 +4,7 @@ const {
   HomebridgePluginUiServer,
   RequestError
 } = require('@homebridge/plugin-ui-utils');
-const XboxWebApi = require('xbox-webapi');
+const XboxWebApi = require('../src/webApi/xboxwebapi.js');
 const fs = require('fs');
 const fsPromises = fs.promises;
 
@@ -50,26 +50,26 @@ class PluginUiServer extends HomebridgePluginUiServer {
       const webApiToken = payload.webApiToken;
       const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
-      const webApiCheck = XboxWebApi({
+      const xboxWebApi = new XboxWebApi({
         clientId: clientId,
         clientSecret: clientSecret,
         userToken: '',
-        userUhs: ''
+        userUhs: '',
+        tokensFile: authTokenFile
       });
-      webApiCheck._authentication._tokensFile = authTokenFile;
 
       try {
-        await webApiCheck.isAuthenticated();
+        await xboxWebApi.authentication.isAuthenticated();
         this.data = {
-          info: 'Console already authorized.',
+          info: 'Console already authorized. To start a new athorization process you need clear the Web API Token first.',
           status: 0
         };
       } catch (error) {
         if (webApiToken.length > 10) {
           try {
-            const authenticationData = await webApiCheck._authentication.getTokenRequest(webApiToken);
-            webApiCheck._authentication._tokens.oauth = authenticationData;
-            webApiCheck._authentication.saveTokens();
+            const authenticationData = await xboxWebApi.authentication.getTokenRequest(webApiToken);
+            xboxWebApi.authentication.tokens.oauth = authenticationData;
+            await xboxWebApi.authentication.saveTokens();
             this.data = {
               info: 'Console successfully authorized and token file saved.',
               status: 2
@@ -81,7 +81,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
             };
           };
         } else {
-          const oauth2URI = webApiCheck._authentication.generateAuthorizationUrl();
+          const oauth2URI = await xboxWebApi.authentication.generateAuthorizationUrl();
           this.data = {
             info: oauth2URI,
             status: 1

@@ -5,8 +5,8 @@ const UuId = require('uuid');
 const EOL = require('os').EOL;
 const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
-const Packer = require('./packet/packer');
-const SGCrypto = require('./sgcrypto');
+const Packer = require('./packet/packer.js');
+const SGCrypto = require('./sgcrypto.js');
 const CONSTANS = require('./constans.json');
 const Ping = require('ping');
 

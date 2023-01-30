@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.6.0] - (29.01.2023)
+## Changes
+- integrate web api library in to the plugin
+- simplify the authorization manager process(reduced 1 step, correct some words)
+- bump dependencies
+- stability improwements
+- config.schema updated
+
 ## [2.5.0] - (29.01.2023)
 ## Changes
 - update logging 
