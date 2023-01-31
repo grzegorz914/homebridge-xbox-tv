@@ -4,7 +4,7 @@ const {
   HomebridgePluginUiServer,
   RequestError
 } = require('@homebridge/plugin-ui-utils');
-const XboxWebApi = require('../src/webApi/xboxwebapi.js');
+const Authentication = require('../src/webApi//authentication.js')
 const fs = require('fs');
 const fsPromises = fs.promises;
 
@@ -50,7 +50,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
       const webApiToken = payload.webApiToken;
       const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
-      const xboxWebApi = new XboxWebApi({
+      const authentication = new Authentication({
         clientId: clientId,
         clientSecret: clientSecret,
         userToken: '',
@@ -59,7 +59,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
       });
 
       try {
-        await xboxWebApi.authentication.isAuthenticated();
+        await authentication.isAuthenticated();
         this.data = {
           info: 'Console already authorized. To start a new athorization process you need clear the Web API Token first.',
           status: 0
@@ -67,9 +67,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
       } catch (error) {
         if (webApiToken.length > 10) {
           try {
-            const authenticationData = await xboxWebApi.authentication.getTokenRequest(webApiToken);
-            xboxWebApi.authentication.tokens.oauth = authenticationData;
-            await xboxWebApi.authentication.saveTokens();
+            const authenticationData = await authentication.getTokenRequest(webApiToken);
+            authentication.tokens.oauth = authenticationData;
+            await authentication.saveTokens();
             this.data = {
               info: 'Console successfully authorized and token file saved.',
               status: 2
@@ -81,7 +81,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
             };
           };
         } else {
-          const oauth2URI = await xboxWebApi.authentication.generateAuthorizationUrl();
+          const oauth2URI = await authentication.generateAuthorizationUrl();
           this.data = {
             info: oauth2URI,
             status: 1

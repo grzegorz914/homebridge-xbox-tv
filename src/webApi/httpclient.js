@@ -15,40 +15,29 @@ class HTTPCLIENT {
                 port: parsedUrl.port,
                 path: parsedUrl.path,
                 method: 'GET',
-                headers: {
-                    // 'Content-Type': 'application/x-www-form-urlencoded',
-                    // 'Content-Length': postdata.length
-                },
+                headers: {}
             }
 
-            for (let header in headers) {
+            for (const header in headers) {
                 options.headers[header] = headers[header]
             }
 
-            let httpEngine = Http
-            if (parsedUrl.protocol == 'https') {
-                httpEngine = Https
-            }
-
+            const httpEngine = parsedUrl.protocol === 'https' ? Https : Http;
             const req = httpEngine.request(options, (res) => {
                 let responseData = ''
                 res.on('data', (data) => {
                     responseData += data
-                })
-
-                res.on('close', () => {
-                    if (res.statusCode == 200) {
+                }).on('close', () => {
+                    if (res.statusCode === 200) {
                         resolve(responseData.toString())
                     } else {
                         reject({ status: res.statusCode, body: responseData.toString() })
                     }
                 })
             })
-
             req.on('error', (error) => {
                 reject(error)
             })
-
             req.end()
 
         })
@@ -64,54 +53,40 @@ class HTTPCLIENT {
                 path: parsedUrl.path,
                 method: 'POST',
                 headers: {
-                    // 'Content-Type': 'application/x-www-form-urlencoded',
                     'Content-Length': postdata.length
-                },
+                }
             }
 
-            for (let header in headers) {
+            for (const header in headers) {
                 options.headers[header] = headers[header]
             }
 
-            let httpEngine = Http
-            if (parsedUrl.protocol == 'https') {
-                httpEngine = Https
-            }
-
+            const httpEngine = parsedUrl.protocol === 'https' ? Https : Http;
             const req = httpEngine.request(options, (res) => {
                 let responseData = ''
                 res.on('data', (data) => {
                     responseData += data
                 })
-
                 res.on('close', () => {
-                    if (res.statusCode == 200) {
+                    if (res.statusCode === 200) {
                         resolve(responseData.toString())
                     } else {
                         reject({ status: res.statusCode, body: responseData.toString() })
                     }
                 })
             })
-
             req.on('error', (error) => {
                 reject(error)
             })
-
             req.write(postdata)
             req.end()
-
         })
     }
 
     queryUrl(url) {
         const parsedUrl = UrlParser.parse(url)
-        let defaultPort = 80
-        let protocol = 'http'
-
-        if (parsedUrl.protocol == 'https:') {
-            defaultPort = 443
-            protocol = 'https'
-        }
+        const defaultPort = parsedUrl.protocol === 'https:' ? 443 : 80;
+        const protocol = parsedUrl.protocol === 'https:' ? 'https' : 'http';
 
         return {
             host: parsedUrl.hostname,

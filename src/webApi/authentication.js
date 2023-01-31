@@ -28,20 +28,16 @@ class AUTHENTICATION {
     }
 
     generateAuthorizationUrl() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             try {
-                if (!this.server) {
-                    //await this.startServer();
-                };
-
-                const paramsobject = {
+                const paramsObject = {
                     "client_id": this.clientId,
                     "response_type": "code",
                     "approval_prompt": "auto",
                     "scope": this.scopes.join(' '),
                     "redirect_uri": this.getReturnUrl()
                 }
-                const params = QueryString.stringify(paramsobject)
+                const params = QueryString.stringify(paramsObject)
                 const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params
                 resolve(oauth2URI);
             } catch (error) {
@@ -65,7 +61,7 @@ class AUTHENTICATION {
                             reject(error)
                         })
                     } else {
-                        reject('No oauth token found. Run authentication flow first')
+                        reject('No oauth token found. Use authorization manager first.')
                     }
                     break;
                 case 'user':
@@ -88,10 +84,10 @@ class AUTHENTICATION {
                                         reject(error)
                                     })
                                 }).catch((error) => {
-                                    reject(`Unable to refresh oauth access token, error: ${error}`)
+                                    reject(`Refresh oauth access token error: ${error}`)
                                 })
                             }).catch((error) => {
-                                reject(`Unable to refresh user access token error: ${error}`)
+                                reject(`Refresh user access token error: ${error}`)
                             })
                         } else {
                             this.refreshTokens('xsts').then(() => {
@@ -136,7 +132,7 @@ class AUTHENTICATION {
 
                             }).catch((error) => {
                                 // @TODO: Investigate this part of the auth flow
-                                reject('Unable to refresh xsts access token. Reauthenticate again', error)
+                                reject(`Refresh xsts access token error: ${error}. Use authorization manager again.`)
                             })
                         } else {
                             this.user = {
@@ -283,7 +279,7 @@ class AUTHENTICATION {
             } else if (this.userToken !== '' && this.uhs !== '') {
                 resolve()
             } else {
-                reject({ error: 'No authentication supplied.' })
+                reject({ error: 'Not authorized.' })
             }
         })
     }

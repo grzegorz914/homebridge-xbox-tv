@@ -20,7 +20,7 @@ class BASE {
         return new Promise((resolve, reject) => {
             this.httpClient.get(this.endpoint + url, this.headers).then((response) => {
                 const responseObject = JSON.parse(response)
-                if (this.providerName == 'smartglass') {
+                if (this.providerName === 'smartglass') {
                     if (responseObject.status.errorCode != 'OK') {
                         reject(responseObject.status)
                     } else {
@@ -39,7 +39,7 @@ class BASE {
         return new Promise((resolve, reject) => {
             this.httpClient.post(this.endpoint + url, this.headers, postData).then((response) => {
                 const responseObject = JSON.parse(response)
-                if (this.providerName == 'smartglass') {
+                if (this.providerName === 'smartglass') {
                     if (responseObject.status.errorCode != 'OK') {
                         reject(responseObject.status)
                     } else {

@@ -114,7 +114,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     const debug = this.debugLog ? this.emit('debug', `Ping console, state: ${state.alive ? 'Online' : 'Offline'}`) : false;
 
                     if (!state.alive) {
-                        this.emit('stateChanged', false, 0, true, 0, -1, -1);
                         return;
                     }
 
@@ -124,7 +123,6 @@ class XBOXLOCALAPI extends EventEmitter {
                 }, 10000);
             }).on('close', () => {
                 const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
-
                 this.isConnected = false;
                 this.reconnect();
             }).bind();
@@ -249,8 +247,8 @@ class XBOXLOCALAPI extends EventEmitter {
             const volume = 0;
             const mute = power ? power : true;
             const mediaState = 0;
-            const titleId = appsCount >= 2 ? decodedMessage.apps[1].titleId : decodedMessage.apps[0].titleId;
-            const reference = appsCount >= 2 ? decodedMessage.apps[1].aumId : decodedMessage.apps[0].aumId;
+            const titleId = appsCount === 2 ? decodedMessage.apps[1].titleId : decodedMessage.apps[0].titleId;
+            const reference = appsCount === 2 ? decodedMessage.apps[1].aumId : decodedMessage.apps[0].aumId;
 
             this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
             const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
@@ -424,7 +422,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             const info = this.infoLog ? false : this.emit('message', 'Send power On.');
             try {
-                for (let i = 0; i < 12; i++) {
+                for (let i = 0; i < 15; i++) {
                     if (this.isConnected) {
                         resolve(true);
                         return;
