@@ -132,46 +132,44 @@ class XBOXLOCALAPI extends EventEmitter {
         this.on('discoveryResponse', async (message) => {
             const decodedMessage = message.packetDecoded;
             const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(decodedMessage)}.`) : false;
-            if (!decodedMessage || this.isConnected) {
-                const debug = this.debugLog ? this.emit('debug', `Decoded message undefined or console already connected`) : false;
-                return;
-            };
 
-            // Set certyficate
-            const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
+            if (decodedMessage && !this.isConnected) {
+                // Set certyficate
+                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-            // Set pem
-            const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+                // Set pem
+                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-            // Set uuid
-            const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
+                // Set uuid
+                const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
 
-            // Create public key
-            const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
-            const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
+                // Create public key
+                const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
+                const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
 
-            // Load crypto data
-            const { publicKey, secret } = this.crypto.signPublicKey(ecKey.pubKeyHex);
-            this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
-            const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
+                // Load crypto data
+                const { publicKey, secret } = this.crypto.signPublicKey(ecKey.pubKeyHex);
+                this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
+                const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
 
-            const connectRequest = new Packer('simple.connectRequest');
-            connectRequest.set('uuid', uuid4);
-            connectRequest.set('publicKey', this.crypto.getPublicKey());
-            connectRequest.set('iv', this.crypto.getIv());
+                const connectRequest = new Packer('simple.connectRequest');
+                connectRequest.set('uuid', uuid4);
+                connectRequest.set('publicKey', this.crypto.getPublicKey());
+                connectRequest.set('iv', this.crypto.getIv());
 
-            if (this.userHash && this.userToken) {
-                connectRequest.set('userHash', this.userHash, true);
-                connectRequest.set('jwt', this.userToken, true);
-                this.isAuthorized = true;
-            }
-            const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
+                if (this.userHash && this.userToken) {
+                    connectRequest.set('userHash', this.userHash, true);
+                    connectRequest.set('jwt', this.userToken, true);
+                    this.isAuthorized = true;
+                }
+                const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
 
-            try {
-                const message = connectRequest.pack(this);
-                await this.sendSocketMessage(message);
-            } catch (error) {
-                this.emit('error', `Send connect request error: ${error}`)
+                try {
+                    const message = connectRequest.pack(this);
+                    await this.sendSocketMessage(message);
+                } catch (error) {
+                    this.emit('error', `Send connect request error: ${error}`)
+                };
             };
         }).on('connectResponse', async (message) => {
             const connectionResult = message.packetDecoded.protectedPayload.connectResult;
@@ -239,19 +237,17 @@ class XBOXLOCALAPI extends EventEmitter {
             };
 
             const appsCount = Array.isArray(decodedMessage.apps) ? decodedMessage.apps.length : 0;
-            if (appsCount === 0) {
-                return;
+            if (appsCount > 0) {
+                const power = true;
+                const volume = 0;
+                const mute = power ? power : true;
+                const mediaState = 0;
+                const titleId = appsCount === 2 ? decodedMessage.apps[1].titleId : decodedMessage.apps[0].titleId;
+                const reference = appsCount === 2 ? decodedMessage.apps[1].aumId : decodedMessage.apps[0].aumId;
+
+                this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
+                const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
             };
-
-            const power = true;
-            const volume = 0;
-            const mute = power ? power : true;
-            const mediaState = 0;
-            const titleId = appsCount === 2 ? decodedMessage.apps[1].titleId : decodedMessage.apps[0].titleId;
-            const reference = appsCount === 2 ? decodedMessage.apps[1].aumId : decodedMessage.apps[0].aumId;
-
-            this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
-            const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
         }).on('channelResponse', (message) => {
             if (message.packetDecoded.protectedPayload.result !== '0') {
                 return;
