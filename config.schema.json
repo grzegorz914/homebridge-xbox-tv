@@ -563,6 +563,12 @@
 										"type": "integer",
 										"oneOf": [
 											{
+												"title": "None",
+												"enum": [
+													-1
+												]
+											},
+											{
 												"title": "Button",
 												"enum": [
 													0
@@ -594,7 +600,7 @@
 							"default": false,
 							"description": "This expose Input as a Motion Sensor to use with automations.",
 							"required": false
-						  },
+						},
 						"sensorScreenSaver": {
 							"title": "Screen Saver",
 							"type": "boolean",

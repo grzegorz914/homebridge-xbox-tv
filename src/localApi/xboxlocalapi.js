@@ -152,19 +152,18 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
                 const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
 
-                const connectRequest = new Packer('simple.connectRequest');
-                connectRequest.set('uuid', uuid4);
-                connectRequest.set('publicKey', this.crypto.getPublicKey());
-                connectRequest.set('iv', this.crypto.getIv());
-
-                if (this.userHash && this.userToken) {
-                    connectRequest.set('userHash', this.userHash, true);
-                    connectRequest.set('jwt', this.userToken, true);
-                    this.isAuthorized = true;
-                }
-                const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
-
                 try {
+                    const connectRequest = new Packer('simple.connectRequest');
+                    connectRequest.set('uuid', uuid4);
+                    connectRequest.set('publicKey', this.crypto.getPublicKey());
+                    connectRequest.set('iv', this.crypto.getIv());
+
+                    if (this.userHash && this.userToken) {
+                        connectRequest.set('userHash', this.userHash, true);
+                        connectRequest.set('jwt', this.userToken, true);
+                        this.isAuthorized = true;
+                    }
+                    const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
                     const message = connectRequest.pack(this);
                     await this.sendSocketMessage(message);
                 } catch (error) {
@@ -174,6 +173,7 @@ class XBOXLOCALAPI extends EventEmitter {
         }).on('connectResponse', async (message) => {
             const connectionResult = message.packetDecoded.protectedPayload.connectResult;
             const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
+            this.isConnected = true;
 
             if (connectionResult !== 0) {
                 const errorTable = {
@@ -192,15 +192,14 @@ class XBOXLOCALAPI extends EventEmitter {
                 return;
             };
 
-            const participantId = message.packetDecoded.protectedPayload.participantId;
-            this.targetParticipantId = participantId;
-            this.sourceParticipantId = participantId;
-            this.isConnected = true;
-
             try {
+                const participantId = message.packetDecoded.protectedPayload.participantId;
+                this.targetParticipantId = participantId;
+                this.sourceParticipantId = participantId;
+
                 const localJoin = new Packer('message.localJoin');
-                const message = localJoin.pack(this);
-                await this.sendSocketMessage(message);
+                const localJointMessage = localJoin.pack(this);
+                await this.sendSocketMessage(localJointMessage);
             } catch (error) {
                 this.emit('error', `Send local join error: ${error}`)
             };
