@@ -704,13 +704,13 @@ class XBOXDEVICE {
 		this.log.debug('prepareInputServices');
 
 		const savedInputs = this.getInputsFromDevice ? fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs : this.inputs;
-		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
+		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
 		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
-		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved custom Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
+		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
 		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
-		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Inputs Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
+		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and filter custom unnecessary inputs
 		const filteredInputsArr = [];
@@ -770,9 +770,9 @@ class XBOXDEVICE {
 						savedInputsNames[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input successful, name: ${name}, product Id: ${inputOneStoreProductId}`);
+						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, product Id: ${inputOneStoreProductId}`);
 					} catch (error) {
-						this.log.error(`Device: ${this.host} ${accessoryName}, saved new Input Name error: ${error}`);
+						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
 				});
 
@@ -784,10 +784,10 @@ class XBOXDEVICE {
 						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Target Visibility successful, input: ${inputName}, state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
-						this.log.error(`Device: ${this.host} ${accessoryName}, saved new Target Visibility error, input: ${inputName}, error: ${error}`);
+						this.log.error(`Device: ${this.host} ${accessoryName}, new target visibility state save error: ${error}`);
 					}
 				});
 
