@@ -712,7 +712,7 @@ class XBOXDEVICE {
 		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
-		//check available inputs and filter custom unnecessary inputs
+		//check possible inputs and filter custom unnecessary inputs
 		const filteredInputsArr = [];
 		for (const input of savedInputs) {
 			const contentType = input.contentType;
@@ -723,7 +723,7 @@ class XBOXDEVICE {
 			const push = this.getInputsFromDevice ? (!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false : filteredInputsArr.push(input);
 		}
 
-		//check available inputs and possible inputs count (max 80)
+		//check possible inputs and possible inputs count (max 80)
 		const inputs = filteredInputsArr;
 		const inputsCount = inputs.length;
 		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
@@ -805,8 +805,8 @@ class XBOXDEVICE {
 		this.sensorInputsServices = [];
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const availableSensorInputsCount = 80 - this.inputsReference.length;
-		const maxSensorInputsCount = availableSensorInputsCount > 0 ? (availableSensorInputsCount > sensorInputsCount ? sensorInputsCount : availableSensorInputsCount) : 0;
+		const possibleSensorInputsCount = 80 - this.inputsReference.length;
+		const maxSensorInputsCount = possibleSensorInputsCount > sensorInputsCount ? sensorInputsCount : possibleSensorInputsCount;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
 			for (let i = 0; i < maxSensorInputsCount; i++) {
@@ -825,7 +825,7 @@ class XBOXDEVICE {
 				if (sensorInputDisplayType >= 0) {
 					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
 					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-					const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${sensorInputName}`);
+					const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
 					sensorInputService.getCharacteristic(characteristicType)
 						.onGet(async () => {
 							const state = this.power ? (this.reference === sensorInputReference) : false;
@@ -841,14 +841,15 @@ class XBOXDEVICE {
 		}
 
 		//Prepare buttons services
+		this.buttonsServices = [];
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = 80 - (this.inputsReference.length + this.sensorInputsServices.length);
-		const maxButtonsCount = availableButtonsCount > 0 ? (availableButtonsCount >= buttonsCount ? buttonsCount : availableButtonsCount) : 0;
+		const possibleButtonsCount = 80 - (this.inputsReference.length + this.sensorInputsServices.length);
+		const maxButtonsCount = possibleButtonsCount >= buttonsCount ? buttonsCount : possibleButtonsCount;
 		if (maxButtonsCount > 0) {
-			this.log.debug('prepareButtonServices');
+			this.log.debug('prepareInputsButtonService');
 			for (let i = 0; i < maxButtonsCount; i++) {
-				//button 
+				//get button
 				const button = buttons[i];
 
 				//get button name
@@ -858,7 +859,7 @@ class XBOXDEVICE {
 				const buttonCommand = button.command || 'Not set';
 
 				//get button display type
-				const buttonDisplayType = button.displayType || -1;
+				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
 				if (buttonDisplayType >= 0) {
 					//get button mode
@@ -914,7 +915,8 @@ class XBOXDEVICE {
 								this.log.error(`Device: ${this.host} ${accessoryName}, set button error, name: ${buttonName}, error: ${error}`);
 							};
 						});
-					accessory.addService(buttonService);
+					this.buttonsServices.push(buttonService);
+					accessory.addService(this.buttonsServices[i]);
 				}
 			}
 		}

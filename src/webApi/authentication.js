@@ -47,7 +47,7 @@ class AUTHENTICATION {
     }
 
     refreshTokens(type) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             if (type === undefined) {
                 type = 'oauth'
             }
@@ -66,16 +66,16 @@ class AUTHENTICATION {
                     break;
                 case 'user':
                     if (this.tokens.user.Token) {
-                        const userexpireuser = new Date(this.tokens.user.NotAfter).getTime()
-                        if (new Date() > userexpireuser) {
+                        const userExpireUser = new Date(this.tokens.user.NotAfter).getTime()
+                        if (new Date() > userExpireUser) {
                             // Oauth token expired, refresh user token
-                            this.refreshToken(this.tokens.oauth.refresh_token).then(async (usertoken) => {
-                                this.tokens.oauth = usertoken
+                            this.refreshToken(this.tokens.oauth.refresh_token).then(async (userToken) => {
+                                this.tokens.oauth = userToken
                                 await this.saveTokens()
 
                                 this.getUserToken(this.tokens.oauth.access_token).then(async (token) => {
-                                    this.tokens.user = token
-                                    this.tokens.xsts = {}
+                                    this.tokens.user = token;
+                                    this.tokens.xsts = {};
                                     await this.saveTokens()
 
                                     this.refreshTokens('xsts').then(() => {
@@ -100,8 +100,8 @@ class AUTHENTICATION {
                         // Get user token
                         this.getUserToken(this.tokens.oauth.access_token).then(async (data) => {
                             // Got user token, continue with xsts
-                            this.tokens.user = data
-                            this.tokens.xsts = {}
+                            this.tokens.user = data;
+                            this.tokens.xsts = {};
                             await this.saveTokens()
 
                             this.refreshTokens('xsts').then(() => {
@@ -117,12 +117,15 @@ class AUTHENTICATION {
                     break;
                 case 'xsts':
                     if (this.tokens.xsts.Token) {
-                        const oauthexpire = new Date(this.tokens.xsts.NotAfter).getTime()
-                        if (new Date() > oauthexpire) {
+                        const oauthExpire = new Date(this.tokens.xsts.NotAfter).getTime()
+                        if (new Date() > oauthExpire) {
                             // Oauth token expired, refresh xstx token
+                            this.tokens.xsts = token;
+                            await this.saveTokens();
+
                             this.getXstsToken(this.tokens.user.Token).then(async (token) => {
-                                this.tokens.xsts = token
-                                await this.saveTokens()
+                                this.tokens.xsts = token;
+                                await this.saveTokens();
 
                                 this.refreshTokens('xsts').then(() => {
                                     resolve()
@@ -131,7 +134,6 @@ class AUTHENTICATION {
                                 })
 
                             }).catch((error) => {
-                                // @TODO: Investigate this part of the auth flow
                                 reject(`Refresh xsts access token error: ${error}. Use authorization manager again.`)
                             })
                         } else {
