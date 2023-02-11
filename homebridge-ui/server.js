@@ -52,7 +52,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
         clientId: payload.clientId,
         clientSecret: payload.clientSecret,
         userToken: payload.userToken,
-        uhs: payload.clientSecret,
+        uhs: payload.uhs,
         tokensFile: authTokenFile
       });
 
