@@ -70,6 +70,8 @@
           document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
           this.clientId = pluginConfig[0].devices[i].clientId;
           this.clientSecret = pluginConfig[0].devices[i].clientSecret;
+          this.userToken = pluginConfig[0].devices[i].userToken;
+          this.uhs = pluginConfig[0].devices[i].uhs;
           this.xboxWebApiToken = pluginConfig[0].devices[i].xboxWebApiToken;
           this.deviceIndex = i;
         });
@@ -151,6 +153,8 @@
           host: host,
           clientId: clientId,
           clientSecret: this.clientSecret,
+          userToken: this.userToken,
+          uhs: this.clientSecret,
           webApiToken: webApiToken,
         };
 

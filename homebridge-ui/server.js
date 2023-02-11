@@ -29,7 +29,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
     const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
     try {
-      if (fs.existsSync(authTokenFile) == true) {
+      if (fs.existsSync(authTokenFile)) {
         await fsPromises.writeFile(authTokenFile, '');
       };
 
@@ -45,16 +45,14 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
     try {
       const host = payload.host;
-      const clientId = payload.clientId;
-      const clientSecret = payload.clientSecret;
       const webApiToken = payload.webApiToken;
       const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
       const authentication = new Authentication({
-        clientId: clientId,
-        clientSecret: clientSecret,
-        userToken: '',
-        userUhs: '',
+        clientId: payload.clientId,
+        clientSecret: payload.clientSecret,
+        userToken: payload.userToken,
+        uhs: payload.clientSecret,
         tokensFile: authTokenFile
       });
 
@@ -65,11 +63,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
           status: 0
         };
       } catch (error) {
-        if (webApiToken.length > 10) {
+        if (webApiToken) {
           try {
-            const authenticationData = await authentication.getTokenRequest(webApiToken);
-            authentication.tokens.oauth = authenticationData;
-            await authentication.saveTokens();
+            await authentication.getTokenRequest(webApiToken);
             this.data = {
               info: 'Console successfully authorized and token file saved.',
               status: 2

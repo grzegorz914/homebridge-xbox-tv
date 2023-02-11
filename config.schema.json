@@ -55,7 +55,7 @@
 							"description": "Optional alternative authentication method.",
 							"required": false
 						},
-						"userHash": {
+						"uhs": {
 							"title": "User Hash",
 							"type": "string",
 							"placeholder": "User Hash",

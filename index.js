@@ -68,9 +68,9 @@ class XBOXDEVICE {
 		this.xboxLiveId = config.xboxLiveId;
 		this.webApiControl = config.webApiControl || false;
 		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
-		this.clientSecret = config.clientSecret || false;
-		this.userToken = config.userToken;
-		this.userHash = config.userHash;
+		this.clientSecret = config.clientSecret;
+		this.userToken = config.userToken || '';
+		this.uhs = config.uhs || '';
 		this.xboxWebApiToken = config.xboxWebApiToken || '';
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
@@ -187,7 +187,7 @@ class XBOXDEVICE {
 			host: this.host,
 			xboxLiveId: this.xboxLiveId,
 			userToken: this.userToken,
-			uhs: this.userHash,
+			uhs: this.uhs,
 			infoLog: this.disableLogInfo,
 			debugLog: this.enableDebugMode
 		});
@@ -309,7 +309,7 @@ class XBOXDEVICE {
 				clientId: this.clientId,
 				clientSecret: this.clientSecret,
 				userToken: this.userToken,
-				uhs: this.userHash,
+				uhs: this.uhs,
 				tokensFile: this.authTokenFile,
 				infoLog: this.disableLogInfo,
 				debugLog: this.enableDebugMode
@@ -770,7 +770,7 @@ class XBOXDEVICE {
 						savedInputsNames[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, product Id: ${inputOneStoreProductId}`);
+						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -820,7 +820,7 @@ class XBOXDEVICE {
 				const sensorInputReference = sensorInput.reference || 'Not set';
 
 				//get sensor display type
-				const sensorInputDisplayType = sensorInput.displayType || -1;
+				const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
 
 				if (sensorInputDisplayType >= 0) {
 					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];

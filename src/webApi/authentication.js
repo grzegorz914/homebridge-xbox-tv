@@ -1,13 +1,14 @@
 'use strict';
-const QueryString = require('querystring')
-const HttpClient = require('./httpclient.js')
-const fs = require('fs')
+const QueryString = require('querystring');
+const HttpClient = require('./httpclient.js');
+const fs = require('fs');
+const fsPromises = fs.promises;
 
 class AUTHENTICATION {
     constructor(config) {
         this.httpClient = new HttpClient();
         this.clientId = config.clientId;
-        this.clientSecret = config.secret;
+        this.clientSecret = config.clientSecret;
         this.userToken = config.userToken;
         this.uhs = config.uhs;
         this.tokensFile = config.tokensFile;
@@ -35,10 +36,10 @@ class AUTHENTICATION {
                     "response_type": "code",
                     "approval_prompt": "auto",
                     "scope": this.scopes.join(' '),
-                    "redirect_uri": this.getReturnUrl()
+                    "redirect_uri": `http://localhost:8581/auth/callback`
                 }
-                const params = QueryString.stringify(paramsObject)
-                const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params
+                const params = QueryString.stringify(paramsObject);
+                const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params;
                 resolve(oauth2URI);
             } catch (error) {
                 reject(error);
@@ -49,271 +50,248 @@ class AUTHENTICATION {
     refreshTokens(type) {
         return new Promise(async (resolve, reject) => {
             if (type === undefined) {
-                type = 'oauth'
+                type = 'oauth';
             }
 
             switch (type) {
                 case 'oauth':
                     if (this.tokens.oauth.refresh_token) {
-                        this.refreshTokens('user').then(() => {
-                            resolve()
-                        }).catch((error) => {
-                            reject(error)
-                        })
+                        try {
+                            await this.refreshTokens('user');
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        };
                     } else {
                         reject('No oauth token found. Use authorization manager first.')
                     }
                     break;
                 case 'user':
                     if (this.tokens.user.Token) {
-                        const userExpireUser = new Date(this.tokens.user.NotAfter).getTime()
-                        if (new Date() > userExpireUser) {
-                            // Oauth token expired, refresh user token
-                            this.refreshToken(this.tokens.oauth.refresh_token).then(async (userToken) => {
-                                this.tokens.oauth = userToken
-                                await this.saveTokens()
+                        try {
+                            const userExpireUser = new Date(this.tokens.user.NotAfter).getTime();
+                            if (new Date() > userExpireUser) {
+                                const refreshToken = await this.refreshToken(this.tokens.oauth.refresh_token);
+                                this.tokens.oauth = refreshToken;
+                                await this.saveTokens(this.tokens);
 
-                                this.getUserToken(this.tokens.oauth.access_token).then(async (token) => {
-                                    this.tokens.user = token;
-                                    this.tokens.xsts = {};
-                                    await this.saveTokens()
+                                const accessToken = await this.getUserToken(this.tokens.oauth.access_token);
+                                this.tokens.user = accessToken;
+                                this.tokens.xsts = {};
+                                await this.saveTokens(this.tokens);
 
-                                    this.refreshTokens('xsts').then(() => {
-                                        resolve()
-                                    }).catch((error) => {
-                                        reject(error)
-                                    })
-                                }).catch((error) => {
-                                    reject(`Refresh oauth access token error: ${error}`)
-                                })
-                            }).catch((error) => {
-                                reject(`Refresh user access token error: ${error}`)
-                            })
-                        } else {
-                            this.refreshTokens('xsts').then(() => {
-                                resolve()
-                            }).catch((error) => {
-                                reject(error)
-                            })
-                        }
+                                await this.refreshTokens('xsts');
+                                resolve();
+                            } else {
+                                try {
+                                    await this.refreshTokens('xsts');
+                                    resolve();
+                                } catch (error) {
+                                    reject(error);
+                                };
+                            }
+                        } catch (error) {
+                            reject(error);
+                        };
                     } else {
-                        // Get user token
-                        this.getUserToken(this.tokens.oauth.access_token).then(async (data) => {
-                            // Got user token, continue with xsts
-                            this.tokens.user = data;
+                        try {
+                            const accessToken = await this.getUserToken(this.tokens.oauth.access_token);
+                            this.tokens.user = accessToken;
                             this.tokens.xsts = {};
-                            await this.saveTokens()
+                            await this.saveTokens(this.tokens);
 
-                            this.refreshTokens('xsts').then(() => {
-                                resolve()
-                            }).catch((error) => {
-                                reject(error)
-                            })
-
-                        }).catch((error) => {
-                            reject(error)
-                        })
+                            await this.refreshTokens('xsts');
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        };
                     }
                     break;
                 case 'xsts':
                     if (this.tokens.xsts.Token) {
-                        const oauthExpire = new Date(this.tokens.xsts.NotAfter).getTime()
-                        if (new Date() > oauthExpire) {
-                            // Oauth token expired, refresh xstx token
-                            this.tokens.xsts = token;
-                            await this.saveTokens();
+                        try {
+                            const oauthExpire = new Date(this.tokens.xsts.NotAfter).getTime();
+                            if (new Date() > oauthExpire) {
+                                this.tokens.xsts = {};
+                                await this.saveTokens(this.tokens);
 
-                            this.getXstsToken(this.tokens.user.Token).then(async (token) => {
-                                this.tokens.xsts = token;
-                                await this.saveTokens();
+                                const userToken = await this.getXstsToken(this.tokens.user.Token);
+                                this.tokens.xsts = userToken;
+                                await this.saveTokens(this.tokens);
 
-                                this.refreshTokens('xsts').then(() => {
-                                    resolve()
-                                }).catch((error) => {
-                                    reject(error)
-                                })
-
-                            }).catch((error) => {
-                                reject(`Refresh xsts access token error: ${error}. Use authorization manager again.`)
-                            })
-                        } else {
-                            this.user = {
-                                gamertag: this.tokens.xsts.DisplayClaims.xui[0].gtg,
-                                xid: this.tokens.xsts.DisplayClaims.xui[0].xid,
-                                uhs: this.tokens.xsts.DisplayClaims.xui[0].uhs
-                                //agg: data.DisplayClaims.xui[0].agg,
-                                //usr: data.DisplayClaims.xui[0].usr,
-                                //utr: data.DisplayClaims.xui[0].utr,
-                                //prv: data.DisplayClaims.xui[0].prv
+                                await this.refreshTokens('xsts');
+                                resolve();
+                            } else {
+                                this.user = {
+                                    gamertag: this.tokens.xsts.DisplayClaims.xui[0].gtg,
+                                    xid: this.tokens.xsts.DisplayClaims.xui[0].xid,
+                                    uhs: this.tokens.xsts.DisplayClaims.xui[0].uhs
+                                    //agg: this.tokens.DisplayClaims.xui[0].agg,
+                                    //usr: this.tokens.DisplayClaims.xui[0].usr,
+                                    //utr: this.tokens.DisplayClaims.xui[0].utr,
+                                    //prv: this.tokens.DisplayClaims.xui[0].prv
+                                }
+                                resolve();
                             }
-                            resolve()
-                        }
+                        } catch (error) {
+                            reject(error);
+                        };
                     } else {
-                        // Get user token
-                        this.getXstsToken(this.tokens.user.Token).then(async (data) => {
-                            // Got user token, continue with xsts
-                            this.tokens.xsts = data
-                            await this.saveTokens()
+                        try {
+                            const userToken = await this.getXstsToken(this.tokens.user.Token);
+                            this.tokens.xsts = userToken;
+                            await this.saveTokens(this.tokens);
 
                             this.user = {
-                                gamertag: data.DisplayClaims.xui[0].gtg,
-                                xid: data.DisplayClaims.xui[0].xid,
-                                uhs: data.DisplayClaims.xui[0].uhs
-                                //agg: data.DisplayClaims.xui[0].agg,
-                                //usr: data.DisplayClaims.xui[0].usr,
-                                //utr: data.DisplayClaims.xui[0].utr,
-                                //prv: data.DisplayClaims.xui[0].prv
+                                gamertag: userToken.DisplayClaims.xui[0].gtg,
+                                xid: userToken.DisplayClaims.xui[0].xid,
+                                uhs: userToken.DisplayClaims.xui[0].uhs
+                                //agg: userToken.DisplayClaims.xui[0].agg,
+                                //usr: userToken.DisplayClaims.xui[0].usr,
+                                //utr: userToken.DisplayClaims.xui[0].utr,
+                                //prv: userToken.DisplayClaims.xui[0].prv
                             }
-                            resolve()
-                        }).catch((error) => {
-                            reject(error)
-                        })
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        };
                     }
                     break;
             }
         })
     }
 
-    getTokenRequest(code) {
-        return new Promise((resolve, reject) => {
-            const tokenParams = {
-                "client_id": this.clientId,
-                "grant_type": "authorization_code",
-                "scope": this.scopes.join(' '),
-                "code": code,
-                "redirect_uri": this.getReturnUrl()
-            }
-
-            if (this.clientSecret !== '') {
-                tokenParams.client_secret = this.clientSecret;
-            }
-
-            const postData = QueryString.stringify(tokenParams)
-            this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData).then((data) => {
-                const responseData = JSON.parse(data)
-                responseData.issued = new Date().toISOString()
-                resolve(responseData)
-            }).catch((error) => {
-                reject(error)
-            })
-        })
-    }
-
     refreshToken(refreshToken) {
-        return new Promise((resolve, reject) => {
-            const tokenParams = {
-                "client_id": this.clientId,
-                "grant_type": "refresh_token",
-                "scope": this.scopes.join(' '),
-                "refresh_token": refreshToken,
-            }
+        return new Promise(async (resolve, reject) => {
+            try {
+                const tokenParams = {
+                    "client_id": this.clientId,
+                    "grant_type": "refresh_token",
+                    "scope": this.scopes.join(' '),
+                    "refresh_token": refreshToken,
+                }
 
-            if (this.clientSecret !== '') {
-                tokenParams.client_secret = this.clientSecret;
-            }
+                if (this.clientSecret !== '') {
+                    tokenParams.client_secret = this.clientSecret;
+                }
 
-            const postData = QueryString.stringify(tokenParams)
-            this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData).then((data) => {
-                const responseData = JSON.parse(data)
-                responseData.issued = new Date().toISOString()
-                resolve(responseData)
-            }).catch((error) => {
-                reject(error)
-            })
+                const postData = QueryString.stringify(tokenParams);
+                const data = await this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData);
+                const responseData = JSON.parse(data);
+                responseData.issued = new Date().toISOString();
+                resolve(responseData);
+            } catch (error) {
+                reject(error);
+            };
         })
     }
 
     getUserToken(accessToken) {
-        return new Promise((resolve, reject) => {
-            const tokenParams = {
-                "RelyingParty": "http://auth.xboxlive.com",
-                "TokenType": "JWT",
-                "Properties": {
-                    "AuthMethod": "RPS",
-                    "SiteName": "user.auth.xboxlive.com",
-                    "RpsTicket": "d=" + accessToken
-                },
-            }
+        return new Promise(async (resolve, reject) => {
+            try {
+                const tokenParams = {
+                    "RelyingParty": "http://auth.xboxlive.com",
+                    "TokenType": "JWT",
+                    "Properties": {
+                        "AuthMethod": "RPS",
+                        "SiteName": "user.auth.xboxlive.com",
+                        "RpsTicket": "d=" + accessToken
+                    },
+                }
 
-            const postData = JSON.stringify(tokenParams)
-            this.httpClient.post(this.endpoints.auth + '/user/authenticate', { 'Content-Type': 'application/json' }, postData).then((data) => {
-                const responseData = JSON.parse(data)
-                resolve(responseData)
-            }).catch((error) => {
-                reject(error)
-            })
+                const postData = JSON.stringify(tokenParams);
+                const data = await this.httpClient.post(this.endpoints.auth + '/user/authenticate', { 'Content-Type': 'application/json' }, postData);
+                const responseData = JSON.parse(data);
+                resolve(responseData);
+            } catch (error) {
+                reject(error);
+            };
         })
     }
 
     getXstsToken(userToken) {
-        return new Promise((resolve, reject) => {
-            const tokenParams = {
-                "RelyingParty": "http://xboxlive.com",
-                "TokenType": "JWT",
-                "Properties": {
-                    "UserTokens": [userToken],
-                    "SandboxId": "RETAIL",
-                },
-            }
+        return new Promise(async (resolve, reject) => {
+            try {
+                const tokenParams = {
+                    "RelyingParty": "http://xboxlive.com",
+                    "TokenType": "JWT",
+                    "Properties": {
+                        "UserTokens": [userToken],
+                        "SandboxId": "RETAIL",
+                    },
+                }
 
-            const postData = JSON.stringify(tokenParams)
-            this.httpClient.post(this.endpoints.xsts + '/xsts/authorize', { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' }, postData).then((data) => {
-                const responseData = JSON.parse(data)
-                resolve(responseData)
-            }).catch((error) => {
-                reject(error)
-            })
+                const postData = JSON.stringify(tokenParams);
+                const data = await this.httpClient.post(this.endpoints.xsts + '/xsts/authorize', { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' }, postData);
+                const responseData = JSON.parse(data);
+                resolve(responseData);
+            } catch (error) {
+                reject(error);
+            };
         })
     }
 
     isAuthenticated() {
         return new Promise(async (resolve, reject) => {
-            if (fs.existsSync(this.tokensFile)) {
-                await this.loadTokens();
-            }
+            try {
+                if (fs.existsSync(this.tokensFile) && fs.readFileSync(this.tokensFile).length > 30) {
+                    const tokens = fs.readFileSync(this.tokensFile).toString();
+                    this.tokens = JSON.parse(tokens);
+                }
 
-            if (this.clientId !== '') {
-                this.refreshTokens().then(() => {
-                    resolve()
-                }).catch((error) => {
-                    reject(error)
-                })
-            } else if (this.userToken !== '' && this.uhs !== '') {
-                resolve()
-            } else {
-                reject({ error: 'Not authorized.' })
-            }
+                if (this.clientId !== '') {
+                    await this.refreshTokens();
+                    resolve();
+                } else if (this.userToken !== '' && this.uhs !== '') {
+                    resolve();
+                } else {
+                    reject({ error: 'Client Id, user Token or Uhs missing!!!' });
+                }
+            } catch (error) {
+                reject(error);
+            };
         })
     }
 
-    saveTokens() {
+    getTokenRequest(webApiToken) {
         return new Promise(async (resolve, reject) => {
             try {
-                const tokens = JSON.stringify(this.tokens);
-                fs.writeFileSync(this.tokensFile, tokens)
-                await this.isAuthenticated()
-                resolve()
+                const tokenParams = {
+                    "client_id": this.clientId,
+                    "grant_type": "authorization_code",
+                    "scope": this.scopes.join(' '),
+                    "code": webApiToken,
+                    "redirect_uri": `http://localhost:8581/auth/callback`
+                }
+
+                if (this.clientSecret !== '') {
+                    tokenParams.client_secret = this.clientSecret;
+                }
+
+                const postData = QueryString.stringify(tokenParams);
+                const data = await this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData);
+                const responseData = JSON.parse(data);
+                responseData.issued = new Date().toISOString();
+                this.tokens.oauth = responseData;
+                await this.saveTokens(this.tokens);
+                resolve();
             } catch (error) {
                 reject(error);
             };
         })
     }
 
-    loadTokens() {
-        return new Promise((resolve, reject) => {
+    saveTokens(tokens) {
+        return new Promise(async (resolve, reject) => {
             try {
-                const tokens = fs.readFileSync(this.tokensFile).length > 0 ? fs.readFileSync(this.tokensFile).toString() : false;
-                this.tokens = tokens ? JSON.parse(tokens) : this.tokens;
-                resolve()
+                tokens = JSON.stringify(tokens);
+                await fsPromises.writeFile(this.tokensFile, tokens);
+                await this.isAuthenticated();
+                resolve();
             } catch (error) {
                 reject(error);
             };
         })
     }
-
-    getReturnUrl() {
-        return `http://localhost:8581/auth/callback`
-    }
-
 }
 module.exports = AUTHENTICATION;
