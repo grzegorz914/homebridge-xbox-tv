@@ -1,35 +1,61 @@
+'use strict';
 const QueryString = require('querystring')
-const BaseProvider = require('./base.js')
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://screenshotsmetadata.xboxlive.com'
-    provider.headers['x-xbl-contract-version'] = '5'
-    
-    provider.getUserScreenshots = () => {
-        return provider.get('/users/me/screenshots')
-        // return this.get('/users/me/scids/d1adc8aa-0a31-4407-90f2-7e9b54b0347c/screenshots/06e5ed92-8508-4a7f-9ba0-94fb945ec20e/views')
+class CATALOG {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['x-xbl-contract-version'] = '5'
+    }
+
+    getUserScreenshots() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://screenshotsmetadata.xboxlive.com/users/me/screenshot`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
 
     }
 
-    provider.getCommunityScreenshotsByTitleId = (titleId) => {
-        return provider.get('/public/titles/' + titleId + '/screenshots?qualifier=created&maxItems=10')
+    getCommunityScreenshotsByTitleId(titleId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://screenshotsmetadata.xboxlive.com/public/titles/${titleId}/screenshots?qualifier=created&maxItems=10`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getScreenshotsByXuid = (xuid, titleId, skipItems, maxItems) => {
-        const params = {
-            skipitems: skipItems || 0,
-            maxitems: maxItems || 25,
-        }
+    getScreenshotsByXuid(xuid, titleId, skipItems, maxItems) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const params = {
+                    skipitems: skipItems || 0,
+                    maxitems: maxItems || 25,
+                }
 
-        if (titleId !== undefined) {
-            params.titleid = titleId
-        }
+                if (titleId !== undefined) {
+                    params.titleid = titleId
+                }
 
-        const queryParams = QueryString.stringify(params)
-
-        return provider.get('/users/xuid(' + xuid + ')/screenshots?' + queryParams)
+                const queryParams = QueryString.stringify(params)
+                const url = `https://screenshotsmetadata.xboxlive.com/users/xuid(${xuid})/screenshots?${queryParams}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
 }
+module.exports = CATALOG;

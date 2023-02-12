@@ -1,27 +1,63 @@
-const BaseProvider = require('./base.js')
+'use strict';
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://achievements.xboxlive.com'
-    provider.headers['x-xbl-contract-version'] = 2
-
-    provider.getTitleAchievements = (continuationToken = 0) => {
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/history/titles?continuationToken=' + continuationToken)
+class ACHIVEMENTS {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['x-xbl-contract-version'] = '2';
     }
 
-    provider.getTitleAchievements360 = (continuationToken = 0) => {
-        provider.headers['x-xbl-contract-version'] = 1
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/history/titles')
+    getTitleAchievements(continuationToken = 0) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://achievements.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/history/titles?continuationToken=${continuationToken}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getTitleId = (titleId, continuationToken = 0) => {
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/achievements?titleId=' + titleId + '&continuationToken=' + continuationToken)
+    getTitleAchievements360(continuationToken = 0) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                this.headers['x-xbl-contract-version'] = 1
+                const url = `https://achievements.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/history/titles?continuationToken=${continuationToken}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getTitleId360 = (titleId, continuationToken = 0) => {
-        provider.headers['x-xbl-contract-version'] = 1
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/achievements?titleId=' + titleId + '&continuationToken=' + continuationToken)
+    getTitleId(titleId, continuationToken = 0) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://achievements.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/achievements?titleId=${titleId}&continuationToken=${continuationToken}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
+    getTitleId360(titleId, continuationToken = 0) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                this.headers['x-xbl-contract-version'] = 1
+                const url = `https://achievements.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/achievements?titleId=${titleId}&continuationToken=${continuationToken}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = ACHIVEMENTS;

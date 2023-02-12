@@ -1,14 +1,13 @@
 'use strict';
-const Https = require('https')
-const Http = require('http')
-const UrlParser = require('url')
+const Https = require('https');
+const Http = require('http');
+const UrlParser = require('url');
 
 class HTTPCLIENT {
     constructor() { }
 
     get(url, headers) {
         return new Promise((resolve, reject) => {
-            // Extract options from url
             const parsedUrl = this.queryUrl(url)
             const options = {
                 hostname: parsedUrl.host,
@@ -19,34 +18,33 @@ class HTTPCLIENT {
             }
 
             for (const header in headers) {
-                options.headers[header] = headers[header]
+                options.headers[header] = headers[header];
             }
 
             const httpEngine = parsedUrl.protocol === 'https' ? Https : Http;
             const req = httpEngine.request(options, (res) => {
                 let responseData = ''
                 res.on('data', (data) => {
-                    responseData += data
+                    responseData += data;
                 }).on('close', () => {
                     if (res.statusCode === 200) {
-                        resolve(responseData.toString())
+                        resolve(responseData.toString());
                     } else {
-                        reject({ status: res.statusCode, body: responseData.toString() })
+                        reject({ status: res.statusCode, body: responseData.toString() });
                     }
                 })
             })
             req.on('error', (error) => {
-                reject(error)
+                reject(error);
             })
-            req.end()
+            req.end();
 
         })
     }
 
     post(url, headers, postdata) {
         return new Promise((resolve, reject) => {
-            // Extract options from url
-            const parsedUrl = this.queryUrl(url)
+            const parsedUrl = this.queryUrl(url);
             const options = {
                 hostname: parsedUrl.host,
                 port: parsedUrl.port,
@@ -65,21 +63,21 @@ class HTTPCLIENT {
             const req = httpEngine.request(options, (res) => {
                 let responseData = ''
                 res.on('data', (data) => {
-                    responseData += data
+                    responseData += data;
                 })
                 res.on('close', () => {
                     if (res.statusCode === 200) {
-                        resolve(responseData.toString())
+                        resolve(responseData.toString());
                     } else {
-                        reject({ status: res.statusCode, body: responseData.toString() })
+                        reject({ status: res.statusCode, body: responseData.toString() });
                     }
                 })
             })
             req.on('error', (error) => {
-                reject(error)
+                reject(error);
             })
-            req.write(postdata)
-            req.end()
+            req.write(postdata);
+            req.end();
         })
     }
 

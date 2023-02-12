@@ -20,7 +20,15 @@ class AUTHENTICATION {
             xsts: 'https://xsts.auth.xboxlive.com'
         }
 
-        this.user = {};
+        this.user = {
+            gamertag: {},
+            xid: {},
+            uhs: {},
+            agg: {},
+            usr: {},
+            utr: {},
+            prv: {}
+        };
         this.tokens = {
             oauth: {},
             user: {},
@@ -28,43 +36,23 @@ class AUTHENTICATION {
         };
     }
 
-    generateAuthorizationUrl() {
-        return new Promise((resolve, reject) => {
-            try {
-                const paramsObject = {
-                    "client_id": this.clientId,
-                    "response_type": "code",
-                    "approval_prompt": "auto",
-                    "scope": this.scopes.join(' '),
-                    "redirect_uri": `http://localhost:8581/auth/callback`
-                }
-                const params = QueryString.stringify(paramsObject);
-                const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params;
-                resolve(oauth2URI);
-            } catch (error) {
-                reject(error);
-            };
-        })
-    }
-
     refreshTokens(type) {
         return new Promise(async (resolve, reject) => {
-            if (type === undefined) {
-                type = 'oauth';
-            }
+            type = type || 'oauth'
 
             switch (type) {
                 case 'oauth':
-                    if (this.tokens.oauth.refresh_token) {
-                        try {
-                            await this.refreshTokens('user');
-                            resolve();
-                        } catch (error) {
-                            reject(error);
-                        };
-                    } else {
+                    if (!this.tokens.oauth.refresh_token) {
                         reject('No oauth token found. Use authorization manager first.')
-                    }
+                        return;
+                    };
+
+                    try {
+                        await this.refreshTokens('user');
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    };
                     break;
                 case 'user':
                     if (this.tokens.user.Token) {
@@ -79,7 +67,6 @@ class AUTHENTICATION {
                                 this.tokens.user = accessToken;
                                 this.tokens.xsts = {};
                                 await this.saveTokens(this.tokens);
-
                                 await this.refreshTokens('xsts');
                                 resolve();
                             } else {
@@ -99,7 +86,6 @@ class AUTHENTICATION {
                             this.tokens.user = accessToken;
                             this.tokens.xsts = {};
                             await this.saveTokens(this.tokens);
-
                             await this.refreshTokens('xsts');
                             resolve();
                         } catch (error) {
@@ -118,19 +104,16 @@ class AUTHENTICATION {
                                 const userToken = await this.getXstsToken(this.tokens.user.Token);
                                 this.tokens.xsts = userToken;
                                 await this.saveTokens(this.tokens);
-
                                 await this.refreshTokens('xsts');
                                 resolve();
                             } else {
-                                this.user = {
-                                    gamertag: this.tokens.xsts.DisplayClaims.xui[0].gtg,
-                                    xid: this.tokens.xsts.DisplayClaims.xui[0].xid,
-                                    uhs: this.tokens.xsts.DisplayClaims.xui[0].uhs
-                                    //agg: this.tokens.DisplayClaims.xui[0].agg,
-                                    //usr: this.tokens.DisplayClaims.xui[0].usr,
-                                    //utr: this.tokens.DisplayClaims.xui[0].utr,
-                                    //prv: this.tokens.DisplayClaims.xui[0].prv
-                                }
+                                this.user.gamertag = this.tokens.xsts.DisplayClaims.xui[0].gtg;
+                                this.user.xid = this.tokens.xsts.DisplayClaims.xui[0].xid;
+                                this.user.uhs = this.tokens.xsts.DisplayClaims.xui[0].uhs;
+                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
+                                this.user.usr = this.tokens.xsts.DisplayClaims.xui[0].usr;
+                                this.user.utr = this.tokens.xsts.DisplayClaims.xui[0].utr;
+                                this.user.prv = this.tokens.xsts.DisplayClaims.xui[0].prv;
                                 resolve();
                             }
                         } catch (error) {
@@ -142,15 +125,13 @@ class AUTHENTICATION {
                             this.tokens.xsts = userToken;
                             await this.saveTokens(this.tokens);
 
-                            this.user = {
-                                gamertag: userToken.DisplayClaims.xui[0].gtg,
-                                xid: userToken.DisplayClaims.xui[0].xid,
-                                uhs: userToken.DisplayClaims.xui[0].uhs
-                                //agg: userToken.DisplayClaims.xui[0].agg,
-                                //usr: userToken.DisplayClaims.xui[0].usr,
-                                //utr: userToken.DisplayClaims.xui[0].utr,
-                                //prv: userToken.DisplayClaims.xui[0].prv
-                            }
+                            this.user.gamertag = userToken.DisplayClaims.xui[0].gtg;
+                            this.user.xid = userToken.DisplayClaims.xui[0].xid;
+                            this.user.uhs = userToken.DisplayClaims.xui[0].uhs;
+                            this.user.agg = userToken.DisplayClaims.xui[0].agg;
+                            this.user.usr = userToken.DisplayClaims.xui[0].usr;
+                            this.user.utr = userToken.DisplayClaims.xui[0].utr;
+                            this.user.prv = userToken.DisplayClaims.xui[0].prv;
                             resolve();
                         } catch (error) {
                             reject(error);
@@ -241,9 +222,9 @@ class AUTHENTICATION {
 
                 if (this.clientId !== '') {
                     await this.refreshTokens();
-                    resolve();
+                    resolve(true);
                 } else if (this.userToken !== '' && this.uhs !== '') {
-                    resolve();
+                    resolve(true);
                 } else {
                     reject({ error: 'Client Id, user Token or Uhs missing!!!' });
                 }
@@ -275,6 +256,25 @@ class AUTHENTICATION {
                 this.tokens.oauth = responseData;
                 await this.saveTokens(this.tokens);
                 resolve();
+            } catch (error) {
+                reject(error);
+            };
+        })
+    }
+
+    generateAuthorizationUrl() {
+        return new Promise((resolve, reject) => {
+            try {
+                const paramsObject = {
+                    "client_id": this.clientId,
+                    "response_type": "code",
+                    "approval_prompt": "auto",
+                    "scope": this.scopes.join(' '),
+                    "redirect_uri": `http://localhost:8581/auth/callback`
+                }
+                const params = QueryString.stringify(paramsObject);
+                const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params;
+                resolve(oauth2URI);
             } catch (error) {
                 reject(error);
             };

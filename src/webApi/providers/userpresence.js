@@ -1,13 +1,25 @@
-const BaseProvider = require('./base.js')
+'use strict';
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://userpresence.xboxlive.com'
-    provider.headers['x-xbl-contract-version'] = 3
-    
-    provider.getCurrentUser = () => {
-        return provider.get('/users/me?level=all')
+class USERPRESENCE {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['x-xbl-contract-version'] = 3
     }
 
-    return provider
+    getCurrentUser() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://userpresence.xboxlive.com/users/me?level=all`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = USERPRESENCE;

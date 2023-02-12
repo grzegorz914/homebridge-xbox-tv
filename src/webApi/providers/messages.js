@@ -1,17 +1,37 @@
-const BaseProvider = require('./base.js')
+'use strict';
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://xblmessaging.xboxlive.com'
+class MESSAGES {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+    }
 
-    provider.getInbox = () => {
-        return provider.get('/network/Xbox/users/me/inbox')
+    getInbox() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/inbox`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
 
     }
 
-    provider.getConversation = (xuid) => {
-        return provider.get('/network/Xbox/users/me/conversations/users/xuid(' + xuid + ')?maxItems=100')
+    getConversation(xuid) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/conversations/users/xuid(${xuid})?maxItems=100`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
 }
+module.exports = MESSAGES;

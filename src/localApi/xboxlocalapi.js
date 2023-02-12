@@ -7,7 +7,6 @@ const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
 const Packer = require('./packet/packer.js');
 const SGCrypto = require('./sgcrypto.js');
-const CONSTANS = require('./constans.json');
 const Ping = require('ping');
 
 class XBOXLOCALAPI extends EventEmitter {
@@ -18,7 +17,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.port = config.dgramPort;
         this.xboxLiveId = config.xboxLiveId;
         this.userToken = config.userToken;
-        this.userHash = config.uhs;
+        this.uhs = config.uhs;
         this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
 
@@ -32,7 +31,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.sourceParticipantId = 0;
         this.mediaRequestId = 0;
         this.emitDevInfo = true;
-        this.command = '';
 
         //dgram socket
         this.connect = () => {
@@ -158,8 +156,8 @@ class XBOXLOCALAPI extends EventEmitter {
                     connectRequest.set('publicKey', this.crypto.getPublicKey());
                     connectRequest.set('iv', this.crypto.getIv());
 
-                    if (this.userHash && this.userToken) {
-                        connectRequest.set('userHash', this.userHash, true);
+                    if (this.uhs && this.userToken) {
+                        connectRequest.set('userHash', this.uhs, true);
                         connectRequest.set('jwt', this.userToken, true);
                         this.isAuthorized = true;
                     }
@@ -246,125 +244,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
                 const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
-            };
-        }).on('channelResponse', (message) => {
-            if (message.packetDecoded.protectedPayload.result !== '0') {
-                return;
-            };
-
-            const channelRequestId = message.packetDecoded.protectedPayload.channelRequestId;
-            const channelTargetId = message.packetDecoded.protectedPayload.channelTargetId;
-            const debug = this.debugLog ? this.emit('debug', `Channel response for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, target id: ${channelTargetId}`) : false;
-
-            this.emit('sendCommand', channelRequestId, this.command);
-        }).on('sendCommand', async (channelRequestId, command) => {
-            const debug = this.debugLog ? this.emit('debug', `Channel send command for name: ${CONSTANS.ChannelNames[channelRequestId]}, request id: ${channelRequestId}, command: ${command}`) : false;
-
-            switch (channelRequestId) {
-                case 0:
-                    if (!(command in CONSTANS.SystemMediaCommands)) {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown media input command: ${command}`) : false;
-                        return;
-                    }
-
-                    try {
-                        this.mediaRequestId++;
-                        let requestId = '0000000000000000';
-                        const requestIdLength = requestId.length;
-                        requestId = (requestId + this.mediaRequestId).slice(-requestIdLength);
-
-                        const mediaCommand = new Packer('message.mediaCommand');
-                        mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                        mediaCommand.set('titleId', 0);
-                        mediaCommand.set('command', CONSTANS.SystemMediaCommands[command]);
-                        mediaCommand.setChannel('0');
-                        const message = mediaCommand.pack(this);
-                        const debug = this.debugLog ? this.emit('debug', `System media send command: ${command}`) : false;
-                        await this.sendSocketMessage(message);
-                    } catch (error) {
-                        this.emit('error', `Send media command error: ${error}`)
-                    };
-                    break;
-                case 1:
-                    if (!(command in CONSTANS.SystemInputCommands)) {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown system input command: ${command}`) : false;
-                        return;
-                    };
-
-                    try {
-                        const timeStampPress = new Date().getTime().toString();
-                        const gamepadPress = new Packer('message.gamepad');
-                        gamepadPress.set('timestamp', Buffer.from(`000${timeStampPress}`, 'hex'));
-                        gamepadPress.set('buttons', CONSTANS.SystemInputCommands[command]);
-                        gamepadPress.setChannel('1');
-                        const message = gamepadPress.pack(this);
-                        const debug = this.debugLog ? this.emit('debug', `System input send press, command: ${command}`) : false;
-                        const status = await this.sendSocketMessage(message);
-
-                        if (status) {
-                            try {
-                                const timeStampUnpress = new Date().getTime().toString();
-                                const gamepadUnpress = new Packer('message.gamepad');
-                                gamepadUnpress.set('timestamp', Buffer.from(`000${timeStampUnpress}`, 'hex'));
-                                gamepadUnpress.set('buttons', CONSTANS.SystemInputCommands['unpress']);
-                                gamepadUnpress.setChannel('1');
-                                const message = gamepadUnpress.pack(this);
-                                const debug = this.debugLog ? this.emit('debug', `System input send unpress, command: unpress`) : false;
-                                await this.sendSocketMessage(message);
-                            } catch (error) {
-                                this.emit('error', `Send system input command unpress error: ${error}`)
-                            };
-                        }
-                    } catch (error) {
-                        this.emit('error', `Send system input command press error: ${error}`)
-                    };
-                    break;
-                case 2:
-                    if (!(command in CONSTANS.TvRemoteCommands)) {
-                        const debug = this.debugLog ? this.emit('debug', `Unknown tv remote command: ${command}`) : false;
-                        return
-                    };
-
-                    try {
-                        let messageNum = 0;
-                        const jsonRequest = {
-                            msgid: `2ed6c0fd.${messageNum++}`,
-                            request: 'SendKey',
-                            params: {
-                                button_id: CONSTANS.TvRemoteCommands[command],
-                                device_id: null
-                            }
-                        };
-                        const json = new Packer('message.json');
-                        json.set('json', JSON.stringify(jsonRequest));
-                        json.setChannel('2');
-                        const message = json.pack(this);
-                        const debug = this.debugLog ? this.emit('debug', `TV remote send command: ${command}`) : false;
-                        await this.sendSocketMessage(message);
-                    } catch (error) {
-                        this.emit('error', `Send tv remote command error: ${error}`)
-                    };
-                    break;
-                case 3:
-                    const configNames = CONSTANS.ConfigNames;
-                    for (const configName of configNames) {
-                        try {
-                            const jsonRequest = {
-                                msgid: `2ed6c0fd.${i}`,
-                                request: configName,
-                                params: null
-                            };
-                            const json = new Packer('message.json');
-                            json.set('json', JSON.stringify(jsonRequest));
-                            json.setChannel('3');
-                            const message = json.pack(this);
-                            const debug = this.debugLog ? this.emit('debug', `System config send: ${configName}`) : false;
-                            await this.sendSocketMessage(message);
-                        } catch (error) {
-                            this.emit('error', `Send json error: ${error}`)
-                        };
-                    };
-                    break;
             };
         }).on('heartBeat', () => {
             if (this.heartBeatConnection) {
@@ -498,36 +377,6 @@ class XBOXLOCALAPI extends EventEmitter {
                     error: error
                 });
             };
-        });
-    };
-
-    sendCommand(channelName, command) {
-        return new Promise(async (resolve, reject) => {
-            if (!this.isConnected) {
-                reject({
-                    status: `Console not connected, send command: ${command} ignored.`
-                });
-                return;
-            };
-
-            const debug = this.debugLog ? this.emit('debug', 'Send command.') : false;
-            this.command = command;
-            try {
-                const channelRequest = new Packer('message.channelRequest');
-                channelRequest.set('channelRequestId', CONSTANS.ChannelIds[channelName]);
-                channelRequest.set('titleId', 0);
-                channelRequest.set('service', Buffer.from(CONSTANS.ChannelUuids[channelName], 'hex'));
-                channelRequest.set('activityId', 0);
-                const message = channelRequest.pack(this);
-                const debug1 = this.debugLog ? this.emit('debug', `Send channel request name: ${channelName}, id: ${CONSTANS.ChannelIds[channelName]}`) : false;
-                await this.sendSocketMessage(message);
-                resolve(true);
-            } catch (error) {
-                reject({
-                    status: `Send command: ${command} error.`,
-                    error: error
-                });
-            }
         });
     };
 

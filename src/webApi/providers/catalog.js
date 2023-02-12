@@ -1,55 +1,82 @@
-const QueryString = require('querystring')
-const BaseProvider = require('./base.js')
+'use strict';
+const QueryString = require('querystring');
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://displaycatalog.mp.microsoft.com'
-    provider.headers = {
-        'MS-CV': '0'
+class CATALOG {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers = {
+            'MS-CV': '0'
+        };
     }
 
-    provider.searchTitle = (query, marketLocale = 'us', languagesLocale = 'en-us') => {
-        const searchParams = {
-            "languages": languagesLocale,
-            "market": marketLocale,
-            "platformdependencyname": 'windows.xbox',
-            "productFamilyNames": "Games,Apps",
-            "query": query,
-            "topProducts": 25,
-        }
-
-        const queryParams = QueryString.stringify(searchParams)
-        return provider.get('/v7.0/productFamilies/autosuggest?' + queryParams)
+    searchTitle(query, marketLocale = 'us', languagesLocale = 'en-us') {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const searchParams = {
+                    "languages": languagesLocale,
+                    "market": marketLocale,
+                    "platformdependencyname": 'windows.xbox',
+                    "productFamilyNames": "Games,Apps",
+                    "query": query,
+                    "topProducts": 25,
+                }
+                const queryParams = QueryString.stringify(searchParams)
+                const url = `https://displaycatalog.mp.microsoft.com/v7.0/productFamilies/autosuggest?${queryParams}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getProductId = (query, marketLocale = 'us', languagesLocale = 'en-us') => {
-        const searchParams = {
-            "actionFilter": 'Browse',
-            "bigIds": [query],
-            "fieldsTemplate": 'details',
-            "languages": languagesLocale,
-            "market": marketLocale,
-        }
+    getProductId(query, marketLocale = 'us', languagesLocale = 'en-us') {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const searchParams = {
+                    "actionFilter": 'Browse',
+                    "bigIds": [query],
+                    "fieldsTemplate": 'details',
+                    "languages": languagesLocale,
+                    "market": marketLocale,
+                }
 
-        const queryParams = QueryString.stringify(searchParams)
-        return provider.get('/v7.0/products?' + queryParams)
+                const queryParams = QueryString.stringify(searchParams)
+                const url = `https://displaycatalog.mp.microsoft.com/v7.0/products?${queryParams}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getProductFromAlternateId = (titleId, titleType, marketLocale = 'US', languagesLocale = 'en-US') => {
-        const searchParams = {
-            "top": 25,
-            "alternateId": titleType,
-            "fieldsTemplate": 'details',
-            // "languages": 'en-US',
-            // "market": 'US',
-            "languages": languagesLocale,
-            "market": marketLocale,
-            "value": titleId,
-        }
+    getProductFromAlternateId(titleId, titleType, marketLocale = 'US', languagesLocale = 'en-US') {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const searchParams = {
+                    "top": 25,
+                    "alternateId": titleType,
+                    "fieldsTemplate": 'details',
+                    // "languages": 'en-US',
+                    // "market": 'US',
+                    "languages": languagesLocale,
+                    "market": marketLocale,
+                    "value": titleId,
+                }
 
-        const queryParams = QueryString.stringify(searchParams)
-        return provider.get('/v7.0/products/lookup?' + queryParams)
+                const queryParams = QueryString.stringify(searchParams)
+                const url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup${queryParams}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
 }
+module.exports = CATALOG;

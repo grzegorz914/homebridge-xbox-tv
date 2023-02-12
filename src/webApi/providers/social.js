@@ -1,11 +1,24 @@
-const BaseProvider = require('./base.js')
+'use strict';
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://social.xboxlive.com'
-    provider.getFriends = () => {
-        return provider.get('/users/me/summary')
+class SOCIAL {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
     }
 
-    return provider
+    getFriends() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://social.xboxlive.com/users/me/summary`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = SOCIAL;

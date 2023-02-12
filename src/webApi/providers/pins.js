@@ -1,17 +1,37 @@
-const BaseProvider = require('./base.js')
+'use strict';
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://eplists.xboxlive.com'
-    provider.headers['Content-Type'] = 'application/json'
-
-    provider.getPins = (list = 'XBLPins') => {
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/lists/PINS/' + list)
+class PINS {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['Content-Type'] = 'application/json';
     }
 
-    provider.getSaveForLater = () => {
-        return provider.get('/users/xuid(' + client.authentication.user.xid + ')/lists/PINS/SaveForLater')
+    getPins(list = 'XBLPins') {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://eplists.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/lists/PINS/${list}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
+    getSaveForLater() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://eplists.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/lists/PINS/SaveForLater`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = PINS;

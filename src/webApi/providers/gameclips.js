@@ -1,32 +1,60 @@
+'use strict';
 const QueryString = require('querystring')
-const BaseProvider = require('./base.js')
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://gameclipsmetadata.xboxlive.com'
-    provider.headers['x-xbl-contract-version'] = '1'
-
-    provider.getUserGameclips = () => {
-        return provider.get('/users/me/clips')
+class GAMECLIP {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['x-xbl-contract-version'] = '1';
     }
 
-    provider.getCommunityGameclipsByTitleId = (titleId) => {
-        return provider.get('/public/titles/' + titleId + '/clips/saved?qualifier=created')
+    getUserGameclips() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://gameclipsmetadata.xboxlive.com/users/me/clips`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    provider.getGameclipsByXuid = (xuid, titleId, skipItems, maxItems) => {
-        const params = {
-            skipitems: skipItems || 0,
-            maxitems: maxItems || 25,
-        }
-
-        if (titleId !== undefined) {
-            params.titleid = titleId
-        }
-
-        const queryParams = QueryString.stringify(params)
-        return provider.get('/users/xuid(' + xuid + ')/clips?' + queryParams)
+    getCommunityGameclipsByTitleId(titleId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://gameclipsmetadata.xboxlive.com/public/titles/${titleId}clips/saved?qualifier=created`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
     }
 
-    return provider
+    getGameclipsByXuid(xuid, titleId, skipItems, maxItems) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const params = {
+                    skipitems: skipItems || 0,
+                    maxitems: maxItems || 25,
+                }
+
+                if (titleId !== undefined) {
+                    params.titleid = titleId
+                }
+
+                const queryParams = QueryString.stringify(params)
+                const url = `https://gameclipsmetadata.xboxlive.com/users/xuid(${xuid})/clips?${queryParams}`;
+                const response = await this.httpClient.get(url, this.headers);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = GAMECLIP;

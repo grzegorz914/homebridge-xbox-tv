@@ -1,16 +1,26 @@
-const BaseProvider = require('./base.js')
+const HttpClient = require('../httpclient.js');
 
-module.exports = (client) => {
-    const provider = new BaseProvider(client)
-    provider.endpoint = 'https://userstats.xboxlive.com'
-    provider.headers['x-xbl-contract-version'] = 2
-    
-    provider.getUserTitleStats = (titleId) => {
-        return provider.post(
-            '/batch',
-            `{"arrangebyfield":"xuid","xuids":["${client.authentication.user.xid}"],"groups":[{"name":"Hero","titleId":"${titleId}"}],"stats":[{"name":"MinutesPlayed","titleId":"${titleId}"}]}`
-        )
+'use strict';
+class USERSTATS {
+    constructor(client, headers) {
+        this.client = client;
+        this.headers = headers;
+        this.httpClient = new HttpClient();
+        this.headers['x-xbl-contract-version'] = '2';
     }
 
-    return provider
+    getUserTitleStats(titleId) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const url = `https://userstats.xboxlive.com/batch`;
+                const params = `{"arrangebyfield":"xuid","xuids":["${this.client.authentication.user.xid}"],"groups":[{"name":"Hero","titleId":"${titleId}"}],"stats":[{"name":"MinutesPlayed","titleId":"${titleId}"}]}`;
+                const response = await this.httpClient.post(url, this.headers, params);
+                resolve(response);
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
 }
+module.exports = USERSTATS;
