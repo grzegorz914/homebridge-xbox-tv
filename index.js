@@ -701,13 +701,13 @@ class XBOXDEVICE {
 		//Prepare inputs services
 		this.log.debug('prepareInputServices');
 
-		const savedInputs = this.getInputsFromDevice ? fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs : this.inputs;
+		const savedInputs = this.getInputsFromDevice ? fs.readFileSync(this.inputsFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs : this.inputs;
 		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
-		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
+		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
-		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
+		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check possible inputs and filter custom unnecessary inputs
