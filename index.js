@@ -735,7 +735,7 @@ class XBOXDEVICE {
 			const inputReference = input.reference || 'undefined';
 
 			//get input oneStoreProductId
-			const inputOneStoreProductId = input.oneStoreProductId || 'undefined';
+			const inputOneStoreProductId = this.webApiEnabled ? input.oneStoreProductId || 'undefined' : 'undefined';
 
 			//get input name
 			const inputName = savedInputsNames[inputTitleId] ? savedInputsNames[inputTitleId] : savedInputsNames[inputReference] ? savedInputsNames[inputReference] : savedInputsNames[inputOneStoreProductId] ? savedInputsNames[inputOneStoreProductId] : input.name;
@@ -854,11 +854,11 @@ class XBOXDEVICE {
 				//get button command
 				const buttonCommand = button.command || 'Not set';
 
+				//get button inputOneStoreProductId
+				const buttonOneStoreProductId = this.webApiEnabled ? button.oneStoreProductId || 'Not set' : 'Web api disabled';
+
 				//get button display type
 				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
-
-				//get button inputOneStoreProductId
-				const buttonOneStoreProductId = button.oneStoreProductId || 'Not set';
 
 				if (buttonDisplayType >= 0) {
 					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
@@ -909,8 +909,8 @@ class XBOXDEVICE {
 												case 'XboxGuide':
 													await this.xboxWebApi.openGuideTab();
 													break;
-												case 'Not set':
-													this.log(`Device: ${this.host} ${accessoryName}, trying to launch unknown app/game with one store product id: ${buttonOneStoreProductId}.`);
+												case 'Not set': case 'Web api disabled':
+													this.log(`Device: ${this.host} ${accessoryName}, trying to launch app/game with one store product id: ${buttonOneStoreProductId}.`);
 													break;
 												default:
 													await this.xboxWebApi.launchApp(buttonOneStoreProductId);

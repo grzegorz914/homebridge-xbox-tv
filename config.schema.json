@@ -34,129 +34,12 @@
 							"description": "Xbox Live ID",
 							"required": true
 						},
-						"disableLogInfo": {
-							"title": "Disable Log Info",
-							"type": "boolean",
-							"default": false,
-							"description": "This disable logging values and states on every it change.",
-							"required": false
-						},
-						"disableLogDeviceInfo": {
-							"title": "Disable Log Device Info",
-							"type": "boolean",
-							"default": false,
-							"description": "This disable log device info by every connections device to the network.",
-							"required": false
-						},
-						"enableDebugMode": {
-							"title": "Debug",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable debug mode.",
-							"required": false
-						},
 						"webApiControl": {
 							"title": "Web Api",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable possibility to control Xbox over Web Api.",
 							"required": false
-						},
-						"xboxWebApiToken": {
-							"title": "Web Api Token",
-							"type": "string",
-							"placeholder": "Web Api Token",
-							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"clientId": {
-							"title": "Web Api Client ID",
-							"type": "string",
-							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
-							"description": "Here set your own Client ID created on Azure AD or leave empty.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"clientSecret": {
-							"title": "Web Api Client Secret",
-							"type": "string",
-							"placeholder": "Client Secret",
-							"description": "OHere set your Client Secret reated on Azure AD or leave empty.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"userToken": {
-							"title": "User Token",
-							"type": "string",
-							"placeholder": "User Token",
-							"description": "Optional authorization method for future use.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"uhs": {
-							"title": "User Hash",
-							"type": "string",
-							"placeholder": "User Hash",
-							"description": "Optional authorization method for future use.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"volumeControl": {
-							"title": "Volume Control",
-							"type": "integer",
-							"description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
-							"oneOf": [
-								{
-									"title": "None/Disabled",
-									"enum": [
-										-1
-									]
-								},
-								{
-									"title": "Slider",
-									"enum": [
-										0
-									]
-								},
-								{
-									"title": "Fan",
-									"enum": [
-										1
-									]
-								}
-							],
-							"required": true
-						},
-						"infoButtonCommand": {
-							"title": "Info Button",
-							"type": "string",
-							"oneOf": [
-								{
-									"title": "View",
-									"enum": [
-										"view"
-									]
-								},
-								{
-									"title": "Nexus",
-									"enum": [
-										"nexus"
-									]
-								}
-							],
-							"description": "Here select the function of info button in RC.",
-							"required": true
 						},
 						"getInputsFromDevice": {
 							"title": "Load Inputs From Device",
@@ -227,8 +110,11 @@
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
-										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
+										"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
+										"required": false,
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+										}
 									},
 									"contentType": {
 										"title": "Content Type",
@@ -482,8 +368,11 @@
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
-										"description": "Here set the *oneStoreProductId*, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file. Set button mode to *Switch App/Game* and *Enable Web Api*, in other case leave this empty",
-										"required": true
+										"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
+										"required": true,
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+										}
 									},
 									"displayType": {
 										"title": "Display Type",
@@ -591,12 +480,139 @@
 								}
 							}
 						},
+						"xboxWebApiToken": {
+							"title": "Web Api Token",
+							"type": "string",
+							"placeholder": "Web Api Token",
+							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"clientId": {
+							"title": "Web Api Client ID",
+							"type": "string",
+							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
+							"description": "Here set your own Client ID created on Azure AD or leave empty.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"clientSecret": {
+							"title": "Web Api Client Secret",
+							"type": "string",
+							"placeholder": "Client Secret",
+							"description": "OHere set your Client Secret reated on Azure AD or leave empty.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"userToken": {
+							"title": "User Token",
+							"type": "string",
+							"placeholder": "User Token",
+							"description": "Optional authorization method for future use.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"uhs": {
+							"title": "User Hash",
+							"type": "string",
+							"placeholder": "User Hash",
+							"description": "Optional authorization method for future use.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"enableDebugMode": {
+							"title": "Debug",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
+						},
+						"disableLogInfo": {
+							"title": "Disable Log Info",
+							"type": "boolean",
+							"default": false,
+							"description": "This disable logging values and states on every it change.",
+							"required": false
+						},
+						"disableLogDeviceInfo": {
+							"title": "Disable Log Device Info",
+							"type": "boolean",
+							"default": false,
+							"description": "This disable log device info by every connections device to the network.",
+							"required": false
+						},
+						"infoButtonCommand": {
+							"title": "Info Button",
+							"type": "string",
+							"oneOf": [
+								{
+									"title": "View",
+									"enum": [
+										"view"
+									]
+								},
+								{
+									"title": "Nexus",
+									"enum": [
+										"nexus"
+									]
+								}
+							],
+							"description": "Here select the function of info button in RC.",
+							"required": true
+						},
+						"volumeControl": {
+							"title": "Volume Control",
+							"type": "integer",
+							"description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
+							"oneOf": [
+								{
+									"title": "None/Disabled",
+									"enum": [
+										-1
+									]
+								},
+								{
+									"title": "Slider",
+									"enum": [
+										0
+									]
+								},
+								{
+									"title": "Fan",
+									"enum": [
+										1
+									]
+								}
+							],
+							"required": true
+						},
 						"enableMqtt": {
 							"title": "Enable",
 							"type": "boolean",
 							"default": false,
 							"required": false,
 							"description": "This enable MQTT client."
+						},
+						"mqttDebug": {
+							"title": "Debug",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable debug mode for MQTT.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+							}
 						},
 						"mqttHost": {
 							"title": "IP/Hostname",
@@ -657,16 +673,6 @@
 							"description": "Here set the password of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
-							}
-						},
-						"mqttDebug": {
-							"title": "Debug",
-							"type": "boolean",
-							"default": false,
-							"required": false,
-							"description": "This enable debug mode for MQTT.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
 							}
 						}
 					}
