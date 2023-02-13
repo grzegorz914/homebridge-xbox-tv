@@ -72,7 +72,7 @@ class XBOXWEBAPI extends EventEmitter {
                 //await this.getWebApiUserProfile();
                 this.updateAuthorization();
             } catch (error) {
-                this.emit('error', `get web api console data error: ${error}, recheck in 60se.`)
+                this.emit('error', `web api data error: ${error}, recheck in 60se.`)
                 this.updateAuthorization();
             };
         } catch (error) {
@@ -115,7 +115,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('consoleStatus', consoleStatusData, consoleType);
                 resolve(remoteManagementEnabled);
             } catch (error) {
-                reject(`Console with liveId: ${this.xboxLiveId}, get status error: ${error}`);
+                reject(`Console: ${this.xboxLiveId}, get status error: ${error}`);
             };
         });
     }
@@ -201,7 +201,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('consolesList', consolesList);
                 resolve(true);
             } catch (error) {
-                reject(`get consoles list error: ${error}`);
+                reject(`Consoles list error: ${error}`);
             };
         });
     }
@@ -255,7 +255,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('appsList', appsArray);
                 resolve(true);
             } catch (error) {
-                reject(`Console with liveId: ${this.xboxLiveId}, get installed apps error: ${error}`);
+                reject(`Console: ${this.xboxLiveId}, get installed apps error: ${error}`);
             };
         });
     }
@@ -304,7 +304,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('storageDevices', storageDevices);
                 resolve(true);
             } catch (error) {
-                reject(`Console with liveId: ${this.xboxLiveId}, get storage devices error: ${error}`);
+                reject(`Console: ${this.xboxLiveId}, get storage devices error: ${error}`);
             };
         });
     }
@@ -353,7 +353,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('userProfile', profileUsers);
                 resolve(true);
             } catch (error) {
-                reject(`get user profile error: ${error}`);
+                reject(`User profile error: ${error}`);
             };
         });
     }
@@ -364,7 +364,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.sendCommand('Power', 'WakeUp')
                 resolve(true);
             } catch (error) {
-                reject(`set power on error: ${error}`);
+                reject(`power on error: ${error}`);
             };
         });
     }
@@ -375,7 +375,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.sendCommand('Power', 'TurnOff')
                 resolve(true);
             } catch (error) {
-                reject(`set power off error: ${error}`);
+                reject(`power off error: ${error}`);
             };
         });
     }
@@ -397,7 +397,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.sendCommand('Audio', 'Mute')
                 resolve(true);
             } catch (error) {
-                reject(`set mute error: ${error}`);
+                reject(`mute error: ${error}`);
             };
         });
     }
@@ -408,7 +408,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.sendCommand('Audio', 'Unmute')
                 resolve(true);
             } catch (error) {
-                reject(`get user profile error: ${error}`);
+                reject(`unmute error: ${error}`);
             };
         });
     }

@@ -418,7 +418,7 @@ class XBOXDEVICE {
 			})
 			.onSet(async (state) => {
 				try {
-					const setPower = (state && !this.power) ? await this.xboxLocalApi.powerOn() : (!state && this.power) ? await this.xboxLocalApi.powerOff() : false;
+					const setPower = !this.power && state ? await this.xboxLocalApi.powerOn() : this.power && !state ? await this.xboxLocalApi.powerOff() : false;
 					const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power successful: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Power, error: ${error}`);
@@ -440,7 +440,7 @@ class XBOXDEVICE {
 					const inputReference = this.inputsReference[inputIdentifier];
 					const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
 
-					switch (inputOneStoreProductId) {
+					switch (this.webApiEnabled && inputOneStoreProductId) {
 						case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
 							await this.xboxWebApi.launchDashboard();
 							break;
@@ -578,7 +578,6 @@ class XBOXDEVICE {
 							break;
 					};
 
-					const channelName = 'tvRemote';
 					const setVolume = this.power && this.webApiEnabled ? await this.xboxWebApi.sendButtonPress(command) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Volume command successful: ${command}`);
 				} catch (error) {
@@ -607,7 +606,7 @@ class XBOXDEVICE {
 			})
 			.onSet(async (state) => {
 				try {
-					const toggleMute = this.power && this.webApiEnabled ? state ? await this.xboxWebApi.mute() : await this.xboxWebApi.unmute() : false;
+					const toggleMute = this.power && this.webApiEnabled ? (state ? await this.xboxWebApi.mute() : await this.xboxWebApi.unmute()) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Mute successful: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Mute error: ${error}`);
@@ -681,7 +680,7 @@ class XBOXDEVICE {
 			this.sensorInputService = new Service.MotionSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
 			this.sensorInputService.getCharacteristic(Characteristic.MotionDetected)
 				.onGet(async () => {
-					const state = this.sensorInputState;
+					const state = this.power ? this.sensorInputState : false;
 					return state;
 				});
 			accessory.addService(this.sensorInputService);
@@ -858,30 +857,10 @@ class XBOXDEVICE {
 				//get button display type
 				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
+				//get button inputOneStoreProductId
+				const buttonOneStoreProductId = button.oneStoreProductId || 'Not set';
+
 				if (buttonDisplayType >= 0) {
-					//get button mode
-					let buttonMode = 0;
-					let command = '';
-					if (buttonCommand in CONSTANS.SystemMediaCommands) {
-						buttonMode = 0;
-						command = buttonCommand;
-					} else if (buttonCommand in CONSTANS.SystemInputCommands) {
-						buttonMode = 1;
-						command = buttonCommand;
-					} else if (buttonCommand in CONSTANS.TvRemoteCommands) {
-						buttonMode = 2;
-					} else if (buttonCommand === 'recordGameDvr') {
-						buttonMode = 3;
-						command = buttonCommand;
-					} else if (buttonCommand === 'reboot') {
-						buttonMode = 4;
-					} else if (buttonCommand === 'switchAppGame') {
-						buttonMode = 5;
-					};
-
-					//get button inputOneStoreProductId
-					const buttonOneStoreProductId = (button.oneStoreProductId) ? button.oneStoreProductId : '0';
-
 					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
 					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
 					buttonService.getCharacteristic(Characteristic.On)
@@ -893,9 +872,25 @@ class XBOXDEVICE {
 						.onSet(async (state) => {
 							try {
 								if (this.power && state && this.webApiEnabled) {
+									//get button mode
+									let buttonMode = -1;
+									if (buttonCommand in CONSTANS.SystemMediaCommands) {
+										buttonMode = 0;
+									} else if (buttonCommand in CONSTANS.SystemInputCommands) {
+										buttonMode = 1;
+									} else if (buttonCommand in CONSTANS.TvRemoteCommands) {
+										buttonMode = 2;
+									} else if (buttonCommand === 'recordGameDvr') {
+										buttonMode = 3;
+									} else if (buttonCommand === 'reboot') {
+										buttonMode = 4;
+									} else if (buttonCommand === 'switchAppGame') {
+										buttonMode = 5;
+									};
+
 									switch (buttonMode) {
 										case 0: case 1: case 2:
-											await this.xboxWebApi.sendButtonPress(command);
+											await this.xboxWebApi.sendButtonPress(buttonCommand);
 											break;
 										case 3:
 											await this.xboxLocalApi.recordGameDvr();
@@ -914,16 +909,19 @@ class XBOXDEVICE {
 												case 'XboxGuide':
 													await this.xboxWebApi.openGuideTab();
 													break;
+												case 'Not set':
+													this.log(`Device: ${this.host} ${accessoryName}, trying to launch unknown app/game with one store product id: ${buttonOneStoreProductId}.`);
+													break;
 												default:
 													await this.xboxWebApi.launchApp(buttonOneStoreProductId);
 													break;
 											}
 											break;
 									}
+									const logInfo = this.disableLogInfo || this.firstRun || buttonMode === -1 ? false : this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`);
 								}
-								const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`);
 								await new Promise(resolve => setTimeout(resolve, 300));
-								const setChar = (state && this.power) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+								const setChar = this.power && state ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
 							} catch (error) {
 								this.log.error(`Device: ${this.host} ${accessoryName}, set button error, name: ${buttonName}, error: ${error}`);
 							};

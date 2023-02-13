@@ -307,10 +307,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 }
                 this.emit('disconnected', 'Power On failed, please try again.');
             } catch (error) {
-                reject({
-                    status: 'Send power On error.',
-                    error: error
-                });
+                reject(error);
             };
         });
     };
@@ -346,10 +343,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 await this.disconnect();
                 resolve(true);
             } catch (error) {
-                reject({
-                    status: 'Send power Off error.',
-                    error: error
-                });
+                reject(error);
             };
         });
     };
@@ -372,10 +366,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 await this.sendSocketMessage(message);
                 resolve(true);
             } catch (error) {
-                reject({
-                    status: 'Send record game error.',
-                    error: error
-                });
+                reject(error);
             };
         });
     };
@@ -395,10 +386,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.emit('disconnected', 'Disconnected.');
                 resolve(true);
             } catch (error) {
-                reject({
-                    status: `Send disconnect error.`,
-                    error: error
-                });
+                reject(error);
             };
         });
     };
