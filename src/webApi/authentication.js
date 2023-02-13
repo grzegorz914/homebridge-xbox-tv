@@ -1,8 +1,8 @@
 'use strict';
 const QueryString = require('querystring');
-const HttpClient = require('./httpclient.js');
 const fs = require('fs');
 const fsPromises = fs.promises;
+const HttpClient = require('./httpclient.js');
 
 class AUTHENTICATION {
     constructor(config) {

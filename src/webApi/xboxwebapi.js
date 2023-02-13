@@ -15,7 +15,6 @@ const Social = require('./providers/social.js');
 const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
-
 const CONSTANS = require('../constans.json');
 
 class XBOXWEBAPI extends EventEmitter {
@@ -248,8 +247,7 @@ class XBOXWEBAPI extends EventEmitter {
                         'reference': aumid,
                         'isGame': isGame,
                         'name': name,
-                        'contentType': contentType,
-                        'type': 'APPLICATION'
+                        'contentType': contentType
                     };
                     appsArray.push(inputsObj);
                 };

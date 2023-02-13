@@ -19,20 +19,15 @@
 			"platform": "XboxTv",
 			"devices": [
 				{
-					"name": "Game Console",
+					"name": "Xbox One",
 					"host": "192.168.1.6",
 					"xboxLiveId": "FD0000000000",
+					"webApiControl": false,
 					"clientId": "",
 					"clientSecret": "",
 					"userToken": "",
 					"userUhs": "",
 					"xboxWebApiToken": "",
-					"webApiControl": false,
-					"disableLogInfo": false,
-					"disableLogDeviceInfo": false,
-					"enableDebugMode": false,
-					"volumeControl": 0,
-					"infoButtonCommand": "nexus",
 					"getInputsFromDevice": false,
 					"filterGames": false,
 					"filterApps": false,
@@ -43,48 +38,36 @@
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
 							"oneStoreProductId": "",
-							"type": "APPLICATION"
+							"contentType": "Game"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
 							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Battlefield 4",
-							"reference": "BFX_8s70symrha4j2!BF.App",
-							"oneStoreProductId": "",
-							"type": "APPLICATION"
-						},
-						{
-							"name": "Cities: Skylines",
-							"reference": "ColossalOrder.CitiesSkylines_9dej7x9zwzxzc!App",
-							"oneStoreProductId": "C4GH8N6ZXG5L",
-							"type": "APPLICATION"
+							"contentType": "App"
 						}
 					],
 					"buttons": [
 						{
 							"name": "Play",
 							"command": "play",
-							"displayType": 0
+							"displayType": -1
 						},
 						{
 							"name": "Record Game DVR",
 							"command": "recordGameDvr",
-							"displayType": 0
+							"displayType": -1
 						},
 						{
 							"name": "Reboot",
 							"command": "reboot",
-							"displayType": 0
+							"displayType": -1
 						},
 						{
 							"name": "A Way Out",
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
-							"displayType": 0
+							"displayType": -1
 						}
 					],
 					"sensorPower": false,
@@ -94,17 +77,22 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"displayType": 0
+							"displayType": -1
 						}
 					],
+					"enableDebugMode": false,
+					"disableLogInfo": false,
+					"disableLogDeviceInfo": false,
+					"infoButtonCommand": "nexus",
+					"volumeControl": 0,
 					"enableMqtt": false,
+					"mqttDebug": false,
 					"mqttHost": "192.168.1.33",
 					"mqttPort": 1883,
-					"mqttPrefix": "home/denon",
+					"mqttPrefix": "home/xbox",
 					"mqttAuth": false,
 					"mqttUser": "user",
-					"mqttPass": "password",
-					"mqttDebug": false
+					"mqttPass": "password"
 				}
 			]
 		}

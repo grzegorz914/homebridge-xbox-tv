@@ -34,41 +34,6 @@
 							"description": "Xbox Live ID",
 							"required": true
 						},
-						"clientId": {
-							"title": "Web Api Client ID",
-							"type": "string",
-							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
-							"description": "Here set your own Client ID created on Azure AD or leave empty to use default ID.",
-							"required": false
-						},
-						"clientSecret": {
-							"title": "Web Api Client Secret",
-							"type": "string",
-							"placeholder": "Client Secret",
-							"description": "Optional for future use.",
-							"required": false
-						},
-						"userToken": {
-							"title": "User Token",
-							"type": "string",
-							"placeholder": "User Token",
-							"description": "Optional alternative authentication method.",
-							"required": false
-						},
-						"uhs": {
-							"title": "User Hash",
-							"type": "string",
-							"placeholder": "User Hash",
-							"description": "Optional alternative authentication method.",
-							"required": false
-						},
-						"xboxWebApiToken": {
-							"title": "Web Api Token",
-							"type": "string",
-							"placeholder": "Web Api Token",
-							"description": "Here put the reponse Token (value after ?code=) from the authentication URL.",
-							"required": false
-						},
 						"disableLogInfo": {
 							"title": "Disable Log Info",
 							"type": "boolean",
@@ -97,29 +62,77 @@
 							"description": "This enable possibility to control Xbox over Web Api.",
 							"required": false
 						},
+						"xboxWebApiToken": {
+							"title": "Web Api Token",
+							"type": "string",
+							"placeholder": "Web Api Token",
+							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"clientId": {
+							"title": "Web Api Client ID",
+							"type": "string",
+							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
+							"description": "Here set your own Client ID created on Azure AD or leave empty.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"clientSecret": {
+							"title": "Web Api Client Secret",
+							"type": "string",
+							"placeholder": "Client Secret",
+							"description": "OHere set your Client Secret reated on Azure AD or leave empty.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"userToken": {
+							"title": "User Token",
+							"type": "string",
+							"placeholder": "User Token",
+							"description": "Optional authorization method for future use.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"uhs": {
+							"title": "User Hash",
+							"type": "string",
+							"placeholder": "User Hash",
+							"description": "Optional authorization method for future use.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"volumeControl": {
 							"title": "Volume Control",
 							"type": "integer",
-							"minimum": 0,
-							"maximum": 2,
-							"description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
+							"description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
 							"oneOf": [
 								{
-									"title": "None",
+									"title": "None/Disabled",
 									"enum": [
-										0
+										-1
 									]
 								},
 								{
 									"title": "Slider",
 									"enum": [
-										1
+										0
 									]
 								},
 								{
 									"title": "Fan",
 									"enum": [
-										2
+										1
 									]
 								}
 							],
@@ -160,40 +173,28 @@
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Games will not be displayed on the list of inputs.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
-							}
+							"required": false
 						},
 						"filterApps": {
 							"title": "Hide Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Apps will not be displayed on the list of inputs.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
-							}
+							"required": false
 						},
 						"filterSystemApps": {
 							"title": "Hide System Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
-							}
+							"required": false
 						},
 						"filterDlc": {
 							"title": "Hide DLC",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, DLC will not be displayed on the list of inputs.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true && model.devices[arrayIndices].webApiControl === true"
-							}
+							"required": false
 						},
 						"inputs": {
 							"type": "array",
@@ -228,80 +229,6 @@
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api is enable switch app will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": false
-									},
-									"type": {
-										"title": "Type",
-										"type": "string",
-										"description": "Here select source input type.",
-										"oneOf": [
-											{
-												"title": "Other",
-												"enum": [
-													"OTHER"
-												]
-											},
-											{
-												"title": "Home screen",
-												"enum": [
-													"HOME_SCREEN"
-												]
-											},
-											{
-												"title": "Tuner",
-												"enum": [
-													"TUNER"
-												]
-											},
-											{
-												"title": "HDMI",
-												"enum": [
-													"HDMI"
-												]
-											},
-											{
-												"title": "Composite video",
-												"enum": [
-													"COMPOSITE_VIDEO"
-												]
-											},
-											{
-												"title": "S Video",
-												"enum": [
-													"S_VIDEO"
-												]
-											},
-											{
-												"title": "Component video",
-												"enum": [
-													"COMPONENT_VIDEO"
-												]
-											},
-											{
-												"title": "Digital video input",
-												"enum": [
-													"DVI"
-												]
-											},
-											{
-												"title": "Airplay",
-												"enum": [
-													"AIRPLAY"
-												]
-											},
-											{
-												"title": "USB",
-												"enum": [
-													"USB"
-												]
-											},
-											{
-												"title": "Application",
-												"enum": [
-													"APPLICATION"
-												]
-											}
-										],
-										"required": true
 									},
 									"contentType": {
 										"title": "Content Type",
@@ -563,7 +490,7 @@
 										"type": "integer",
 										"oneOf": [
 											{
-												"title": "None",
+												"title": "None/Disabled",
 												"enum": [
 													-1
 												]
@@ -634,7 +561,7 @@
 										"type": "integer",
 										"oneOf": [
 											{
-												"title": "None",
+												"title": "None/Disabled",
 												"enum": [
 													-1
 												]
@@ -756,7 +683,6 @@
 				"devices[].name",
 				"devices[].host",
 				"devices[].xboxLiveId",
-				"devices[].webApiControl",
 				{
 					"key": "devices[]",
 					"type": "section",
@@ -777,7 +703,6 @@
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
 								"devices[].inputs[].oneStoreProductId",
-								"devices[].inputs[].type",
 								"devices[].inputs[].contentType"
 							],
 							"condition": {
@@ -844,15 +769,13 @@
 					"expandable": true,
 					"expanded": false,
 					"items": [
+						"devices[].webApiControl",
+						"devices[].xboxWebApiToken",
 						"devices[].clientId",
 						"devices[].clientSecret",
-						"devices[].xboxWebApiToken",
 						"devices[].userToken",
-						"devices[].userHash"
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-					}
+						"devices[].uhs"
+					]
 				},
 				{
 					"key": "devices[]",

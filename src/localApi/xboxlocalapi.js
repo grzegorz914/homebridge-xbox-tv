@@ -5,9 +5,9 @@ const UuId = require('uuid');
 const EOL = require('os').EOL;
 const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
-const Packer = require('./packet/packer.js');
-const SGCrypto = require('./sgcrypto.js');
 const Ping = require('ping');
+const Packer = require('./packer.js');
+const SGCrypto = require('./sgcrypto.js');
 
 class XBOXLOCALAPI extends EventEmitter {
     constructor(config) {

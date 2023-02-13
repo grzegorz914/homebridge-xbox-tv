@@ -1,6 +1,6 @@
 "use strict";
-const PacketStructure = require('./structure');
 const HexToBin = require('hex-to-binary');
+const PacketStructure = require('./structure');
 const CONSTANS = require('../constans.json');
 
 class MESSAGE {

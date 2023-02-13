@@ -24,7 +24,6 @@
             "titleId": "851275400",
             "reference": "Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application",
             "oneStoreProductId": "Screensaver",
-            "type": "HOME_SCREEN",
             "contentType": "Dashboard"
         },
         {
@@ -32,7 +31,6 @@
             "titleId": "750323071",
             "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
             "oneStoreProductId": "Dashboard",
-            "type": "HOME_SCREEN",
             "contentType": "Dashboard"
         },
         {
@@ -40,7 +38,6 @@
             "titleId": "1837352387",
             "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
             "oneStoreProductId": "Settings",
-            "type": "HOME_SCREEN",
             "contentType": "Dashboard"
         },
         {
@@ -48,7 +45,6 @@
             "titleId": "371594669",
             "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
             "oneStoreProductId": "Television",
-            "type": "HDMI",
             "contentType": "systemApp"
         },
         {
@@ -56,7 +52,6 @@
             "titleId": "2019308066",
             "reference": "Microsoft.Xbox.TvSettings_8wekyb3d8bbwe!Microsoft.Xbox.TvSettings.Application",
             "oneStoreProductId": "SettingsTv",
-            "type": "HOME_SCREEN",
             "contentType": "Dashboard"
         },
         {
@@ -64,7 +59,6 @@
             "titleId": "758407307",
             "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
             "oneStoreProductId": "Accessory",
-            "type": "HOME_SCREEN",
             "contentType": "systemApp"
         },
         {
@@ -72,7 +66,6 @@
             "titleId": "1614319806",
             "reference": "Xbox.NetworkTroubleshooter_8wekyb3d8bbwe!Xbox.NetworkTroubleshooter.Application",
             "oneStoreProductId": "NetworkTroubleshooter",
-            "type": "HOME_SCREEN",
             "contentType": "systemApp"
         },
         {
@@ -80,7 +73,6 @@
             "titleId": "1864271209",
             "reference": "Microsoft.storify_8wekyb3d8bbwe!App",
             "oneStoreProductId": "MicrosoftStore",
-            "type": "HOME_SCREEN",
             "contentType": "Dashboard"
         },
         {
@@ -88,7 +80,6 @@
             "titleId": "1052052983",
             "reference": "Xbox.Guide_8wekyb3d8bbwe!Xbox.Guide.Application",
             "oneStoreProductId": "XboxGuide",
-            "type": "HOME_SCREEN",
             "contentType": "systemApp"
         }
     ],

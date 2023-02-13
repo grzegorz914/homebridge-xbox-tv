@@ -80,7 +80,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `volumeControl` | Here select what a additional volume control mode You want to use (None, Slider, Fan), not yet implemented. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (`None/Disabled`, `Lightbulb`, `Fan`), not working yet. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
@@ -90,17 +90,17 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
 | `inputs.reference` | Required to identify current running app. |
 | `inputs.oneStoreProductId` | Required to switch apps. |
-| `inputs.type` | Here select from available types. |
+| `inputs.contentType` | Here select from available content types. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
-| `buttons.displayType` | Here select display type in HomeKit app, possible `None`, `Outlet`, `Switch`.|
+| `buttons.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` (active on Power ON) to use with automations. |
 | `sensorInput`| If enabled, then the Input will be exposed as a `Motion Sensor` (active on every Input change) to use with automations. |
 | `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor` (active on change to Screen Saver) to use with automations. |
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). | 
-| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
+| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
@@ -110,8 +110,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
-| `Display Type Inputs/Buttons` | -1 - `None`, 0 - `Outlet`, 1 - `Switch`.|
-| `Display Type Sensors` | -1 - `None`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
+| `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`.|
+| `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`.|
+| `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
 
 *Example Config:
 
@@ -123,17 +124,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 			"name": "Xbox One",
 			"host": "192.168.1.6",
 			"xboxLiveId": "FD0000000000",
+			"webApiControl": false,
 			"clientId": "",
 			"clientSecret": "",
 			"userToken": "",
 			"userUhs": "",
 			"xboxWebApiToken": "",
-			"webApiControl": false,
-			"disableLogInfo": false,
-			"disableLogDeviceInfo": false,
-			"enableDebugMode": false,
-			"volumeControl": 0,
-			"infoButtonCommand": "nexus",
 			"getInputsFromDevice": false,
 			"filterGames": false,
 			"filterApps": false,
@@ -144,20 +140,20 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 							"name": "A Way Out",
 							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
 							"oneStoreProductId": "",
-							"type": "APPLICATION"
+							"contentType": "Game"
 						},
 						{
 							"name": "Apple TV",
 							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
 							"oneStoreProductId": "",
-							"type": "APPLICATION"
+							"contentType": "App"
 						}
 					],
 			"buttons": [
 						{
 							"name": "Play",
                             "command": "play",
-							"displayType": -1,
+							"displayType": -1
 						},
 						{
 					        "name": "Record Game DVR",
@@ -174,7 +170,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
 							"displayType": -1
-						},
+						}
 					],
 			"sensorPower": false,
             "sensorInput": false,
@@ -185,15 +181,20 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
                     "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
                     "displayType": -1
                 }
-            ],		
+            ],	
+			"enableDebugMode": false,	
+			"disableLogInfo": false,
+			"disableLogDeviceInfo": false,
+			"infoButtonCommand": "nexus",
+			"volumeControl": 0,
             "enableMqtt": false,
+			"mqttDebug": false,
             "mqttHost": "192.168.1.33",
             "mqttPort": 1883,
             "mqttPrefix": "home/xbox",
             "mqttAuth": false,
             "mqttUser": "user",
-            "mqttPass": "password",
-            "mqttDebug": false
+            "mqttPass": "password"
 		}
 	]
 }

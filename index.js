@@ -75,7 +75,7 @@ class XBOXDEVICE {
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
-		this.volumeControl = config.volumeControl || 0;
+		this.volumeControl = config.volumeControl || -1;
 		this.infoButtonCommand = config.infoButtonCommand || 'nexus';
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
 		this.filterGames = config.filterGames || false;
@@ -114,7 +114,6 @@ class XBOXDEVICE {
 		this.inputsOneStoreProductId = [];
 		this.inputsName = [];
 		this.inputsTitleId = [];
-		this.inputsType = [];
 
 		this.sensorInputsReference = [];
 		this.sensorInputsDisplayType = [];
@@ -135,21 +134,23 @@ class XBOXDEVICE {
 		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
+		const object = JSON.stringify({});
+		const array = JSON.stringify([]);
 		//check if the directory exists, if not then create it
 		if (!fs.existsSync(this.prefDir)) {
 			fs.mkdirSync(this.prefDir);
 		}
 		if (!fs.existsSync(this.authTokenFile)) {
-			fs.writeFileSync(this.authTokenFile, JSON.stringify({}));
+			fs.writeFileSync(this.authTokenFile, object);
 		}
 		if (!fs.existsSync(this.inputsFile)) {
-			fs.writeFileSync(this.inputsFile, JSON.stringify([]));
+			fs.writeFileSync(this.inputsFile, array);
 		}
 		if (!fs.existsSync(this.inputsNamesFile)) {
-			fs.writeFileSync(this.inputsNamesFile, JSON.stringify({}));
+			fs.writeFileSync(this.inputsNamesFile, object);
 		}
 		if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
-			fs.writeFileSync(this.inputsTargetVisibilityFile, JSON.stringify({}));
+			fs.writeFileSync(this.inputsTargetVisibilityFile, object);
 		}
 
 		//mqtt client
@@ -229,12 +230,12 @@ class XBOXDEVICE {
 					this.speakerService
 						.updateCharacteristic(Characteristic.Volume, volume)
 						.updateCharacteristic(Characteristic.Mute, mute);
-					if (this.volumeService && this.volumeControl === 1) {
+					if (this.volumeService) {
 						this.volumeService
 							.updateCharacteristic(Characteristic.Brightness, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
 					};
-					if (this.volumeServiceFan && this.volumeControl === 2) {
+					if (this.volumeServiceFan) {
 						this.volumeServiceFan
 							.updateCharacteristic(Characteristic.RotationSpeed, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
@@ -616,9 +617,9 @@ class XBOXDEVICE {
 		accessory.addService(this.speakerService);
 
 		//Prepare volume service
-		if (this.volumeControl >= 1) {
+		if (this.volumeControl >= 0) {
 			this.log.debug('prepareVolumeService');
-			if (this.volumeControl === 1) {
+			if (this.volumeControl === 0) {
 				this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
 					.onGet(async () => {
@@ -640,7 +641,7 @@ class XBOXDEVICE {
 				accessory.addService(this.volumeService);
 			}
 
-			if (this.volumeControl === 2) {
+			if (this.volumeControl === 1) {
 				this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
 					.onGet(async () => {
@@ -713,11 +714,11 @@ class XBOXDEVICE {
 		const filteredInputsArr = [];
 		for (const input of savedInputs) {
 			const contentType = input.contentType;
-			const filterGames = this.filterGames ? (this.filterGames && contentType === 'Game') : false;
+			const filterGames = this.filterGames ? (contentType === 'Game') : false;
 			const filterApps = this.filterApps ? (contentType === 'App') : false;
 			const filterSystemApps = this.filterSystemApps ? (contentType === 'systemApp') : false;
 			const filterDlc = this.filterDlc ? (contentType === 'Dlc') : false;
-			const push = this.getInputsFromDevice ? (!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false : filteredInputsArr.push(input);
+			const push = this.getInputsFromDevice ? ((!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false) : filteredInputsArr.push(input);
 		}
 
 		//check possible inputs and possible inputs count (max 80)
@@ -741,7 +742,7 @@ class XBOXDEVICE {
 			const inputName = savedInputsNames[inputTitleId] ? savedInputsNames[inputTitleId] : savedInputsNames[inputReference] ? savedInputsNames[inputReference] : savedInputsNames[inputOneStoreProductId] ? savedInputsNames[inputOneStoreProductId] : input.name;
 
 			//get input type
-			const inputType = CONSTANS.InputSourceTypes.includes(input.type) ? CONSTANS.InputSourceTypes.findIndex(index => index === input.type) : 10;
+			const inputType = 0;
 
 			//get input configured
 			const isConfigured = 1;
@@ -792,7 +793,6 @@ class XBOXDEVICE {
 			this.inputsReference.push(inputReference);
 			this.inputsOneStoreProductId.push(inputOneStoreProductId);
 			this.inputsName.push(inputName);
-			this.inputsType.push(inputType);
 
 			this.televisionService.addLinkedService(inputService);
 			accessory.addService(inputService);

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.7.0] - (13.02.2023)
+## Changes
+- standarize function of display type and volume control, now volume control -1 None/Disabled, 0 Slider, 1 Fan, please see in readme
+- config.schema updated
+- fix expose extra input tile in homekit app
+- other small fixes and improvements
+- cleanup
+
 ## [2.6.0] - (12.02.2023)
 ## Changes
 - integrate web api library in to the plugin
