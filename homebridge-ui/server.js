@@ -4,7 +4,7 @@ const {
   HomebridgePluginUiServer,
   RequestError
 } = require('@homebridge/plugin-ui-utils');
-const Authentication = require('../src/webApi//authentication.js')
+const Authentication = require('../src/webApi/authentication.js')
 const fs = require('fs');
 const fsPromises = fs.promises;
 
@@ -30,7 +30,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
     try {
       if (fs.existsSync(authTokenFile)) {
-        await fsPromises.writeFile(authTokenFile, '');
+        await fsPromises.writeFile(authTokenFile, JSON.stringify({}));
       };
 
       return true;

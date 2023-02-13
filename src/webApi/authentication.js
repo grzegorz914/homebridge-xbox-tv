@@ -12,22 +12,16 @@ class AUTHENTICATION {
         this.userToken = config.userToken;
         this.uhs = config.uhs;
         this.tokensFile = config.tokensFile;
-
         this.scopes = ['XboxLive.signin', 'XboxLive.offline_access'];
-        this.endpoints = {
-            live: 'https://login.live.com',
-            auth: 'https://user.auth.xboxlive.com',
-            xsts: 'https://xsts.auth.xboxlive.com'
-        }
 
         this.user = {
-            gamertag: {},
+            gtg: {},
             xid: {},
             uhs: {},
-            agg: {},
             usr: {},
             utr: {},
-            prv: {}
+            prv: {},
+            agg: {}
         };
         this.tokens = {
             oauth: {},
@@ -107,13 +101,13 @@ class AUTHENTICATION {
                                 await this.refreshTokens('xsts');
                                 resolve();
                             } else {
-                                this.user.gamertag = this.tokens.xsts.DisplayClaims.xui[0].gtg;
+                                this.user.gtg = this.tokens.xsts.DisplayClaims.xui[0].gtg;
                                 this.user.xid = this.tokens.xsts.DisplayClaims.xui[0].xid;
                                 this.user.uhs = this.tokens.xsts.DisplayClaims.xui[0].uhs;
-                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
                                 this.user.usr = this.tokens.xsts.DisplayClaims.xui[0].usr;
                                 this.user.utr = this.tokens.xsts.DisplayClaims.xui[0].utr;
                                 this.user.prv = this.tokens.xsts.DisplayClaims.xui[0].prv;
+                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
                                 resolve();
                             }
                         } catch (error) {
@@ -125,13 +119,13 @@ class AUTHENTICATION {
                             this.tokens.xsts = userToken;
                             await this.saveTokens(this.tokens);
 
-                            this.user.gamertag = userToken.DisplayClaims.xui[0].gtg;
+                            this.user.gtg = userToken.DisplayClaims.xui[0].gtg;
                             this.user.xid = userToken.DisplayClaims.xui[0].xid;
                             this.user.uhs = userToken.DisplayClaims.xui[0].uhs;
-                            this.user.agg = userToken.DisplayClaims.xui[0].agg;
                             this.user.usr = userToken.DisplayClaims.xui[0].usr;
                             this.user.utr = userToken.DisplayClaims.xui[0].utr;
                             this.user.prv = userToken.DisplayClaims.xui[0].prv;
+                            this.user.agg = userToken.DisplayClaims.xui[0].agg;
                             resolve();
                         } catch (error) {
                             reject(error);
@@ -157,7 +151,9 @@ class AUTHENTICATION {
                 }
 
                 const postData = QueryString.stringify(tokenParams);
-                const data = await this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData);
+                const url = 'https://login.live.com/oauth20_token.srf';
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                const data = await this.httpClient.post(url, headers, postData);
                 const responseData = JSON.parse(data);
                 responseData.issued = new Date().toISOString();
                 resolve(responseData);
@@ -171,17 +167,19 @@ class AUTHENTICATION {
         return new Promise(async (resolve, reject) => {
             try {
                 const tokenParams = {
-                    "RelyingParty": "http://auth.xboxlive.com",
-                    "TokenType": "JWT",
+                    "RelyingParty": 'http://auth.xboxlive.com',
+                    "TokenType": 'JWT',
                     "Properties": {
-                        "AuthMethod": "RPS",
-                        "SiteName": "user.auth.xboxlive.com",
-                        "RpsTicket": "d=" + accessToken
+                        "AuthMethod": 'RPS',
+                        "SiteName": 'user.auth.xboxlive.com',
+                        "RpsTicket": `d=${accessToken}`
                     },
                 }
 
                 const postData = JSON.stringify(tokenParams);
-                const data = await this.httpClient.post(this.endpoints.auth + '/user/authenticate', { 'Content-Type': 'application/json' }, postData);
+                const url = 'https://user.auth.xboxlive.com/user/authenticate';
+                const headers = { 'Content-Type': 'application/json' };
+                const data = await this.httpClient.post(url, headers, postData);
                 const responseData = JSON.parse(data);
                 resolve(responseData);
             } catch (error) {
@@ -194,16 +192,18 @@ class AUTHENTICATION {
         return new Promise(async (resolve, reject) => {
             try {
                 const tokenParams = {
-                    "RelyingParty": "http://xboxlive.com",
-                    "TokenType": "JWT",
+                    "RelyingParty": 'http://xboxlive.com',
+                    "TokenType": 'JWT',
                     "Properties": {
                         "UserTokens": [userToken],
-                        "SandboxId": "RETAIL",
+                        "SandboxId": 'RETAIL',
                     },
                 }
 
                 const postData = JSON.stringify(tokenParams);
-                const data = await this.httpClient.post(this.endpoints.xsts + '/xsts/authorize', { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' }, postData);
+                const url = 'https://xsts.auth.xboxlive.com/xsts/authorize';
+                const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
+                const data = await this.httpClient.post(url, headers, postData);
                 const responseData = JSON.parse(data);
                 resolve(responseData);
             } catch (error) {
@@ -239,10 +239,10 @@ class AUTHENTICATION {
             try {
                 const tokenParams = {
                     "client_id": this.clientId,
-                    "grant_type": "authorization_code",
+                    "grant_type": 'authorization_code',
                     "scope": this.scopes.join(' '),
                     "code": webApiToken,
-                    "redirect_uri": `http://localhost:8581/auth/callback`
+                    "redirect_uri": 'http://localhost:8581/auth/callback'
                 }
 
                 if (this.clientSecret !== '') {
@@ -250,7 +250,9 @@ class AUTHENTICATION {
                 }
 
                 const postData = QueryString.stringify(tokenParams);
-                const data = await this.httpClient.post(this.endpoints.live + '/oauth20_token.srf', { 'Content-Type': 'application/x-www-form-urlencoded' }, postData);
+                const url = 'https://login.live.com/oauth20_token.srf';
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                const data = await this.httpClient.post(url, headers, postData);
                 const responseData = JSON.parse(data);
                 responseData.issued = new Date().toISOString();
                 this.tokens.oauth = responseData;
@@ -267,13 +269,13 @@ class AUTHENTICATION {
             try {
                 const paramsObject = {
                     "client_id": this.clientId,
-                    "response_type": "code",
-                    "approval_prompt": "auto",
+                    "response_type": 'code',
+                    "approval_prompt": 'auto',
                     "scope": this.scopes.join(' '),
-                    "redirect_uri": `http://localhost:8581/auth/callback`
+                    "redirect_uri": 'http://localhost:8581/auth/callback'
                 }
                 const params = QueryString.stringify(paramsObject);
-                const oauth2URI = 'https://login.live.com/oauth20_authorize.srf?' + params;
+                const oauth2URI = `https://login.live.com/oauth20_authorize.srf?${params}`;
                 resolve(oauth2URI);
             } catch (error) {
                 reject(error);

@@ -136,20 +136,20 @@ class XBOXDEVICE {
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
 		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.prefDir) === false) {
+		if (!fs.existsSync(this.prefDir)) {
 			fs.mkdirSync(this.prefDir);
 		}
-		if (fs.existsSync(this.authTokenFile) === false) {
-			fs.writeFileSync(this.authTokenFile, '');
+		if (!fs.existsSync(this.authTokenFile)) {
+			fs.writeFileSync(this.authTokenFile, JSON.stringify({}));
 		}
-		if (fs.existsSync(this.inputsFile) === false) {
-			fs.writeFileSync(this.inputsFile, '');
+		if (!fs.existsSync(this.inputsFile)) {
+			fs.writeFileSync(this.inputsFile, JSON.stringify([]));
 		}
-		if (fs.existsSync(this.inputsNamesFile) === false) {
-			fs.writeFileSync(this.inputsNamesFile, '');
+		if (!fs.existsSync(this.inputsNamesFile)) {
+			fs.writeFileSync(this.inputsNamesFile, JSON.stringify({}));
 		}
-		if (fs.existsSync(this.inputsTargetVisibilityFile) === false) {
-			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
+		if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
+			fs.writeFileSync(this.inputsTargetVisibilityFile, JSON.stringify({}));
 		}
 
 		//mqtt client

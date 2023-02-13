@@ -54,7 +54,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             this.emit('authenticated', true);
             this.headers = {
-                'Authorization': (this.authentication.userToken !== '' && this.authentication.uhs !== '') ? 'XBL3.0 x=' + this.authentication.uhs + ';' + this.authentication.userToken : 'XBL3.0 x=' + this.authentication.user.uhs + ';' + this.authentication.tokens.xsts.Token,
+                'Authorization': (this.authentication.userToken !== '' && this.authentication.uhs !== '') ? `XBL3.0 x=${this.authentication.uhs};${this.authentication.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
                 'Accept-Language': 'en-US',
                 'x-xbl-contract-version': '4',
                 'x-xbl-client-name': 'XboxApp',
