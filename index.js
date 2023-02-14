@@ -315,62 +315,62 @@ class XBOXDEVICE {
 				infoLog: this.disableLogInfo,
 				debugLog: this.enableDebugMode
 			});
-		};
 
-		this.xboxWebApi.on('authenticated', (status) => {
+			this.xboxWebApi.on('authenticated', (status) => {
 
-			this.webApiEnabled = status;
-		})
-			.on('consoleStatus', (consoleStatusData, consoleType) => {
-				if (this.informationService) {
-					this.informationService
-						.setCharacteristic(Characteristic.Model, consoleType)
-				};
-
-				//this.serialNumber = id;
-				this.modelName = consoleType;
-				//this.power = powerState;
-				//this.mediaState = playbackState;
-
-				//mqtt
-				const mqtt = this.mqttEnabled ? this.mqtt.send('Status', JSON.stringify(consoleStatusData, null, 2)) : false;
+				this.webApiEnabled = status;
 			})
-			.on('consolesList', (consolesList) => {
+				.on('consoleStatus', (consoleStatusData, consoleType) => {
+					if (this.informationService) {
+						this.informationService
+							.setCharacteristic(Characteristic.Model, consoleType)
+					};
 
-				//mqtt
-				const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', JSON.stringify(consolesList, null, 2)) : false;
-			})
-			.on('appsList', async (appsArray) => {
-				try {
-					const apps = JSON.stringify([...CONSTANS.DefaultInputs, ...appsArray], null, 2);
-					await fsPromises.writeFile(this.inputsFile, apps);
-					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps: ${apps}`) : false;
+					//this.serialNumber = id;
+					this.modelName = consoleType;
+					//this.power = powerState;
+					//this.mediaState = playbackState;
 
 					//mqtt
-					const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', JSON.stringify(apps, null, 2)) : false;
-				} catch (error) {
-					this.log.error(`Device: ${this.host} ${this.name}, save apps error: ${error}`);
-				};
-			})
-			.on('storageDevices', (storageDevices) => {
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Status', JSON.stringify(consoleStatusData, null, 2)) : false;
+				})
+				.on('consolesList', (consolesList) => {
 
-				//mqtt
-				const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', JSON.stringify(storageDevices, null, 2)) : false;
-			})
-			.on('userProfile', (profileUsers) => {
+					//mqtt
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', JSON.stringify(consolesList, null, 2)) : false;
+				})
+				.on('appsList', async (appsArray) => {
+					try {
+						const apps = JSON.stringify([...CONSTANS.DefaultInputs, ...appsArray], null, 2);
+						await fsPromises.writeFile(this.inputsFile, apps);
+						const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps: ${apps}`) : false;
 
-				//mqtt
-				const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', JSON.stringify(profileUsers, null, 2)) : false;
-			})
-			.on('error', (error) => {
-				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
-			})
-			.on('debug', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
-			})
-			.on('message', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, ${message}`);
-			});
+						//mqtt
+						const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', JSON.stringify(apps, null, 2)) : false;
+					} catch (error) {
+						this.log.error(`Device: ${this.host} ${this.name}, save apps error: ${error}`);
+					};
+				})
+				.on('storageDevices', (storageDevices) => {
+
+					//mqtt
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', JSON.stringify(storageDevices, null, 2)) : false;
+				})
+				.on('userProfile', (profileUsers) => {
+
+					//mqtt
+					const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', JSON.stringify(profileUsers, null, 2)) : false;
+				})
+				.on('error', (error) => {
+					this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
+				})
+				.on('debug', (message) => {
+					this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
+				})
+				.on('message', (message) => {
+					this.log(`Device: ${this.host} ${this.name}, ${message}`);
+				});
+		};
 
 		this.start();
 	}
