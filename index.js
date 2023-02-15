@@ -755,9 +755,10 @@ class XBOXDEVICE {
 					try {
 						const nameIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsNames[nameIdentifier] = name;
+						
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
-						fs.writeFileSync(this.inputsNamesFile, newCustomName);
-						const logInfo = this.enableDebugMode || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`);
+						await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
+						const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`) : false;
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -769,9 +770,10 @@ class XBOXDEVICE {
 					try {
 						const targetVisibilityIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
+						
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
-						fs.writeFileSync(this.inputsTargetVisibilityFile, newTargetVisibility);
-						const logInfo = this.enableDebugMode || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
+						const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new target visibility state save error: ${error}`);
@@ -856,7 +858,7 @@ class XBOXDEVICE {
 					buttonService.getCharacteristic(Characteristic.On)
 						.onGet(async () => {
 							const state = false;
-							const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, get Button state successful: ${state}`);
+							const logDebug = this.disableLogInfo ? this.log(`Device: ${this.host} ${accessoryName}, get Button state successful: ${state}`) : false;
 							return state;
 						})
 						.onSet(async (state) => {
@@ -908,7 +910,7 @@ class XBOXDEVICE {
 											}
 											break;
 									}
-									const logInfo = this.enableDebugMode || this.firstRun || buttonMode === -1 ? false : this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`);
+									const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`) : false;
 								}
 								await new Promise(resolve => setTimeout(resolve, 300));
 								const setChar = this.power && state ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
