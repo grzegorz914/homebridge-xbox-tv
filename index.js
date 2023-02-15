@@ -719,13 +719,13 @@ class XBOXDEVICE {
 			const input = inputs[i];
 
 			//get title Id
-			const inputTitleId = input.titleId || 'undefined';
+			const inputTitleId = input.titleId || 'Not set';
 
 			//get input reference
-			const inputReference = input.reference || 'undefined';
+			const inputReference = input.reference || 'Not set';
 
 			//get input oneStoreProductId
-			const inputOneStoreProductId = this.webApiEnabled ? input.oneStoreProductId || 'undefined' : 'undefined';
+			const inputOneStoreProductId = this.webApiEnabled ? input.oneStoreProductId || 'Not set' : 'Not set';
 
 			//get input name
 			const inputName = savedInputsNames[inputTitleId] ? savedInputsNames[inputTitleId] : savedInputsNames[inputReference] ? savedInputsNames[inputReference] : savedInputsNames[inputOneStoreProductId] ? savedInputsNames[inputOneStoreProductId] : input.name;
@@ -743,22 +743,24 @@ class XBOXDEVICE {
 			const inputService = new Service.InputSource(inputName, `Input ${i}`);
 			inputService
 				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.Name, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
 				.setCharacteristic(Characteristic.InputSourceType, inputType)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
-				.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
-			inputService
-				.getCharacteristic(Characteristic.ConfiguredName)
+			inputService.getCharacteristic(Characteristic.ConfiguredName)
+				.onGet(async () => {
+					return inputName;
+				})
 				.onSet(async (name) => {
 					try {
 						const nameIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsNames[nameIdentifier] = name;
-						
+
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 						await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
 						const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`) : false;
+						inputService.setCharacteristic(Characteristic.Name, inputName);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -766,11 +768,14 @@ class XBOXDEVICE {
 
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
+				.onGet(async () => {
+					return targetVisibility;
+				})
 				.onSet(async (state) => {
 					try {
 						const targetVisibilityIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
-						
+
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 						await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
 						const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
