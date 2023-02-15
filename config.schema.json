@@ -757,7 +757,7 @@
 								{
 									"key": "devices[].sensorInputs",
 									"type": "tabarray",
-									"title": "{{ value.name || 'new input sensor' }}",
+									"title": "{{ value.name || 'new sensor' }}",
 									"items": [
 										"devices[].sensorInputs[].name",
 										"devices[].sensorInputs[].reference",

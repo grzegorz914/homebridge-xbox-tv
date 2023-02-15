@@ -147,14 +147,13 @@
 
       try {
         const host = document.querySelector('#deviceHostInput').value;
-        const clientId = this.clientId !== undefined ? this.clientId : '5e5ead27-ed60-482d-b3fc-702b28a97404';
         const webApiToken = document.querySelector('#deviceTokenInput').value;
         const payload = {
           host: host,
-          clientId: clientId,
-          clientSecret: this.clientSecret,
-          userToken: this.userToken,
-          uhs: this.uhs,
+          clientId: this.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404',
+          clientSecret: this.clientSecret || '',
+          userToken: this.userToken || '',
+          uhs: this.uhs || '',
           webApiToken: webApiToken,
         };
 

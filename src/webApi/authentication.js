@@ -3,6 +3,7 @@ const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const HttpClient = require('./httpclient.js');
+const CONSTANS = require('../constans.json');
 
 class AUTHENTICATION {
     constructor(config) {
@@ -12,7 +13,6 @@ class AUTHENTICATION {
         this.userToken = config.userToken;
         this.uhs = config.uhs;
         this.tokensFile = config.tokensFile;
-        this.scopes = ['XboxLive.signin', 'XboxLive.offline_access'];
 
         this.user = {
             gtg: {},
@@ -142,7 +142,7 @@ class AUTHENTICATION {
                 const tokenParams = {
                     "client_id": this.clientId,
                     "grant_type": "refresh_token",
-                    "scope": this.scopes.join(' '),
+                    "scope": CONSTANS.Scopes.join(' '),
                     "refresh_token": refreshToken,
                 }
 
@@ -240,7 +240,7 @@ class AUTHENTICATION {
                 const tokenParams = {
                     "client_id": this.clientId,
                     "grant_type": 'authorization_code',
-                    "scope": this.scopes.join(' '),
+                    "scope": CONSTANS.Scopes.join(' '),
                     "code": webApiToken,
                     "redirect_uri": 'http://localhost:8581/auth/callback'
                 }
@@ -271,7 +271,7 @@ class AUTHENTICATION {
                     "client_id": this.clientId,
                     "response_type": 'code',
                     "approval_prompt": 'auto',
-                    "scope": this.scopes.join(' '),
+                    "scope": CONSTANS.Scopes.join(' '),
                     "redirect_uri": 'http://localhost:8581/auth/callback'
                 }
                 const params = QueryString.stringify(paramsObject);

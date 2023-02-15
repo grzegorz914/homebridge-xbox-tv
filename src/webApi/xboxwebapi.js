@@ -22,14 +22,17 @@ class XBOXWEBAPI extends EventEmitter {
         super();
 
         this.xboxLiveId = config.xboxLiveId;
-        this.infoLog = config.infoLog;
+        this.clientId = config.clientId;
+        this.clientSecret = config.clientSecret;
+        this.userToken = config.userToken;
+        this.uhs = config.uhs;
         this.debugLog = config.debugLog;
 
         const authenticationConfig = {
-            clientId: config.clientId || '',
-            clientSecret: config.clientSecret || '',
-            userToken: config.userToken || '',
-            uhs: config.uhs || '',
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+            userToken: config.userToken,
+            uhs: config.uhs,
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authenticationConfig);
@@ -51,18 +54,16 @@ class XBOXWEBAPI extends EventEmitter {
                 return;
             }
 
-            this.emit('authenticated', true);
-            this.headers = {
-                'Authorization': (this.authentication.userToken !== '' && this.authentication.uhs !== '') ? `XBL3.0 x=${this.authentication.uhs};${this.authentication.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
-                'Accept-Language': 'en-US',
-                'x-xbl-contract-version': '4',
-                'x-xbl-client-name': 'XboxApp',
-                'x-xbl-client-type': 'UWA',
-                'x-xbl-client-version': '39.39.22001.0'
-            }
-            this.achievements = new Achievements(this, this.headers);
-
             try {
+                this.emit('authenticated', true);
+                this.headers = {
+                    'Authorization': (this.userToken !== '' && this.uhs !== '') ? `XBL3.0 x=${this.uhs};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
+                    'Accept-Language': 'en-US',
+                    'x-xbl-contract-version': '4',
+                    'x-xbl-client-name': 'XboxApp',
+                    'x-xbl-client-type': 'UWA',
+                    'x-xbl-client-version': '39.39.22001.0'
+                }
                 const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
                 const rmEnabled = await this.getWebApiConsoleStatus();
                 const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings!!!.`) : false;
@@ -361,7 +362,7 @@ class XBOXWEBAPI extends EventEmitter {
     powerOn() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Power', 'WakeUp')
+                await this.send('Power', 'WakeUp')
                 resolve(true);
             } catch (error) {
                 reject(`power on error: ${error}`);
@@ -372,7 +373,7 @@ class XBOXWEBAPI extends EventEmitter {
     powerOff() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Power', 'TurnOff')
+                await this.send('Power', 'TurnOff')
                 resolve(true);
             } catch (error) {
                 reject(`power off error: ${error}`);
@@ -383,7 +384,7 @@ class XBOXWEBAPI extends EventEmitter {
     reboot() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Power', 'Reboot')
+                await this.send('Power', 'Reboot')
                 resolve(true);
             } catch (error) {
                 reject(`reboot error: ${error}`);
@@ -394,7 +395,7 @@ class XBOXWEBAPI extends EventEmitter {
     mute() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Audio', 'Mute')
+                await this.send('Audio', 'Mute')
                 resolve(true);
             } catch (error) {
                 reject(`mute error: ${error}`);
@@ -405,7 +406,7 @@ class XBOXWEBAPI extends EventEmitter {
     unmute() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Audio', 'Unmute')
+                await this.send('Audio', 'Unmute')
                 resolve(true);
             } catch (error) {
                 reject(`unmute error: ${error}`);
@@ -416,7 +417,7 @@ class XBOXWEBAPI extends EventEmitter {
     launchApp(oneStoreProductId) {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Shell', 'ActivateApplicationWithOneStoreProductId', [{
+                await this.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{
                     'oneStoreProductId': oneStoreProductId
                 }])
                 resolve(true);
@@ -429,7 +430,7 @@ class XBOXWEBAPI extends EventEmitter {
     launchDashboard() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Shell', 'GoHome')
+                await this.send('Shell', 'GoHome')
                 resolve(true);
             } catch (error) {
                 reject(`launch dashboard error: ${error}`);
@@ -440,7 +441,7 @@ class XBOXWEBAPI extends EventEmitter {
     openGuideTab() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Shell', 'ShowGuideTab', [{
+                await this.send('Shell', 'ShowGuideTab', [{
                     'tabName': 'Guide'
                 }])
                 resolve(true);
@@ -453,7 +454,7 @@ class XBOXWEBAPI extends EventEmitter {
     launchOneGuide() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('TV', 'ShowGuide')
+                await this.send('TV', 'ShowGuide')
                 resolve(true);
             } catch (error) {
                 reject(`launch one guide error: ${error}`);
@@ -464,7 +465,7 @@ class XBOXWEBAPI extends EventEmitter {
     sendButtonPress(button) {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.sendCommand('Shell', 'InjectKey', [{
+                await this.send('Shell', 'InjectKey', [{
                     'keyType': button
                 }])
                 resolve(true);
@@ -474,7 +475,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    sendCommand(commandType, command, params) {
+    send(commandType, command, params) {
         return new Promise(async (resolve, reject) => {
             try {
                 const sessionid = Uuid4();

@@ -19,7 +19,8 @@
         "Paused": 2,
         "Unknown": 3
     },
-    "DefaultInputs": [{
+    "DefaultInputs": [
+        {
             "name": "Screensaver",
             "titleId": "851275400",
             "reference": "Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application",
@@ -83,7 +84,19 @@
             "contentType": "systemApp"
         }
     ],
-    "InputSourceTypes": ["OTHER", "HOME_SCREEN", "TUNER", "HDMI", "COMPOSITE_VIDEO", "S_VIDEO", "COMPONENT_VIDEO", "DVI", "AIRPLAY", "USB", "APPLICATION"],
+    "InputSourceTypes": [
+        "OTHER",
+        "HOME_SCREEN",
+        "TUNER",
+        "HDMI",
+        "COMPOSITE_VIDEO",
+        "S_VIDEO",
+        "COMPONENT_VIDEO",
+        "DVI",
+        "AIRPLAY",
+        "USB",
+        "APPLICATION"
+    ],
     "SystemMediaCommands": {
         "play": 2,
         "pause": 4,
@@ -132,8 +145,19 @@
         "tvRemote": "d451e3b360bb4c71b3dbf994b1aca3a7",
         "sysConfig": "d451e3b360bb4c71b3dbf994b1aca3a7"
     },
-    "ChannelNames": ["systemMedia", "systemInput", "tvRemote", "sysConfig"],
-    "ConfigNames": ["GetConfiguration", "GetHeadendInfo", "GetLiveTVInfo", "GetTunerLineups", "GetAppChannelLineups"],
+    "ChannelNames": [
+        "systemMedia",
+        "systemInput",
+        "tvRemote",
+        "sysConfig"
+    ],
+    "ConfigNames": [
+        "GetConfiguration",
+        "GetHeadendInfo",
+        "GetLiveTVInfo",
+        "GetTunerLineups",
+        "GetAppChannelLineups"
+    ],
     "PlaybackStatus": {
         "0": "Closed",
         "1": "Changing",
@@ -161,5 +185,9 @@
         "dd00": "simple.discoveryRequest",
         "dd01": "simple.discoveryResponse",
         "dd02": "simple.powerOn"
-    }
+    },
+    "Scopes": [
+        "XboxLive.signin",
+        "XboxLive.offline_access"
+    ]
 }

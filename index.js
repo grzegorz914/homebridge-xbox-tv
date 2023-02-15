@@ -67,16 +67,6 @@ class XBOXDEVICE {
 		this.host = config.host;
 		this.xboxLiveId = config.xboxLiveId;
 		this.webApiControl = config.webApiControl || false;
-		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
-		this.clientSecret = config.clientSecret;
-		this.userToken = config.userToken || '';
-		this.uhs = config.uhs || '';
-		this.xboxWebApiToken = config.xboxWebApiToken || '';
-		this.disableLogInfo = config.disableLogInfo || false;
-		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
-		this.enableDebugMode = config.enableDebugMode || false;
-		this.volumeControl = config.volumeControl || -1;
-		this.infoButtonCommand = config.infoButtonCommand || 'nexus';
 		this.getInputsFromDevice = config.getInputsFromDevice || false;
 		this.filterGames = config.filterGames || false;
 		this.filterApps = config.filterApps || false;
@@ -88,14 +78,24 @@ class XBOXDEVICE {
 		this.sensorInput = config.sensorInput || false;
 		this.sensorScreenSaver = config.sensorScreenSaver || false;
 		this.sensorInputs = config.sensorInputs || [];
+		this.xboxWebApiToken = config.xboxWebApiToken || '';
+		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
+		this.clientSecret = config.clientSecret || '';
+		this.userToken = config.userToken || '';
+		this.uhs = config.uhs || '';
+		this.enableDebugMode = config.enableDebugMode || false;
+		this.disableLogInfo = config.disableLogInfo || false;
+		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
+		this.infoButtonCommand = config.infoButtonCommand || 'nexus';
+		this.volumeControl = config.volumeControl >= 0 ? config.volumeControl : -1;
 		this.mqttEnabled = config.enableMqtt || false;
+		this.mqttDebug = config.mqttDebug || false;
 		this.mqttHost = config.mqttHost;
 		this.mqttPort = config.mqttPort || 1883;
 		this.mqttPrefix = config.mqttPrefix;
 		this.mqttAuth = config.mqttAuth || false;
 		this.mqttUser = config.mqttUser;
 		this.mqttPasswd = config.mqttPasswd;
-		this.mqttDebug = config.mqttDebug || false;
 
 		//add configured inputs to the default inputs
 		this.inputs = [...CONSTANS.DefaultInputs, ...this.inputs];
@@ -312,12 +312,10 @@ class XBOXDEVICE {
 				userToken: this.userToken,
 				uhs: this.uhs,
 				tokensFile: this.authTokenFile,
-				infoLog: this.disableLogInfo,
 				debugLog: this.enableDebugMode
 			});
 
 			this.xboxWebApi.on('authenticated', (status) => {
-
 				this.webApiEnabled = status;
 			})
 				.on('consoleStatus', (consoleStatusData, consoleType) => {
@@ -331,12 +329,9 @@ class XBOXDEVICE {
 					//this.power = powerState;
 					//this.mediaState = playbackState;
 
-					//mqtt
 					const mqtt = this.mqttEnabled ? this.mqtt.send('Status', JSON.stringify(consoleStatusData, null, 2)) : false;
 				})
 				.on('consolesList', (consolesList) => {
-
-					//mqtt
 					const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', JSON.stringify(consolesList, null, 2)) : false;
 				})
 				.on('appsList', async (appsArray) => {
@@ -345,20 +340,15 @@ class XBOXDEVICE {
 						await fsPromises.writeFile(this.inputsFile, apps);
 						const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved apps: ${apps}`) : false;
 
-						//mqtt
 						const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', JSON.stringify(apps, null, 2)) : false;
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${this.name}, save apps error: ${error}`);
 					};
 				})
 				.on('storageDevices', (storageDevices) => {
-
-					//mqtt
 					const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', JSON.stringify(storageDevices, null, 2)) : false;
 				})
 				.on('userProfile', (profileUsers) => {
-
-					//mqtt
 					const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', JSON.stringify(profileUsers, null, 2)) : false;
 				})
 				.on('error', (error) => {
@@ -418,7 +408,7 @@ class XBOXDEVICE {
 			})
 			.onSet(async (state) => {
 				try {
-					const setPower = !this.power && state ? await this.xboxLocalApi.powerOn() : this.power && !state ? await this.xboxLocalApi.powerOff() : false;
+					const setPower = state ? await this.xboxLocalApi.powerOn() : await this.xboxLocalApi.powerOff();
 					const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power successful: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Power, error: ${error}`);
@@ -551,7 +541,7 @@ class XBOXDEVICE {
 					};
 
 					const channelName = 'systemInput';
-					const setPowerModeSelection = this.power ? this.webApiEnabled ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxWebApi.sendButtonPress(command) : false;
+					const setPowerModeSelection = this.power && this.webApiEnabled ? await this.xboxWebApi.sendButtonPress(command) : false;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power Mode Selection command successful: ${command}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Power Mode Selection command error: ${error}`);
@@ -766,8 +756,8 @@ class XBOXDEVICE {
 						const nameIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsNames[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
-						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`);
+						fs.writeFileSync(this.inputsNamesFile, newCustomName);
+						const logInfo = this.enableDebugMode || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, one store product id: ${inputOneStoreProductId}`);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -780,8 +770,8 @@ class XBOXDEVICE {
 						const targetVisibilityIdentifier = inputTitleId ? inputTitleId : inputReference ? inputReference : inputOneStoreProductId ? inputOneStoreProductId : false;
 						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
-						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						fs.writeFileSync(this.inputsTargetVisibilityFile, newTargetVisibility);
+						const logInfo = this.enableDebugMode || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName} target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new target visibility state save error: ${error}`);
@@ -918,7 +908,7 @@ class XBOXDEVICE {
 											}
 											break;
 									}
-									const logInfo = this.disableLogInfo || this.firstRun || buttonMode === -1 ? false : this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`);
+									const logInfo = this.enableDebugMode || this.firstRun || buttonMode === -1 ? false : this.log(`Device: ${this.host} ${accessoryName}, set button successful, name:  ${buttonName}, command: ${buttonCommand}`);
 								}
 								await new Promise(resolve => setTimeout(resolve, 300));
 								const setChar = this.power && state ? buttonService.updateCharacteristic(Characteristic.On, false) : false;

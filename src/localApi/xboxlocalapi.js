@@ -289,8 +289,7 @@ class XBOXLOCALAPI extends EventEmitter {
     powerOn() {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
-                this.emit('message', 'Console already On.');
-                resolve(true);
+                reject('Console already On.');
                 return;
             };
 
@@ -326,9 +325,7 @@ class XBOXLOCALAPI extends EventEmitter {
     powerOff() {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected) {
-                reject({
-                    status: 'Console already Off.'
-                });
+                reject('Console already Off.');
                 return;
             };
 
