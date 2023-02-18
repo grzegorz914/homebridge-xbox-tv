@@ -348,9 +348,7 @@ class XBOXLOCALAPI extends EventEmitter {
     recordGameDvr() {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected || !this.isAuthorized) {
-                reject({
-                    status: `Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`
-                });
+                reject(`Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`);
                 return;
             };
 

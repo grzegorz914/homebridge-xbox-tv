@@ -556,15 +556,46 @@
 							"type": "string",
 							"oneOf": [
 								{
-									"title": "View",
+									"title": "Game Pad View",
 									"enum": [
 										"view"
 									]
 								},
 								{
-									"title": "Nexus",
+									"title": "Game Pad Nexus",
 									"enum": [
 										"nexus"
+									]
+								},
+								{
+									"title": "Game Pad Menu",
+									"enum": [
+										"menu1"
+									]
+								},
+								{
+									"title": "Game Pad A",
+									"enum": [
+										"a"
+									]
+								}
+								,
+								{
+									"title": "Game Pad B",
+									"enum": [
+										"b"
+									]
+								},
+								{
+									"title": "Game Pad X",
+									"enum": [
+										"x"
+									]
+								},
+								{
+									"title": "Game Pad Y",
+									"enum": [
+										"y"
 									]
 								}
 							],
@@ -805,13 +836,13 @@
 					"expanded": false,
 					"items": [
 						"devices[].enableMqtt",
+						"devices[].mqttDebug",
 						"devices[].mqttHost",
 						"devices[].mqttPort",
 						"devices[].mqttPrefix",
 						"devices[].mqttAuth",
 						"devices[].mqttUser",
-						"devices[].mqttPasswd",
-						"devices[].mqttDebug"
+						"devices[].mqttPasswd"
 					]
 				}
 			]

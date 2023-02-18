@@ -50,12 +50,13 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const authorized = await this.authentication.isAuthenticated();
             if (!authorized) {
-                this.emit(`message', 'not authorized, please use authorization manager first!!!`)
+                this.emit(`message', 'not authorized, please use authorization manager first.`)
+                this.auhorized = false;
                 return;
             }
 
             try {
-                this.emit('authenticated', true);
+                this.auhorized = true;
                 this.headers = {
                     'Authorization': (this.userToken !== '' && this.uhs !== '') ? `XBL3.0 x=${this.uhs};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
                     'Accept-Language': 'en-US',
@@ -66,7 +67,7 @@ class XBOXWEBAPI extends EventEmitter {
                 }
                 const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
                 const rmEnabled = await this.getWebApiConsoleStatus();
-                const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings!!!.`) : false;
+                const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
                 //await this.getWebApiConsolesList();
                 await this.getWebApiInstalledApps();
                 //await this.getWebApiStorageDevices();
@@ -478,6 +479,11 @@ class XBOXWEBAPI extends EventEmitter {
     send(commandType, command, params) {
         return new Promise(async (resolve, reject) => {
             try {
+                if (!this.auhorized) {
+                    reject('not authorized.');
+                    return;
+                };
+
                 const sessionid = Uuid4();
                 const postParams = {
                     "destination": "Xbox",
