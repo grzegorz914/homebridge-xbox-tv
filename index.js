@@ -109,6 +109,7 @@ class XBOXDEVICE {
 		//setup variables
 		this.firstRun = true;
 
+		this.services = [];
 		this.inputsName = [];
 		this.inputsReference = [];
 		this.inputsOneStoreProductId = [];
@@ -246,20 +247,20 @@ class XBOXDEVICE {
 
 				if (this.sensorPowerService) {
 					this.sensorPowerService
-						.updateCharacteristic(Characteristic.MotionDetected, power)
+						.updateCharacteristic(Characteristic.ContactSensorState, power)
 				}
 
 				if (this.sensorInputService) {
 					const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
 					this.sensorInputService
-						.updateCharacteristic(Characteristic.MotionDetected, state)
+						.updateCharacteristic(Characteristic.ContactSensorState, state)
 					this.sensorInputState = state;
 				}
 
 				if (this.sensorScreenSaverService) {
 					const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
 					this.sensorScreenSaverService
-						.updateCharacteristic(Characteristic.MotionDetected, state)
+						.updateCharacteristic(Characteristic.ContactSensorState, state)
 					this.sensorScreenSaverState = state;
 				}
 
@@ -384,6 +385,7 @@ class XBOXDEVICE {
 			.setCharacteristic(Characteristic.Model, this.modelName)
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+		this.services.push(this.informationService);
 
 		//Prepare television service
 		this.log.debug('prepareTelevisionService');
@@ -563,6 +565,7 @@ class XBOXDEVICE {
 				};
 			});
 
+		this.services.push(this.televisionService);
 		accessory.addService(this.televisionService);
 
 		//Prepare speaker service
@@ -629,6 +632,7 @@ class XBOXDEVICE {
 				};
 			});
 
+		this.services.push(this.speakerService);
 		accessory.addService(this.speakerService);
 
 		//Prepare volume service
@@ -653,6 +657,7 @@ class XBOXDEVICE {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 
+				this.services.push(this.volumeService);
 				accessory.addService(this.volumeService);
 			}
 
@@ -675,6 +680,7 @@ class XBOXDEVICE {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 
+				this.services.push(this.volumeServiceFan);
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
@@ -682,34 +688,40 @@ class XBOXDEVICE {
 		//prepare sensor service
 		if (this.sensorPower) {
 			this.log.debug('prepareSensorPowerService')
-			this.sensorPowerService = new Service.MotionSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
-			this.sensorPowerService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
+			this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.power;
 					return state;
 				});
+
+			this.services.push(this.sensorPowerService);
 			accessory.addService(this.sensorPowerService);
 		};
 
 		if (this.sensorInput) {
 			this.log.debug('prepareSensorInputService')
-			this.sensorInputService = new Service.MotionSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
-			this.sensorInputService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
+			this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.power ? this.sensorInputState : false;
 					return state;
 				});
+
+			this.services.push(this.sensorInputService);
 			accessory.addService(this.sensorInputService);
 		};
 
 		if (this.sensorScreenSaver) {
 			this.log.debug('prepareSensorScreenSaverService')
-			this.sensorScreenSaverService = new Service.MotionSensor(`${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
-			this.sensorScreenSaverService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorScreenSaverService = new Service.ContactSensor(`${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
+			this.sensorScreenSaverService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.power ? this.sensorScreenSaverState : false;
 					return state;
 				});
+
+			this.services.push(this.sensorScreenSaverService);
 			accessory.addService(this.sensorScreenSaverService);
 		};
 
@@ -738,7 +750,8 @@ class XBOXDEVICE {
 		//check possible inputs and possible inputs count (max 80)
 		const inputs = filteredInputsArr;
 		const inputsCount = inputs.length;
-		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
+		const possibleInputsCount = 90 - this.services.length;
+		const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
 		for (let i = 0; i < maxInputsCount; i++) {
 			//get input 
 			const input = inputs[i];
@@ -812,6 +825,7 @@ class XBOXDEVICE {
 				this.inputsName.push(inputName);
 
 				this.televisionService.addLinkedService(inputService);
+				this.services.push(inputService);
 				accessory.addService(inputService);
 			} else {
 				this.log(`Device: ${this.host} ${accessoryName}, Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
@@ -822,8 +836,8 @@ class XBOXDEVICE {
 		//prepare sonsor service
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const possibleSensorInputsCount = 80 - this.inputsReference.length;
-		const maxSensorInputsCount = possibleSensorInputsCount > sensorInputsCount ? sensorInputsCount : possibleSensorInputsCount;
+		const possibleSensorInputsCount = 90 - this.services.length;
+		const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareInputSensorServices');
 			for (let i = 0; i < maxSensorInputsCount; i++) {
@@ -853,6 +867,7 @@ class XBOXDEVICE {
 						this.sensorInputsReference.push(sensorInputReference);
 						this.sensorInputsDisplayType.push(sensorInputDisplayType);
 						this.sensorInputsServices.push(sensorInputService);
+						this.services.push(sensorInputService);
 						accessory.addService(this.sensorInputsServices[i]);
 					} else {
 						this.log(`Device: ${this.host} ${accessoryName}, Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
@@ -864,8 +879,8 @@ class XBOXDEVICE {
 		//Prepare buttons services
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const possibleButtonsCount = 80 - (this.inputsReference.length + this.sensorInputsServices.length);
-		const maxButtonsCount = possibleButtonsCount >= buttonsCount ? buttonsCount : possibleButtonsCount;
+		const possibleButtonsCount = 90 - this.services.length;
+		const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareInputsButtonService');
 			for (let i = 0; i < maxButtonsCount; i++) {
@@ -953,6 +968,7 @@ class XBOXDEVICE {
 								};
 							});
 						this.buttonsServices.push(buttonService);
+						this.services.push(buttonService);
 						accessory.addService(this.buttonsServices[i]);
 					} else {
 						this.log(`Device: ${this.host} ${accessoryName}, Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
