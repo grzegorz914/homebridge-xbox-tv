@@ -400,7 +400,7 @@ class XBOXDEVICE {
 					this.name = value;
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Accessory Name: ${value}`);
 				} catch (error) {
-					this.log.error(`Device: ${this.host} ${accessoryName}, set Brightness error: ${error}`);
+					this.log.error(`Device: ${this.host} ${accessoryName}, set Accessory Name error: ${error}`);
 				};
 			});
 		this.televisionService.getCharacteristic(Characteristic.SleepDiscoveryMode)

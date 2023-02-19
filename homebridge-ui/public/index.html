@@ -28,17 +28,16 @@
   (async () => {
     // get the initial config - this is an array potentially containing multiple config blocks
     const pluginConfig = await homebridge.getPluginConfig();
+    const devicesCount = pluginConfig[0].devices.length;
 
-    if (!pluginConfig.length) {
+    if (!devicesCount) {
       pluginConfig.push({});
       await homebridge.updatePluginConfig(pluginConfig);
-      homebridge.showSchemaForm();
+      await homebridge.showSchemaForm();
     } else {
       // get the intial from the config and add it to the form
       document.getElementById('authorizationRequired').style.display = 'block';
-      const devicesCount = pluginConfig[0].devices.length;
       for (let i = 0; i < devicesCount; i++) {
-
         //create consoles buttons
         const button = document.createElement("button");
         button.setAttribute("type", "button");
@@ -49,44 +48,49 @@
         button.style.height = '34x';
         document.body.appendChild(button);
 
-        //load on first run
-        document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[0].name;
-        document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[0].host;
-        document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[0].xboxWebApiToken;
-        this.clientId = pluginConfig[0].devices[0].clientId;
-        this.clientSecret = pluginConfig[0].devices[0].clientSecret;
-        const tokenLength = (pluginConfig[0].devices[0].xboxWebApiToken).length;
-        document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
-        if (tokenLength <= 10) {
-          document.getElementById('startAuthorizationButton').innerText = "Start authorization";
-        } else {
-          document.getElementById('startAuthorizationButton').innerText = "Check state";
-        }
-
         //get actuall value on console select
         document.getElementById('button' + i).addEventListener('click', async () => {
-          document.querySelector('#deviceNameInput').value = pluginConfig[0].devices[i].name;
-          document.querySelector('#deviceHostInput').value = pluginConfig[0].devices[i].host;
-          document.querySelector('#deviceTokenInput').value = pluginConfig[0].devices[i].xboxWebApiToken;
-          this.clientId = pluginConfig[0].devices[i].clientId;
-          this.clientSecret = pluginConfig[0].devices[i].clientSecret;
-          this.userToken = pluginConfig[0].devices[i].userToken;
-          this.uhs = pluginConfig[0].devices[i].uhs;
-          this.xboxWebApiToken = pluginConfig[0].devices[i].xboxWebApiToken;
+          this.name = pluginConfig[0].devices[i].name;
+          this.host = pluginConfig[0].devices[i].host;
+          this.clientId = pluginConfig[0].devices[i].clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404'
+          this.clientSecret = pluginConfig[0].devices[i].clientSecret || '';
+          this.userToken = pluginConfig[0].devices[i].userToken || '';
+          this.uhs = pluginConfig[0].devices[i].uhs || '';
+          this.xboxWebApiToken = pluginConfig[0].devices[i].xboxWebApiToken || '';
+          document.querySelector('#deviceNameInput').value = this.name;
+          document.querySelector('#deviceHostInput').value = this.host;
+          document.querySelector('#deviceTokenInput').value = this.xboxWebApiToken;
           this.deviceIndex = i;
         });
-        this.deviceIndex = 0;
       };
+
+      //load on first run
+      this.name = pluginConfig[0].devices[0].name;
+      this.host = pluginConfig[0].devices[0].host;
+      this.xboxWebApiToken = pluginConfig[0].devices[0].xboxWebApiToken || '';
+      this.clientId = pluginConfig[0].devices[0].clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404'
+      this.clientSecret = pluginConfig[0].devices[0].clientSecret || '';
+      this.userToken = pluginConfig[0].devices[0].userToken || '';
+      this.uhs = pluginConfig[0].devices[0].uhs || '';
+      document.querySelector('#deviceNameInput').value = this.name;
+      document.querySelector('#deviceHostInput').value = this.host;
+      document.querySelector('#deviceTokenInput').value = this.xboxWebApiToken;
+      const tokenLength = this.xboxWebApiToken.length || 0;
+      document.getElementById('authorizeConsoleButton').setAttribute('disabled', 'disabled');
+      if (tokenLength <= 10) {
+        document.getElementById('startAuthorizationButton').innerText = "Start authorization";
+      } else {
+        document.getElementById('startAuthorizationButton').innerText = "Check state";
+      }
     };
 
     // watch for changes to the form and update the config
     document.getElementById('configForm').addEventListener('input', async () => {
-      // get the current values from the form
       pluginConfig[0].devices[this.deviceIndex].name = document.querySelector('#deviceNameInput').value;
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHostInput').value;
       pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceTokenInput').value;
-      const tokenLength = (document.querySelector('#deviceTokenInput').value).length;
 
+      const tokenLength = (document.querySelector('#deviceTokenInput').value).length;
       if (tokenLength <= 10) {
         document.getElementById('startAuthorizationButton').innerText = "Start authorization";
         document.getElementById('startAuthorizationButton').removeAttribute('disabled');
@@ -98,15 +102,16 @@
       await homebridge.savePluginConfig(pluginConfig);
     });
 
+    //show hide config
     document.getElementById('configButton').addEventListener('click', async () => {
       const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
         configButton.innerText = "Show Config";
-        homebridge.hideSchemaForm();
+        await homebridge.hideSchemaForm();
         this.configButtonState = false;
       } else {
         configButton.innerText = "Hide Config";
-        homebridge.showSchemaForm();
+        await homebridge.showSchemaForm();
         this.configButtonState = true;
       };
     });
@@ -116,9 +121,8 @@
       homebridge.showSpinner();
 
       try {
-        const host = document.querySelector('#deviceHostInput').value;
         const payload = {
-          host: host,
+          host: this.host,
         };
         const response = await homebridge.request('/clearToken', payload);
 
@@ -146,14 +150,13 @@
       homebridge.showSpinner();
 
       try {
-        const host = document.querySelector('#deviceHostInput').value;
         const webApiToken = document.querySelector('#deviceTokenInput').value;
         const payload = {
-          host: host,
-          clientId: this.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404',
-          clientSecret: this.clientSecret || '',
-          userToken: this.userToken || '',
-          uhs: this.uhs || '',
+          host: this.host,
+          clientId: this.clientId,
+          clientSecret: this.clientSecret,
+          userToken: this.userToken,
+          uhs: this.uhs,
           webApiToken: webApiToken,
         };
 
