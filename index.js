@@ -782,7 +782,7 @@ class XBOXDEVICE {
 							const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 							await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
 							const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
-							inputService.setCharacteristic(Characteristic.Name, inputName);
+							inputService.setCharacteristic(Characteristic.Name, value);
 						} catch (error) {
 							this.log.error(`Device: ${this.host} ${accessoryName}, save Input Name error: ${error}`);
 						}
@@ -831,28 +831,32 @@ class XBOXDEVICE {
 				const sensorInput = sensorInputs[i];
 
 				//get sensor name		
-				const sensorInputName = sensorInput.name || 'Not set';
+				const sensorInputName = sensorInput.name;
 
 				//get sensor reference
-				const sensorInputReference = sensorInput.reference || 'Not set';
+				const sensorInputReference = sensorInput.reference;
 
 				//get sensor display type
 				const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
 
 				if (sensorInputDisplayType >= 0) {
-					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
-					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-					const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
-					sensorInputService.getCharacteristic(characteristicType)
-						.onGet(async () => {
-							const state = this.power ? (this.reference === sensorInputReference) : false;
-							return state;
-						});
+					if (sensorInputName && sensorInputReference) {
+						const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+						const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
+						const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+						sensorInputService.getCharacteristic(characteristicType)
+							.onGet(async () => {
+								const state = this.power ? (this.reference === sensorInputReference) : false;
+								return state;
+							});
 
-					this.sensorInputsReference.push(sensorInputReference);
-					this.sensorInputsDisplayType.push(sensorInputDisplayType);
-					this.sensorInputsServices.push(sensorInputService);
-					accessory.addService(this.sensorInputsServices[i]);
+						this.sensorInputsReference.push(sensorInputReference);
+						this.sensorInputsDisplayType.push(sensorInputDisplayType);
+						this.sensorInputsServices.push(sensorInputService);
+						accessory.addService(this.sensorInputsServices[i]);
+					} else {
+						this.log(`Device: ${this.host} ${accessoryName}, Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
+					};
 				}
 			}
 		}
@@ -869,85 +873,90 @@ class XBOXDEVICE {
 				const button = buttons[i];
 
 				//get button name
-				const buttonName = button.name || 'Not set';
+				const buttonName = button.name;
 
 				//get button command
-				const buttonCommand = button.command || 'Not set';
+				const buttonCommand = button.command;
+
+				//get button mode
+				let mode;
+				if (buttonCommand in CONSTANS.SystemMediaCommands) {
+					mode = 0;
+				} else if (buttonCommand in CONSTANS.SystemInputCommands) {
+					mode = 1;
+				} else if (buttonCommand in CONSTANS.TvRemoteCommands) {
+					mode = 2;
+				} else if (buttonCommand === 'recordGameDvr') {
+					mode = 3;
+				} else if (buttonCommand === 'reboot') {
+					mode = 4;
+				} else if (buttonCommand === 'switchAppGame') {
+					mode = 5;
+				};
+				const buttonMode = mode >= 0 ? mode : -1;
 
 				//get button inputOneStoreProductId
-				const buttonOneStoreProductId = button.oneStoreProductId || 'Not set';
+				const buttonOneStoreProductId = button.oneStoreProductId;
 
 				//get button display type
 				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
 				if (buttonDisplayType >= 0) {
-					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
-					buttonService.getCharacteristic(Characteristic.On)
-						.onGet(async () => {
-							const state = false;
-							const logDebug = this.disableLogInfo ? this.log(`Device: ${this.host} ${accessoryName}, Button state: ${state}`) : false;
-							return state;
-						})
-						.onSet(async (state) => {
-							try {
-								if (state) {
-									//get button mode
-									let buttonMode = -1;
-									if (buttonCommand in CONSTANS.SystemMediaCommands) {
-										buttonMode = 0;
-									} else if (buttonCommand in CONSTANS.SystemInputCommands) {
-										buttonMode = 1;
-									} else if (buttonCommand in CONSTANS.TvRemoteCommands) {
-										buttonMode = 2;
-									} else if (buttonCommand === 'recordGameDvr') {
-										buttonMode = 3;
-									} else if (buttonCommand === 'reboot') {
-										buttonMode = 4;
-									} else if (buttonCommand === 'switchAppGame') {
-										buttonMode = 5;
-									};
-
-									switch (buttonMode) {
-										case 0: case 1: case 2:
-											await this.xboxWebApi.sendButtonPress(buttonCommand);
-											break;
-										case 3:
-											await this.xboxLocalApi.recordGameDvr();
-											break;
-										case 4:
-											await this.xboxWebApi.reboot();
-											break;
-										case 5:
-											switch (buttonOneStoreProductId) {
-												case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-													await this.xboxWebApi.launchDashboard();
-													break;
-												case 'Television':
-													await this.xboxWebApi.launchOneGuide();
-													break;
-												case 'XboxGuide':
-													await this.xboxWebApi.openGuideTab();
-													break;
-												case 'Not set': case 'Web api disabled':
-													this.log(`Device: ${this.host} ${accessoryName}, trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
-													break;
-												default:
-													await this.xboxWebApi.launchApp(buttonOneStoreProductId);
-													break;
-											}
-											break;
+					if (buttonName && buttonCommand && buttonMode) {
+						const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
+						const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+						buttonService.getCharacteristic(Characteristic.On)
+							.onGet(async () => {
+								const state = false;
+								const logDebug = this.disableLogInfo ? this.log(`Device: ${this.host} ${accessoryName}, Button state: ${state}`) : false;
+								return state;
+							})
+							.onSet(async (state) => {
+								try {
+									if (state) {
+										switch (buttonMode) {
+											case 0: case 1: case 2:
+												await this.xboxWebApi.sendButtonPress(buttonCommand);
+												break;
+											case 3:
+												await this.xboxLocalApi.recordGameDvr();
+												break;
+											case 4:
+												await this.xboxWebApi.reboot();
+												break;
+											case 5:
+												switch (buttonOneStoreProductId) {
+													case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+														await this.xboxWebApi.launchDashboard();
+														break;
+													case 'Television':
+														await this.xboxWebApi.launchOneGuide();
+														break;
+													case 'XboxGuide':
+														await this.xboxWebApi.openGuideTab();
+														break;
+													case 'Not set': case 'Web api disabled':
+														this.log(`Device: ${this.host} ${accessoryName}, trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
+														break;
+													default:
+														await this.xboxWebApi.launchApp(buttonOneStoreProductId);
+														break;
+												}
+												break;
+										}
+										const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set Button Name:  ${buttonName}, Command: ${buttonCommand}`) : false;
 									}
-									const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set Button Name:  ${buttonName}, Command: ${buttonCommand}`) : false;
-								}
-								await new Promise(resolve => setTimeout(resolve, 300));
-								const setChar = state ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
-							} catch (error) {
-								this.log.error(`Device: ${this.host} ${accessoryName}, set Button error: ${error}`);
-							};
-						});
-					this.buttonsServices.push(buttonService);
-					accessory.addService(this.buttonsServices[i]);
+									await new Promise(resolve => setTimeout(resolve, 300));
+									const setChar = state ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+								} catch (error) {
+									this.log.error(`Device: ${this.host} ${accessoryName}, set Button error: ${error}`);
+								};
+							});
+						this.buttonsServices.push(buttonService);
+						accessory.addService(this.buttonsServices[i]);
+					} else {
+						this.log(`Device: ${this.host} ${accessoryName}, Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
+					};
 				}
 			}
 		}
