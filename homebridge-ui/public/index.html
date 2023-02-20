@@ -1,35 +1,38 @@
-<div>
-  <img src="homebridge-xbox-tv.png" style="text-align: center;" height="150" />
-</div>
+<body>
+  <div>
+    <img src="homebridge-xbox-tv.png" style="text-align: center;" height="150" />
+  </div>
 
-<div id="authorizationManager" style="display: none;" class="card card-body">
-  <form id="configForm">
-    <div class="text-center">
-      <label id="deviceNameInput" style="font-size: 23px">Xbox</label><br>
-    </div>
-    <div class="text-center">
+  <div id="authorizationManager" style="display: none;" class="card card-body">
+    <form id="configForm">
       <div class="text-center">
-        <label id="info" style="text-align: center; font-size: 17px; color: white;">Authorization Manager</label><br><br>
+        <label id="deviceNameInput" style="font-size: 23px">Xbox</label><br>
       </div>
-    </div>
-    <div class="form-group">
-      <label for="deviceHostInput">Host</label>
-      <input type="text" class="form-control" id="deviceHostInput"><br>
-      <label for="deviceLiveId">Xbox Live ID</label>
-      <input type="text" class="form-control" id="deviceLiveId"><br>
-      <label for="deviceTokenInput">Web Api Token</label>
-      <input type="text" class="form-control" id="deviceTokenInput"><br>
-      <label for="deviceWebApiControl">Web Api Control</label>
-      <input type="checkbox" class="form-control" id="deviceWebApiControl">
-    </div>
-    <div class="text-center">
-      <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start authorization</button>
-      <button id="authorizeConsoleButton" type="button" class="btn btn-primary">Authorize console</button>
-      <button id="clearTokenButton" type="button" class="btn btn-primary">Clear Web Api Token</button>
-      <button id="configButton" type="button" class="btn btn-primary">Show Config</button>
-    </div>
-  </form>
-</div>
+      <div class="text-center">
+        <div class="text-center">
+          <label id="info" style="text-align: center; font-size: 17px; color: white;">Authorization
+            Manager</label><br><br>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="deviceHostInput">Host</label>
+        <input type="text" class="form-control" id="deviceHostInput"><br>
+        <label for="deviceLiveId">Xbox Live ID</label>
+        <input type="text" class="form-control" id="deviceLiveId"><br>
+        <label for="deviceTokenInput">Web Api Token</label>
+        <input type="text" class="form-control" id="deviceTokenInput"><br>
+        <label for="deviceWebApiControl">Web Api Control</label>
+        <input type="checkbox" class="form-control" id="deviceWebApiControl">
+      </div>
+      <div class="text-center">
+        <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start authorization</button>
+        <button id="authorizeConsoleButton" type="button" class="btn btn-primary">Authorize console</button>
+        <button id="clearTokenButton" type="button" class="btn btn-primary">Clear Web Api Token</button>
+        <button id="configButton" type="button" class="btn btn-primary"><i class="fas fa-gear"></i></button>
+      </div>
+    </form>
+  </div>
+</body>
 
 <script>
   (async () => {
@@ -80,11 +83,9 @@
     document.getElementById('configButton').addEventListener('click', async () => {
       const configButton = document.getElementById('configButton');
       if (this.configButtonState) {
-        configButton.innerText = "Show Config";
         await homebridge.hideSchemaForm();
         this.configButtonState = false;
       } else {
-        configButton.innerText = "Hide Config";
         await homebridge.showSchemaForm();
         this.configButtonState = true;
       };
