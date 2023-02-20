@@ -1,9 +1,6 @@
 "use strict";
 
-const {
-  HomebridgePluginUiServer,
-  RequestError
-} = require('@homebridge/plugin-ui-utils');
+const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-ui-utils');
 const Authentication = require('../src/webApi/authentication.js')
 const fs = require('fs');
 const fsPromises = fs.promises;

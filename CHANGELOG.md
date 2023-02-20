@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.8.0] - (20.02.2023)
+## Changes
+- fix load plugin gui on first start after install
+- authorization manager updated
+- added possibility to set IP Address and Xbox Live ID from Authorization Manager.
+- added possibility to enable Web Api Control from Authorization Manager after authorization successfull done.
+- cleanup
+
 ## [2.7.0] - (13.02.2023)
 ## Changes
 - standarize function of display type and volume control, now volume control -1 None/Disabled, 0 Slider, 1 Fan, please see in readme
