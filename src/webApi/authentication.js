@@ -242,7 +242,7 @@ class AUTHENTICATION {
                     "grant_type": 'authorization_code',
                     "scope": CONSTANS.Scopes.join(' '),
                     "code": webApiToken,
-                    "redirect_uri": 'http://localhost:8581/auth/callback'
+                    "redirect_uri": 'http://localhost:8080/auth/callback'
                 }
 
                 if (this.clientSecret !== '') {
@@ -272,7 +272,7 @@ class AUTHENTICATION {
                     "response_type": 'code',
                     "approval_prompt": 'auto',
                     "scope": CONSTANS.Scopes.join(' '),
-                    "redirect_uri": 'http://localhost:8581/auth/callback'
+                    "redirect_uri": 'http://localhost:8080/auth/callback'
                 }
                 const params = QueryString.stringify(paramsObject);
                 const oauth2URI = `https://login.live.com/oauth20_authorize.srf?${params}`;
