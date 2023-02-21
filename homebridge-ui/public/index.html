@@ -72,6 +72,7 @@
         document.querySelector('#deviceWebApiControl').checked = pluginConfig[0].devices[i].webApiControl || false;
 
         const tokenLength = (pluginConfig[0].devices[i].xboxWebApiToken).length || 0;
+        const setButtonName = tokenLength <= 10 ? document.getElementById('startAuthorizationButton').innerText = "Start authorization" : document.getElementById('startAuthorizationButton').innerText = "Check state";
         const setCheckboxState = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').checked = false : false;
         const setCheckboxMode = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').disabled = true : document.getElementById('deviceWebApiControl').disabled = false;
         const setWebApiControlMode = tokenLength <= 10 ? pluginConfig[0].devices[i].webApiControl = false : false;
