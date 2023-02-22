@@ -59,8 +59,8 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Run this plugin as a [Child Bridge](https://github.com/homebridge/homebridge/wiki/Child-Bridges) (Highly Recommended), this prevent crash Homebridge if plugin crashes.
 * Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin (Highly Recommended). 
 * The sample configuration can be edited and used manually as an alternative. 
-* See the `sample-config.json` file in this repository or copy the example below into your config.json file, making the apporpriate changes before saving it. 
-* Be sure to always make a backup copy of your config.json file before making any changes to it.saving it.  
+* See the `sample-config.json` file in this repository or copy it into your config.json file, making the apporpriate changes before saving it. 
+* Be sure to always make a backup copy of your config.json file before making any changes to it.  
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
@@ -113,89 +113,3 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`. |
 | `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`. |
 | `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`. |
-
-*Example Config:
-
-```json
-{
-	"platform": "XboxTv",
-	"devices": [
-		{
-			"name": "Xbox One",
-			"host": "192.168.1.6",
-			"xboxLiveId": "FD0000000000",
-			"webApiControl": false,
-			"getInputsFromDevice": false,
-			"filterGames": false,
-			"filterApps": false,
-			"filterSystemApps": false,
-			"filterDlc": false,
-			"inputs": [
-						{
-							"name": "A Way Out",
-							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"oneStoreProductId": "",
-							"contentType": "Game"
-						},
-						{
-							"name": "Apple TV",
-							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"oneStoreProductId": "",
-							"contentType": "App"
-						}
-					],
-			"buttons": [
-						{
-							"name": "Play",
-                            "command": "play",
-							"displayType": -1
-						},
-						{
-					        "name": "Record Game DVR",
-					        "command": "recordGameDvr",
-							"displayType": -1
-				        },
-				        {
-					        "name": "Reboot",
-					        "command": "reboot",
-							"displayType": -1
-				        },
-						{
-							"name": "A Way Out",
-							"command": "switchAppGame",
-							"oneStoreProductId": "oneStoreProductId",
-							"displayType": -1
-						}
-					],
-			"sensorPower": false,
-            "sensorInput": false,
-            "sensorScreenSaver": false,
-			"sensorInputs": [
-                {
-                    "name": "Dashboard",
-                    "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-                    "displayType": -1
-                }
-            ],	
-			"xboxWebApiToken": "",
-			"clientId": "",
-			"clientSecret": "",
-			"userToken": "",
-			"userHash": "",
-			"enableDebugMode": false,	
-			"disableLogInfo": false,
-			"disableLogDeviceInfo": false,
-			"infoButtonCommand": "nexus",
-			"volumeControl": 0,
-            "enableMqtt": false,
-			"mqttDebug": false,
-            "mqttHost": "192.168.1.33",
-            "mqttPort": 1883,
-            "mqttPrefix": "home/xbox",
-            "mqttAuth": false,
-            "mqttUser": "user",
-            "mqttPass": "password"
-		}
-	]
-}
-```
