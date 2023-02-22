@@ -48,17 +48,12 @@ class XBOXWEBAPI extends EventEmitter {
 
     async getAuthorizationState() {
         try {
-            const authorized = await this.authentication.checkAuthorization();
-            if (!authorized) {
-                this.emit(`message', 'not authorized, please use authorization manager first.`)
-                this.auhorized = false;
-                return;
-            }
+            await this.authentication.checkAuthorization();
+            this.auhorized = true;
 
             try {
-                this.auhorized = true;
                 this.headers = {
-                    'Authorization': (this.userToken && this.userHash) ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts}`,
+                    'Authorization': (this.userToken && this.userHash) ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
                     'Accept-Language': 'en-US',
                     'x-xbl-contract-version': '4',
                     'x-xbl-client-name': 'XboxApp',
@@ -201,7 +196,7 @@ class XBOXWEBAPI extends EventEmitter {
                 }
 
                 this.emit('consolesList', consolesList);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`Consoles list error: ${error}`);
             };
@@ -255,7 +250,7 @@ class XBOXWEBAPI extends EventEmitter {
                 };
 
                 this.emit('appsList', appsArray);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`Console: ${this.xboxLiveId}, get installed apps error: ${error}`);
             };
@@ -304,7 +299,7 @@ class XBOXWEBAPI extends EventEmitter {
                 };
 
                 this.emit('storageDevices', storageDevices);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`Console: ${this.xboxLiveId}, get storage devices error: ${error}`);
             };
@@ -353,7 +348,7 @@ class XBOXWEBAPI extends EventEmitter {
                 };
 
                 this.emit('userProfile', profileUsers);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`User profile error: ${error}`);
             };
@@ -364,7 +359,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Power', 'WakeUp')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`power on error: ${error}`);
             };
@@ -375,7 +370,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Power', 'TurnOff')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`power off error: ${error}`);
             };
@@ -386,7 +381,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Power', 'Reboot')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`reboot error: ${error}`);
             };
@@ -397,7 +392,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Audio', 'Mute')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`mute error: ${error}`);
             };
@@ -408,7 +403,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Audio', 'Unmute')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`unmute error: ${error}`);
             };
@@ -421,7 +416,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{
                     'oneStoreProductId': oneStoreProductId
                 }])
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`launch app error: ${error}`);
             };
@@ -432,7 +427,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Shell', 'GoHome')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`launch dashboard error: ${error}`);
             };
@@ -445,7 +440,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Shell', 'ShowGuideTab', [{
                     'tabName': 'Guide'
                 }])
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`open guide tab error: ${error}`);
             };
@@ -456,7 +451,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('TV', 'ShowGuide')
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`launch one guide error: ${error}`);
             };
@@ -469,7 +464,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Shell', 'InjectKey', [{
                     'keyType': button
                 }])
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`send button error: ${error}`);
             };
@@ -499,7 +494,7 @@ class XBOXWEBAPI extends EventEmitter {
                 const url = `https://xccs.xboxlive.com/commands`;
                 const postData = JSON.stringify(postParams);
                 await this.httpClient.post(url, this.headers, postData);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(`send command type: ${commandType}, command: ${command}, data: ${params}, error: ${error}.`);
             };

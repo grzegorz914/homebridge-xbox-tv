@@ -253,7 +253,7 @@ class AUTHENTICATION {
                 } else if (this.userToken && this.userHash) {
                     resolve();
                 } else {
-                    reject(error);
+                    reject('Not authorized, check client id in settings.');
                 }
             } catch (error) {
                 reject(error);
