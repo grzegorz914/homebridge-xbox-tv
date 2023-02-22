@@ -16,26 +16,26 @@ const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
 const CONSTANS = require('../constans.json');
-
 class XBOXWEBAPI extends EventEmitter {
     constructor(config) {
         super();
-
         this.xboxLiveId = config.xboxLiveId;
         this.clientId = config.clientId;
         this.clientSecret = config.clientSecret;
         this.userToken = config.userToken;
-        this.uhs = config.uhs;
+        this.userHash = config.userHash;
         this.debugLog = config.debugLog;
 
-        const authenticationConfig = {
+        const authConfig = {
+            xboxLiveUser: config.xboxLiveUser,
+            xboxLivePasswd: config.xboxLivePasswd,
             clientId: config.clientId,
             clientSecret: config.clientSecret,
             userToken: config.userToken,
-            uhs: config.uhs,
+            userHash: config.userHash,
             tokensFile: config.tokensFile
         }
-        this.authentication = new Authentication(authenticationConfig);
+        this.authentication = new Authentication(authConfig);
         this.httpClient = new HttpClient();
 
         this.getAuthorizationState();
@@ -48,7 +48,7 @@ class XBOXWEBAPI extends EventEmitter {
 
     async getAuthorizationState() {
         try {
-            const authorized = await this.authentication.isAuthenticated();
+            const authorized = await this.authentication.checkAuthorization();
             if (!authorized) {
                 this.emit(`message', 'not authorized, please use authorization manager first.`)
                 this.auhorized = false;
@@ -58,7 +58,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 this.auhorized = true;
                 this.headers = {
-                    'Authorization': (this.userToken !== '' && this.uhs !== '') ? `XBL3.0 x=${this.uhs};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
+                    'Authorization': (this.userToken && this.userHash) ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts}`,
                     'Accept-Language': 'en-US',
                     'x-xbl-contract-version': '4',
                     'x-xbl-client-name': 'XboxApp',
@@ -66,12 +66,12 @@ class XBOXWEBAPI extends EventEmitter {
                     'x-xbl-client-version': '39.39.22001.0'
                 }
                 const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
-                const rmEnabled = await this.getWebApiConsoleStatus();
+                const rmEnabled = await this.consoleStatus();
                 const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
-                //await this.getWebApiConsolesList();
-                await this.getWebApiInstalledApps();
-                //await this.getWebApiStorageDevices();
-                //await this.getWebApiUserProfile();
+                //await this.consolesList();
+                await this.installedApps();
+                //await this.storageDevices();
+                //await this.userProfile();
                 this.updateAuthorization();
             } catch (error) {
                 this.emit('error', `web api data error: ${error}, recheck in 60se.`)
@@ -84,7 +84,7 @@ class XBOXWEBAPI extends EventEmitter {
         };
     };
 
-    getWebApiConsoleStatus() {
+    consoleStatus() {
         return new Promise(async (resolve, reject) => {
             try {
                 this.headers['skillplatform'] = 'RemoteManagement';
@@ -122,7 +122,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    getWebApiConsolesList() {
+    consolesList() {
         return new Promise(async (resolve, reject) => {
             try {
                 this.headers['skillplatform'] = 'RemoteManagement';
@@ -208,7 +208,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    getWebApiInstalledApps() {
+    installedApps() {
         return new Promise(async (resolve, reject) => {
             try {
                 this.headers['skillplatform'] = 'RemoteManagement';
@@ -262,7 +262,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    getWebApiStorageDevices() {
+    storageDevices() {
         return new Promise(async (resolve, reject) => {
             try {
                 this.headers['skillplatform'] = 'RemoteManagement';
@@ -311,7 +311,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    getWebApiUserProfile() {
+    userProfile() {
         return new Promise(async (resolve, reject) => {
             try {
                 this.headers['x-xbl-contract-version'] = '3';

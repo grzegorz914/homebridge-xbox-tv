@@ -17,7 +17,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.port = config.dgramPort;
         this.xboxLiveId = config.xboxLiveId;
         this.userToken = config.userToken;
-        this.uhs = config.uhs;
+        this.userHash = config.userHash;
         this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
 
@@ -156,8 +156,8 @@ class XBOXLOCALAPI extends EventEmitter {
                     connectRequest.set('publicKey', this.crypto.getPublicKey());
                     connectRequest.set('iv', this.crypto.getIv());
 
-                    if (this.uhs && this.userToken) {
-                        connectRequest.set('userHash', this.uhs, true);
+                    if (this.userHash && this.userToken) {
+                        connectRequest.set('userHash', this.userHash, true);
                         connectRequest.set('jwt', this.userToken, true);
                         this.isAuthorized = true;
                     }

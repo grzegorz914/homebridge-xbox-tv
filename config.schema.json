@@ -480,6 +480,26 @@
 								}
 							}
 						},
+						"xboxLiveUser": {
+							"title": "Xbox Live User",
+							"type": "string",
+							"placeholder": "abcdefg@hotmail.com",
+							"description": "Here set user for your Xbox Live account, not used at this time.",
+							"required": true,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"xboxLivePasswd": {
+							"title": "Xbox Live Password",
+							"type": "string",
+							"placeholder": "abcdefg@hotmail.com",
+							"description": "Here set password for your Xbox Live account, not used at this time.",
+							"required": true,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"xboxWebApiToken": {
 							"title": "Web Api Token",
 							"type": "string",
@@ -491,20 +511,20 @@
 							}
 						},
 						"clientId": {
-							"title": "Web Api Client ID",
+							"title": "Client ID",
 							"type": "string",
-							"placeholder": "5e5ead27-ed60-482d-b3fc-702b28a97404",
-							"description": "Here set your own Client ID created on Azure AD or leave empty.",
+							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
+							"description": "Here set your own Client ID from Azure AD, leave empty if you do not have own account.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
 						"clientSecret": {
-							"title": "Web Api Client Secret",
+							"title": "Client Secret",
 							"type": "string",
 							"placeholder": "Client Secret",
-							"description": "OHere set your Client Secret reated on Azure AD or leave empty.",
+							"description": "Here set your Client Secret from Azure AD to use with API uthorization, leave empty if you do not have own account.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -520,7 +540,7 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"uhs": {
+						"userHash": {
 							"title": "User Hash",
 							"type": "string",
 							"placeholder": "User Hash",
@@ -578,8 +598,7 @@
 									"enum": [
 										"a"
 									]
-								}
-								,
+								},
 								{
 									"title": "Game Pad B",
 									"enum": [
@@ -807,11 +826,13 @@
 					"expanded": false,
 					"items": [
 						"devices[].webApiControl",
+						"devices[].xboxLiveUser",
+						"devices[].xboxLivePasswd",
 						"devices[].xboxWebApiToken",
 						"devices[].clientId",
 						"devices[].clientSecret",
 						"devices[].userToken",
-						"devices[].uhs"
+						"devices[].userHash"
 					]
 				},
 				{

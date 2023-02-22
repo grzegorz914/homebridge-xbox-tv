@@ -71,17 +71,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
-| `clientId` | If You create app on Azure AD then You can use your own Client Id. |
-| `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
-| `userToken` | Alternate authorization method. |
-| `userUhs` | Alternate authorization method. |
 | `webApiControl` | If enabled, the console can be controlled using Web Api and additional functions are available in `Advanced Settings` section. |
-| `xboxWebApiToken` | Required if `webApiControl` enabled. |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (`None/Disabled`, `Lightbulb`, `Fan`), not working yet. |
-| `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
@@ -93,26 +83,36 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `inputs.contentType` | Here select from available content types. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
 | `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled.|
-| `buttons.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
+| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled. |
+| `buttons.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`. |
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` (active on Power ON) to use with automations. |
 | `sensorInput`| If enabled, then the Input will be exposed as a `Motion Sensor` (active on every Input change) to use with automations. |
 | `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor` (active on change to Screen Saver) to use with automations. |
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). | 
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
+| `xboxWebApiToken` | Required if `webApiControl` enabled. |
+| `clientId` | If You create app on Azure AD then You can use your own Client Id. |
+| `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
+| `userToken` | Alternate authorization method. |
+| `userHash` | Alternate authorization method. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
+| `infoButtonCommand` | Here select the function of `I` button in RC app. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (`None/Disabled`, `Lightbulb`, `Fan`), not working yet. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
-| `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
-| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
-| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty.) |
+| `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker. |
+| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |
+| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty. |
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
-| `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`.|
-| `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`.|
-| `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
+| `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`. |
+| `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`. |
+| `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`. |
 
 *Example Config:
 
@@ -125,11 +125,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 			"host": "192.168.1.6",
 			"xboxLiveId": "FD0000000000",
 			"webApiControl": false,
-			"clientId": "",
-			"clientSecret": "",
-			"userToken": "",
-			"userUhs": "",
-			"xboxWebApiToken": "",
 			"getInputsFromDevice": false,
 			"filterGames": false,
 			"filterApps": false,
@@ -182,6 +177,11 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
                     "displayType": -1
                 }
             ],	
+			"xboxWebApiToken": "",
+			"clientId": "",
+			"clientSecret": "",
+			"userToken": "",
+			"userHash": "",
 			"enableDebugMode": false,	
 			"disableLogInfo": false,
 			"disableLogDeviceInfo": false,

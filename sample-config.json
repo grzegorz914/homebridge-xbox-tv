@@ -23,11 +23,6 @@
 					"host": "192.168.1.6",
 					"xboxLiveId": "FD0000000000",
 					"webApiControl": false,
-					"clientId": "",
-					"clientSecret": "",
-					"userToken": "",
-					"userUhs": "",
-					"xboxWebApiToken": "",
 					"getInputsFromDevice": false,
 					"filterGames": false,
 					"filterApps": false,
@@ -80,6 +75,11 @@
 							"displayType": -1
 						}
 					],
+					"xboxWebApiToken": "",
+					"clientId": "",
+					"clientSecret": "",
+					"userToken": "",
+					"userHash": "",
 					"enableDebugMode": false,
 					"disableLogInfo": false,
 					"disableLogDeviceInfo": false,

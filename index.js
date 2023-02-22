@@ -78,11 +78,13 @@ class XBOXDEVICE {
 		this.sensorInput = config.sensorInput || false;
 		this.sensorScreenSaver = config.sensorScreenSaver || false;
 		this.sensorInputs = config.sensorInputs || [];
-		this.xboxWebApiToken = config.xboxWebApiToken || '';
-		this.clientId = config.clientId || '5e5ead27-ed60-482d-b3fc-702b28a97404';
-		this.clientSecret = config.clientSecret || '';
-		this.userToken = config.userToken || '';
-		this.uhs = config.uhs || '';
+		this.xboxLiveUser = config.xboxLiveUser;
+		this.xboxLivePasswd = config.xboxLivePasswd;
+		this.xboxWebApiToken = config.xboxWebApiToken;
+		this.clientId = config.clientId;
+		this.clientSecret = config.clientSecret;
+		this.userToken = config.userToken;
+		this.userHash = config.userHash;
 		this.enableDebugMode = config.enableDebugMode || false;
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
@@ -191,7 +193,7 @@ class XBOXDEVICE {
 			host: this.host,
 			xboxLiveId: this.xboxLiveId,
 			userToken: this.userToken,
-			uhs: this.uhs,
+			userHash: this.userHash,
 			infoLog: this.disableLogInfo,
 			debugLog: this.enableDebugMode
 		});
@@ -310,10 +312,12 @@ class XBOXDEVICE {
 		if (this.webApiControl) {
 			this.xboxWebApi = new XboxWebApi({
 				xboxLiveId: this.xboxLiveId,
+				xboxLiveUser: this.xboxLiveUser,
+				xboxLivePasswd: this.xboxLivePasswd,
 				clientId: this.clientId,
 				clientSecret: this.clientSecret,
 				userToken: this.userToken,
-				uhs: this.uhs,
+				userHash: this.userHash,
 				tokensFile: this.authTokenFile,
 				debugLog: this.enableDebugMode
 			});
