@@ -10,7 +10,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
     super();
 
     //clear web api token
-    this.onRequest('/clearToken', this.clearToken.bind(this));
+    this.onRequest('/clearToken', this.startAuthorization.bind(this));
 
     //start console authorization
     this.onRequest('/startAuthorization', this.startAuthorization.bind(this));
@@ -19,23 +19,13 @@ class PluginUiServer extends HomebridgePluginUiServer {
     this.ready();
   };
 
-  async clearToken(payload) {
-    try {
-      const host = payload.host;
-      const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
-      await fsPromises.writeFile(authTokenFile, JSON.stringify({}));
-      return true;
-    } catch (e) {
-      throw new RequestError(`Clear token error: ${e.message}`);
-    };
-  };
-
   async startAuthorization(payload) {
 
     try {
+      const mode = payload.mode;
       const host = payload.host;
       const webApiToken = payload.webApiToken;
-      const authTokenFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
+      const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
       const authConfig = {
         xboxLiveUser: payload.xboxLiveUser,
@@ -44,23 +34,17 @@ class PluginUiServer extends HomebridgePluginUiServer {
         clientSecret: payload.clientSecret,
         userToken: payload.userToken,
         userHash: payload.userHash,
-        tokensFile: authTokenFile
+        tokensFile: tokensFile
       }
       const authentication = new Authentication(authConfig);
 
-      try {
-        await authentication.checkAuthorization();
-        this.data = {
-          info: 'Console already authorized. To start a new athorization process you need clear the Web API Token first.',
-          status: 0
-        };
-      } catch (error) {
-        if (webApiToken) {
+      switch (mode) {
+        case 0:
           try {
-            await authentication.accessToken(webApiToken);
+            await authentication.clearToken();
             this.data = {
-              info: 'Console successfully authorized and token file saved.',
-              status: 2
+              info: 'Web Api Token cleared, now You can start new authorization process.',
+              status: 0
             };
           } catch (error) {
             this.data = {
@@ -69,22 +53,47 @@ class PluginUiServer extends HomebridgePluginUiServer {
               error: error
             };
           };
-        } else {
+          break;
+        case 1:
           try {
-            const oauth2URI = await authentication.generateAuthorizationUrl();
-            //this.pushEvent('webApiToken', { code: webApiToken });
+            await authentication.checkAuthorization();
             this.data = {
-              info: oauth2URI,
-              status: 1
+              info: 'Console authorized and activated. To start new process please clear Web API Token first.',
+              status: 0
             };
           } catch (error) {
-            this.data = {
-              info: 'Error',
-              status: 3,
-              error: error
+            if (webApiToken) {
+              try {
+                await authentication.accessToken(webApiToken);
+                this.data = {
+                  info: 'Activation successfull, now restart plugin and have fun!!!',
+                  status: 2
+                };
+              } catch (error) {
+                this.data = {
+                  info: 'Error',
+                  status: 3,
+                  error: error
+                };
+              };
+            } else {
+              try {
+                const oauth2URI = await authentication.generateAuthorizationUrl();
+                //this.pushEvent('webApiToken', { code: webApiToken });
+                this.data = {
+                  info: oauth2URI,
+                  status: 1
+                };
+              } catch (error) {
+                this.data = {
+                  info: 'Error',
+                  status: 3,
+                  error: error
+                };
+              };
             };
           };
-        };
+          break;
       };
 
       return this.data;

@@ -98,20 +98,33 @@
       try {
         homebridge.showSpinner();
         const host = pluginConfig[0].devices[this.deviceIndex].host;
-        const response = await homebridge.request('/clearToken', { host: host });
+        const response = await homebridge.request('/clearToken', { mode: 0, host: host });
 
-        document.getElementById('deviceToken').value = '';
-        document.getElementById('startAuthorizationButton').removeAttribute("disabled");
-        document.getElementById('startAuthorizationButton').innerText = "Start authorization";
-        document.getElementById('deviceWebApiControl').checked = false;
-        document.getElementById('deviceWebApiControl').disabled = true;
-        document.getElementById('info').innerHTML = 'Web Api Token cleared, now You can start new authorization process.';
-        document.getElementById('info').style.color = 'green';
-        pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
-        pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
+        const info = response.info;
+        const status = response.status;
+        const error = response.error;
 
-        await homebridge.updatePluginConfig(pluginConfig);
-        await homebridge.savePluginConfig(pluginConfig);
+        switch (status) {
+          case 0:
+            document.getElementById('deviceToken').value = '';
+            document.getElementById('startAuthorizationButton').removeAttribute("disabled");
+            document.getElementById('startAuthorizationButton').innerText = "Start authorization";
+            document.getElementById('deviceWebApiControl').checked = false;
+            document.getElementById('deviceWebApiControl').disabled = true;
+            document.getElementById('info').innerHTML = info;
+            document.getElementById('info').style.color = 'green';
+            pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
+            pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
+
+            await homebridge.updatePluginConfig(pluginConfig);
+            await homebridge.savePluginConfig(pluginConfig);
+            break;
+          case 3:
+            document.getElementById('info').innerHTML = `Clear token error: ${JSON.stringify(error, null, 2)}`;
+            document.getElementById('info').style.color = 'red';
+            break;
+        };
+
         homebridge.hideSpinner();
       } catch (e) {
         homebridge.toast.error(`Clear Web Api Token error: ${e.message}`);
@@ -136,6 +149,7 @@
         const xboxWebApiToken = pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken;
 
         const payload = {
+          mode: 1,
           host: host,
           xboxLiveUser: xboxLiveUser,
           xboxLivePasswd: xboxLivePasswd,
@@ -152,7 +166,7 @@
 
         switch (status) {
           case 0:
-            document.getElementById('info').innerHTML = 'Console authorized and activated. To start new process please clear Web API Token first.';
+            document.getElementById('info').innerHTML = info;
             document.getElementById('info').style.color = 'green';
             document.getElementById('startAuthorizationButton').innerText = "Check state";
             document.getElementById('deviceWebApiControl').disabled = false;
@@ -173,7 +187,7 @@
             });
             break;
           case 2:
-            document.getElementById('info').innerHTML = 'Activation successfull, now restart plugin and have fun!!!';
+            document.getElementById('info').innerHTML = info;
             document.getElementById('info').style.color = 'green';
             document.getElementById('startAuthorizationButton').innerText = "Check state";
             document.getElementById('deviceWebApiControl').disabled = false;
@@ -186,13 +200,6 @@
           case 3:
             document.getElementById('info').innerHTML = `Authorization error: ${JSON.stringify(error, null, 2)}`;
             document.getElementById('info').style.color = 'red';
-            document.getElementById('startAuthorizationButton').innerText = "Start authorization";
-            document.getElementById('deviceWebApiControl').checked = false;
-            document.getElementById('deviceWebApiControl').disabled = true;
-            pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
-
-            await homebridge.updatePluginConfig(pluginConfig)
-            await homebridge.savePluginConfig(pluginConfig);
             break;
         };
 

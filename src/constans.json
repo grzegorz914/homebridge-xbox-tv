@@ -186,8 +186,12 @@
         "dd01": "simple.discoveryResponse",
         "dd02": "simple.powerOn"
     },
-    "Scopes": [
-        "XboxLive.signin",
-        "XboxLive.offline_access"
-    ]
+    "oauth2URI": "https://login.live.com/oauth20_authorize.srf?",
+    "AccessTokenUrl": "https://login.live.com/oauth20_token.srf",
+    "RefreshTokenUrl": "https://login.live.com/oauth20_token.srf",
+    "UserTokenUrl": "https://user.auth.xboxlive.com/user/authenticate",
+    "XtsxTokenUrl": "https://xsts.auth.xboxlive.com/xsts/authorize",
+    "RedirectUri": "http://localhost:8888/auth/callback",
+    "Scopes": "XboxLive.signin XboxLive.offline_access",
+    "ClientId": "a34ac209-edab-4b08-91e7-a4558d8da1bd"
 }

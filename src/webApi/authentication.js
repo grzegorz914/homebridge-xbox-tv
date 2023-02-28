@@ -1,5 +1,4 @@
 'use strict';
-const axios = require('axios');
 const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
@@ -11,7 +10,7 @@ class AUTHENTICATION {
         this.httpClient = new HttpClient();
         this.xboxLiveUser = config.xboxLiveUser;
         this.xboxLivePasswd = config.xboxLivePasswd;
-        this.clientId = config.clientId || 'a34ac209-edab-4b08-91e7-a4558d8da1bd';
+        this.clientId = config.clientId || CONSTANS.ClientId;
         this.clientSecret = config.clientSecret;
         this.userToken = config.userToken;
         this.userHash = config.userHash;
@@ -145,16 +144,15 @@ class AUTHENTICATION {
                 const payload = {
                     "client_id": this.clientId,
                     "grant_type": 'authorization_code',
-                    "scope": CONSTANS.Scopes.join(' '),
+                    "scope": CONSTANS.Scopes,
                     "code": webApiToken,
-                    "redirect_uri": 'http://localhost:8888/auth/callback'
+                    "redirect_uri": CONSTANS.RedirectUri
                 }
                 const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
 
                 const postData = QueryString.stringify(payload);
-                const url = 'https://login.live.com/oauth20_token.srf';
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.post(url, headers, postData);
+                const data = await this.httpClient.post(CONSTANS.AccessTokenUrl, headers, postData);
                 const token = JSON.parse(data);
                 token.issued = new Date().toISOString();
                 this.tokens.oauth = token;
@@ -172,15 +170,14 @@ class AUTHENTICATION {
                 const payload = {
                     "client_id": this.clientId,
                     "grant_type": "refresh_token",
-                    "scope": CONSTANS.Scopes.join(' '),
+                    "scope": CONSTANS.Scopes,
                     "refresh_token": refreshToken,
                 }
                 const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
 
                 const postData = QueryString.stringify(payload);
-                const url = 'https://login.live.com/oauth20_token.srf';
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.post(url, headers, postData);
+                const data = await this.httpClient.post(CONSTANS.RefreshTokenUrl, headers, postData);
                 const token = JSON.parse(data);
                 token.issued = new Date().toISOString();
                 resolve(token);
@@ -204,9 +201,8 @@ class AUTHENTICATION {
                 }
 
                 const postData = JSON.stringify(payload);
-                const url = 'https://user.auth.xboxlive.com/user/authenticate';
                 const headers = { 'Content-Type': 'application/json' };
-                const data = await this.httpClient.post(url, headers, postData);
+                const data = await this.httpClient.post(CONSTANS.UserTokenUrl, headers, postData);
                 const token = JSON.parse(data);
                 resolve(token);
             } catch (error) {
@@ -228,9 +224,8 @@ class AUTHENTICATION {
                 }
 
                 const postData = JSON.stringify(payload);
-                const url = 'https://xsts.auth.xboxlive.com/xsts/authorize';
                 const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-                const data = await this.httpClient.post(url, headers, postData);
+                const data = await this.httpClient.post(CONSTANS.XtsxTokenUrl, headers, postData);
                 const token = JSON.parse(data);
                 resolve(token);
             } catch (error) {
@@ -262,40 +257,18 @@ class AUTHENTICATION {
     }
 
     generateAuthorizationUrl() {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             try {
                 const payload = {
                     "client_id": this.clientId,
                     "response_type": 'code',
                     "approval_prompt": 'auto',
-                    "scope": CONSTANS.Scopes.join(' '),
-                    "redirect_uri": 'http://localhost:8888/auth/callback'
+                    "scope": CONSTANS.Scopes,
+                    "redirect_uri": CONSTANS.RedirectUri
                 }
                 const params = QueryString.stringify(payload);
-                const oauth2URI = `https://login.live.com/oauth20_authorize.srf?${params}`;
+                const oauth2URI = `${CONSTANS.oauth2URI}${params}`;
                 resolve(oauth2URI);
-            } catch (error) {
-                reject(error);
-            };
-        })
-    }
-
-    getCode(oauth2URI) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const payload = {
-                    method: 'GET',
-                    params: {
-                        user: this.xboxLiveUser,
-                        password: this.xboxLivePasswd
-                    }
-                }
-
-                const response = await axios(oauth2URI, payload);
-                const url = response.data;
-                const parsedUrl = url.parse(url, true);
-                const webApiToken = QueryString.parse(parsedUrl).code;
-                resolve(webApiToken);
             } catch (error) {
                 reject(error);
             };
@@ -308,6 +281,25 @@ class AUTHENTICATION {
                 tokens = JSON.stringify(tokens);
                 await fsPromises.writeFile(this.tokensFile, tokens);
                 await this.checkAuthorization();
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        })
+    }
+
+    clearToken() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!fs.existsSync(this.tokensFile)) {
+                    const object = JSON.stringify({});
+                    fs.writeFileSync(this.authTokenFile, object);
+
+                    reject('Token file not exist, empty file created now please start authorization again.');
+                    return;
+                };
+
+                await fsPromises.writeFile(this.tokensFile, JSON.stringify({}));
                 resolve();
             } catch (error) {
                 reject(error);

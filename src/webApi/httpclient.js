@@ -1,7 +1,7 @@
 'use strict';
+const UrlParser = require('url');
 const Https = require('https');
 const Http = require('http');
-const UrlParser = require('url');
 
 class HTTPCLIENT {
     constructor() { }

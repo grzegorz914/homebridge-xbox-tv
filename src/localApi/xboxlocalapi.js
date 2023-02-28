@@ -171,7 +171,6 @@ class XBOXLOCALAPI extends EventEmitter {
         }).on('connectResponse', async (message) => {
             const connectionResult = message.packetDecoded.protectedPayload.connectResult;
             const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
-            this.isConnected = true;
 
             if (connectionResult !== 0) {
                 const errorTable = {
@@ -190,6 +189,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 return;
             };
 
+            this.isConnected = true;
             try {
                 const participantId = message.packetDecoded.protectedPayload.participantId;
                 this.targetParticipantId = participantId;
@@ -297,12 +297,12 @@ class XBOXLOCALAPI extends EventEmitter {
             try {
                 for (let i = 0; i < 15; i++) {
                     if (this.isConnected) {
-                        resolve(true);
+                        resolve();
                         return;
                     }
                     this.sendPowerOn();
-                    await new Promise(resolve => setTimeout(resolve, 600));
-                    resolve(true);
+                    await new Promise(resolve => setTimeout(resolve, 750));
+                    resolve();
                 }
                 this.emit('disconnected', 'Power On failed, please try again.');
             } catch (error) {
@@ -338,7 +338,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 await new Promise(resolve => setTimeout(resolve, 3500));
                 await this.disconnect();
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -359,7 +359,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 recordGameDvr.set('endTimeDelta', 0);
                 const message = recordGameDvr.pack(this);
                 await this.sendSocketMessage(message);
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -379,7 +379,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const message = disconnect.pack(this);
                 await this.sendSocketMessage(message);
                 this.emit('disconnected', 'Disconnected.');
-                resolve(true);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -411,8 +411,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     170: 'Connect Request'
                 }
                 const debug = this.debugLog ? this.emit('debug', `Socket send ${sendMessage[bytes]}.`) : false;
-                this.bytes = bytes;
-                resolve(true);
+                resolve();
             });
         });
     };

@@ -67,7 +67,7 @@ class XBOXDEVICE {
 		this.host = config.host;
 		this.xboxLiveId = config.xboxLiveId;
 		this.webApiControl = config.webApiControl || false;
-		this.getInputsFromDevice = config.getInputsFromDevice || false;
+		this.getInputsFromDevice = this.webApiControl ? config.getInputsFromDevice : false;
 		this.filterGames = config.filterGames || false;
 		this.filterApps = config.filterApps || false;
 		this.filterSystemApps = config.filterSystemApps || false;

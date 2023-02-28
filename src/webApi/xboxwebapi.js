@@ -42,7 +42,7 @@ class XBOXWEBAPI extends EventEmitter {
     }
 
     async updateAuthorization() {
-        await new Promise(resolve => setTimeout(resolve, 60000));
+        await new Promise(resolve => setTimeout(resolve, 600000));
         this.getAuthorizationState();
     };
 

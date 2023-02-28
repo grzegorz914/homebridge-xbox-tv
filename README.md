@@ -113,3 +113,15 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`. |
 | `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`. |
 | `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`. |
+
+## Create app on Azure AD
+* Go to [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+* Register new app *+ New registration*
+  * Enter a name for your app
+  * Set *Supported account types* to *Personal Microsoft accounts only*
+  * Click register
+  * Choose *Redirect URIs* -> *Add a Redirect URI*
+  * Click "Add a platform" -> "Mobile and desktop applications"
+  * Enter custom redirect URI *http://localhost:8888/auth/callback*
+* From the overview of your app page, copy *Application (client) ID* to `clientId`
+* Zave restart plugin and authorize console again and have fun.
