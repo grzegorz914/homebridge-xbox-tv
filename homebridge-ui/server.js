@@ -21,84 +21,72 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
   async startAuthorization(payload) {
 
-    try {
-      const mode = payload.mode;
-      const host = payload.host;
-      const webApiToken = payload.webApiToken;
-      const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
+    const mode = payload.mode;
+    const host = payload.host;
+    const webApiToken = payload.webApiToken;
+    const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
-      const authConfig = {
-        xboxLiveUser: payload.xboxLiveUser,
-        xboxLivePasswd: payload.xboxLivePasswd,
-        clientId: payload.clientId,
-        clientSecret: payload.clientSecret,
-        userToken: payload.userToken,
-        userHash: payload.userHash,
-        tokensFile: tokensFile
-      }
-      const authentication = new Authentication(authConfig);
+    const authConfig = {
+      xboxLiveUser: payload.xboxLiveUser,
+      xboxLivePasswd: payload.xboxLivePasswd,
+      clientId: payload.clientId,
+      clientSecret: payload.clientSecret,
+      userToken: payload.userToken,
+      userHash: payload.userHash,
+      tokensFile: tokensFile
+    }
+    const authentication = new Authentication(authConfig);
 
-      switch (mode) {
-        case 0:
+    let data = {};
+    if (mode === 0) {
+      try {
+        await authentication.clearToken();
+        data = {
+          info: 'Web Api Token cleared, now You can start new authorization process.',
+          status: 0
+        };
+      } catch (error) {
+        data = {
+          info: 'Clear token error:',
+          status: 3,
+          error: error
+        };
+      };
+      return data;
+    };
+
+    if (mode === 1) {
+      let data = {};
+      try {
+        await authentication.checkAuthorization();
+        data = {
+          info: 'Console authorized and activated. To start new process please clear Web API Token first.',
+          status: 0
+        };
+      } catch (error) {
+        if (webApiToken) {
           try {
-            await authentication.clearToken();
-            this.data = {
-              info: 'Web Api Token cleared, now You can start new authorization process.',
-              status: 0
+            await authentication.accessToken(webApiToken);
+            data = {
+              info: 'Activation successfull, now restart plugin and have fun!!!',
+              status: 2
             };
           } catch (error) {
-            this.data = {
+            data = {
               info: 'Error',
               status: 3,
               error: error
             };
           };
-          break;
-        case 1:
-          try {
-            await authentication.checkAuthorization();
-            this.data = {
-              info: 'Console authorized and activated. To start new process please clear Web API Token first.',
-              status: 0
-            };
-          } catch (error) {
-            if (webApiToken) {
-              try {
-                await authentication.accessToken(webApiToken);
-                this.data = {
-                  info: 'Activation successfull, now restart plugin and have fun!!!',
-                  status: 2
-                };
-              } catch (error) {
-                this.data = {
-                  info: 'Error',
-                  status: 3,
-                  error: error
-                };
-              };
-            } else {
-              try {
-                const oauth2URI = await authentication.generateAuthorizationUrl();
-                //this.pushEvent('webApiToken', { code: webApiToken });
-                this.data = {
-                  info: oauth2URI,
-                  status: 1
-                };
-              } catch (error) {
-                this.data = {
-                  info: 'Error',
-                  status: 3,
-                  error: error
-                };
-              };
-            };
+        } else {
+          const oauth2URI = await authentication.generateAuthorizationUrl();
+          data = {
+            info: oauth2URI,
+            status: 1
           };
-          break;
+        };
       };
-
-      return this.data;
-    } catch (e) {
-      throw new RequestError(`Authorization data error: ${e.message}`);
+      return data;
     };
   };
 };

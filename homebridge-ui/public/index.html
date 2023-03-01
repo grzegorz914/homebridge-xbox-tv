@@ -63,6 +63,7 @@
         const setCheckboxState = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').checked = false : false;
         const setCheckboxMode = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').disabled = true : document.getElementById('deviceWebApiControl').disabled = false;
         const setWebApiControlMode = tokenLength <= 10 ? pluginConfig[0].devices[i].webApiControl = false : false;
+        await homebridge.updatePluginConfig(pluginConfig)
         this.deviceIndex = i;
       });
       const click = i === devicesCount - 1 ? document.getElementById(`button0`).click() : false;
@@ -120,7 +121,7 @@
             await homebridge.savePluginConfig(pluginConfig);
             break;
           case 3:
-            document.getElementById('info').innerHTML = `Clear token error: ${JSON.stringify(error, null, 2)}`;
+            document.getElementById('info').innerHTML = JSON.stringify(error, null, 2);
             document.getElementById('info').style.color = 'red';
             break;
         };
@@ -138,6 +139,7 @@
       try {
         homebridge.showSpinner();
         await homebridge.updatePluginConfig(pluginConfig)
+        document.getElementById('info').innerHTML = '';
 
         const host = pluginConfig[0].devices[this.deviceIndex].host;
         const xboxLiveUser = pluginConfig[0].devices[this.deviceIndex].xboxLiveUser;
@@ -172,19 +174,24 @@
             document.getElementById('deviceWebApiControl').disabled = false;
             break;
           case 1:
-            document.getElementById('info').innerHTML = 'Now go to the opened window, login to Your Xbox Live account and allow this plugin. Next from the response URI copy the part after *?code=* and paste it to the *Web Api Token and press *Activate Console*.';
+            homebridge.hideSpinner();
             document.getElementById('info').style.color = 'yellow';
             document.getElementById('startAuthorizationButton').innerText = "Activate console";
             document.getElementById('deviceWebApiControl').checked = false;
             document.getElementById('deviceWebApiControl').disabled = true;
             pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
-            open(info);
 
-            homebridge.addEventListener('webApiToken', async (webApiToken) => {
-              document.getElementById('deviceToken').value = webApiToken;
-              await homebridge.updatePluginConfig(pluginConfig)
-              await homebridge.savePluginConfig(pluginConfig);
-            });
+            let timeLeft = 15;
+            let timerId = setInterval(() => {
+              if (timeLeft <= 0) {
+                open(info);
+                clearInterval(timerId);
+                document.getElementById('info').innerHTML = `Now paste the *code* to the *Web Api Token* and press *Activate Console*.`;
+              } else {
+                document.getElementById('info').innerHTML = `After ${timeLeft} sec. on the opened page, sign in to your Xbox Live account and give permission for Xbox TV. Next from the response URI copy the part after *?code=* and return to Authorization Manager.`;
+                timeLeft--;
+              }
+            }, 1000);
             break;
           case 2:
             document.getElementById('info').innerHTML = info;

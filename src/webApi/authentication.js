@@ -291,15 +291,8 @@ class AUTHENTICATION {
     clearToken() {
         return new Promise(async (resolve, reject) => {
             try {
-                if (!fs.existsSync(this.tokensFile)) {
-                    const object = JSON.stringify({});
-                    fs.writeFileSync(this.authTokenFile, object);
-
-                    reject('Token file not exist, empty file created now please start authorization again.');
-                    return;
-                };
-
-                await fsPromises.writeFile(this.tokensFile, JSON.stringify({}));
+                const object = JSON.stringify({});
+                await fsPromises.writeFile(this.tokensFile, object);
                 resolve();
             } catch (error) {
                 reject(error);
