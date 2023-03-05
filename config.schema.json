@@ -480,6 +480,16 @@
 								}
 							}
 						},
+						"webApiPowerOnOff": {
+							"title": "Power Control",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable possibility power ON/OFF console over Web Api.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"xboxLiveUser": {
 							"title": "Xbox Live User",
 							"type": "string",
@@ -826,6 +836,7 @@
 					"expanded": false,
 					"items": [
 						"devices[].webApiControl",
+						"devices[].webApiPowerOnOff",
 						"devices[].xboxLiveUser",
 						"devices[].xboxLivePasswd",
 						"devices[].xboxWebApiToken",

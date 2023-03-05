@@ -75,6 +75,7 @@
 							"displayType": -1
 						}
 					],
+					"webApiPowerOnOff": false,
 					"xboxWebApiToken": "",
 					"clientId": "",
 					"clientSecret": "",

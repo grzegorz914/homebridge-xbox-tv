@@ -78,6 +78,7 @@ class XBOXDEVICE {
 		this.sensorInput = config.sensorInput || false;
 		this.sensorScreenSaver = config.sensorScreenSaver || false;
 		this.sensorInputs = config.sensorInputs || [];
+		this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
 		this.xboxLiveUser = config.xboxLiveUser;
 		this.xboxLivePasswd = config.xboxLivePasswd;
 		this.xboxWebApiToken = config.xboxWebApiToken;
@@ -429,7 +430,7 @@ class XBOXDEVICE {
 			})
 			.onSet(async (state) => {
 				try {
-					const setPower = state ? await this.xboxLocalApi.powerOn() : await this.xboxLocalApi.powerOff();
+					const setPower = this.webApiPowerOnOff ? (state ? await this.xboxWebApi.powerOn() : await this.xboxWebApi.powerOff()) : (state ? await this.xboxLocalApi.powerOn() : await this.xboxLocalApi.powerOff());
 					const logInfo = this.disableLogInfo || this.firstRun ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Power, error: ${error}`);

@@ -262,7 +262,7 @@ class MESSAGE {
                 clientVersion: Type.uInt32('15'),
                 osMajorVersion: Type.uInt32('6'),
                 osMinorVersion: Type.uInt32('2'),
-                displayName: Type.sgString('Xbox-Smartglass-Node'),
+                displayName: Type.sgString('Xbox-TV'),
             },
             json: {
                 json: Type.sgString('{}')

@@ -208,16 +208,16 @@ class SIMPLE {
 
         switch (type) {
             case 'powerOn':
-                packet = this.pack1(Buffer.from('DD02', 'hex'), payload.toBuffer(), '');
+                packet = this.pack1(Buffer.from('dd02', 'hex'), payload.toBuffer(), '');
                 break;
             case 'discoveryRequest':
-                packet = this.pack1(Buffer.from('DD00', 'hex'), payload.toBuffer(), Buffer.from('0000', 'hex'));
+                packet = this.pack1(Buffer.from('dd00', 'hex'), payload.toBuffer(), Buffer.from('0000', 'hex'));
                 break;
             case 'discoveryResponse':
-                packet = this.pack1(Buffer.from('DD01', 'hex'), payload.toBuffer(), '2');
+                packet = this.pack1(Buffer.from('dd01', 'hex'), payload.toBuffer(), '2');
                 break;
             case 'connectRequest':
-                packet = this.pack1(Buffer.from('CC00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
+                packet = this.pack1(Buffer.from('cc00', 'hex'), payload.toBuffer(), Buffer.from('0002', 'hex'), this.protectedPayloadLength, this.protectedPayloadLengthReal);
                 // Sign protected payload
                 const protectedPayloadHash = xboxlocalapi.crypto.sign(packet);
                 packet = Buffer.concat([
@@ -226,7 +226,7 @@ class SIMPLE {
                 ]);
                 break;
             case 'connectResponse':
-                packet = this.pack1(Buffer.from('CC01', 'hex'), payload.toBuffer(), '2')
+                packet = this.pack1(Buffer.from('cc01', 'hex'), payload.toBuffer(), '2')
                 break;
             case 'connectRequestProtected':
                 // Pad packet

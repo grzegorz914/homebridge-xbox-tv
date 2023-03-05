@@ -361,7 +361,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Power', 'WakeUp')
                 resolve();
             } catch (error) {
-                reject(`power on error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -372,7 +372,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Power', 'TurnOff')
                 resolve();
             } catch (error) {
-                reject(`power off error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -383,7 +383,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Power', 'Reboot')
                 resolve();
             } catch (error) {
-                reject(`reboot error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -394,7 +394,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Audio', 'Mute')
                 resolve();
             } catch (error) {
-                reject(`mute error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -405,7 +405,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Audio', 'Unmute')
                 resolve();
             } catch (error) {
-                reject(`unmute error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -418,7 +418,7 @@ class XBOXWEBAPI extends EventEmitter {
                 }])
                 resolve();
             } catch (error) {
-                reject(`launch app error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -429,7 +429,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Shell', 'GoHome')
                 resolve();
             } catch (error) {
-                reject(`launch dashboard error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -442,7 +442,7 @@ class XBOXWEBAPI extends EventEmitter {
                 }])
                 resolve();
             } catch (error) {
-                reject(`open guide tab error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -453,7 +453,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('TV', 'ShowGuide')
                 resolve();
             } catch (error) {
-                reject(`launch one guide error: ${error}`);
+                reject(error);
             };
         });
     }
@@ -466,12 +466,12 @@ class XBOXWEBAPI extends EventEmitter {
                 }])
                 resolve();
             } catch (error) {
-                reject(`send button error: ${error}`);
+                reject(error);
             };
         });
     }
 
-    send(commandType, command, params) {
+    send(commandType, command, payload) {
         return new Promise(async (resolve, reject) => {
             try {
                 if (!this.auhorized) {
@@ -480,13 +480,14 @@ class XBOXWEBAPI extends EventEmitter {
                 };
 
                 const sessionid = Uuid4();
+                const params = payload ? payload : [];
                 const postParams = {
                     "destination": "Xbox",
                     "type": commandType,
                     "command": command,
                     "sessionId": sessionid,
                     "sourceId": "com.microsoft.smartglass",
-                    "parameters": params = params || [],
+                    "parameters": params,
                     "linkedXboxId": this.xboxLiveId,
                 }
 
@@ -496,7 +497,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.httpClient.post(url, this.headers, postData);
                 resolve();
             } catch (error) {
-                reject(`send command type: ${commandType}, command: ${command}, data: ${params}, error: ${error}.`);
+                reject(`send command type: ${commandType}, command: ${command}, params: ${payload}, error: ${JSON.stringify(error, null, 2)}`);
             };
         });
     }

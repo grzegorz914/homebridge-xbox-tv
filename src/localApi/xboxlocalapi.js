@@ -301,7 +301,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         return;
                     }
                     this.sendPowerOn();
-                    await new Promise(resolve => setTimeout(resolve, 750));
+                    await new Promise(resolve => setTimeout(resolve, 600));
                     resolve();
                 }
                 this.emit('disconnected', 'Power On failed, please try again.');
