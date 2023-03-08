@@ -38,6 +38,11 @@ class XBOXWEBAPI extends EventEmitter {
         this.authentication = new Authentication(authConfig);
         this.httpClient = new HttpClient();
 
+        this.on('disconnected', async () => {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            this.emit('stateChanged', false);
+        });
+
         this.getAuthorizationState();
     }
 
@@ -49,6 +54,7 @@ class XBOXWEBAPI extends EventEmitter {
     async getAuthorizationState() {
         try {
             await this.authentication.checkAuthorization();
+            const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
             this.auhorized = true;
 
             try {
@@ -60,7 +66,6 @@ class XBOXWEBAPI extends EventEmitter {
                     'x-xbl-client-type': 'UWA',
                     'x-xbl-client-version': '39.39.22001.0'
                 }
-                const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
                 const rmEnabled = await this.consoleStatus();
                 const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
                 //await this.consolesList();
@@ -69,7 +74,7 @@ class XBOXWEBAPI extends EventEmitter {
                 //await this.userProfile();
                 this.updateAuthorization();
             } catch (error) {
-                this.emit('error', `web api data error: ${error}, recheck in 60se.`)
+                this.emit('error', `web Api data error: ${error}, recheck in 60se.`)
                 this.updateAuthorization();
             };
         } catch (error) {
@@ -361,6 +366,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.send('Power', 'WakeUp')
                 resolve();
             } catch (error) {
+                this.emit('powerOnError', false);
                 reject(error);
             };
         });
@@ -497,7 +503,7 @@ class XBOXWEBAPI extends EventEmitter {
                 await this.httpClient.post(url, this.headers, postData);
                 resolve();
             } catch (error) {
-                reject(`send command type: ${commandType}, command: ${command}, params: ${payload}, error: ${JSON.stringify(error, null, 2)}`);
+                reject(`send command type: ${commandType}, command: ${command}, params: ${payload}, error: ${JSON.stringify(error)}`);
             };
         });
     }

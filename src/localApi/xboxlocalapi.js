@@ -300,26 +300,20 @@ class XBOXLOCALAPI extends EventEmitter {
                         resolve();
                         return;
                     }
-                    this.sendPowerOn();
+                    const powerOn = new Packer('simple.powerOn');
+                    powerOn.set('liveId', this.xboxLiveId);
+                    const message = powerOn.pack(this);
+                    await this.sendSocketMessage(message);
+
                     await new Promise(resolve => setTimeout(resolve, 600));
                     resolve();
                 }
                 this.emit('disconnected', 'Power On failed, please try again.');
             } catch (error) {
+                this.emit('disconnected', 'Power On error, please try again.');
                 reject(error);
             };
         });
-    };
-
-    async sendPowerOn() {
-        try {
-            const powerOn = new Packer('simple.powerOn');
-            powerOn.set('liveId', this.xboxLiveId);
-            const message = powerOn.pack(this);
-            await this.sendSocketMessage(message);
-        } catch (error) {
-            this.emit('error', `Send power On error: ${error}`)
-        };
     };
 
     powerOff() {

@@ -38,7 +38,7 @@
 							"title": "Web Api",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable possibility to control Xbox over Web Api.",
+							"description": "This enable control Xbox over Web Api.",
 							"required": false
 						},
 						"getInputsFromDevice": {
@@ -484,7 +484,7 @@
 							"title": "Power Control",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable possibility power ON/OFF console over Web Api.",
+							"description": "This enable power ON/OFF control over Web Api.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
