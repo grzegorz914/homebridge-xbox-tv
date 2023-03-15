@@ -39,6 +39,7 @@
 
     //get devices count
     const devicesCount = pluginConfig[0].devices.length;
+    this.deviceIndex = 0;
     for (let i = 0; i < devicesCount; i++) {
       //create buttons
       const button = document.createElement("button");
