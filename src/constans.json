@@ -1,4 +1,6 @@
 {
+    "PlatformName": "XboxTv",
+    "PluginName": "homebridge-xbox-tv",
     "ConsoleName": {
         "XboxSeriesX": "Xbox Series X",
         "XboxSeriesS": "Xbox Series S",
