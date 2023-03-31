@@ -38,56 +38,56 @@ class PluginUiServer extends HomebridgePluginUiServer {
     const authentication = new Authentication(authConfig);
 
     let data = {};
-    if (mode === 0) {
-      try {
-        await authentication.clearToken();
-        data = {
-          info: 'Web Api Token cleared, now You can start new authorization process.',
-          status: 0
+    switch (mode) {
+      case 'clearToken':
+        try {
+          await authentication.clearToken(tokensFile);
+          data = {
+            info: 'Web Api Token cleared, now You can start new authorization process.',
+            status: 0
+          };
+        } catch (error) {
+          data = {
+            info: 'Clear token error:',
+            status: 3,
+            error: error
+          };
         };
-      } catch (error) {
-        data = {
-          info: 'Clear token error:',
-          status: 3,
-          error: error
+        break;
+      case 'authorization':
+        try {
+          await authentication.checkAuthorization();
+          data = {
+            info: 'Console authorized and activated. To start new process please clear Web API Token first.',
+            status: 0
+          };
+        } catch (error) {
+          if (webApiToken) {
+            try {
+              await authentication.accessToken(webApiToken);
+              data = {
+                info: 'Activation successfull, now restart plugin and have fun!!!',
+                status: 2
+              };
+            } catch (error) {
+              data = {
+                info: 'Error',
+                status: 3,
+                error: error
+              };
+            };
+          } else {
+            const oauth2URI = await authentication.generateAuthorizationUrl();
+            data = {
+              info: oauth2URI,
+              status: 1
+            };
+          };
         };
-      };
-      return data;
+        break;
     };
 
-    if (mode === 1) {
-      let data = {};
-      try {
-        await authentication.checkAuthorization();
-        data = {
-          info: 'Console authorized and activated. To start new process please clear Web API Token first.',
-          status: 0
-        };
-      } catch (error) {
-        if (webApiToken) {
-          try {
-            await authentication.accessToken(webApiToken);
-            data = {
-              info: 'Activation successfull, now restart plugin and have fun!!!',
-              status: 2
-            };
-          } catch (error) {
-            data = {
-              info: 'Error',
-              status: 3,
-              error: error
-            };
-          };
-        } else {
-          const oauth2URI = await authentication.generateAuthorizationUrl();
-          data = {
-            info: oauth2URI,
-            status: 1
-          };
-        };
-      };
-      return data;
-    };
+    return data;
   };
 };
 

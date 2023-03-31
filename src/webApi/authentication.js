@@ -288,11 +288,11 @@ class AUTHENTICATION {
         })
     }
 
-    clearToken() {
+    clearToken(tokensFile) {
         return new Promise(async (resolve, reject) => {
             try {
                 const object = JSON.stringify({});
-                await fsPromises.writeFile(this.tokensFile, object);
+                await fsPromises.writeFile(tokensFile, object);
                 resolve();
             } catch (error) {
                 reject(error);
