@@ -5,7 +5,7 @@
   <form id="configForm">
     <div class="text-center">
       <label id="deviceName" style="font-size: 23px">Xbox</label><br>
-      <label id="info" style="text-align: center; font-size: 17px; color: white;">Authorization Manager</label><br><br>
+      <label id="info" style="text-align: center; font-size: 17px;">Authorization Manager</label><br><br>
     </div>
     <div class="form-group">
       <label for="deviceHost">Host</label>
@@ -97,10 +97,10 @@
 
     //clear token file
     document.getElementById('clearTokenButton').addEventListener('click', async () => {
+      homebridge.showSpinner();
       try {
-        homebridge.showSpinner();
         const host = pluginConfig[0].devices[this.deviceIndex].host;
-        const response = await homebridge.request('/clearToken', { mode: 0, host: host });
+        const response = await homebridge.request('/clearToken', { mode: 'clearToken', host: host });
 
         const info = response.info;
         const status = response.status;
@@ -114,7 +114,6 @@
             document.getElementById('deviceWebApiControl').checked = false;
             document.getElementById('deviceWebApiControl').disabled = true;
             document.getElementById('info').innerHTML = info;
-            document.getElementById('info').style.color = 'green';
             pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
             pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
 
@@ -130,15 +129,14 @@
         homebridge.hideSpinner();
       } catch (e) {
         homebridge.toast.error(`Clear Web Api Token error: ${e.message}`);
-      } finally {
-        homebridge.hideSpinner();
-      };
+      }
     });
 
     //watch for click on the Start authorization button
     document.getElementById('startAuthorizationButton').addEventListener('click', async () => {
+      homebridge.showSpinner();
+
       try {
-        homebridge.showSpinner();
         await homebridge.updatePluginConfig(pluginConfig)
         document.getElementById('info').innerHTML = '';
 
@@ -152,7 +150,7 @@
         const xboxWebApiToken = pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken;
 
         const payload = {
-          mode: 1,
+          mode: 'authorization',
           host: host,
           xboxLiveUser: xboxLiveUser,
           xboxLivePasswd: xboxLivePasswd,
@@ -170,13 +168,10 @@
         switch (status) {
           case 0:
             document.getElementById('info').innerHTML = info;
-            document.getElementById('info').style.color = 'green';
             document.getElementById('startAuthorizationButton').innerText = "Check state";
             document.getElementById('deviceWebApiControl').disabled = false;
             break;
           case 1:
-            homebridge.hideSpinner();
-            document.getElementById('info').style.color = 'blue';
             document.getElementById('startAuthorizationButton').innerText = "Activate console";
             document.getElementById('deviceWebApiControl').checked = false;
             document.getElementById('deviceWebApiControl').disabled = true;
@@ -196,7 +191,6 @@
             break;
           case 2:
             document.getElementById('info').innerHTML = info;
-            document.getElementById('info').style.color = 'green';
             document.getElementById('startAuthorizationButton').innerText = "Check state";
             document.getElementById('deviceWebApiControl').disabled = false;
             document.getElementById('deviceWebApiControl').checked = true;
@@ -211,6 +205,7 @@
             break;
         };
 
+        homebridge.hideSpinner();
       } catch (e) {
         homebridge.toast.error(`Data error: ${e.message}`);
       } finally {
