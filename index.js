@@ -19,15 +19,20 @@ class XboxPlatform {
 					return;
 				}
 
-				//openwebif device
-				const xboxDevice = new XboxDevice(log, api, device);
+				//xbox device
+				const xboxDevice = new XboxDevice(api, device);
 				xboxDevice.on('publishAccessory', (accessory) => {
 					api.publishExternalAccessories(CONSTANS.PluginName, [accessory]);
 					const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, published as external accessory.`) : false;
 				})
-					.on('removeAccessory', (accessory) => {
-						api.unregisterPlatformAccessories(CONSTANS.PluginName, CONSTANS.PlatformName, [accessory]);
-						const debug = device.enableDebugMode ? log(`Accessory: ${accessory}, removed.`) : false;
+					.on('devInfo', (devInfo) => {
+						log(devInfo);
+					})
+					.on('message', (message) => {
+						log(`Device: ${device.host} ${device.name}, ${message}`);
+					})
+					.on('debug', (debug) => {
+						log(`Device: ${device.host} ${device.name}, debug: ${debug}`);
 					})
 					.on('error', (error) => {
 						log.error(`Device: ${device.host} ${device.name}, ${error}`);
