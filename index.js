@@ -1,4 +1,6 @@
 'use strict';
+const path = require('path');
+const fs = require('fs');
 const XboxDevice = require('./src/xboxdevice.js');
 const CONSTANS = require('./src/constans.json');
 
@@ -6,21 +8,28 @@ class XboxPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log(`No configuration found for ${PLUGIN_NAME}`);
+			log.warn(`No configuration found for ${PLUGIN_NAME}`);
 			return;
 		}
 		this.accessories = [];
+
+		//check if prefs directory exist
+		const prefDir = path.join(api.user.storagePath(), 'xboxTv');
+		if (!fs.existsSync(prefDir)) {
+			fs.mkdirSync(prefDir);
+		};
 
 		api.on('didFinishLaunching', () => {
 			log.debug('didFinishLaunching');
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
-					this.log.warn('Device Name, Host or Xbox Live ID Missing');
+					log.warn('Device Name, Host or Xbox Live ID Missing');
 					return;
 				}
+				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
 
 				//xbox device
-				const xboxDevice = new XboxDevice(api, device);
+				const xboxDevice = new XboxDevice(api, prefDir, device);
 				xboxDevice.on('publishAccessory', (accessory) => {
 					api.publishExternalAccessories(CONSTANS.PluginName, [accessory]);
 					const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, published as external accessory.`) : false;

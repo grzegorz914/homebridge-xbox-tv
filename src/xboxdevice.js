@@ -10,7 +10,7 @@ const CONSTANS = require('./constans.json');
 let Accessory, Characteristic, Service, Categories, UUID;
 
 class XboxDevice extends EventEmitter {
-    constructor(api, config) {
+    constructor(api, prefDir, config) {
         super();
 
         Accessory = api.platformAccessory;
@@ -90,19 +90,15 @@ class XboxDevice extends EventEmitter {
         this.sensorScreenSaverState = false;
         this.sensorInputState = false;
 
-        this.prefDir = path.join(api.user.storagePath(), 'xboxTv');
-        this.authTokenFile = `${this.prefDir}/authToken_${this.host.split('.').join('')}`;
-        this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
-        this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
-        this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
+        this.authTokenFile = `${prefDir}/authToken_${this.host.split('.').join('')}`;
+        this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
+        this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
+        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
-        //check if the directory or files exists, if not then create it
+        //check if files exists, if not then create it
         const object = JSON.stringify({});
         const array = JSON.stringify([]);
 
-        if (!fs.existsSync(this.prefDir)) {
-            fs.mkdirSync(this.prefDir);
-        }
         if (!fs.existsSync(this.authTokenFile)) {
             fs.writeFileSync(this.authTokenFile, object);
         }
