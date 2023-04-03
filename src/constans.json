@@ -1,6 +1,7 @@
 {
     "PlatformName": "XboxTv",
     "PluginName": "homebridge-xbox-tv",
+    "ClientId": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
     "Url": {
         "oauth2": "https://login.live.com/oauth20_authorize.srf?",
         "AccessToken": "https://login.live.com/oauth20_token.srf",
@@ -8,8 +9,7 @@
         "UserToken": "https://user.auth.xboxlive.com/user/authenticate",
         "XtsxToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
         "Redirect": "http://localhost:8888/auth/callback",
-        "Scopes": "XboxLive.signin XboxLive.offline_access",
-        "ClientId": "a34ac209-edab-4b08-91e7-a4558d8da1bd"
+        "Scopes": "XboxLive.signin XboxLive.offline_access"
     },
     "ConsoleName": {
         "XboxSeriesX": "Xbox Series X",
