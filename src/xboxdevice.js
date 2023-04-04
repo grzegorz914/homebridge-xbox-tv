@@ -1,5 +1,4 @@
 "use strict";
-const path = require('path');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
@@ -95,10 +94,9 @@ class XboxDevice extends EventEmitter {
         this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
         this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
-        //check if files exists, if not then create it
+       // Create files if it doesn't exist
         const object = JSON.stringify({});
         const array = JSON.stringify([]);
-
         if (!fs.existsSync(this.authTokenFile)) {
             fs.writeFileSync(this.authTokenFile, object);
         }
