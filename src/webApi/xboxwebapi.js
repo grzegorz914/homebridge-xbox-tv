@@ -16,6 +16,7 @@ const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
 const CONSTANS = require('../constans.json');
+
 class XBOXWEBAPI extends EventEmitter {
     constructor(config) {
         super();
@@ -38,6 +39,9 @@ class XBOXWEBAPI extends EventEmitter {
         this.authentication = new Authentication(authConfig);
         this.httpClient = new HttpClient();
 
+        //variables
+        this.auhorized = false;
+
         this.on('disconnected', async () => {
             await new Promise(resolve => setTimeout(resolve, 5000));
             this.emit('stateChanged', false);
@@ -54,7 +58,7 @@ class XBOXWEBAPI extends EventEmitter {
     async getAuthorizationState() {
         try {
             await this.authentication.checkAuthorization();
-            const debug = this.debugLog ? this.emit(`message', 'authorized and web Api enabled.`) : false;
+            const debug = this.debugLog ? this.emit(`debug', 'authorized and web Api enabled.`) : false;
             this.auhorized = true;
 
             try {
@@ -74,12 +78,11 @@ class XBOXWEBAPI extends EventEmitter {
                 //await this.userProfile();
                 this.updateAuthorization();
             } catch (error) {
-                this.emit('error', `web Api data error: ${error}, recheck in 60se.`)
+                this.emit('error', `web Api data error: ${JSON.stringify(error, null, 2)}, recheck in 60se.`)
                 this.updateAuthorization();
             };
         } catch (error) {
-            this.emit('error', `check authorization state error: ${error}, recheck in 60se.`);
-            this.emit('authenticated', false);
+            this.emit('error', `check authorization state error: ${JSON.stringify(error, null, 2)}, recheck in 60se.`);
             this.updateAuthorization();
         };
     };
