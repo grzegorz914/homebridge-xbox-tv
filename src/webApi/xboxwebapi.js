@@ -40,7 +40,7 @@ class XBOXWEBAPI extends EventEmitter {
         this.httpClient = new HttpClient();
 
         //variables
-        this.auhorized = false;
+        this.authorized = false;
 
         this.on('disconnected', async () => {
             await new Promise(resolve => setTimeout(resolve, 5000));
@@ -51,7 +51,7 @@ class XBOXWEBAPI extends EventEmitter {
     }
 
     async updateAuthorization() {
-        await new Promise(resolve => setTimeout(resolve, 600000));
+        await new Promise(resolve => setTimeout(resolve, 900000));
         this.getAuthorizationState();
     };
 
@@ -59,7 +59,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             await this.authentication.checkAuthorization();
             const debug = this.debugLog ? this.emit(`debug', 'authorized and web Api enabled.`) : false;
-            this.auhorized = true;
+            this.authorized = true;
 
             try {
                 this.headers = {
@@ -78,11 +78,11 @@ class XBOXWEBAPI extends EventEmitter {
                 //await this.userProfile();
                 this.updateAuthorization();
             } catch (error) {
-                this.emit('error', `web Api data error: ${JSON.stringify(error, null, 2)}, recheck in 60se.`)
+                this.emit('error', `web Api data error: ${JSON.stringify(error, null, 2)}, recheck in 15min.`)
                 this.updateAuthorization();
             };
         } catch (error) {
-            this.emit('error', `check authorization state error: ${JSON.stringify(error, null, 2)}, recheck in 60se.`);
+            this.emit('error', `check authorization state error: ${JSON.stringify(error, null, 2)}, recheck in 15min.`);
             this.updateAuthorization();
         };
     };
@@ -483,7 +483,7 @@ class XBOXWEBAPI extends EventEmitter {
     send(commandType, command, payload) {
         return new Promise(async (resolve, reject) => {
             try {
-                if (!this.auhorized) {
+                if (!this.authorized) {
                     reject('not authorized.');
                     return;
                 };
