@@ -2,10 +2,9 @@
 const PacketStructure = require('./structure.js');
 
 class SIMPLE {
-    constructor(packetFormat, packetData = false) {
-        this.type = 'simple';
-        this.packetType = packetFormat;
-        this.packetFormat = packetFormat;
+    constructor(type, packetData = false) {
+        this.packetType = type;
+        this.packetFormat = type;
         this.packetData = packetData;
         this.packetDecoded = false;
         this.structureProtected = false;
@@ -106,12 +105,12 @@ class SIMPLE {
             },
         };
         this.packet = Packet;
-        this.structure = Packet[packetFormat];
+        this.structure = Packet[type];
 
         // Load protected payload PacketStructure
         if (this.structure.protectedPayload !== undefined) {
             this.protectedPayload = new PacketStructure();
-            this.structureProtected = Packet[`${packetFormat}Protected`];
+            this.structureProtected = Packet[`${type}Protected`];
         };
     };
 

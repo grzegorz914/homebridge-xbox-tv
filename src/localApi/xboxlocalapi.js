@@ -21,7 +21,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
 
-        this.crypto = new SGCrypto();
         this.isConnected = false;
         this.isAuthorized = false;
         this.heartBeatConnection = false;
@@ -31,6 +30,8 @@ class XBOXLOCALAPI extends EventEmitter {
         this.sourceParticipantId = 0;
         this.mediaRequestId = 0;
         this.emitDevInfo = true;
+
+        this.crypto = new SGCrypto();
 
         //dgram socket
         this.connect = () => {
@@ -111,7 +112,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
                     const debug = this.debugLog ? this.emit('debug', `Ping console, state: ${state.alive ? 'Online' : 'Offline'}`) : false;
 
-                    if (!state.alive) {
+                    if (!state.alive || this.isConnected) {
                         return;
                     }
 

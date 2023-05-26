@@ -94,7 +94,7 @@ class XboxDevice extends EventEmitter {
         this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
         this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 
-       // Create files if it doesn't exist
+        // Create files if it doesn't exist
         const object = JSON.stringify({});
         const array = JSON.stringify([]);
         if (!fs.existsSync(this.authTokenFile)) {
@@ -618,96 +618,6 @@ class XboxDevice extends EventEmitter {
                 this.services.push(this.speakerService);
                 accessory.addService(this.speakerService);
 
-                //Prepare volume service
-                if (this.volumeControl >= 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
-                    if (this.volumeControl === 0) {
-                        this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
-                        this.volumeService.getCharacteristic(Characteristic.Brightness)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeService.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-
-                        this.services.push(this.volumeService);
-                        accessory.addService(this.volumeService);
-                    }
-
-                    if (this.volumeControl === 1) {
-                        this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
-                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-
-                        this.services.push(this.volumeServiceFan);
-                        accessory.addService(this.volumeServiceFan);
-                    }
-                }
-
-                //prepare sensor service
-                if (this.sensorPower) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
-                    this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
-                    this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power;
-                            return state;
-                        });
-
-                    this.services.push(this.sensorPowerService);
-                    accessory.addService(this.sensorPowerService);
-                };
-
-                if (this.sensorInput) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
-                    this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
-                    this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power ? this.sensorInputState : false;
-                            return state;
-                        });
-
-                    this.services.push(this.sensorInputService);
-                    accessory.addService(this.sensorInputService);
-                };
-
-                if (this.sensorScreenSaver) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare screen saver sensor service`);
-                    this.sensorScreenSaverService = new Service.ContactSensor(`${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
-                    this.sensorScreenSaverService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power ? this.sensorScreenSaverState : false;
-                            return state;
-                        });
-
-                    this.services.push(this.sensorScreenSaverService);
-                    accessory.addService(this.sensorScreenSaverService);
-                };
-
                 //Prepare inputs services
                 const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare input service`);
 
@@ -817,6 +727,106 @@ class XboxDevice extends EventEmitter {
                     };
                 }
 
+                //Prepare volume service
+                if (this.volumeControl >= 0) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
+                    if (this.volumeControl === 0) {
+                        this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
+                        this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
+                        this.volumeService.getCharacteristic(Characteristic.Brightness)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (volume) => {
+                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                            });
+                        this.volumeService.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = !this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                            });
+
+                        this.services.push(this.volumeService);
+                        accessory.addService(this.volumeService);
+                    }
+
+                    if (this.volumeControl === 1) {
+                        this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
+                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
+                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (volume) => {
+                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                            });
+                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = !this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                            });
+
+                        this.services.push(this.volumeServiceFan);
+                        accessory.addService(this.volumeServiceFan);
+                    }
+                }
+
+                //prepare sensor service
+                if (this.sensorPower) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
+                    this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
+                    this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
+                    this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.power;
+                            return state;
+                        });
+
+                    this.services.push(this.sensorPowerService);
+                    accessory.addService(this.sensorPowerService);
+                };
+
+                if (this.sensorInput) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
+                    this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
+                    this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
+                    this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.power ? this.sensorInputState : false;
+                            return state;
+                        });
+
+                    this.services.push(this.sensorInputService);
+                    accessory.addService(this.sensorInputService);
+                };
+
+                if (this.sensorScreenSaver) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare screen saver sensor service`);
+                    this.sensorScreenSaverService = new Service.ContactSensor(`${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
+                    this.sensorScreenSaverService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorScreenSaverService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Screen Saver Sensor`);
+                    this.sensorScreenSaverService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.power ? this.sensorScreenSaverState : false;
+                            return state;
+                        });
+
+                    this.services.push(this.sensorScreenSaverService);
+                    accessory.addService(this.sensorScreenSaverService);
+                };
+
                 //prepare sonsor service
                 const sensorInputs = this.sensorInputs;
                 const sensorInputsCount = sensorInputs.length;
@@ -842,6 +852,8 @@ class XboxDevice extends EventEmitter {
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                                 const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
                                 const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+                                sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${sensorInputName}`);
                                 sensorInputService.getCharacteristic(characteristicType)
                                     .onGet(async () => {
                                         const state = this.power ? (this.reference === sensorInputReference) : false;
@@ -904,6 +916,8 @@ class XboxDevice extends EventEmitter {
                             if (buttonName && buttonCommand && buttonMode) {
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
                                 const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+                                buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                buttonService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${buttonName}`);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         const state = false;

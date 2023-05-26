@@ -5,7 +5,6 @@ const CONSTANS = require('../constans.json');
 
 class MESSAGE {
     constructor(type, packetData = false) {
-        this.type = 'message';
         this.packetType = type;
         this.packetData = packetData;
         this.packetDecoded = false;
