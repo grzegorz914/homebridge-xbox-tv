@@ -8,7 +8,7 @@
         "AccessToken": "https://login.live.com/oauth20_token.srf",
         "RefreshToken": "https://login.live.com/oauth20_token.srf",
         "UserToken": "https://user.auth.xboxlive.com/user/authenticate",
-        "XtsxToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
+        "XstsToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
         "Redirect": "http://localhost:8888/auth/callback"
     },
     "ConsoleName": {

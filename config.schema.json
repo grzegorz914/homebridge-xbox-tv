@@ -2,6 +2,7 @@
 	"pluginAlias": "XboxTv",
 	"pluginType": "platform",
 	"singular": true,
+	"fixArrays": true,
 	"customUi": true,
 	"headerDisplay": "This plugin works with Xbox game Consoles. Devices are exposed to HomeKit as separate accessories and each needs to be manually paired.\n\n1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device.\n2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>.\n3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*.\n4. Select Your accessory and press add anyway.\n5. Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.\n6. Complete the accessory setup.",
 	"footerDisplay": "For documentation please see [GitHub repository](https://github.com/grzegorz914/homebridge-xbox-tv).",

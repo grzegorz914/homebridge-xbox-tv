@@ -482,12 +482,12 @@ class XBOXWEBAPI extends EventEmitter {
 
     send(commandType, command, payload) {
         return new Promise(async (resolve, reject) => {
-            try {
-                if (!this.authorized) {
-                    reject('not authorized.');
-                    return;
-                };
+            if (!this.authorized) {
+                reject('not authorized.');
+                return;
+            };
 
+            try {
                 const sessionid = Uuid4();
                 const params = payload ? payload : [];
                 const postParams = {

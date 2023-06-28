@@ -20,10 +20,10 @@ class AUTHENTICATION {
             gtg: {},
             xid: {},
             uhs: {},
+            agg: {},
             usr: {},
             utr: {},
-            prv: {},
-            agg: {}
+            prv: {}
         };
         this.tokens = {
             oauth: {},
@@ -34,36 +34,15 @@ class AUTHENTICATION {
 
     refreshTokens(type) {
         return new Promise(async (resolve, reject) => {
-            type = type || 'oauth'
-
             switch (type) {
-                case 'oauth':
-                    if (!this.tokens.oauth.refresh_token) {
-                        reject('No oauth token found. Use authorization manager first.')
-                        return;
-                    };
-
-                    try {
-                        await this.refreshTokens('user');
-                        resolve();
-                    } catch (error) {
-                        reject(error);
-                    };
-                    break;
                 case 'user':
                     if (this.tokens.user.Token) {
                         const tokenExpired = new Date() > new Date(this.tokens.user.NotAfter).getTime();
                         switch (tokenExpired) {
                             case true:
                                 try {
-                                    const refreshToken = await this.refreshToken(this.tokens.oauth.refresh_token);
-                                    this.tokens.oauth = refreshToken;
-                                    await this.saveTokens(this.tokens);
-
-                                    const accessToken = await this.getUserToken(this.tokens.oauth.access_token);
-                                    this.tokens.user = accessToken;
-                                    this.tokens.xsts = {};
-                                    await this.saveTokens(this.tokens);
+                                    await this.refreshToken(this.tokens.oauth.refresh_token);
+                                    await this.getUserToken(this.tokens.oauth.access_token);
                                     await this.refreshTokens('xsts');
                                     resolve();
                                 } catch (error) {
@@ -81,10 +60,7 @@ class AUTHENTICATION {
                         }
                     } else {
                         try {
-                            const accessToken = await this.getUserToken(this.tokens.oauth.access_token);
-                            this.tokens.user = accessToken;
-                            this.tokens.xsts = {};
-                            await this.saveTokens(this.tokens);
+                            await this.getUserToken(this.tokens.oauth.access_token);
                             await this.refreshTokens('xsts');
                             resolve();
                         } catch (error) {
@@ -98,12 +74,7 @@ class AUTHENTICATION {
                         switch (tokenExpired) {
                             case true:
                                 try {
-                                    this.tokens.xsts = {};
-                                    await this.saveTokens(this.tokens);
-
-                                    const userToken = await this.getXstsToken(this.tokens.user.Token);
-                                    this.tokens.xsts = userToken;
-                                    await this.saveTokens(this.tokens);
+                                    await this.getXstsToken(this.tokens.user.Token);
                                     await this.refreshTokens('xsts');
                                     resolve();
                                 } catch (error) {
@@ -114,26 +85,23 @@ class AUTHENTICATION {
                                 this.user.gtg = this.tokens.xsts.DisplayClaims.xui[0].gtg;
                                 this.user.xid = this.tokens.xsts.DisplayClaims.xui[0].xid;
                                 this.user.uhs = this.tokens.xsts.DisplayClaims.xui[0].uhs;
+                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
                                 this.user.usr = this.tokens.xsts.DisplayClaims.xui[0].usr;
                                 this.user.utr = this.tokens.xsts.DisplayClaims.xui[0].utr;
                                 this.user.prv = this.tokens.xsts.DisplayClaims.xui[0].prv;
-                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
                                 resolve();
                                 break;
                         }
                     } else {
                         try {
-                            const userToken = await this.getXstsToken(this.tokens.user.Token);
-                            this.tokens.xsts = userToken;
-                            await this.saveTokens(this.tokens);
-
-                            this.user.gtg = userToken.DisplayClaims.xui[0].gtg;
-                            this.user.xid = userToken.DisplayClaims.xui[0].xid;
-                            this.user.uhs = userToken.DisplayClaims.xui[0].uhs;
-                            this.user.usr = userToken.DisplayClaims.xui[0].usr;
-                            this.user.utr = userToken.DisplayClaims.xui[0].utr;
-                            this.user.prv = userToken.DisplayClaims.xui[0].prv;
-                            this.user.agg = userToken.DisplayClaims.xui[0].agg;
+                            const xstsToken = await this.getXstsToken(this.tokens.user.Token);
+                            this.user.gtg = xstsToken.DisplayClaims.xui[0].gtg;
+                            this.user.xid = xstsToken.DisplayClaims.xui[0].xid;
+                            this.user.uhs = xstsToken.DisplayClaims.xui[0].uhs;
+                            this.user.agg = xstsToken.DisplayClaims.xui[0].agg;
+                            this.user.usr = xstsToken.DisplayClaims.xui[0].usr;
+                            this.user.utr = xstsToken.DisplayClaims.xui[0].utr;
+                            this.user.prv = xstsToken.DisplayClaims.xui[0].prv;
                             resolve();
                         } catch (error) {
                             reject(error);
@@ -159,9 +127,9 @@ class AUTHENTICATION {
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
                 const data = await this.httpClient.post(CONSTANS.Url.AccessToken, headers, postData);
-                const token = JSON.parse(data);
-                token.issued = new Date().toISOString();
-                this.tokens.oauth = token;
+                const accessToken = JSON.parse(data);
+                accessToken.issued = new Date().toISOString();
+                this.tokens.oauth = accessToken;
                 await this.saveTokens(this.tokens);
                 resolve();
             } catch (error) {
@@ -170,23 +138,25 @@ class AUTHENTICATION {
         })
     }
 
-    refreshToken(refreshToken) {
+    refreshToken(token) {
         return new Promise(async (resolve, reject) => {
             try {
                 const payload = {
                     "client_id": this.clientId,
                     "grant_type": "refresh_token",
                     "scope": CONSTANS.Scopes,
-                    "refresh_token": refreshToken,
+                    "refresh_token": token,
                 }
                 const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
                 const data = await this.httpClient.post(CONSTANS.Url.RefreshToken, headers, postData);
-                const token = JSON.parse(data);
-                token.issued = new Date().toISOString();
-                resolve(token);
+                const refreshToken = JSON.parse(data);
+                refreshToken.issued = new Date().toISOString();
+                this.tokens.oauth = refreshToken;
+                await this.saveTokens(this.tokens);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -209,8 +179,11 @@ class AUTHENTICATION {
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json' };
                 const data = await this.httpClient.post(CONSTANS.Url.UserToken, headers, postData);
-                const token = JSON.parse(data);
-                resolve(token);
+                const userToken = JSON.parse(data);
+                this.tokens.user = userToken;
+                this.tokens.xsts = {};
+                await this.saveTokens(this.tokens);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -231,9 +204,11 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-                const data = await this.httpClient.post(CONSTANS.Url.XtsxToken, headers, postData);
-                const token = JSON.parse(data);
-                resolve(token);
+                const data = await this.httpClient.post(CONSTANS.Url.XstsToken, headers, postData);
+                const xstsToken = JSON.parse(data);
+                this.tokens.xsts = xstsToken;
+                await this.saveTokens(this.tokens);
+                resolve(xstsToken);
             } catch (error) {
                 reject(error);
             };
@@ -242,23 +217,27 @@ class AUTHENTICATION {
 
     checkAuthorization() {
         return new Promise(async (resolve, reject) => {
-            try {
-                if (fs.existsSync(this.tokensFile) && fs.readFileSync(this.tokensFile).length > 30) {
-                    const tokens = fs.readFileSync(this.tokensFile).toString();
-                    this.tokens = JSON.parse(tokens);
-                }
+            if (fs.existsSync(this.tokensFile) && fs.readFileSync(this.tokensFile).length > 30) {
+                const tokens = fs.readFileSync(this.tokensFile);
+                this.tokens = JSON.parse(tokens);
+            }
 
-                if (this.clientId) {
-                    await this.refreshTokens();
+            if (this.clientId) {
+                if (!this.tokens.oauth.refresh_token) {
+                    reject('No oauth token found. Use authorization manager first.')
+                };
+
+                try {
+                    await this.refreshTokens('user');
                     resolve();
-                } else if (this.userToken && this.userHash) {
-                    resolve();
-                } else {
-                    reject('Not authorized, check client id in settings.');
-                }
-            } catch (error) {
-                reject(error);
-            };
+                } catch (error) {
+                    reject(error);
+                };
+            } else if (this.userToken && this.userHash) {
+                resolve();
+            } else {
+                reject('Not authorized, check client id in settings.');
+            }
         })
     }
 
@@ -284,9 +263,8 @@ class AUTHENTICATION {
     saveTokens(tokens) {
         return new Promise(async (resolve, reject) => {
             try {
-                tokens = JSON.stringify(tokens);
+                tokens = JSON.stringify(tokens, null, 2);
                 await fsPromises.writeFile(this.tokensFile, tokens);
-                await this.checkAuthorization();
                 resolve();
             } catch (error) {
                 reject(error);
