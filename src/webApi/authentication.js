@@ -15,16 +15,6 @@ class AUTHENTICATION {
         this.userToken = config.userToken;
         this.userHash = config.userHash;
         this.tokensFile = config.tokensFile;
-
-        this.user = {
-            gtg: {},
-            xid: {},
-            uhs: {},
-            agg: {},
-            usr: {},
-            utr: {},
-            prv: {}
-        };
         this.tokens = {
             oauth: {},
             user: {},
@@ -82,31 +72,20 @@ class AUTHENTICATION {
                                 };
                                 break;
                             case false:
-                                this.user.gtg = this.tokens.xsts.DisplayClaims.xui[0].gtg;
-                                this.user.xid = this.tokens.xsts.DisplayClaims.xui[0].xid;
-                                this.user.uhs = this.tokens.xsts.DisplayClaims.xui[0].uhs;
-                                this.user.agg = this.tokens.xsts.DisplayClaims.xui[0].agg;
-                                this.user.usr = this.tokens.xsts.DisplayClaims.xui[0].usr;
-                                this.user.utr = this.tokens.xsts.DisplayClaims.xui[0].utr;
-                                this.user.prv = this.tokens.xsts.DisplayClaims.xui[0].prv;
                                 resolve();
                                 break;
                         }
                     } else {
                         try {
-                            const xstsToken = await this.getXstsToken(this.tokens.user.Token);
-                            this.user.gtg = xstsToken.DisplayClaims.xui[0].gtg;
-                            this.user.xid = xstsToken.DisplayClaims.xui[0].xid;
-                            this.user.uhs = xstsToken.DisplayClaims.xui[0].uhs;
-                            this.user.agg = xstsToken.DisplayClaims.xui[0].agg;
-                            this.user.usr = xstsToken.DisplayClaims.xui[0].usr;
-                            this.user.utr = xstsToken.DisplayClaims.xui[0].utr;
-                            this.user.prv = xstsToken.DisplayClaims.xui[0].prv;
+                            await this.getXstsToken(this.tokens.user.Token);
                             resolve();
                         } catch (error) {
                             reject(error);
                         };
                     }
+                    break;
+                default:
+                    reject(`Unknow refresh token type: ${type}.`);
                     break;
             }
         })
@@ -229,14 +208,14 @@ class AUTHENTICATION {
 
                 try {
                     await this.refreshTokens('user');
-                    resolve();
+                    resolve(this.tokens);
                 } catch (error) {
                     reject(error);
                 };
             } else if (this.userToken && this.userHash) {
                 resolve();
             } else {
-                reject('Not authorized, check client id in settings.');
+                reject('Not authorized, check client Id in settings.');
             }
         })
     }

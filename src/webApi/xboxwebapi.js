@@ -57,19 +57,22 @@ class XBOXWEBAPI extends EventEmitter {
 
     async getAuthorizationState() {
         try {
-            await this.authentication.checkAuthorization();
-            const debug = this.debugLog ? this.emit(`debug', 'authorized and web Api enabled.`) : false;
+            const tokens = this.userToken && this.userHash ? false : await this.authentication.checkAuthorization();
+            const debug = !this.debugLog ? this.emit('debug', `authorization tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
+            const authorizationHeaders = this.userToken && this.userHash ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${tokens.xsts.DisplayClaims.xui[0].uhs};${tokens.xsts.Token}`
+            this.headers = {
+                'Authorization': authorizationHeaders,
+                'Accept-Language': 'en-US',
+                'x-xbl-contract-version': '4',
+                'x-xbl-client-name': 'XboxApp',
+                'x-xbl-client-type': 'UWA',
+                'x-xbl-client-version': '39.39.22001.0',
+                'skillplatform': 'RemoteManagement'
+            }
+            this.tokens = tokens;
             this.authorized = true;
 
             try {
-                this.headers = {
-                    'Authorization': (this.userToken && this.userHash) ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${this.authentication.user.uhs};${this.authentication.tokens.xsts.Token}`,
-                    'Accept-Language': 'en-US',
-                    'x-xbl-contract-version': '4',
-                    'x-xbl-client-name': 'XboxApp',
-                    'x-xbl-client-type': 'UWA',
-                    'x-xbl-client-version': '39.39.22001.0'
-                }
                 const rmEnabled = await this.consoleStatus();
                 const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
                 //await this.consolesList();
@@ -90,7 +93,6 @@ class XBOXWEBAPI extends EventEmitter {
     consoleStatus() {
         return new Promise(async (resolve, reject) => {
             try {
-                this.headers['skillplatform'] = 'RemoteManagement';
                 const url = `https://xccs.xboxlive.com/consoles/${this.xboxLiveId}`;
                 const getConsoleStatusData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getConsoleStatusData);
@@ -128,7 +130,6 @@ class XBOXWEBAPI extends EventEmitter {
     consolesList() {
         return new Promise(async (resolve, reject) => {
             try {
-                this.headers['skillplatform'] = 'RemoteManagement';
                 const url = `https://xccs.xboxlive.com/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
                 const getConsolesListData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getConsolesListData);
@@ -214,7 +215,6 @@ class XBOXWEBAPI extends EventEmitter {
     installedApps() {
         return new Promise(async (resolve, reject) => {
             try {
-                this.headers['skillplatform'] = 'RemoteManagement';
                 const url = `https://xccs.xboxlive.com/lists/installedApps?deviceId=${this.xboxLiveId}`;
                 const getInstalledAppsData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getInstalledAppsData);
@@ -268,7 +268,6 @@ class XBOXWEBAPI extends EventEmitter {
     storageDevices() {
         return new Promise(async (resolve, reject) => {
             try {
-                this.headers['skillplatform'] = 'RemoteManagement';
                 const url = `https://xccs.xboxlive.com/lists/storageDevices?deviceId=${this.xboxLiveId}`;
                 const getStorageDevicesData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getStorageDevicesData);
@@ -317,8 +316,7 @@ class XBOXWEBAPI extends EventEmitter {
     userProfile() {
         return new Promise(async (resolve, reject) => {
             try {
-                this.headers['x-xbl-contract-version'] = '3';
-                const url = `https://profile.xboxlive.com/users/xuid(${this.authentication.user.xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag}`;
+                const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
                 const getUserProfileData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getUserProfileData);
                 const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(responseObject.profileUsers[0], null, 2)}, ${JSON.stringify(responseObject.profileUsers[0].settings[0], null, 2)}`) : false
@@ -419,6 +417,95 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
+    volumeUp() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Volume', 'Up')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    volumeDown() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Volume', 'Dovn')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    next() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Media', 'Next')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    previous() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Media', 'Previous')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    pause() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Media', 'Pause')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    play() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Media', 'Play')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    goBack() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Shell', 'GoBack')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+
+    goHome() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.send('Shell', 'GoHome')
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
     launchApp(oneStoreProductId) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -432,18 +519,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    launchDashboard() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Shell', 'GoHome')
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    openGuideTab() {
+    showGuideTab() {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Shell', 'ShowGuideTab', [{
@@ -456,7 +532,7 @@ class XBOXWEBAPI extends EventEmitter {
         });
     }
 
-    launchOneGuide() {
+    showTVGuide() {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('TV', 'ShowGuide')
@@ -500,7 +576,6 @@ class XBOXWEBAPI extends EventEmitter {
                     "linkedXboxId": this.xboxLiveId,
                 }
 
-                this.headers['skillplatform'] = 'RemoteManagement';
                 const url = `https://xccs.xboxlive.com/commands`;
                 const postData = JSON.stringify(postParams);
                 await this.httpClient.post(url, this.headers, postData);

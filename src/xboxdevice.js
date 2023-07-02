@@ -432,13 +432,13 @@ class XboxDevice extends EventEmitter {
 
                             switch (inputOneStoreProductId) {
                                 case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                    await this.xboxWebApi.launchDashboard();
+                                    await this.xboxWebApi.goHome();
                                     break;
                                 case 'Television':
-                                    await this.xboxWebApi.launchOneGuide();
+                                    await this.xboxWebApi.showTVGuide();
                                     break;
                                 case 'XboxGuide':
-                                    await this.xboxWebApi.openGuideTab();
+                                    await this.xboxWebApi.showGuideTab();
                                     break;
                                 default:
                                     await this.xboxWebApi.launchApp(inputOneStoreProductId);
@@ -467,22 +467,22 @@ class XboxDevice extends EventEmitter {
                                     command = 'prevTrack';
                                     break;
                                 case Characteristic.RemoteKey.ARROW_UP:
-                                    command = 'up';
+                                    command = 'Up';
                                     break;
                                 case Characteristic.RemoteKey.ARROW_DOWN:
-                                    command = 'down';
+                                    command = 'Down';
                                     break;
                                 case Characteristic.RemoteKey.ARROW_LEFT:
-                                    command = 'left';
+                                    command = 'Left';
                                     break;
                                 case Characteristic.RemoteKey.ARROW_RIGHT:
-                                    command = 'right';
+                                    command = 'Right';
                                     break;
                                 case Characteristic.RemoteKey.SELECT:
-                                    command = 'a';
+                                    command = 'A';
                                     break;
                                 case Characteristic.RemoteKey.BACK:
-                                    command = 'b';
+                                    command = 'B';
                                     break;
                                 case Characteristic.RemoteKey.EXIT:
                                     command = 'nexus';
@@ -940,13 +940,13 @@ class XboxDevice extends EventEmitter {
                                                     case 5:
                                                         switch (buttonOneStoreProductId) {
                                                             case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                                await this.xboxWebApi.launchDashboard();
+                                                                await this.xboxWebApi.goGome();
                                                                 break;
                                                             case 'Television':
-                                                                await this.xboxWebApi.launchOneGuide();
+                                                                await this.xboxWebApi.showTVGuide();
                                                                 break;
                                                             case 'XboxGuide':
-                                                                await this.xboxWebApi.openGuideTab();
+                                                                await this.xboxWebApi.showGuideTab();
                                                                 break;
                                                             case 'Not set': case 'Web api disabled':
                                                                 this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);

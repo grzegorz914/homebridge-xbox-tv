@@ -162,6 +162,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         connectRequest.set('jwt', this.userToken, true);
                         this.isAuthorized = true;
                     }
+                    
                     const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
                     const message = connectRequest.pack(this);
                     await this.sendSocketMessage(message);
