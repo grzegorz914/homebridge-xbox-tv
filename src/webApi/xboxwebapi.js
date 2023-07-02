@@ -58,7 +58,7 @@ class XBOXWEBAPI extends EventEmitter {
     async getAuthorizationState() {
         try {
             const tokens = this.userToken && this.userHash ? false : await this.authentication.checkAuthorization();
-            const debug = !this.debugLog ? this.emit('debug', `authorization tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `authorization tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
             const authorizationHeaders = this.userToken && this.userHash ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${tokens.xsts.DisplayClaims.xui[0].uhs};${tokens.xsts.Token}`
             this.headers = {
                 'Authorization': authorizationHeaders,
