@@ -23,6 +23,7 @@ class XboxDevice extends EventEmitter {
         this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
         this.webApiControl = config.webApiControl || false;
+        this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
         this.getInputsFromDevice = this.webApiControl ? config.getInputsFromDevice : false;
         this.filterGames = config.filterGames || false;
         this.filterApps = config.filterApps || false;
@@ -34,7 +35,6 @@ class XboxDevice extends EventEmitter {
         this.sensorInput = config.sensorInput || false;
         this.sensorScreenSaver = config.sensorScreenSaver || false;
         this.sensorInputs = config.sensorInputs || [];
-        this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
         this.xboxLiveUser = config.xboxLiveUser;
         this.xboxLivePasswd = config.xboxLivePasswd;
         this.xboxWebApiToken = config.xboxWebApiToken;

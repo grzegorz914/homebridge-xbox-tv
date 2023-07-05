@@ -2,9 +2,8 @@
 const HttpClient = require('../httpclient.js');
 
 class SOCIAL {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
+    constructor(authorizationHeaders) {
+        this.headers = authorizationHeaders;
         this.httpClient = new HttpClient();
     }
 

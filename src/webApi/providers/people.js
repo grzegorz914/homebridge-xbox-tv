@@ -2,12 +2,10 @@
 const HttpClient = require('../httpclient.js');
 
 class PEOPLE {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
-        this.httpClient = new HttpClient();
+    constructor(authorizationHeaders) {
+        this.headers = authorizationHeaders;
         this.headers['x-xbl-contract-version'] = '3';
-        this.headers['Accept-Language'] = 'en-US';
+        this.httpClient = new HttpClient();
     }
 
     getFriends() {

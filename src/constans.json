@@ -9,7 +9,8 @@
         "RefreshToken": "https://login.live.com/oauth20_token.srf",
         "UserToken": "https://user.auth.xboxlive.com/user/authenticate",
         "XstsToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
-        "Redirect": "http://localhost:8888/auth/callback"
+        "Redirect": "http://localhost:8888/auth/callback",
+        "Xccs": "https://xccs.xboxlive.com"
     },
     "ConsoleName": {
         "XboxSeriesX": "Xbox Series X",

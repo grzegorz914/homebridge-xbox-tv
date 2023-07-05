@@ -3,13 +3,10 @@ const QueryString = require('querystring');
 const HttpClient = require('../httpclient.js');
 
 class CATALOG {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
+    constructor(authorizationHeaders) {
+        this.headers = authorizationHeaders;
+        this.headers = { 'MS-CV': '0' };
         this.httpClient = new HttpClient();
-        this.headers = {
-            'MS-CV': '0'
-        };
     }
 
     searchTitle(query, marketLocale = 'us', languagesLocale = 'en-us') {

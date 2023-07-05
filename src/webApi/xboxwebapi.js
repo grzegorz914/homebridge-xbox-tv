@@ -27,6 +27,10 @@ class XBOXWEBAPI extends EventEmitter {
         this.userHash = config.userHash;
         this.debugLog = config.debugLog;
 
+        //variables
+        this.authorized = false;
+        this.httpClient = new HttpClient();
+
         const authConfig = {
             xboxLiveUser: config.xboxLiveUser,
             xboxLivePasswd: config.xboxLivePasswd,
@@ -37,29 +41,8 @@ class XBOXWEBAPI extends EventEmitter {
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);
-        this.httpClient = new HttpClient();
-
-        //variables
-        this.authorized = false;
-
-        this.on('disconnected', async () => {
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            this.emit('stateChanged', false);
-        });
-
-        this.getAuthorizationState();
-    }
-
-    async updateAuthorization() {
-        await new Promise(resolve => setTimeout(resolve, 900000));
-        this.getAuthorizationState();
-    };
-
-    async getAuthorizationState() {
-        try {
-            const tokens = this.userToken && this.userHash ? false : await this.authentication.checkAuthorization();
-            const debug = this.debugLog ? this.emit('debug', `authorization tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
-            const authorizationHeaders = this.userToken && this.userHash ? `XBL3.0 x=${this.userHash};${this.userToken}` : `XBL3.0 x=${tokens.xsts.DisplayClaims.xui[0].uhs};${tokens.xsts.Token}`
+        this.authentication.on('authorization', async (authorizationHeaders, tokens) => {
+            const debug = this.debugLog ? this.emit('debug', `authorization headers: ${JSON.stringify(authorizationHeaders, null, 2)}, tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
             this.headers = {
                 'Authorization': authorizationHeaders,
                 'Accept-Language': 'en-US',
@@ -73,35 +56,38 @@ class XBOXWEBAPI extends EventEmitter {
             this.authorized = true;
 
             try {
+                await this.xboxLiveData();
+            } catch (error) {
+                this.emit('error', JSON.stringify(error, null, 2));
+            };
+        }).on('error', (error) => {
+            this.emit('error', JSON.stringify(error, null, 2));
+        })
+    }
+
+    xboxLiveData() {
+        return new Promise(async (resolve, reject) => {
+            try {
                 const rmEnabled = await this.consoleStatus();
                 const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
                 //await this.consolesList();
                 await this.installedApps();
                 //await this.storageDevices();
                 //await this.userProfile();
-                this.updateAuthorization();
+                resolve();
             } catch (error) {
-                this.emit('error', `web Api data error: ${JSON.stringify(error, null, 2)}, recheck in 15min.`)
-                this.updateAuthorization();
+                reject(`get xbox live data error: ${error}`);
             };
-        } catch (error) {
-            this.emit('error', `check authorization state error: ${JSON.stringify(error, null, 2)}, recheck in 15min.`);
-            this.updateAuthorization();
-        };
+        });
     };
 
     consoleStatus() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://xccs.xboxlive.com/consoles/${this.xboxLiveId}`;
+                const url = `${CONSTANS.Url.Xccs}/consoles/${this.xboxLiveId}`;
                 const getConsoleStatusData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getConsoleStatusData);
-                const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false
-
-                if (responseObject.status.errorCode !== 'OK') {
-                    reject(responseObject.status);
-                    return;
-                }
+                const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
                 //get console status
                 const consoleStatusData = responseObject;
@@ -122,7 +108,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('consoleStatus', consoleStatusData, consoleType);
                 resolve(remoteManagementEnabled);
             } catch (error) {
-                reject(`Console: ${this.xboxLiveId}, get status error: ${error}`);
+                reject(`get status error: ${error}`);
             };
         });
     }
@@ -130,15 +116,10 @@ class XBOXWEBAPI extends EventEmitter {
     consolesList() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://xccs.xboxlive.com/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
+                const url = `${CONSTANS.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
                 const getConsolesListData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getConsolesListData);
-                const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false
-
-                if (responseObject.status.errorCode !== 'OK') {
-                    reject(responseObject.status);
-                    return;
-                }
+                const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false;
 
                 //get consoles list
                 this.consolesId = [];
@@ -215,15 +196,10 @@ class XBOXWEBAPI extends EventEmitter {
     installedApps() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://xccs.xboxlive.com/lists/installedApps?deviceId=${this.xboxLiveId}`;
+                const url = `${CONSTANS.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
                 const getInstalledAppsData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getInstalledAppsData);
-                const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false
-
-                if (responseObject.status.errorCode !== 'OK') {
-                    reject(responseObject.status);
-                    return;
-                }
+                const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false;
 
                 //get installed apps
                 const appsArray = [];
@@ -260,7 +236,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('appsList', appsArray);
                 resolve();
             } catch (error) {
-                reject(`Console: ${this.xboxLiveId}, get installed apps error: ${error}`);
+                reject(`get installed apps error: ${error}`);
             };
         });
     }
@@ -268,15 +244,10 @@ class XBOXWEBAPI extends EventEmitter {
     storageDevices() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://xccs.xboxlive.com/lists/storageDevices?deviceId=${this.xboxLiveId}`;
+                const url = `${CONSTANS.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
                 const getStorageDevicesData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getStorageDevicesData);
-                const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false
-
-                if (responseObject.status.errorCode !== 'OK') {
-                    reject(responseObject.status);
-                    return;
-                }
+                const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
                 //get console storages
                 this.storageDeviceId = [];
@@ -308,7 +279,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('storageDevices', storageDevices);
                 resolve();
             } catch (error) {
-                reject(`Console: ${this.xboxLiveId}, get storage devices error: ${error}`);
+                reject(`get storage devices error: ${error}`);
             };
         });
     }
@@ -320,11 +291,6 @@ class XBOXWEBAPI extends EventEmitter {
                 const getUserProfileData = await this.httpClient.get(url, this.headers);
                 const responseObject = JSON.parse(getUserProfileData);
                 const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(responseObject.profileUsers[0], null, 2)}, ${JSON.stringify(responseObject.profileUsers[0].settings[0], null, 2)}`) : false
-
-                if (responseObject.status.errorCode !== 'OK') {
-                    reject(responseObject.status);
-                    return;
-                }
 
                 //get user profiles
                 this.userProfileId = [];
@@ -563,25 +529,27 @@ class XBOXWEBAPI extends EventEmitter {
                 return;
             };
 
-            try {
-                const sessionid = Uuid4();
-                const params = payload ? payload : [];
-                const postParams = {
-                    "destination": "Xbox",
-                    "type": commandType,
-                    "command": command,
-                    "sessionId": sessionid,
-                    "sourceId": "com.microsoft.smartglass",
-                    "parameters": params,
-                    "linkedXboxId": this.xboxLiveId,
-                }
+            const sessionid = Uuid4();
+            const params = payload ? payload : [];
+            const postParams = {
+                "destination": 'Xbox',
+                "type": commandType,
+                "command": command,
+                "sessionId": sessionid,
+                "sourceId": 'com.microsoft.smartglass',
+                "parameters": params,
+                "linkedXboxId": this.xboxLiveId
+            }
+            const postData = JSON.stringify(postParams);
 
-                const url = `https://xccs.xboxlive.com/commands`;
-                const postData = JSON.stringify(postParams);
-                await this.httpClient.post(url, this.headers, postData);
+            try {
+                const response = await this.httpClient.post(`${CONSTANS.Url.Xccs}/commands`, this.headers, postData);
+                const responseObject = JSON.parse(response);
+                const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
+
                 resolve();
             } catch (error) {
-                reject(`send command type: ${commandType}, command: ${command}, params: ${payload}, error: ${JSON.stringify(error)}`);
+                reject(`send command type: ${commandType}, command: ${command}, params: ${params}, error: ${error}`);
             };
         });
     }

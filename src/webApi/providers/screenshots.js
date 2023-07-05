@@ -3,11 +3,11 @@ const QueryString = require('querystring')
 const HttpClient = require('../httpclient.js');
 
 class CATALOG {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
+    constructor(tokens, authorizationHeaders) {
+        this.tokens = tokens;
+        this.headers = authorizationHeaders;
+        this.headers['x-xbl-contract-version'] = '5';
         this.httpClient = new HttpClient();
-        this.headers['x-xbl-contract-version'] = '5'
     }
 
     getUserScreenshots() {
@@ -35,7 +35,7 @@ class CATALOG {
         });
     }
 
-    getScreenshotsByXuid(xuid, titleId, skipItems, maxItems) {
+    getScreenshotsByXuid(titleId, skipItems, maxItems) {
         return new Promise(async (resolve, reject) => {
             try {
                 const params = {
@@ -48,7 +48,7 @@ class CATALOG {
                 }
 
                 const queryParams = QueryString.stringify(params)
-                const url = `https://screenshotsmetadata.xboxlive.com/users/xuid(${xuid})/screenshots?${queryParams}`;
+                const url = `https://screenshotsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/screenshots?${queryParams}`;
                 const response = await this.httpClient.get(url, this.headers);
                 resolve(response);
             } catch (error) {

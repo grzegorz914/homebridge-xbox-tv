@@ -1,12 +1,14 @@
 'use strict';
+const EventEmitter = require('events');
 const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const HttpClient = require('./httpclient.js');
 const CONSTANS = require('../constans.json');
 
-class AUTHENTICATION {
+class AUTHENTICATION extends EventEmitter {
     constructor(config) {
+        super();
         this.httpClient = new HttpClient();
         this.xboxLiveUser = config.xboxLiveUser;
         this.xboxLivePasswd = config.xboxLivePasswd;
@@ -20,7 +22,14 @@ class AUTHENTICATION {
             user: {},
             xsts: {}
         };
+
+        this.checkAuthorization();
     }
+
+    async updateAuthorization() {
+        await new Promise(resolve => setTimeout(resolve, 900000));
+        this.checkAuthorization();
+    };
 
     refreshTokens(type) {
         return new Promise(async (resolve, reject) => {
@@ -91,32 +100,6 @@ class AUTHENTICATION {
         })
     }
 
-    accessToken(webApiToken) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const payload = {
-                    "client_id": this.clientId,
-                    "grant_type": 'authorization_code',
-                    "scope": CONSTANS.Scopes,
-                    "code": webApiToken,
-                    "redirect_uri": CONSTANS.Url.Redirect
-                }
-                const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
-
-                const postData = QueryString.stringify(payload);
-                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.post(CONSTANS.Url.AccessToken, headers, postData);
-                const accessToken = JSON.parse(data);
-                accessToken.issued = new Date().toISOString();
-                this.tokens.oauth = accessToken;
-                await this.saveTokens(this.tokens);
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        })
-    }
-
     refreshToken(token) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -134,7 +117,6 @@ class AUTHENTICATION {
                 const refreshToken = JSON.parse(data);
                 refreshToken.issued = new Date().toISOString();
                 this.tokens.oauth = refreshToken;
-                await this.saveTokens(this.tokens);
                 resolve();
             } catch (error) {
                 reject(error);
@@ -161,7 +143,6 @@ class AUTHENTICATION {
                 const userToken = JSON.parse(data);
                 this.tokens.user = userToken;
                 this.tokens.xsts = {};
-                await this.saveTokens(this.tokens);
                 resolve();
             } catch (error) {
                 reject(error);
@@ -186,8 +167,33 @@ class AUTHENTICATION {
                 const data = await this.httpClient.post(CONSTANS.Url.XstsToken, headers, postData);
                 const xstsToken = JSON.parse(data);
                 this.tokens.xsts = xstsToken;
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        })
+    }
+
+    accessToken(webApiToken) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const payload = {
+                    "client_id": this.clientId,
+                    "grant_type": 'authorization_code',
+                    "scope": CONSTANS.Scopes,
+                    "code": webApiToken,
+                    "redirect_uri": CONSTANS.Url.Redirect
+                }
+                const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
+
+                const postData = QueryString.stringify(payload);
+                const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                const data = await this.httpClient.post(CONSTANS.Url.AccessToken, headers, postData);
+                const accessToken = JSON.parse(data);
+                accessToken.issued = new Date().toISOString();
+                this.tokens.oauth = accessToken;
                 await this.saveTokens(this.tokens);
-                resolve(xstsToken);
+                resolve();
             } catch (error) {
                 reject(error);
             };
@@ -203,20 +209,28 @@ class AUTHENTICATION {
 
             if (this.clientId) {
                 if (!this.tokens.oauth.refresh_token) {
-                    reject('No oauth token found. Use authorization manager first.')
+                    this.emit('error', 'no oauth token found. Use authorization manager first.');
+                    reject('No oauth token found. Use authorization manager first.');
+                    return;
                 };
 
                 try {
                     await this.refreshTokens('user');
-                    resolve(this.tokens);
+                    this.emit('authorization', `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, this.tokens);
+                    await this.saveTokens(this.tokens);
+                    resolve();
                 } catch (error) {
+                    this.emit('error', `refresh tokens error: ${JSON.stringify(error, null, 2)}.`);
                     reject(error);
                 };
             } else if (this.userToken && this.userHash) {
+                this.emit('authorization', `XBL3.0 x=${this.userHash};${this.userToken}`, this.tokens);
                 resolve();
             } else {
-                reject('Not authorized, check client Id in settings.');
+                this.emit('error', 'not authorized, check plugin setting client Id.');
+                reject('Not authorized, check plugin setting client Id.');
             }
+            this.updateAuthorization();
         })
     }
 

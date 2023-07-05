@@ -2,17 +2,17 @@
 const HttpClient = require('../httpclient.js');
 
 class PINS {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
-        this.httpClient = new HttpClient();
+    constructor(tokens, authorizationHeaders) {
+        this.tokens = tokens;
+        this.headers = authorizationHeaders;
         this.headers['Content-Type'] = 'application/json';
+        this.httpClient = new HttpClient();
     }
 
     getPins(list = 'XBLPins') {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://eplists.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/lists/PINS/${list}`;
+                const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/${list}`;
                 const response = await this.httpClient.get(url, this.headers);
                 resolve(response);
             } catch (error) {
@@ -24,7 +24,7 @@ class PINS {
     getSaveForLater() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://eplists.xboxlive.com/users/xuid(${this.client.authentication.user.xid})/lists/PINS/SaveForLater`;
+                const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/SaveForLater`;
                 const response = await this.httpClient.get(url, this.headers);
                 resolve(response);
             } catch (error) {

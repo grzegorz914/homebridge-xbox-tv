@@ -2,9 +2,9 @@
 const HttpClient = require('../httpclient.js');
 
 class MESSAGES {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
+    constructor(tokens, authorizationHeaders) {
+        this.tokens = tokens;
+        this.headers = authorizationHeaders;
         this.httpClient = new HttpClient();
     }
 
@@ -21,10 +21,10 @@ class MESSAGES {
 
     }
 
-    getConversation(xuid) {
+    getConversation() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/conversations/users/xuid(${xuid})?maxItems=100`;
+                const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/conversations/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})?maxItems=100`;
                 const response = await this.httpClient.get(url, this.headers);
                 resolve(response);
             } catch (error) {

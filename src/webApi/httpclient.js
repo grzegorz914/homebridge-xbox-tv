@@ -27,18 +27,18 @@ class HTTPCLIENT {
                 res.on('data', (data) => {
                     responseData += data;
                 }).on('close', () => {
-                    if (res.statusCode === 200) {
-                        resolve(responseData.toString());
-                    } else {
-                        reject({ status: res.statusCode, body: responseData.toString() });
+                    if (res.statusCode != 200) {
+                        reject(`status: ${res.statusCode}, body: ${responseData}`);
+                        return;
                     }
+
+                    resolve(responseData);
                 })
             })
             req.on('error', (error) => {
                 reject(error);
             })
             req.end();
-
         })
     }
 
@@ -66,11 +66,12 @@ class HTTPCLIENT {
                     responseData += data;
                 })
                 res.on('close', () => {
-                    if (res.statusCode === 200) {
-                        resolve(responseData.toString());
-                    } else {
-                        reject({ status: res.statusCode, body: responseData.toString() });
-                    }
+                    if (res.statusCode != 200) {
+                        reject(`status: ${res.statusCode}, body: ${responseData}`);
+                        return;
+                    };
+
+                    resolve(responseData);
                 })
             })
             req.on('error', (error) => {

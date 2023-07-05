@@ -3,11 +3,11 @@ const QueryString = require('querystring')
 const HttpClient = require('../httpclient.js');
 
 class GAMECLIP {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
-        this.httpClient = new HttpClient();
+    constructor(tokens, authorizationHeaders) {
+        this.tokens = tokens;
+        this.headers = authorizationHeaders;
         this.headers['x-xbl-contract-version'] = '1';
+        this.httpClient = new HttpClient();
     }
 
     getUserGameclips() {
@@ -34,7 +34,7 @@ class GAMECLIP {
         });
     }
 
-    getGameclipsByXuid(xuid, titleId, skipItems, maxItems) {
+    getGameclipsByXuid(titleId, skipItems, maxItems) {
         return new Promise(async (resolve, reject) => {
             try {
                 const params = {
@@ -47,7 +47,7 @@ class GAMECLIP {
                 }
 
                 const queryParams = QueryString.stringify(params)
-                const url = `https://gameclipsmetadata.xboxlive.com/users/xuid(${xuid})/clips?${queryParams}`;
+                const url = `https://gameclipsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/clips?${queryParams}`;
                 const response = await this.httpClient.get(url, this.headers);
                 resolve(response);
             } catch (error) {

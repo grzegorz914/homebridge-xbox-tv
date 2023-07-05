@@ -2,11 +2,10 @@
 const HttpClient = require('../httpclient.js');
 
 class USERPRESENCE {
-    constructor(client, headers) {
-        this.client = client;
-        this.headers = headers;
+    constructor(authorizationHeaders) {
+        this.headers = authorizationHeaders;
+        this.headers['x-xbl-contract-version'] = '3';
         this.httpClient = new HttpClient();
-        this.headers['x-xbl-contract-version'] = 3
     }
 
     getCurrentUser() {
