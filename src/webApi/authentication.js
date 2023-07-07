@@ -1,14 +1,12 @@
 'use strict';
-const EventEmitter = require('events');
 const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const HttpClient = require('./httpclient.js');
 const CONSTANS = require('../constans.json');
 
-class AUTHENTICATION extends EventEmitter {
+class AUTHENTICATION {
     constructor(config) {
-        super();
         this.httpClient = new HttpClient();
         this.xboxLiveUser = config.xboxLiveUser;
         this.xboxLivePasswd = config.xboxLivePasswd;
@@ -22,8 +20,6 @@ class AUTHENTICATION extends EventEmitter {
             user: {},
             xsts: {}
         };
-
-        this.checkAuthorization();
     }
 
     refreshTokens(type) {
@@ -203,31 +199,22 @@ class AUTHENTICATION extends EventEmitter {
             }
 
             if (this.clientId) {
-                if (!this.tokens.oauth.refresh_token) {
-                    this.emit('error', 'no oauth token found. Use authorization manager first.');
-                    reject('No oauth token found. Use authorization manager first.');
-                    return;
-                };
-
-                try {
-                    await this.refreshTokens('user');
-                    await this.saveTokens(this.tokens);
-                    this.emit('authorization', `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, this.tokens);
-                    resolve();
-                } catch (error) {
-                    this.emit('error', error);
-                    reject(error);
-                };
+                if (this.tokens.oauth.refresh_token) {
+                    try {
+                        await this.refreshTokens('user');
+                        await this.saveTokens(this.tokens);
+                        resolve({ headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens });
+                    } catch (error) {
+                        reject(error);
+                    };
+                } else {
+                    reject('No oauth token found. Use authorization manager first.')
+                }
             } else if (this.userToken && this.userHash) {
-                this.emit('authorization', `XBL3.0 x=${this.userHash};${this.userToken}`, this.tokens);
-                resolve();
+                resolve({ headers: `XBL3.0 x=${this.userHash};${this.userToken}`, tokens: this.tokens });
             } else {
-                this.emit('error', error);
-                reject('Not authorized, check plugin setting client Id.');
+                reject(`Authorization not possible, check plugin settings - Client Id: ${this.clientId}`);
             }
-
-            await new Promise(resolve => setTimeout(resolve, 900000));
-            this.checkAuthorization();
         })
     }
 

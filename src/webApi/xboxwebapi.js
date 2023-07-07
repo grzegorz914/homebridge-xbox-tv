@@ -41,10 +41,15 @@ class XBOXWEBAPI extends EventEmitter {
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);
-        this.authentication.on('authorization', async (authorizationHeaders, tokens) => {
-            const debug = this.debugLog ? this.emit('debug', `authorization headers: ${JSON.stringify(authorizationHeaders, null, 2)}, tokens: ${JSON.stringify(tokens, null, 2)}`) : false;
+        this.checkAuthorization();
+    }
+
+    async checkAuthorization() {
+        try {
+            const data = await this.authentication.checkAuthorization();
+            const debug = this.debugLog ? this.emit('debug', `authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
             this.headers = {
-                'Authorization': authorizationHeaders,
+                'Authorization': data.headers,
                 'Accept-Language': 'en-US',
                 'x-xbl-contract-version': '4',
                 'x-xbl-client-name': 'XboxApp',
@@ -52,7 +57,7 @@ class XBOXWEBAPI extends EventEmitter {
                 'x-xbl-client-version': '39.39.22001.0',
                 'skillplatform': 'RemoteManagement'
             }
-            this.tokens = tokens;
+            this.tokens = data.tokens;
             this.authorized = true;
 
             try {
@@ -60,9 +65,12 @@ class XBOXWEBAPI extends EventEmitter {
             } catch (error) {
                 this.emit('error', JSON.stringify(error, null, 2));
             };
-        }).on('error', (error) => {
-            this.emit('error', JSON.stringify(error, null, 2));
-        })
+        } catch (error) {
+            this.emit('error', error);
+        };
+
+        await new Promise(resolve => setTimeout(resolve, 900000));
+        this.checkAuthorization();
     }
 
     xboxLiveData() {
