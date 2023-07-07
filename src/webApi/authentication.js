@@ -26,11 +26,6 @@ class AUTHENTICATION extends EventEmitter {
         this.checkAuthorization();
     }
 
-    async updateAuthorization() {
-        await new Promise(resolve => setTimeout(resolve, 900000));
-        this.checkAuthorization();
-    };
-
     refreshTokens(type) {
         return new Promise(async (resolve, reject) => {
             switch (type) {
@@ -202,7 +197,7 @@ class AUTHENTICATION extends EventEmitter {
 
     checkAuthorization() {
         return new Promise(async (resolve, reject) => {
-            if (fs.existsSync(this.tokensFile) && fs.readFileSync(this.tokensFile).length > 30) {
+            if (fs.readFileSync(this.tokensFile).length > 30) {
                 const tokens = fs.readFileSync(this.tokensFile);
                 this.tokens = JSON.parse(tokens);
             }
@@ -216,21 +211,23 @@ class AUTHENTICATION extends EventEmitter {
 
                 try {
                     await this.refreshTokens('user');
-                    this.emit('authorization', `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, this.tokens);
                     await this.saveTokens(this.tokens);
+                    this.emit('authorization', `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, this.tokens);
                     resolve();
                 } catch (error) {
-                    this.emit('error', `refresh tokens error: ${JSON.stringify(error, null, 2)}.`);
+                    this.emit('error', error);
                     reject(error);
                 };
             } else if (this.userToken && this.userHash) {
                 this.emit('authorization', `XBL3.0 x=${this.userHash};${this.userToken}`, this.tokens);
                 resolve();
             } else {
-                this.emit('error', 'not authorized, check plugin setting client Id.');
+                this.emit('error', error);
                 reject('Not authorized, check plugin setting client Id.');
             }
-            this.updateAuthorization();
+
+            await new Promise(resolve => setTimeout(resolve, 900000));
+            this.checkAuthorization();
         })
     }
 
@@ -265,11 +262,15 @@ class AUTHENTICATION extends EventEmitter {
         })
     }
 
-    clearToken() {
+    clearTokens() {
         return new Promise(async (resolve, reject) => {
             try {
-                const object = JSON.stringify({});
-                await fsPromises.writeFile(this.tokensFile, object);
+                const tokens = JSON.stringify({
+                    oauth: {},
+                    user: {},
+                    xsts: {}
+                }, null, 2);
+                await fsPromises.writeFile(this.tokensFile, tokens);
                 resolve();
             } catch (error) {
                 reject(error);

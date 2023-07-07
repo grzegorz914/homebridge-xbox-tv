@@ -39,7 +39,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
     switch (mode) {
       case 'clearToken':
         try {
-          await authentication.clearToken(tokensFile);
+          await authentication.clearTokens();
           data = {
             info: 'Web Api Token cleared, now You can start new authorization process.',
             status: 0

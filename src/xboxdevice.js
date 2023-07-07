@@ -97,8 +97,14 @@ class XboxDevice extends EventEmitter {
         // Create files if it doesn't exist
         const object = JSON.stringify({});
         const array = JSON.stringify([]);
+        const tokens = JSON.stringify({
+            oauth: {},
+            user: {},
+            xsts: {}
+        }, null, 2);
+
         if (!fs.existsSync(this.authTokenFile)) {
-            fs.writeFileSync(this.authTokenFile, object);
+            fs.writeFileSync(this.authTokenFile, tokens);
         }
         if (!fs.existsSync(this.inputsFile)) {
             fs.writeFileSync(this.inputsFile, array);
