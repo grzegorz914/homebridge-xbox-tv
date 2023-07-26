@@ -22,7 +22,7 @@ class CATALOG {
                 }
                 const queryParams = QueryString.stringify(searchParams)
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/productFamilies/autosuggest?${queryParams}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -43,7 +43,7 @@ class CATALOG {
 
                 const queryParams = QueryString.stringify(searchParams)
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/products?${queryParams}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -67,7 +67,7 @@ class CATALOG {
 
                 const queryParams = QueryString.stringify(searchParams)
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup${queryParams}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

@@ -18,7 +18,7 @@ class TITLEHUB {
                 ]
 
                 const url = `https://titlehub.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/titles/titlehistory/decoration/${params.join(',')}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -38,7 +38,7 @@ class TITLEHUB {
                 ]
 
                 const url = `https://titlehub.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/titles/titleid(${titleId})/decoration/${params.join(',')}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

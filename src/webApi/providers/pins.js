@@ -13,7 +13,7 @@ class PINS {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/${list}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -25,7 +25,7 @@ class PINS {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/SaveForLater`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

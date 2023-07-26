@@ -14,7 +14,7 @@ class GAMECLIP {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://gameclipsmetadata.xboxlive.com/users/me/clips`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -26,7 +26,7 @@ class GAMECLIP {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://gameclipsmetadata.xboxlive.com/public/titles/${titleId}clips/saved?qualifier=created`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -48,7 +48,7 @@ class GAMECLIP {
 
                 const queryParams = QueryString.stringify(params)
                 const url = `https://gameclipsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/clips?${queryParams}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

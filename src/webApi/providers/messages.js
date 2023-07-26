@@ -12,7 +12,7 @@ class MESSAGES {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/inbox`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -25,7 +25,7 @@ class MESSAGES {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://xblmessaging.xboxlive.com/network/Xbox/users/me/conversations/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})?maxItems=100`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

@@ -104,7 +104,7 @@ class AUTHENTICATION {
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.post(CONSTANS.Url.RefreshToken, headers, postData);
+                const data = await this.httpClient.request(CONSTANS.Url.RefreshToken, headers, postData, 'POST');
                 const refreshToken = JSON.parse(data);
                 refreshToken.issued = new Date().toISOString();
                 this.tokens.oauth = refreshToken;
@@ -130,7 +130,7 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json' };
-                const data = await this.httpClient.post(CONSTANS.Url.UserToken, headers, postData);
+                const data = await this.httpClient.request(CONSTANS.Url.UserToken, headers, postData, 'POST');
                 const userToken = JSON.parse(data);
                 this.tokens.user = userToken;
                 this.tokens.xsts = {};
@@ -155,7 +155,7 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-                const data = await this.httpClient.post(CONSTANS.Url.XstsToken, headers, postData);
+                const data = await this.httpClient.request(CONSTANS.Url.XstsToken, headers, postData, 'POST');
                 const xstsToken = JSON.parse(data);
                 this.tokens.xsts = xstsToken;
                 resolve();
@@ -179,7 +179,7 @@ class AUTHENTICATION {
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.post(CONSTANS.Url.AccessToken, headers, postData);
+                const data = await this.httpClient.request(CONSTANS.Url.AccessToken, headers, postData, 'POST');
                 const accessToken = JSON.parse(data);
                 accessToken.issued = new Date().toISOString();
                 this.tokens.oauth = accessToken;

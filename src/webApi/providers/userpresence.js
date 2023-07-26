@@ -12,7 +12,7 @@ class USERPRESENCE {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://userpresence.xboxlive.com/users/me?level=all`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);

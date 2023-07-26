@@ -14,7 +14,7 @@ class CATALOG {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://screenshotsmetadata.xboxlive.com/users/me/screenshot`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -27,7 +27,7 @@ class CATALOG {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://screenshotsmetadata.xboxlive.com/public/titles/${titleId}/screenshots?qualifier=created&maxItems=10`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -49,7 +49,7 @@ class CATALOG {
 
                 const queryParams = QueryString.stringify(params)
                 const url = `https://screenshotsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/screenshots?${queryParams}`;
-                const response = await this.httpClient.get(url, this.headers);
+                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
                 resolve(response);
             } catch (error) {
                 reject(error);
