@@ -1,7 +1,7 @@
 {
   "displayName": "Xbox TV",
   "name": "homebridge-xbox-tv",
-  "version": "2.8.28",
+  "version": "2.9.0",
   "description": "Homebridge plugin (https://github.com/homebridge/homebridge) to control Xbox game consoles.",
   "license": "MIT",
   "author": "grzegorz914",
@@ -37,7 +37,8 @@
     "uuid": "^9.0.0",
     "uuid-parse": "^1.1.0",
     "ping": "^0.4.4",
-    "uuid4": "^2.0.3"
+    "uuid4": "^2.0.3",
+    "express": "^4.18.2"
   },
   "keywords": [
     "homebridge",
@@ -48,8 +49,8 @@
     "smartglass"
   ],
   "funding": {
-    "type" : "github",
-    "url" : "https://github.com/sponsors/grzegorz914"
+    "type": "github",
+    "url": "https://github.com/sponsors/grzegorz914"
   },
   "contributors": [],
   "scripts": {
