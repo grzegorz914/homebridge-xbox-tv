@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.9.0] - (29.07.2023)
 ## Changes
 - added RESTFul server
-- use JWT token for lokac api if console authorizen
+- use JWT token for lokal api if console authorizen
 - code refactor and cleanup
 - config.schema updated
 - fixed some minor issues
