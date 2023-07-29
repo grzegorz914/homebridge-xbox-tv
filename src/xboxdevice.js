@@ -144,7 +144,7 @@ class XboxDevice extends EventEmitter {
             this.mqtt = new Mqtt({
                 host: this.mqttHost,
                 port: this.mqttPort,
-                prefix: `${this.mqttPrefi}/${this.name}`,
+                prefix: `${this.mqttPrefix}/${this.name}`,
                 auth: this.mqttAuth,
                 user: this.mqttUser,
                 passwd: this.mqttPasswd,
