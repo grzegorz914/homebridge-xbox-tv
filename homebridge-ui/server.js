@@ -29,8 +29,6 @@ class PluginUiServer extends HomebridgePluginUiServer {
       xboxLivePasswd: payload.xboxLivePasswd,
       clientId: payload.clientId,
       clientSecret: payload.clientSecret,
-      userToken: payload.userToken,
-      userHash: payload.userHash,
       tokensFile: tokensFile
     }
     const authentication = new Authentication(authConfig);

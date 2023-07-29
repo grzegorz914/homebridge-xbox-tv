@@ -33,7 +33,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Record Game DVR with additional button.
-* MQTT publisch topic *Info*, *State*, *Consoles List*, *Profile*, *Apps*, *Storages*, *Status* as payload JSON data.
+* RESTful server:
+  * Request: `http//homebridge_ip_address:port/path`.
+  * Path: `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`.
+  * Respone as JSON data.
+* MQTT client:
+  * Topic: `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status`.
+  * Publish as JSON data.
 
 <p align="left">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a> 
@@ -70,7 +76,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
-| `webApiControl` | This enable control Xbox over Web Api. Additional functions are available in `Advanced Settings` section. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
@@ -90,17 +95,21 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). | 
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
+| `webApiControl` | This enable control Xbox over Web Api. Additional functions are available in `Advanced Settings` section. |
 | `webApiPowerOnOff` | This enable power ON/OFF control over Web Api. |
+| `xboxLiveUser` | Prepare for feature use. |
+| `xboxLivePasswd` | Prepare for feature use. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
 | `clientId` | If You create app on Azure AD then You can use your own Client Id. |
 | `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
-| `userToken` | Alternate authorization method. |
-| `userHash` | Alternate authorization method. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (`None/Disabled`, `Lightbulb`, `Fan`), not working yet. |
+| `enableRestFul` | If enabled, RESTful server will start automatically and respond to any path request. |
+| `restFulPort` | Here set the listening `Port` for RESTful server. |
+| `restFulDebug` | If enabled, deep log will be present in homebridge console for RESTFul server. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker. |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |

@@ -541,26 +541,6 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"userToken": {
-							"title": "User Token",
-							"type": "string",
-							"placeholder": "User Token",
-							"description": "Optional authorization method for future use.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"userHash": {
-							"title": "User Hash",
-							"type": "string",
-							"placeholder": "User Hash",
-							"description": "Optional authorization method for future use.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
 						"enableDebugMode": {
 							"title": "Debug",
 							"type": "boolean",
@@ -657,6 +637,33 @@
 								}
 							],
 							"required": true
+						},
+						"enableRestFul": {
+							"title": "Enable",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable RESTful server."
+						},
+						"restFulDebug": {
+							"title": "Debug",
+							"type": "boolean",
+							"default": false,
+							"required": false,
+							"description": "This enable debug mode for RESTFul.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableRestFul === true;"
+							}
+						},
+						"restFulPort": {
+							"title": "Port",
+							"type": "integer",
+							"placeholder": 3000,
+							"required": true,
+							"description": "Here set the listening Port for RESTful server.",
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].enableRestFul === true;"
+							}
 						},
 						"enableMqtt": {
 							"title": "Enable",
@@ -842,9 +849,7 @@
 						"devices[].xboxLivePasswd",
 						"devices[].xboxWebApiToken",
 						"devices[].clientId",
-						"devices[].clientSecret",
-						"devices[].userToken",
-						"devices[].userHash"
+						"devices[].clientSecret"
 					]
 				},
 				{
@@ -859,6 +864,18 @@
 						"devices[].disableLogDeviceInfo",
 						"devices[].infoButtonCommand",
 						"devices[].volumeControl"
+					]
+				},
+				{
+					"key": "devices[]",
+					"type": "section",
+					"title": "RESTful",
+					"expandable": true,
+					"expanded": false,
+					"items": [
+						"devices[].enableRestFul",
+						"devices[].restFulDebug",
+						"devices[].restFulPort"
 					]
 				},
 				{

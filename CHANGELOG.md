@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.9.0] - (29.07.2023)
+## Changes
+- added RESTFul server
+- use JWT token for lokac api if console authorizen
+- code refactor and cleanup
+- config.schema updated
+- fixed some minor issues
+- prepare for next release and features
+
 ## [2.8.0] - (20.02.2023)
 ## Changes
 - fix load plugin gui on first start after install

@@ -12,8 +12,6 @@ class AUTHENTICATION {
         this.xboxLivePasswd = config.xboxLivePasswd;
         this.clientId = config.clientId || CONSTANS.ClientId;
         this.clientSecret = config.clientSecret;
-        this.userToken = config.userToken;
-        this.userHash = config.userHash;
         this.tokensFile = config.tokensFile;
         this.tokens = {
             oauth: {},
@@ -210,8 +208,6 @@ class AUTHENTICATION {
                 } else {
                     reject('No oauth token found. Use authorization manager first.')
                 }
-            } else if (this.userToken && this.userHash) {
-                resolve({ headers: `XBL3.0 x=${this.userHash};${this.userToken}`, tokens: this.tokens });
             } else {
                 reject(`Authorization not possible, check plugin settings - Client Id: ${this.clientId}`);
             }

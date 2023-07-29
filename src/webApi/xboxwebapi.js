@@ -23,8 +23,6 @@ class XBOXWEBAPI extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.clientId = config.clientId;
         this.clientSecret = config.clientSecret;
-        this.userToken = config.userToken;
-        this.userHash = config.userHash;
         this.debugLog = config.debugLog;
 
         //variables
@@ -36,8 +34,6 @@ class XBOXWEBAPI extends EventEmitter {
             xboxLivePasswd: config.xboxLivePasswd,
             clientId: config.clientId,
             clientSecret: config.clientSecret,
-            userToken: config.userToken,
-            userHash: config.userHash,
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);

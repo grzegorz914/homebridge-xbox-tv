@@ -145,8 +145,6 @@
         const xboxLivePasswd = pluginConfig[0].devices[this.deviceIndex].xboxLivePasswd;
         const clientId = pluginConfig[0].devices[this.deviceIndex].clientId;
         const clientSecret = pluginConfig[0].devices[this.deviceIndex].clientSecret;
-        const userToken = pluginConfig[0].devices[this.deviceIndex].userToken;
-        const userHash = pluginConfig[0].devices[this.deviceIndex].userHash;
         const xboxWebApiToken = pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken;
 
         const payload = {
@@ -156,8 +154,6 @@
           xboxLivePasswd: xboxLivePasswd,
           clientId: clientId,
           clientSecret: clientSecret,
-          userToken: userToken,
-          userHash: userHash,
           webApiToken: xboxWebApiToken
         };
         const response = await homebridge.request('/startAuthorization', payload);

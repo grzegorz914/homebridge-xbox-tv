@@ -1,4 +1,6 @@
 "use strict";
+const fs = require('fs');
+const fsPromises = fs.promises;
 const Dgram = require('dgram');
 const UuIdParse = require('uuid-parse');
 const UuId = require('uuid');
@@ -13,12 +15,12 @@ class XBOXLOCALAPI extends EventEmitter {
     constructor(config) {
         super();
 
+        this.crypto = new SGCrypto();
         this.host = config.host;
         this.port = config.dgramPort;
         this.xboxLiveId = config.xboxLiveId;
-        this.userToken = config.userToken;
-        this.userHash = config.userHash;
         this.infoLog = config.infoLog;
+        this.tokensFile = config.tokensFile;
         this.debugLog = config.debugLog;
 
         this.isConnected = false;
@@ -30,8 +32,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.sourceParticipantId = 0;
         this.mediaRequestId = 0;
         this.emitDevInfo = true;
-
-        this.crypto = new SGCrypto();
 
         //dgram socket
         this.connect = () => {
@@ -157,13 +157,15 @@ class XBOXLOCALAPI extends EventEmitter {
                     connectRequest.set('publicKey', this.crypto.getPublicKey());
                     connectRequest.set('iv', this.crypto.getIv());
 
-                    if (this.userHash && this.userToken) {
-                        connectRequest.set('userHash', this.userHash, true);
-                        connectRequest.set('jwt', this.userToken, true);
+                    const tokenData = await this.readToken();
+                    const tokenExist = tokenData !== false ? true : false;
+                    if (tokenExist) {
+                        connectRequest.set('userHash', tokenData.user.DisplayClaims.xui[0].uhs, true);
+                        connectRequest.set('jwt', tokenData.user.Token, true);
                         this.isAuthorized = true;
                     }
-                    
-                    const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using token: ${this.userToken}`) : this.emit('debug', 'Connecting using anonymous login.') : false;
+
+                    const debug3 = this.debugLog ? this.isAuthorized ? this.emit('debug', `Connecting using JWT token.`) : this.emit('debug', 'Connecting using anonymous login.') : false;
                     const message = connectRequest.pack(this);
                     await this.sendSocketMessage(message);
                 } catch (error) {
@@ -288,6 +290,19 @@ class XBOXLOCALAPI extends EventEmitter {
         this.connect();
     };
 
+    readToken() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const data = await fsPromises.readFile(this.tokensFile);
+                const parseData = JSON.parse(data);
+                const tokenData = parseData.user.Token ? parseData : false;
+                resolve(tokenData);
+            } catch (error) {
+                reject(`Read token error: ${error}`);
+            }
+        });
+    }
+
     powerOn() {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
@@ -403,9 +418,12 @@ class XBOXLOCALAPI extends EventEmitter {
                     25: 'Power On',
                     74: 'Acknowledge',
                     90: 'Power Off',
-                    122: 'Local Join',
-                    170: 'Connect Request'
+                    106: 'Local Join with JWT Token',
+                    122: 'Local Join Anonymous',
+                    170: 'Connect Request Anonymous',
+                    1802: 'Connect Request with JWT Token'
                 }
+
                 const debug = this.debugLog ? this.emit('debug', `Socket send ${sendMessage[bytes]}.`) : false;
                 resolve();
             });
