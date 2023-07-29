@@ -93,7 +93,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANS.Url.Xccs}/consoles/${this.xboxLiveId}`;
-                const getConsoleStatusData = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const getConsoleStatusData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getConsoleStatusData);
                 const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
@@ -125,7 +125,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANS.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
-                const getConsolesListData = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const getConsolesListData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getConsolesListData);
                 const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false;
 
@@ -205,7 +205,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANS.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
-                const getInstalledAppsData = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const getInstalledAppsData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getInstalledAppsData);
                 const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false;
 
@@ -253,7 +253,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANS.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
-                const getStorageDevicesData = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const getStorageDevicesData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getStorageDevicesData);
                 const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
@@ -296,7 +296,7 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
-                const getUserProfileData = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const getUserProfileData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getUserProfileData);
                 const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(responseObject.profileUsers[0], null, 2)}, ${JSON.stringify(responseObject.profileUsers[0].settings[0], null, 2)}`) : false
 
@@ -338,7 +338,7 @@ class XBOXWEBAPI extends EventEmitter {
     powerOn() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Power', 'WakeUp')
+                await this.send('Power', 'WakeUp');
                 resolve();
             } catch (error) {
                 this.emit('powerOnError', false);
@@ -350,7 +350,7 @@ class XBOXWEBAPI extends EventEmitter {
     powerOff() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Power', 'TurnOff')
+                await this.send('Power', 'TurnOff');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -361,7 +361,7 @@ class XBOXWEBAPI extends EventEmitter {
     reboot() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Power', 'Reboot')
+                await this.send('Power', 'Reboot');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -372,7 +372,7 @@ class XBOXWEBAPI extends EventEmitter {
     mute() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Audio', 'Mute')
+                await this.send('Audio', 'Mute');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -383,7 +383,7 @@ class XBOXWEBAPI extends EventEmitter {
     unmute() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Audio', 'Unmute')
+                await this.send('Audio', 'Unmute');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -394,7 +394,7 @@ class XBOXWEBAPI extends EventEmitter {
     volumeUp() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Volume', 'Up')
+                await this.send('Volume', 'Up');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -405,7 +405,7 @@ class XBOXWEBAPI extends EventEmitter {
     volumeDown() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Volume', 'Dovn')
+                await this.send('Volume', 'Dovn');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -416,7 +416,7 @@ class XBOXWEBAPI extends EventEmitter {
     next() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Media', 'Next')
+                await this.send('Media', 'Next');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -427,7 +427,7 @@ class XBOXWEBAPI extends EventEmitter {
     previous() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Media', 'Previous')
+                await this.send('Media', 'Previous');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -438,7 +438,7 @@ class XBOXWEBAPI extends EventEmitter {
     pause() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Media', 'Pause')
+                await this.send('Media', 'Pause');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -449,7 +449,7 @@ class XBOXWEBAPI extends EventEmitter {
     play() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Media', 'Play')
+                await this.send('Media', 'Play');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -460,7 +460,7 @@ class XBOXWEBAPI extends EventEmitter {
     goBack() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Shell', 'GoBack')
+                await this.send('Shell', 'GoBack');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -472,7 +472,7 @@ class XBOXWEBAPI extends EventEmitter {
     goHome() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('Shell', 'GoHome')
+                await this.send('Shell', 'GoHome');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -485,7 +485,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 await this.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{
                     'oneStoreProductId': oneStoreProductId
-                }])
+                }]);
                 resolve();
             } catch (error) {
                 reject(error);
@@ -498,7 +498,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 await this.send('Shell', 'ShowGuideTab', [{
                     'tabName': 'Guide'
-                }])
+                }]);
                 resolve();
             } catch (error) {
                 reject(error);
@@ -509,7 +509,7 @@ class XBOXWEBAPI extends EventEmitter {
     showTVGuide() {
         return new Promise(async (resolve, reject) => {
             try {
-                await this.send('TV', 'ShowGuide')
+                await this.send('TV', 'ShowGuide');
                 resolve();
             } catch (error) {
                 reject(error);
@@ -522,7 +522,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 await this.send('Shell', 'InjectKey', [{
                     'keyType': button
-                }])
+                }]);
                 resolve();
             } catch (error) {
                 reject(error);
@@ -551,7 +551,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             try {
                 const postData = JSON.stringify(postParams);
-                const response = await this.httpClient.request(`${CONSTANS.Url.Xccs}/commands`, this.headers, postData, 'POST');
+                const response = await this.httpClient.request('POST', `${CONSTANS.Url.Xccs}/commands`, this.headers, postData);
                 const responseObject = JSON.parse(response);
                 const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 

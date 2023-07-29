@@ -6,21 +6,21 @@ const Http = require('http');
 class HTTPCLIENT {
     constructor() { }
 
-    request(url, headers, postdata, method) {
+    request(method, url, headers, postdata) {
         return new Promise((resolve, reject) => {
             const parsedUrl = this.queryUrl(url);
             const options = {
+                method: method,
                 hostname: parsedUrl.hostname,
                 port: parsedUrl.port,
                 path: parsedUrl.path,
-                method: method,
                 headers: {}
             }
 
             for (const header in headers) {
                 options.headers[header] = headers[header];
-                const addContentLength = method === 'POST' ? options.headers['Content-Length'] = postdata.length : false;
             }
+            const addContentLength = method === 'POST' ? options.headers['Content-Length'] = postdata.length : false;
 
             const httpEngine = parsedUrl.protocol === 'https' ? Https : Http;
             const req = httpEngine.request(options, (res) => {

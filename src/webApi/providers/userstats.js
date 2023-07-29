@@ -14,7 +14,7 @@ class USERSTATS {
             try {
                 const url = `https://userstats.xboxlive.com/batch`;
                 const params = `{"arrangebyfield":"xuid","xuids":["${this.tokens.xsts.DisplayClaims.xui[0].xid}"],"groups":[{"name":"Hero","titleId":"${titleId}"}],"stats":[{"name":"MinutesPlayed","titleId":"${titleId}"}]}`;
-                const response = await this.httpClient.request(url, this.headers, params, 'POST');
+                const response = await this.httpClient.request('POST', url, this.headers, params);
                 resolve(response);
             } catch (error) {
                 reject(error);

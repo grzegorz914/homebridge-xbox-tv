@@ -11,7 +11,7 @@ class SOCIAL {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://social.xboxlive.com/users/me/summary`;
-                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const response = await this.httpClient.request('GET', url, this.headers);
                 resolve(response);
             } catch (error) {
                 reject(error);

@@ -13,7 +13,7 @@ class ACHIVEMENTS {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://achievements.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/history/titles?continuationToken=${continuationToken}`;
-                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const response = await this.httpClient.request('GET', url, this.headers);
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -26,7 +26,7 @@ class ACHIVEMENTS {
             try {
                 this.headers['x-xbl-contract-version'] = 1
                 const url = `https://achievements.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/history/titles?continuationToken=${continuationToken}`;
-                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const response = await this.httpClient.request('GET', url, this.headers);
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -38,7 +38,7 @@ class ACHIVEMENTS {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://achievements.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/achievements?titleId=${titleId}&continuationToken=${continuationToken}`;
-                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const response = await this.httpClient.request('GET', url, this.headers);
                 resolve(response);
             } catch (error) {
                 reject(error);
@@ -51,7 +51,7 @@ class ACHIVEMENTS {
             try {
                 this.headers['x-xbl-contract-version'] = 1
                 const url = `https://achievements.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/achievements?titleId=${titleId}&continuationToken=${continuationToken}`;
-                const response = await this.httpClient.request(url, this.headers, undefined, 'GET');
+                const response = await this.httpClient.request('GET', url, this.headers);
                 resolve(response);
             } catch (error) {
                 reject(error);
