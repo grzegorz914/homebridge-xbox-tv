@@ -41,7 +41,8 @@ class MQTTCLIENT extends EventEmitter {
 
         try {
             const fullTopic = `${this.mqttPrefix}/${topic}`;
-            await this.mqttClient.publish(fullTopic, message);
+            const publishMessage = JSON.stringify(message, null, 2);
+            await this.mqttClient.publish(fullTopic, publishMessage);
             const emitDebug = this.mqttDebug ? this.emit('debug', `MQTT publish: ${fullTopic}: ${message}`) : false;
         } catch (error) {
             this.emit('error', `MQTT Publish error: ${error}`);

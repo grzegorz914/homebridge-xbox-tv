@@ -244,7 +244,7 @@ class XboxDevice extends EventEmitter {
                     'mute': mute,
                     'mediaState': mediaState,
                 };
-                const mqtt = this.mqttEnabled ? this.mqtt.send('State', JSON.stringify(obj, null, 2)) : false;
+                const mqtt = this.mqttEnabled ? this.mqtt.send('State', obj) : false;
             })
             .on('message', (message) => {
                 this.emit('message', message);
@@ -284,26 +284,26 @@ class XboxDevice extends EventEmitter {
                 //this.power = powerState;
                 //this.mediaState = playbackState;
 
-                const mqtt = this.mqttEnabled ? this.mqtt.send('Status', JSON.stringify(consoleStatusData, null, 2)) : false;
+                const mqtt = this.mqttEnabled ? this.mqtt.send('Status', consoleStatusData) : false;
             })
                 .on('consolesList', (consolesList) => {
-                    const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', JSON.stringify(consolesList, null, 2)) : false;
+                    const mqtt = this.mqttEnabled ? this.mqtt.send('Consoles List', consolesList) : false;
                 })
                 .on('appsList', async (appsArray) => {
                     try {
                         const apps = JSON.stringify([...CONSTANS.DefaultInputs, ...appsArray], null, 2);
                         await fsPromises.writeFile(this.inputsFile, apps);
                         const debug = this.enableDebugMode ? this.emit('debug', `Saved apps: ${apps}`) : false;
-                        const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', JSON.stringify(apps, null, 2)) : false;
+                        const mqtt = this.mqttEnabled ? this.mqtt.send('Apps', apps) : false;
                     } catch (error) {
                         this.emit('error', `save apps error: ${error}`);
                     };
                 })
                 .on('storageDevices', (storageDevices) => {
-                    const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', JSON.stringify(storageDevices, null, 2)) : false;
+                    const mqtt = this.mqttEnabled ? this.mqtt.send('Storages', storageDevices) : false;
                 })
                 .on('userProfile', (profileUsers) => {
-                    const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', JSON.stringify(profileUsers, null, 2)) : false;
+                    const mqtt = this.mqttEnabled ? this.mqtt.send('Profile', profileUsers) : false;
                 })
                 .on('powerOnError', (power) => {
                     if (this.televisionService) {
