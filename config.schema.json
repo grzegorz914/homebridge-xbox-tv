@@ -495,7 +495,7 @@
 							"title": "Xbox Live User",
 							"type": "string",
 							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set user for your Xbox Live account, not used at this time.",
+							"description": "Here set *User* for your Xbox Live account, not used at this time.",
 							"required": true,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -505,7 +505,7 @@
 							"title": "Xbox Live Password",
 							"type": "string",
 							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set password for your Xbox Live account, not used at this time.",
+							"description": "Here set *Password* for your Xbox Live account, not used at this time.",
 							"required": true,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -525,7 +525,7 @@
 							"title": "Client ID",
 							"type": "string",
 							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
-							"description": "Here set your own Client ID from Azure AD, leave empty if you do not have own account.",
+							"description": "Here set your own Client ID from Azure AD or leave empty if you do not have own account.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -535,7 +535,7 @@
 							"title": "Client Secret",
 							"type": "string",
 							"placeholder": "Client Secret",
-							"description": "Here set your Client Secret from Azure AD to use with API uthorization, leave empty if you do not have own account.",
+							"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"

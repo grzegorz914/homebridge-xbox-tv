@@ -9,7 +9,7 @@ class CATALOG {
         this.httpClient = new HttpClient();
     }
 
-    searchTitle(query, marketLocale = 'us', languagesLocale = 'en-us') {
+    searchTitle(query, marketLocale = 'US', languagesLocale = 'en-US') {
         return new Promise(async (resolve, reject) => {
             try {
                 const searchParams = {
@@ -30,7 +30,7 @@ class CATALOG {
         });
     }
 
-    getProductId(query, marketLocale = 'us', languagesLocale = 'en-us') {
+    getProductId(query, marketLocale = 'US', languagesLocale = 'en-US') {
         return new Promise(async (resolve, reject) => {
             try {
                 const searchParams = {

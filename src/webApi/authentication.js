@@ -225,7 +225,7 @@ class AUTHENTICATION {
                     "redirect_uri": CONSTANS.Url.Redirect
                 }
                 const params = QueryString.stringify(payload);
-                const oauth2URI = `${CONSTANS.Url.oauth2}${params}`;
+                const oauth2URI = `${CONSTANS.Url.oauth2}?${params}`;
                 resolve(oauth2URI);
             } catch (error) {
                 reject(error);

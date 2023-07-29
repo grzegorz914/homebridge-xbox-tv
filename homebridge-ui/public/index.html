@@ -1,6 +1,8 @@
 <div>
   <img src="homebridge-xbox-tv.png" style="text-align: center;" height="150" />
 </div>
+<div id="consoles">
+</div>
 <div id="authorizationManager" style="display: none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
@@ -45,14 +47,14 @@
       const button = document.createElement("button");
       button.setAttribute("type", "button");
       button.setAttribute("id", `button${i}`);
-      button.setAttribute("class", "btn btn-secondary");
-      button.innerText = pluginConfig[0].devices[i].name || 'Not set';
-      button.style.width = '160px';
-      button.style.height = '34x';
-      document.body.appendChild(button);
+      button.setAttribute("class", "btn btn-primary");
+      button.innerText = pluginConfig[0].devices[i].name || 'Name not set';
+      document.getElementById("consoles").appendChild(button);
 
       //get actuall value on console select
       document.getElementById(`button${i}`).addEventListener('click', async () => {
+        document.getElementById(`button${i}`).focus();
+
         document.getElementById('deviceName').innerHTML = pluginConfig[0].devices[i].name || '';
         document.getElementById('deviceHost').value = pluginConfig[0].devices[i].host || '';
         document.getElementById('deviceLiveId').value = pluginConfig[0].devices[i].xboxLiveId || '';
