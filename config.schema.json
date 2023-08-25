@@ -869,30 +869,40 @@
 				{
 					"key": "devices[]",
 					"type": "section",
-					"title": "RESTful",
+					"title": "External Integrations",
 					"expandable": true,
 					"expanded": false,
 					"items": [
-						"devices[].enableRestFul",
-						"devices[].restFulDebug",
-						"devices[].restFulPort"
-					]
-				},
-				{
-					"key": "devices[]",
-					"type": "section",
-					"title": "MQTT",
-					"expandable": true,
-					"expanded": false,
-					"items": [
-						"devices[].enableMqtt",
-						"devices[].mqttDebug",
-						"devices[].mqttHost",
-						"devices[].mqttPort",
-						"devices[].mqttPrefix",
-						"devices[].mqttAuth",
-						"devices[].mqttUser",
-						"devices[].mqttPasswd"
+						{
+							"key": "devices[]",
+							"type": "tabarray",
+							"title": "{{ value.title }}",
+							"items": [
+								{
+									"key": "devices[]",
+									"title": "RESTFul",
+									"items": [
+										"devices[].enableRestFul",
+										"devices[].restFulDebug",
+										"devices[].restFulPort"
+									]
+								},
+								{
+									"key": "devices[]",
+									"title": "MQTT",
+									"items": [
+										"devices[].enableMqtt",
+										"devices[].mqttDebug",
+										"devices[].mqttHost",
+										"devices[].mqttPort",
+										"devices[].mqttPrefix",
+										"devices[].mqttAuth",
+										"devices[].mqttUser",
+										"devices[].mqttPasswd"
+									]
+								}
+							]
+						}
 					]
 				}
 			]
