@@ -1,97 +1,78 @@
 "use strict";
-
+const JsRsaSign = require('jsrsasign');
 const Crypto = require('crypto');
+const EOL = require('os').EOL;
 const EC = require('elliptic').ec;
 
 class SGCRYPTO {
     constructor() {
-
-        this.publicKey = Buffer.from('', 'hex');
-        this.secret = Buffer.from('', 'hex');
         this.encryptionKey = false;
         this.iv = false;
         this.hashKey = false;
 
     };
 
-    load(publicKey, secret) {
-        if (!publicKey || !secret) {
-            throw new Error('Both public key and secret are required for loading.');
-        }
+    getPublicKey(decodedMessage) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Set certyficate
+                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
 
-        this.publicKey = Buffer.from(publicKey);
-        this.secret = Buffer.from(secret);
+                // Set pem
+                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-        const data = {
-            'aes_key': Buffer.from(this.secret.slice(0, 16)),
-            'aes_iv': Buffer.from(this.secret.slice(16, 32)),
-            'hmac_key': Buffer.from(this.secret.slice(32))
-        };
+                // Create public key
+                const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
 
-        this.iv = data.aes_iv;
-        this.hashKey = data.hmac_key;
-        this.encryptionKey = data.aes_key;
-    };
+                const ec = new EC('p256');
+                const sha512 = Crypto.createHash('sha512');
 
-    getSecret() {
-        return this.secret;
-    };
+                // Generate keys
+                const key1 = ec.genKeyPair();
+                const key2 = ec.keyFromPublic(ecKey.pubKeyHex, 'hex');
 
-    getHmac() {
-        if (!this.encryptionKey) {
-            this.load();
-        };
-        return this.hashKey;
-    };
+                const shared1 = key1.derive(key2.getPublic());
+                const derivedSecret = Buffer.from(shared1.toString(16), 'hex');
+                const publicKeyClient = key1.getPublic('hex');
 
-    signPublicKey(publicKey) {
-        const ec = new EC('p256');
-        const sha512 = Crypto.createHash('sha512');
+                const preSalt = Buffer.from('d637f1aae2f0418c', 'hex');
+                const postSalt = Buffer.from('a8f81a574e228ab7', 'hex');
+                const prePostSalt = Buffer.concat([preSalt, derivedSecret, postSalt]);
 
-        // Generate keys
-        const key1 = ec.genKeyPair();
-        const key2 = ec.keyFromPublic(publicKey, 'hex');
+                // Hash shared secret
+                const sha = sha512.update(prePostSalt);
+                const shaSecret = sha.digest();
 
-        const shared1 = key1.derive(key2.getPublic());
-        const derivedSecret = Buffer.from(shared1.toString(16), 'hex');
-        const publicKeyClient = key1.getPublic('hex');
+                const publicKeyHex = publicKeyClient.toString('hex');
+                const publicKey = Buffer.from(publicKeyHex.substring(2), 'hex');
+                const shaSecretHex = shaSecret.toString('hex');
+                const secret = Buffer.from(shaSecretHex, 'hex');
 
-        const preSalt = Buffer.from('d637f1aae2f0418c', 'hex');
-        const postSalt = Buffer.from('a8f81a574e228ab7', 'hex');
-        const prePostSalt = Buffer.concat([preSalt, derivedSecret, postSalt]);
+                this.encryptionKey = secret.subarray(0, 16);
+                this.iv = secret.subarray(16, 32);
+                this.hashKey = secret.subarray(32);
 
-        // Hash shared secret
-        const sha = sha512.update(prePostSalt);
-        const secret = sha.digest();
+                const data = {
+                    publicKey: publicKey,
+                    iv: this.iv
+                };
 
-        return {
-            publicKey: publicKeyClient.toString('hex').slice(2),
-            secret: secret.toString('hex'),
-        };
-    };
-
-    getPublicKey() {
-        return this.publicKey;
+                resolve(data);
+            } catch (error) {
+                reject(`sign public key error: ${error}`);
+            };
+        });
     };
 
     getEncryptionKey() {
-        if (!this.encryptionKey) {
-            this.load();
-        };
         return this.encryptionKey;
     };
 
     getIv() {
-        if (!this.iv) {
-            this.load();
-        };
         return this.iv;
     };
 
     getHashKey() {
-        if (!this.hashKey) {
-            this.load();
-        };
         return this.hashKey;
     };
 

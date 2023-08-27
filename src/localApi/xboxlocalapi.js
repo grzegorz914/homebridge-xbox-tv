@@ -3,8 +3,6 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const Dgram = require('dgram');
 const { parse: UuIdParse, v4: UuIdv4 } = require('uuid');
-const EOL = require('os').EOL;
-const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
 const Ping = require('ping');
 const Packer = require('./packer.js');
@@ -132,29 +130,16 @@ class XBOXLOCALAPI extends EventEmitter {
             const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(decodedMessage)}.`) : false;
 
             if (decodedMessage && !this.isConnected) {
-                // Set certyficate
-                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
-
-                // Set pem
-                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
-
-                // Create public key
-                const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
-                const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
-
-                // Load crypto data
-                const { publicKey, secret } = this.crypto.signPublicKey(ecKey.pubKeyHex);
-                this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
-                const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
-
-                // Set uuid
-                const uuid4 = Buffer.from(UuIdParse(UuIdv4()));
-
                 try {
+                    // Sign public key
+                    const data = await this.crypto.getPublicKey(decodedMessage);
+                    const debug2 = this.debugLog ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
+
+                    // Connect request
                     const connectRequest = new Packer('simple.connectRequest');
-                    connectRequest.set('uuid', uuid4);
-                    connectRequest.set('publicKey', this.crypto.getPublicKey());
-                    connectRequest.set('iv', this.crypto.getIv());
+                    connectRequest.set('uuid', Buffer.from(UuIdParse(UuIdv4())));
+                    connectRequest.set('publicKey', data.publicKey);
+                    connectRequest.set('iv', data.iv);
 
                     const tokenData = await this.readToken();
                     const tokenExist = tokenData !== false ? true : false;
