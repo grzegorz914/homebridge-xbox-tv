@@ -2,8 +2,7 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 const Dgram = require('dgram');
-const UuIdParse = require('uuid-parse');
-const UuId = require('uuid');
+const { parse: UuIdParse, v4: UuIdv4 } = require('uuid');
 const EOL = require('os').EOL;
 const JsRsaSign = require('jsrsasign');
 const EventEmitter = require('events');
@@ -139,9 +138,6 @@ class XBOXLOCALAPI extends EventEmitter {
                 // Set pem
                 const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
 
-                // Set uuid
-                const uuid4 = Buffer.from(UuIdParse.parse(UuId.v4()));
-
                 // Create public key
                 const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
                 const debug1 = this.debugLog ? this.emit('debug', `Signing public key: ${ecKey.pubKeyHex}`) : false;
@@ -150,6 +146,9 @@ class XBOXLOCALAPI extends EventEmitter {
                 const { publicKey, secret } = this.crypto.signPublicKey(ecKey.pubKeyHex);
                 this.crypto.load(Buffer.from(publicKey, 'hex'), Buffer.from(secret, 'hex'));
                 const debug2 = this.debugLog ? this.emit('debug', `Loading crypto, public key: ${publicKey}, and secret: ${secret}`) : false;
+
+                // Set uuid
+                const uuid4 = Buffer.from(UuIdParse(UuIdv4()));
 
                 try {
                     const connectRequest = new Packer('simple.connectRequest');

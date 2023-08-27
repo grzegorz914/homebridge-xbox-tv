@@ -1,7 +1,6 @@
 'use strict';
 const EventEmitter = require('events');
-const Uuid4 = require('uuid4');
-
+const { v4: UuIdv4 } = require('uuid');
 const Authentication = require('./authentication.js')
 const HttpClient = require('./httpclient.js')
 const Achievements = require('./providers/achievements.js');
@@ -533,7 +532,7 @@ class XBOXWEBAPI extends EventEmitter {
                 return;
             };
 
-            const sessionid = Uuid4();
+            const sessionid = UuIdv4();
             const params = payload ? payload : [];
             const postParams = {
                 "destination": 'Xbox',

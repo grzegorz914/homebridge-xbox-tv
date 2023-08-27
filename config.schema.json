@@ -839,31 +839,41 @@
 				{
 					"key": "devices[]",
 					"type": "section",
-					"title": "Web Api",
-					"expandable": true,
-					"expanded": false,
-					"items": [
-						"devices[].webApiControl",
-						"devices[].webApiPowerOnOff",
-						"devices[].xboxLiveUser",
-						"devices[].xboxLivePasswd",
-						"devices[].xboxWebApiToken",
-						"devices[].clientId",
-						"devices[].clientSecret"
-					]
-				},
-				{
-					"key": "devices[]",
-					"type": "section",
 					"title": "Advanced Settings",
 					"expandable": true,
 					"expanded": false,
 					"items": [
-						"devices[].enableDebugMode",
-						"devices[].disableLogInfo",
-						"devices[].disableLogDeviceInfo",
-						"devices[].infoButtonCommand",
-						"devices[].volumeControl"
+						{
+							"key": "devices[]",
+							"type": "tabarray",
+							"title": "{{ value.title }}",
+							"items": [
+								{
+									"key": "devices[]",
+									"title": "Web Api",
+									"items": [
+										"devices[].webApiControl",
+										"devices[].webApiPowerOnOff",
+										"devices[].xboxLiveUser",
+										"devices[].xboxLivePasswd",
+										"devices[].xboxWebApiToken",
+										"devices[].clientId",
+										"devices[].clientSecret"
+									]
+								},
+								{
+									"key": "devices[]",
+									"title": "System",
+									"items": [
+										"devices[].enableDebugMode",
+										"devices[].disableLogInfo",
+										"devices[].disableLogDeviceInfo",
+										"devices[].infoButtonCommand",
+										"devices[].volumeControl"
+									]
+								}
+							]
+						}
 					]
 				},
 				{
