@@ -6,7 +6,6 @@ class SIMPLE {
         this.packetType = type;
         this.packetFormat = type;
         this.packetData = packetData;
-        this.packetDecoded = false;
         this.structureProtected = false;
 
         const Type = {
@@ -128,49 +127,6 @@ class SIMPLE {
         }
     }
 
-    unpack(xboxlocalapi = undefined) {
-        const Packet = this.packet;
-        const packetFormat = this.packetFormat;
-        const payload = new PacketStructure(this.packetData);
-
-        let packet = {
-            type: payload.readBytes(2).toString('hex'),
-            payloadLength: payload.readUInt16(),
-            version: payload.readUInt16()
-        };
-
-        if (packet.version !== 0 && packet.version !== 2) {
-            packet.protectedPayloadLength = packet.version;
-            packet.version = payload.readUInt16();
-        }
-
-        for (const name in this.structure) {
-            packet[name] = this.structure[name].unpack(payload);
-            this.set(name, packet[name]);
-        }
-
-        if (packet.protectedPayload !== undefined) {
-            packet.protectedPayload = packet.protectedPayload.slice(0, -32);
-            packet.signature = packet.protectedPayload.slice(-32);
-
-            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
-            decryptedPayload = new PacketStructure(decryptedPayload);
-
-            const protectedStructure = Packet[`${packetFormat}Protected`];
-            packet.protectedPayload = {};
-
-            for (const name in protectedStructure) {
-                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
-                this.set('protectedPayload', packet.protectedPayload);
-            }
-        }
-
-        this.packetType = (packet.type === 'dd02') ? 'powerOn' : this.packetType;
-        this.packetDecoded = packet;
-
-        return this;
-    }
-
     pack(xboxlocalapi = false) {
         const payload = new PacketStructure();
         const type = this.packetType;
@@ -197,7 +153,8 @@ class SIMPLE {
                         }
                     }
                     this.protectedPayloadLengthReal = this.protectedPayload.toBuffer().length;
-                    const encryptedPayload = xboxlocalapi.crypto.encrypt(this.protectedPayload.toBuffer(), xboxlocalapi.crypto.getEncryptionKey(), this.structure.iv.value);
+                    const encryptionKey = xboxlocalapi.crypto.getKey();
+                    const encryptedPayload = xboxlocalapi.crypto.encrypt(this.protectedPayload.toBuffer(), encryptionKey, this.structure.iv.value);
                     payload.writeBytes(encryptedPayload);
                     break;
                 default:
@@ -236,10 +193,10 @@ class SIMPLE {
                         payload.writeUInt8(padTotal);
                     };
                 };
-
-                const encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), xboxlocalapi.crypto.getIv());
-                const encryptedPayloadStructure = new PacketStructure(encryptedPayload)
-                packet = encryptedPayloadStructure.toBuffer();
+                const iv = xboxlocalapi.crypto.getIv();
+                let encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), iv);
+                encryptedPayload = new PacketStructure(encryptedPayload)
+                packet = encryptedPayload.toBuffer();
                 break;
             default:
                 packet = payload.toBuffer();
@@ -279,5 +236,51 @@ class SIMPLE {
         }
         return packet;
     };
+
+    unpack(xboxlocalapi = undefined) {
+        const Packet = this.packet;
+        const packetFormat = this.packetFormat;
+        const payload = new PacketStructure(this.packetData);
+
+        let packet = {
+            type: payload.readBytes(2).toString('hex'),
+            payloadLength: payload.readUInt16(),
+            version: payload.readUInt16()
+        };
+
+        if (packet.version !== 0 && packet.version !== 2) {
+            packet.protectedPayloadLength = packet.version;
+            packet.version = payload.readUInt16();
+        }
+
+        for (const name in this.structure) {
+            packet[name] = this.structure[name].unpack(payload);
+            this.set(name, packet[name]);
+        }
+
+        // Lets decrypt the data when the payload is encrypted
+        if (packet.protectedPayload !== undefined) {
+            packet.protectedPayload = packet.protectedPayload.slice(0, -32);
+            packet.signature = packet.protectedPayload.slice(-32);
+
+            const iv = packet.iv;
+            const protectedPayloadLength = packet.protectedPayloadLength;
+            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, iv);
+            decryptedPayload = decryptedPayload.slice(0, protectedPayloadLength);
+            decryptedPayload = new PacketStructure(decryptedPayload);
+
+            const protectedStructure = Packet[`${packetFormat}Protected`];
+            packet.protectedPayload = {};
+
+            for (const name in protectedStructure) {
+                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
+                this.set('protectedPayload', packet.protectedPayload);
+            }
+        }
+
+        const packetType = (packet.type === 'dd02') ? 'powerOn' : this.packetType;
+        const data = { packetType: packetType, packetDecoded: packet };
+        return data;
+    }
 };
 module.exports = SIMPLE;

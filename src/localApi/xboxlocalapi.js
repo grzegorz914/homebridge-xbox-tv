@@ -195,7 +195,7 @@ class XBOXLOCALAPI extends EventEmitter {
             try {
                 const acknowledge = new Packer('message.acknowledge');
                 acknowledge.set('lowWatermark', this.requestNum);
-                acknowledge.structure.structure.processedList.value.push({
+                acknowledge.packetStructure.structure.processedList.value.push({
                     id: this.requestNum
                 });
                 const message = acknowledge.pack(this);

@@ -3,10 +3,11 @@ const JsRsaSign = require('jsrsasign');
 const Crypto = require('crypto');
 const EOL = require('os').EOL;
 const EC = require('elliptic').ec;
+const bufferIv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
 
 class SGCRYPTO {
     constructor() {
-        this.encryptionKey = false;
+        this.key = false;
         this.iv = false;
         this.hashKey = false;
 
@@ -48,7 +49,7 @@ class SGCRYPTO {
                 const shaSecretHex = shaSecret.toString('hex');
                 const secret = Buffer.from(shaSecretHex, 'hex');
 
-                this.encryptionKey = secret.subarray(0, 16);
+                this.key = secret.subarray(0, 16);
                 this.iv = secret.subarray(16, 32);
                 this.hashKey = secret.subarray(32);
 
@@ -64,73 +65,54 @@ class SGCRYPTO {
         });
     };
 
-    getEncryptionKey() {
-        return this.encryptionKey;
+    getKey() {
+        return this.key;
     };
 
     getIv() {
         return this.iv;
     };
 
-    getHashKey() {
-        return this.hashKey;
-    };
-
-    encrypt(data, key = false, iv = false) {
+    encrypt(data, key, iv) {
         data = Buffer.from(data);
-
-        if (!key) {
-            key = this.getEncryptionKey();
-        }
-
-        if (!iv) {
-            iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
-        }
+        key = !key ? this.key : key;
+        iv = !iv ? bufferIv : iv;
 
         const cipher = Crypto.createCipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
         let encryptedPayload = cipher.update(data, 'binary', 'binary');
         encryptedPayload += cipher.final('binary');
-        return Buffer.from(encryptedPayload, 'binary');
+        encryptedPayload = Buffer.from(encryptedPayload, 'binary');
+        return encryptedPayload;
     }
 
-    decrypt(data, iv, key = false) {
-        if (!key) {
-            key = this.getEncryptionKey();
-        }
+    decrypt(data, iv, key) {
+        key = !key ? this.key : key;
+        iv = !iv ? bufferIv : iv;
 
-        if (!iv) {
-            iv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
-        }
-
-        const paddedData = this.addPadding(data);
         const cipher = Crypto.createDecipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
 
-        let decryptedPayload = cipher.update(paddedData, 'binary', 'binary');
+        let decryptedPayload = cipher.update(data, 'binary', 'binary');
         decryptedPayload += cipher.final('binary');
-        return this.removePadding(Buffer.from(decryptedPayload, 'binary'));
+        decryptedPayload = this.removePadding(Buffer.from(decryptedPayload, 'binary'));
+        return decryptedPayload;
     };
 
     sign(data) {
-        const hashHmac = Crypto.createHmac('sha256', this.getHashKey());
+        const hashHmac = Crypto.createHmac('sha256', this.hashKey);
         hashHmac.update(data, 'binary', 'binary');
-        const protectedPayloadHash = hashHmac.digest('binary');
-        return Buffer.from(protectedPayloadHash, 'binary');
+        let protectedPayloadHash = hashHmac.digest('binary');
+        protectedPayloadHash = Buffer.from(protectedPayloadHash, 'binary');
+        return protectedPayloadHash;
     };
 
     removePadding(payload) {
         const payloadBuffer = Buffer.from(payload.slice(-1));
         const payloadLength = payloadBuffer.readUInt8(0);
 
-        if (payloadLength > 0 && payloadLength < 16) {
-            return Buffer.from(payload.slice(0, payload.length - payloadLength));
-        }
-        return payload;
-    };
-
-    addPadding(payload) {
+        payload = payloadLength > 0 && payloadLength < 16 ? Buffer.from(payload.slice(0, payload.length - payloadLength)) : payload;
         return payload;
     };
 }

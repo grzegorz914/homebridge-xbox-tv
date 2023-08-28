@@ -7,7 +7,6 @@ class MESSAGE {
     constructor(type, packetData = false) {
         this.packetType = type;
         this.packetData = packetData;
-        this.packetDecoded = false;
         this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
         const Type = {
@@ -390,52 +389,6 @@ class MESSAGE {
         }
     }
 
-    setChannel(channelId) {
-        this.channelId = Buffer.from(channelId);
-    };
-
-    unpack(xboxlocalapi = undefined) {
-        const payload = new PacketStructure(this.packetData);
-        const Packet = this.packet;
-
-        let packet = {
-            type: payload.readBytes(2).toString('hex'),
-            payloadLength: payload.readUInt16(),
-            sequenceNumber: payload.readUInt32(),
-            targetParticipantId: payload.readUInt32(),
-            sourceParticipantId: payload.readUInt32(),
-            flags: this.readFlags(payload.readBytes(2)),
-            channelId: payload.readBytes(8),
-            protectedPayload: payload.readBytes()
-        };
-
-        packet.type = packet.flags.type;
-        packet.protectedPayload = Buffer.from(packet.protectedPayload.slice(0, -32));
-        packet.signature = packet.protectedPayload.slice(-32);
-
-        // Lets decrypt the data when the payload is encrypted
-        if (packet.protectedPayload) {
-            const key = xboxlocalapi.crypto.encrypt(this.packetData.slice(0, 16), xboxlocalapi.crypto.getIv());
-
-            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, key);
-            packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
-            decryptedPayload = new PacketStructure(decryptedPayload);
-
-            this.structure = Packet[packet.type];
-            const protectedStructure = Packet[packet.type];
-            packet['protectedPayload'] = {};
-
-            for (const name in protectedStructure) {
-                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
-            };
-        };
-        this.setChannel(packet.channelId);
-        this.packetType = packet.type;
-        this.packetDecoded = packet;
-
-        return this;
-    };
-
     pack(xboxlocalapi) {
         const payload = new PacketStructure();
 
@@ -460,8 +413,10 @@ class MESSAGE {
             }
         }
 
-        const key = xboxlocalapi.crypto.encrypt(header.toBuffer().slice(0, 16), xboxlocalapi.crypto.getIv());
-        const encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), xboxlocalapi.crypto.getEncryptionKey(), key);
+        const iv = xboxlocalapi.crypto.getIv();
+        const key = xboxlocalapi.crypto.getKey();
+        let encryptedPayload = xboxlocalapi.crypto.encrypt(header.toBuffer().slice(0, 16), iv);
+        encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), key, encryptedPayload);
 
         let packet = Buffer.concat([
             header.toBuffer(),
@@ -474,6 +429,46 @@ class MESSAGE {
             Buffer.from(protectedPayloadHash)
         ]);
         return packet;
+    };
+
+    unpack(xboxlocalapi = undefined) {
+        const payload = new PacketStructure(this.packetData);
+        const Packet = this.packet;
+
+        let packet = {
+            type: payload.readBytes(2).toString('hex'),
+            payloadLength: payload.readUInt16(),
+            sequenceNumber: payload.readUInt32(),
+            targetParticipantId: payload.readUInt32(),
+            sourceParticipantId: payload.readUInt32(),
+            flags: this.readFlags(payload.readBytes(2)),
+            channelId: payload.readBytes(8),
+            protectedPayload: payload.readBytes()
+        };
+
+        packet.type = packet.flags.type;
+        packet.protectedPayload = Buffer.from(packet.protectedPayload.slice(0, -32));
+        packet.signature = packet.protectedPayload.slice(-32);
+
+        // Lets decrypt the data when the payload is encrypted
+        if (packet.protectedPayload) {
+            const iv = xboxlocalapi.crypto.getIv();
+            const key = xboxlocalapi.crypto.encrypt(this.packetData.slice(0, 16), iv);
+            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, key);
+            packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
+            decryptedPayload = new PacketStructure(decryptedPayload);
+
+            this.structure = Packet[packet.type];
+            const protectedStructure = Packet[packet.type];
+            packet['protectedPayload'] = {};
+
+            for (const name in protectedStructure) {
+                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
+            };
+        };
+
+        const data = { packetType: packet.type, packetDecoded: packet };
+        return data;
     };
 };
 module.exports = MESSAGE;
