@@ -1,13 +1,13 @@
 "use strict";
 const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
+const CHANNELID = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 const CONSTANS = require('../constans.json');
 
 class MESSAGE {
     constructor(type, packetData = false) {
         this.packetType = type;
         this.packetData = packetData;
-        this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
         const Type = {
             uInt32(value) {
@@ -403,7 +403,7 @@ class MESSAGE {
         header.writeUInt32(xboxlocalapi.targetParticipantId);
         header.writeUInt32(xboxlocalapi.sourceParticipantId);
         header.writeBytes(this.setFlags(this.packetType));
-        header.writeBytes(this.channelId);
+        header.writeBytes(CHANNELID);
 
         if (payload.toBuffer().length % 16 > 0) {
             const padStart = payload.toBuffer().length % 16;
