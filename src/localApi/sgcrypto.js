@@ -3,7 +3,7 @@ const JsRsaSign = require('jsrsasign');
 const Crypto = require('crypto');
 const EOL = require('os').EOL;
 const EC = require('elliptic').ec;
-const bufferIv = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
+const IV = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
 
 class SGCRYPTO {
     constructor() {
@@ -76,7 +76,7 @@ class SGCRYPTO {
     encrypt(data, key, iv) {
         data = Buffer.from(data);
         key = !key ? this.key : key;
-        iv = !iv ? bufferIv : iv;
+        iv = !iv ? IV : iv;
 
         const cipher = Crypto.createCipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
@@ -89,7 +89,7 @@ class SGCRYPTO {
 
     decrypt(data, iv, key) {
         key = !key ? this.key : key;
-        iv = !iv ? bufferIv : iv;
+        iv = !iv ? IV : iv;
 
         const cipher = Crypto.createDecipheriv('aes-128-cbc', key, iv);
         cipher.setAutoPadding(false);
