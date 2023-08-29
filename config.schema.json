@@ -808,37 +808,6 @@
 				{
 					"key": "devices[]",
 					"type": "section",
-					"title": "Sensors",
-					"expandable": true,
-					"expanded": false,
-					"items": [
-						"devices[].sensorPower",
-						"devices[].sensorScreenSaver",
-						"devices[].sensorInput",
-						{
-							"key": "devices[]",
-							"type": "section",
-							"title": "Custom Inputs",
-							"expandable": true,
-							"expanded": false,
-							"items": [
-								{
-									"key": "devices[].sensorInputs",
-									"type": "tabarray",
-									"title": "{{ value.name || 'new sensor' }}",
-									"items": [
-										"devices[].sensorInputs[].name",
-										"devices[].sensorInputs[].reference",
-										"devices[].sensorInputs[].displayType"
-									]
-								}
-							]
-						}
-					]
-				},
-				{
-					"key": "devices[]",
-					"type": "section",
 					"title": "Advanced Settings",
 					"expandable": true,
 					"expanded": false,
@@ -848,6 +817,34 @@
 							"type": "tabarray",
 							"title": "{{ value.title }}",
 							"items": [
+								{
+									"key": "devices[]",
+									"title": "Sensors",
+									"items": [
+										"devices[].sensorPower",
+										"devices[].sensorScreenSaver",
+										"devices[].sensorInput",
+										{
+											"key": "devices[]",
+											"type": "section",
+											"title": "Custom Inputs",
+											"expandable": true,
+											"expanded": false,
+											"items": [
+												{
+													"key": "devices[].sensorInputs",
+													"type": "tabarray",
+													"title": "{{ value.name || 'new sensor' }}",
+													"items": [
+														"devices[].sensorInputs[].name",
+														"devices[].sensorInputs[].reference",
+														"devices[].sensorInputs[].displayType"
+													]
+												}
+											]
+										}
+									]
+								},
 								{
 									"key": "devices[]",
 									"title": "Web Api",
