@@ -2,7 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const XboxDevice = require('./src/xboxdevice.js');
-const CONSTANS = require('./src/constans.json');
+const CONSTANTS = require('./src/constans.json');
 
 class XboxPlatform {
 	constructor(log, config, api) {
@@ -30,7 +30,7 @@ class XboxPlatform {
 				//xbox device
 				const xboxDevice = new XboxDevice(api, prefDir, device);
 				xboxDevice.on('publishAccessory', (accessory) => {
-					api.publishExternalAccessories(CONSTANS.PluginName, [accessory]);
+					api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
 					const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, published as external accessory.`) : false;
 				})
 					.on('devInfo', (devInfo) => {
@@ -55,5 +55,5 @@ class XboxPlatform {
 };
 
 module.exports = (api) => {
-	api.registerPlatform(CONSTANS.PluginName, CONSTANS.PlatformName, XboxPlatform, true);
+	api.registerPlatform(CONSTANTS.PluginName, CONSTANTS.PlatformName, XboxPlatform, true);
 };

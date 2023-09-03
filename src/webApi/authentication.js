@@ -3,14 +3,14 @@ const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const HttpClient = require('./httpclient.js');
-const CONSTANS = require('../constans.json');
+const CONSTANTS = require('../constans.json');
 
 class AUTHENTICATION {
     constructor(config) {
         this.httpClient = new HttpClient();
         this.xboxLiveUser = config.xboxLiveUser;
         this.xboxLivePasswd = config.xboxLivePasswd;
-        this.clientId = config.clientId || CONSTANS.ClientId;
+        this.clientId = config.clientId || CONSTANTS.ClientId;
         this.clientSecret = config.clientSecret;
         this.tokensFile = config.tokensFile;
         this.tokens = {
@@ -95,14 +95,14 @@ class AUTHENTICATION {
                 const payload = {
                     "client_id": this.clientId,
                     "grant_type": "refresh_token",
-                    "scope": CONSTANS.Scopes,
+                    "scope": CONSTANTS.Scopes,
                     "refresh_token": token,
                 }
                 const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.request('POST', CONSTANS.Url.RefreshToken, headers, postData);
+                const data = await this.httpClient.request('POST', CONSTANTS.Url.RefreshToken, headers, postData);
                 const refreshToken = JSON.parse(data);
                 refreshToken.issued = new Date().toISOString();
                 this.tokens.oauth = refreshToken;
@@ -128,7 +128,7 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json' };
-                const data = await this.httpClient.request('POST', CONSTANS.Url.UserToken, headers, postData);
+                const data = await this.httpClient.request('POST', CONSTANTS.Url.UserToken, headers, postData);
                 const userToken = JSON.parse(data);
                 this.tokens.user = userToken;
                 this.tokens.xsts = {};
@@ -153,7 +153,7 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-                const data = await this.httpClient.request('POST', CONSTANS.Url.XstsToken, headers, postData);
+                const data = await this.httpClient.request('POST', CONSTANTS.Url.XstsToken, headers, postData);
                 const xstsToken = JSON.parse(data);
                 this.tokens.xsts = xstsToken;
                 resolve();
@@ -169,15 +169,15 @@ class AUTHENTICATION {
                 const payload = {
                     "client_id": this.clientId,
                     "grant_type": 'authorization_code',
-                    "scope": CONSTANS.Scopes,
+                    "scope": CONSTANTS.Scopes,
                     "code": webApiToken,
-                    "redirect_uri": CONSTANS.Url.Redirect
+                    "redirect_uri": CONSTANTS.Url.Redirect
                 }
                 const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.request('POST', CONSTANS.Url.AccessToken, headers, postData);
+                const data = await this.httpClient.request('POST', CONSTANTS.Url.AccessToken, headers, postData);
                 const accessToken = JSON.parse(data);
                 accessToken.issued = new Date().toISOString();
                 this.tokens.oauth = accessToken;
@@ -221,11 +221,11 @@ class AUTHENTICATION {
                     "client_id": this.clientId,
                     "response_type": 'code',
                     "approval_prompt": 'auto',
-                    "scope": CONSTANS.Scopes,
-                    "redirect_uri": CONSTANS.Url.Redirect
+                    "scope": CONSTANTS.Scopes,
+                    "redirect_uri": CONSTANTS.Url.Redirect
                 }
                 const params = QueryString.stringify(payload);
-                const oauth2URI = `${CONSTANS.Url.oauth2}?${params}`;
+                const oauth2URI = `${CONSTANTS.Url.oauth2}?${params}`;
                 resolve(oauth2URI);
             } catch (error) {
                 reject(error);

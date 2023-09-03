@@ -1,277 +1,29 @@
 "use strict";
 const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
+const Packets = require('./packets.js');
 const CHANNELID = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
-const CONSTANS = require('../constans.json');
 
 class MESSAGE {
     constructor(type, packetData = false) {
+
+        switch (type.slice(0, 6)) {
+            case 'simple':
+                type = type.slice(7);
+                break;
+            case 'messag':
+                type = type.slice(8);
+                break;
+        };
+
+        //structure
+        const structure = new Packets();
+        this.structure = structure[type];
+
+        //packet
+        this.packet = new Packets(this.structure);
         this.packetType = type;
         this.packetData = packetData;
-
-        const Type = {
-            uInt32(value) {
-                const packet = {
-                    value: value,
-                    pack(packetStructure) {
-                        return packetStructure.writeUInt32(this.value);
-                    },
-                    unpack(packetStructure) {
-                        this.value = packetStructure.readUInt32();
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            sInt32(value) {
-                const packet = {
-                    value: value,
-                    pack(packetStructure) {
-                        return packetStructure.writeInt32(this.value);
-                    },
-                    unpack(packetStructure) {
-                        this.value = packetStructure.readInt32();
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            uInt16(value) {
-                const packet = {
-                    value: value,
-                    pack(packetStructure) {
-                        return packetStructure.writeUInt16(this.value);
-                    },
-                    unpack(packetStructure) {
-                        this.value = packetStructure.readUInt16();
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            bytes(length, value) {
-                const packet = {
-                    value: value,
-                    length: length,
-                    pack(packetStructure) {
-                        return packetStructure.writeBytes(this.value);
-                    },
-                    unpack(packetStructure) {
-                        this.value = packetStructure.readBytes(length);
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            sgString(value) {
-                const packet = {
-                    value: value,
-                    pack(packetStructure) {
-                        return packetStructure.writeSGString(this.value);
-                    },
-                    unpack(packetStructure) {
-                        this.value = packetStructure.readSGString().toString();
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            flags(length, value) {
-                const packet = {
-                    value: value,
-                    length: length,
-                    pack(packetStructure) {
-                        return packetStructure.writeBytes(setFlags(this.value));
-                    },
-                    unpack(packetStructure) {
-                        this.value = readFlags(packetStructure.readBytes(this.length));
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            sgArray(structure, value) {
-                const packet = {
-                    value: value,
-                    structure: structure,
-                    pack(packetStructure) {
-                        packetStructure.writeUInt16(this.value.length);
-                        let arrayStructure = Packet[this.structure];
-                        for (const index in this.value) {
-                            for (const name in arrayStructure) {
-                                arrayStructure[name].value = this.value[index][name]
-                                packetStructure = arrayStructure[name].pack(packetStructure);
-                            }
-                        }
-                        return packetStructure;
-                    },
-                    unpack(packetStructure) {
-                        const arrayCount = packetStructure.readUInt16();
-                        const array = [];
-
-                        for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = Packet[this.structure];
-                            const item = {};
-
-                            for (const name in arrayStructure) {
-                                item[name] = arrayStructure[name].unpack(packetStructure);
-                            }
-                            array.push(item);
-                        }
-                        this.value = array;
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            sgList(structure, value) {
-                const packet = {
-                    value: value,
-                    structure: structure,
-                    pack(packetStructure) {
-                        packetStructure.writeUInt32(this.value.length);
-                        const arrayStructure = Packet[this.structure];
-                        for (const item of this.value) {
-                            for (const name in arrayStructure) {
-                                arrayStructure[name].value = item[name];
-                                packetStructure = arrayStructure[name].pack(packetStructure);
-                            }
-                        }
-                        return packetStructure;
-                    },
-                    unpack(packetStructure) {
-                        const arrayCount = packetStructure.readUInt32();
-                        const array = [];
-
-                        for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = Packet[this.structure];
-                            const item = {};
-
-                            for (const name in arrayStructure) {
-                                item[name] = arrayStructure[name].unpack(packetStructure);
-                            }
-                            array.push(item);
-                        }
-                        this.value = array;
-                        return this.value;
-                    }
-                };
-                return packet;
-            },
-            mapper(map, item) {
-                return {
-                    item: item,
-                    value: false,
-                    pack(packetStructure) {
-                        return item.pack(packetStructure);
-                    },
-                    unpack(packetStructure) {
-                        this.value = item.unpack(packetStructure);
-                        return map[this.value];
-                    }
-                };
-            }
-        };
-
-        const Packet = {
-            status: {
-                liveTvProvider: Type.uInt32('0'),
-                majorVersion: Type.uInt32('0'),
-                minorVersion: Type.uInt32('0'),
-                buildNumber: Type.uInt32('0'),
-                locale: Type.sgString('en-US'),
-                apps: Type.sgArray('activeApps')
-            },
-            activeApps: {
-                titleId: Type.uInt32('0'),
-                flags: Type.bytes(2),
-                productId: Type.bytes(16, ''),
-                sandboxId: Type.bytes(16, ''),
-                aumId: Type.sgString('')
-            },
-            powerOff: {
-                liveId: Type.sgString(''),
-            },
-            acknowledge: {
-                lowWatermark: Type.uInt32('0'),
-                processedList: Type.sgList('acknowledgeList', []),
-                rejectedList: Type.sgList('acknowledgeList', []),
-            },
-            acknowledgeList: {
-                id: Type.uInt32('0'),
-            },
-            recordGameDvr: {
-                startTimeDelta: Type.sInt32('0'),
-                endTimeDelta: Type.sInt32('0'),
-            },
-            channelRequest: {
-                channelRequestId: Type.uInt32('0'),
-                titleId: Type.uInt32('0'),
-                service: Type.bytes(16, ''),
-                activityId: Type.uInt32('0'),
-            },
-            channelResponse: {
-                channelRequestId: Type.uInt32('0'),
-                channelTargetId: Type.bytes(8, ''),
-                result: Type.uInt32('0'),
-            },
-            gamepad: {
-                timestamp: Type.bytes(8, ''),
-                buttons: Type.uInt16('0'),
-                leftTrigger: Type.uInt32('0'),
-                rightTrigger: Type.uInt32('0'),
-                leftThumbstickX: Type.uInt32('0'),
-                leftThumbstickY: Type.uInt32('0'),
-                rightThumbstickX: Type.uInt32('0'),
-                rightThumbstickY: Type.uInt32('0'),
-            },
-            mediaState: {
-                titleId: Type.uInt32('0'),
-                aumId: Type.sgString(),
-                assetId: Type.sgString(),
-                mediaType: Type.mapper(CONSTANS.MediaTypes, Type.uInt16('0')),
-                soundLevel: Type.mapper(CONSTANS.SoundStatus, Type.uInt16('0')),
-                enabledCommands: Type.uInt32('0'),
-                playbackStatus: Type.mapper(CONSTANS.PlaybackStatus, Type.uInt16('0')),
-                rate: Type.uInt32('0'),
-                position: Type.bytes(8, ''),
-                enabmediaStart: Type.bytes(8, ''),
-                mediaEnd: Type.bytes(8, ''),
-                minSeek: Type.bytes(8, ''),
-                maxSeek: Type.bytes(8, ''),
-                metadata: Type.sgArray('mediaStateList', []),
-            },
-            mediaStateList: {
-                name: Type.sgString(),
-                value: Type.sgString(),
-            },
-            mediaCommand: {
-                requestId: Type.bytes(8, ''),
-                titleId: Type.uInt32('0'),
-                command: Type.uInt32('0'),
-            },
-            localJoin: {
-                clientType: Type.uInt16('3'),
-                nativeWidth: Type.uInt16('1080'),
-                nativeHeight: Type.uInt16('1920'),
-                dpiX: Type.uInt16('96'),
-                dpiY: Type.uInt16('96'),
-                deviceCapabilities: Type.bytes(8, Buffer.from('ffffffffffffffff', 'hex')),
-                clientVersion: Type.uInt32('15'),
-                osMajorVersion: Type.uInt32('6'),
-                osMinorVersion: Type.uInt32('2'),
-                displayName: Type.sgString('Xbox-TV'),
-            },
-            json: {
-                json: Type.sgString('{}')
-            },
-            disconnect: {
-                reason: Type.uInt32('1'),
-                errorCode: Type.uInt32('0')
-            },
-        };
-        this.packet = Packet;
-        this.structure = Packet[type];
     };
 
     getMsgType(type) {
@@ -382,93 +134,89 @@ class MESSAGE {
     };
 
     set(key, value, subkey = false) {
-        if (!subkey) {
-            this.structure[key].value = value;
-        } else {
-            this.structure[subkey][key].value = value;
-        }
+        switch (subkey) {
+            case true:
+                this.structure[subkey][key].value = value;
+                break;
+            case false:
+                this.structure[key].value = value;
+                break;
+        };
     }
 
-    pack(xboxlocalapi) {
-        const payload = new PacketStructure();
+    pack(crypto, requestNum, targetParticipantId) {
+        const packetStructure = new PacketStructure();
+        let packet;
 
         for (const name in this.structure) {
-            this.structure[name].pack(payload);
+            this.structure[name].pack(packetStructure);
         }
 
         const header = new PacketStructure();
         header.writeBytes(Buffer.from('d00d', 'hex'));
-        header.writeUInt16(payload.toBuffer().length);
-        header.writeUInt32(xboxlocalapi.getRequestNum());
-        header.writeUInt32(xboxlocalapi.targetParticipantId);
-        header.writeUInt32(xboxlocalapi.sourceParticipantId);
+        header.writeUInt16(packetStructure.toBuffer().length);
+        header.writeUInt32(requestNum);
+        header.writeUInt32(targetParticipantId);
+        header.writeUInt32(targetParticipantId);
         header.writeBytes(this.setFlags(this.packetType));
         header.writeBytes(CHANNELID);
 
-        if (payload.toBuffer().length % 16 > 0) {
-            const padStart = payload.toBuffer().length % 16;
+        if (packetStructure.toBuffer().length % 16 > 0) {
+            const padStart = packetStructure.toBuffer().length % 16;
             const padTotal = 16 - padStart;
             for (let paddingNum = padStart + 1; paddingNum <= 16; paddingNum++) {
-                payload.writeUInt8(padTotal);
+                packetStructure.writeUInt8(padTotal);
             }
         }
 
-        const iv = xboxlocalapi.crypto.getIv();
-        const key = xboxlocalapi.crypto.getKey();
-        let encryptedPayload = xboxlocalapi.crypto.encrypt(header.toBuffer().slice(0, 16), iv);
-        encryptedPayload = xboxlocalapi.crypto.encrypt(payload.toBuffer(), key, encryptedPayload);
-
-        let packet = Buffer.concat([
+        const encryptedPayload = crypto.encrypt(packetStructure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
+        packet = Buffer.concat([
             header.toBuffer(),
             encryptedPayload
         ]);
 
-        const protectedPayloadHash = xboxlocalapi.crypto.sign(packet);
+        const protectedPayloadHash = crypto.sign(packet);
         packet = Buffer.concat([
             packet,
             Buffer.from(protectedPayloadHash)
         ]);
+
         return packet;
     };
 
-    unpack(xboxlocalapi = undefined) {
-        const payload = new PacketStructure(this.packetData);
-        const Packet = this.packet;
+    unpack(crypto = undefined) {
+        const packetStructure = new PacketStructure(this.packetData);
 
         let packet = {
-            type: payload.readBytes(2).toString('hex'),
-            payloadLength: payload.readUInt16(),
-            sequenceNumber: payload.readUInt32(),
-            targetParticipantId: payload.readUInt32(),
-            sourceParticipantId: payload.readUInt32(),
-            flags: this.readFlags(payload.readBytes(2)),
-            channelId: payload.readBytes(8),
-            protectedPayload: payload.readBytes()
+            type: packetStructure.readBytes(2).toString('hex'),
+            payloadLength: packetStructure.readUInt16(),
+            sequenceNumber: packetStructure.readUInt32(),
+            targetParticipantId: packetStructure.readUInt32(),
+            sourceParticipantId: packetStructure.readUInt32(),
+            flags: this.readFlags(packetStructure.readBytes(2)),
+            channelId: packetStructure.readBytes(8),
+            protectedPayload: packetStructure.readBytes()
         };
-
         packet.type = packet.flags.type;
         packet.protectedPayload = Buffer.from(packet.protectedPayload.slice(0, -32));
         packet.signature = packet.protectedPayload.slice(-32);
 
         // Lets decrypt the data when the payload is encrypted
         if (packet.protectedPayload) {
-            const iv = xboxlocalapi.crypto.getIv();
-            const key = xboxlocalapi.crypto.encrypt(this.packetData.slice(0, 16), iv);
-            let decryptedPayload = xboxlocalapi.crypto.decrypt(packet.protectedPayload, key);
-            packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
-            decryptedPayload = new PacketStructure(decryptedPayload);
+            const protectedStructure = this.packet[packet.type];
+            const decryptedPayload = crypto.decrypt(packet.protectedPayload, crypto.encrypt(this.packetData.slice(0, 16), crypto.getIv()));
+            const decryptedPacket = new PacketStructure(decryptedPayload);
 
-            this.structure = Packet[packet.type];
-            const protectedStructure = Packet[packet.type];
-            packet['protectedPayload'] = {};
+            packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
+            packet.structure = protectedStructure;
+            packet.protectedPayload = {};
 
             for (const name in protectedStructure) {
-                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPayload);
+                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPacket);
             };
         };
 
-        const data = { packetType: packet.type, packetDecoded: packet };
-        return data;
+        return packet;
     };
 };
 module.exports = MESSAGE;

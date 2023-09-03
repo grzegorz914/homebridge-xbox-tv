@@ -14,7 +14,7 @@ const Social = require('./providers/social.js');
 const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
-const CONSTANS = require('../constans.json');
+const CONSTANTS = require('../constans.json');
 
 class XBOXWEBAPI extends EventEmitter {
     constructor(config) {
@@ -87,7 +87,7 @@ class XBOXWEBAPI extends EventEmitter {
     consoleStatus() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `${CONSTANS.Url.Xccs}/consoles/${this.xboxLiveId}`;
+                const url = `${CONSTANTS.Url.Xccs}/consoles/${this.xboxLiveId}`;
                 const getConsoleStatusData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getConsoleStatusData);
                 const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
@@ -98,9 +98,9 @@ class XBOXWEBAPI extends EventEmitter {
                 const name = consoleStatusData.name;
                 const locale = consoleStatusData.locale;
                 const region = consoleStatusData.region;
-                const consoleType = CONSTANS.ConsoleName[consoleStatusData.consoleType];
-                const powerState = (CONSTANS.ConsolePowerState[consoleStatusData.powerState] === 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
-                const playbackState = (CONSTANS.ConsolePlaybackState[consoleStatusData.playbackState] === 1); // 0 - Stopped, 1 - Playng, 2 - Paused
+                const consoleType = CONSTANTS.ConsoleName[consoleStatusData.consoleType];
+                const powerState = (CONSTANTS.ConsolePowerState[consoleStatusData.powerState] === 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+                const playbackState = (CONSTANTS.ConsolePlaybackState[consoleStatusData.playbackState] === 1); // 0 - Stopped, 1 - Playng, 2 - Paused
                 const loginState = consoleStatusData.loginState;
                 const focusAppAumid = consoleStatusData.focusAppAumid;
                 const isTvConfigured = (consoleStatusData.isTvConfigured === true);
@@ -119,7 +119,7 @@ class XBOXWEBAPI extends EventEmitter {
     consolesList() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `${CONSTANS.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
+                const url = `${CONSTANTS.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
                 const getConsolesListData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getConsolesListData);
                 const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false;
@@ -151,7 +151,7 @@ class XBOXWEBAPI extends EventEmitter {
                     const locale = console.locale;
                     const region = console.region;
                     const consoleType = console.consoleType;
-                    const powerState = CONSTANS.ConsolePowerState[console.powerState]; // 0 - Off, 1 - On, 2 - ConnectedStandby, 3 - SystemUpdate
+                    const powerState = CONSTANTS.ConsolePowerState[console.powerState]; // 0 - Off, 1 - On, 2 - ConnectedStandby, 3 - SystemUpdate
                     const digitalAssistantRemoteControlEnabled = console.digitalAssistantRemoteControlEnabled;
                     const remoteManagementEnabled = console.remoteManagementEnabled;
                     const consoleStreamingEnabled = console.consoleStreamingEnabled;
@@ -199,7 +199,7 @@ class XBOXWEBAPI extends EventEmitter {
     installedApps() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `${CONSTANS.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
+                const url = `${CONSTANTS.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
                 const getInstalledAppsData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getInstalledAppsData);
                 const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false;
@@ -247,7 +247,7 @@ class XBOXWEBAPI extends EventEmitter {
     storageDevices() {
         return new Promise(async (resolve, reject) => {
             try {
-                const url = `${CONSTANS.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
+                const url = `${CONSTANTS.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
                 const getStorageDevicesData = await this.httpClient.request('GET', url, this.headers);
                 const responseObject = JSON.parse(getStorageDevicesData);
                 const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
@@ -546,7 +546,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             try {
                 const postData = JSON.stringify(postParams);
-                const response = await this.httpClient.request('POST', `${CONSTANS.Url.Xccs}/commands`, this.headers, postData);
+                const response = await this.httpClient.request('POST', `${CONSTANTS.Url.Xccs}/commands`, this.headers, postData);
                 const responseObject = JSON.parse(response);
                 const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 

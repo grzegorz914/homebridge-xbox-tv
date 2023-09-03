@@ -6,7 +6,7 @@ const RestFul = require('./restful.js');
 const Mqtt = require('./mqtt.js');
 const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
-const CONSTANS = require('./constans.json');
+const CONSTANTS = require('./constans.json');
 let Accessory, Characteristic, Service, Categories, UUID;
 
 class XboxDevice extends EventEmitter {
@@ -59,7 +59,7 @@ class XboxDevice extends EventEmitter {
         this.mqttPasswd = config.mqttPasswd;
 
         //add configured inputs to the default inputs
-        this.inputs = [...CONSTANS.DefaultInputs, ...this.inputs];
+        this.inputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
 
         //device
         this.manufacturer = 'Microsoft';
@@ -195,7 +195,7 @@ class XboxDevice extends EventEmitter {
                 })
                 .on('appsList', async (appsArray) => {
                     try {
-                        const apps = [...CONSTANS.DefaultInputs, ...appsArray];
+                        const apps = [...CONSTANTS.DefaultInputs, ...appsArray];
                         const stringifyApps = JSON.stringify(apps, null, 2)
                         await fsPromises.writeFile(this.inputsFile, stringifyApps);
                         const debug = this.enableDebugMode ? this.emit('debug', `Saved apps: ${stringifyApps}`) : false;
@@ -926,11 +926,11 @@ class XboxDevice extends EventEmitter {
 
                         //get button mode
                         let mode;
-                        if (buttonCommand in CONSTANS.SystemMediaCommands) {
+                        if (buttonCommand in CONSTANTS.SystemMediaCommands) {
                             mode = 0;
-                        } else if (buttonCommand in CONSTANS.SystemInputCommands) {
+                        } else if (buttonCommand in CONSTANTS.SystemInputCommands) {
                             mode = 1;
-                        } else if (buttonCommand in CONSTANS.TvRemoteCommands) {
+                        } else if (buttonCommand in CONSTANTS.TvRemoteCommands) {
                             mode = 2;
                         } else if (buttonCommand === 'recordGameDvr') {
                             mode = 3;
