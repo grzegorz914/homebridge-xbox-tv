@@ -207,24 +207,27 @@ class PACKETS {
                 minorVersion: types.uInt32('0'),
                 buildNumber: types.uInt32('0'),
                 locale: types.sgString('en-US'),
-                apps: types.sgArray('activeApps')
+                activeTitles: types.sgArray('activeTitle')
             },
-            activeApps: {
-                titleId: types.uInt32('0'),
+            activeTitle: {
                 flags: types.bytes(2),
+                titleId: types.uInt32('0'),
                 productId: types.bytes(16, ''),
                 sandboxId: types.bytes(16, ''),
                 aumId: types.sgString('')
             },
             powerOff: {
-                liveId: types.sgString(''),
+                liveId: types.sgString(),
             },
             acknowledge: {
                 lowWatermark: types.uInt32('0'),
-                processedList: types.sgList('acknowledgeList', []),
-                rejectedList: types.sgList('acknowledgeList', []),
+                processedList: types.sgList('processedList', []),
+                rejectedList: types.sgList('rejectedList', []),
             },
-            acknowledgeList: {
+            processedList: {
+                id: types.uInt32('0'),
+            },
+            rejectedList: {
                 id: types.uInt32('0'),
             },
             recordGameDvr: {

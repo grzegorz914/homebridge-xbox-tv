@@ -244,13 +244,14 @@ class XboxDevice extends EventEmitter {
         this.xboxLocalApi.on('connected', (message) => {
             this.emit('message', message);
         })
-            .on('deviceInfo', (firmwareRevision) => {
+            .on('deviceInfo', (firmwareRevision, locale) => {
                 if (!this.disableLogDeviceInfo) {
                     this.emit('devInfo', `-------- ${this.name} --------'`);
                     this.emit('devInfo', `Manufacturer: ${this.manufacturer}`);
                     this.emit('devInfo', `Model: ${this.modelName}`);
                     this.emit('devInfo', `Serialnr: ${this.serialNumber}`);
                     this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                    this.emit('devInfo', `Locale: ${locale}`);
                     this.emit('devInfo', `----------------------------------`);
                 }
 
