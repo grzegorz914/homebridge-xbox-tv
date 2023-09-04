@@ -201,7 +201,7 @@ class PACKETS {
                 pairingState: types.uInt16('2'),
                 participantId: types.uInt32('0')
             },
-            status: {
+            consoleStatus: {
                 liveTvProvider: types.uInt32('0'),
                 majorVersion: types.uInt32('0'),
                 minorVersion: types.uInt32('0'),

@@ -51,7 +51,7 @@ class SGCRYPTO {
 
                 this.key = secret.subarray(0, 16);
                 this.iv = secret.subarray(16, 32);
-                this.hashKey = secret.subarray(32);
+                this.hashKey = secret.subarray(32, 64);
 
                 const data = {
                     publicKey: publicKey,

@@ -3,7 +3,7 @@ const PacketStructure = require('./structure.js');
 const Packets = require('./packets.js');
 
 class SIMPLE {
-    constructor(type, packetData = false) {
+    constructor(type, data = false) {
 
         switch (type.slice(0, 6)) {
             case 'simple':
@@ -20,8 +20,8 @@ class SIMPLE {
 
         //packet
         this.packet = new Packets(this.structure);
-        this.packetType = type;
-        this.packetData = packetData;
+        this.type = type;
+        this.data = data;
         this.structureProtected = this.structure.protectedPayload !== undefined ? this.packet[`${type}Protected`] : false;
     };
 
@@ -76,7 +76,7 @@ class SIMPLE {
             }
         }
 
-        switch (this.packetType) {
+        switch (this.type) {
             case 'powerOn':
                 packet = this.pack1(Buffer.from('dd02', 'hex'), packetStructure.toBuffer(), '');
                 break;
@@ -151,11 +151,11 @@ class SIMPLE {
     };
 
     unpack(crypto = undefined) {
-        const packetStructure = new PacketStructure(this.packetData);
-        const packetType = packetStructure.readBytes(2).toString('hex') === 'dd02' ? 'powerOn' : this.packetType;
+        const packetStructure = new PacketStructure(this.data);
+        const type = packetStructure.readBytes(2).toString('hex') === 'dd02' ? 'powerOn' : this.type;
 
         let packet = {
-            type: packetType,
+            type: type,
             payloadLength: packetStructure.readUInt16(),
             version: packetStructure.readUInt16()
         };

@@ -3,9 +3,10 @@ const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
 const Packets = require('./packets.js');
 const CHANNELID = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
+const CONSTANTS = require('../constans.json');
 
 class MESSAGE {
-    constructor(type, packetData = false) {
+    constructor(type, data = false) {
 
         switch (type.slice(0, 6)) {
             case 'simple':
@@ -22,8 +23,8 @@ class MESSAGE {
 
         //packet
         this.packet = new Packets(this.structure);
-        this.packetType = type;
-        this.packetData = packetData;
+        this.type = type;
+        this.data = data;
     };
 
     getMsgType(type) {
@@ -37,7 +38,7 @@ class MESSAGE {
             0x1B: "Navigate",
             0x1C: "json",
             0x1D: "Tunnel",
-            0x1E: "status",
+            0x1E: "consoleStatus",
             0x1F: "TitleTextConfiguration",
             0x20: "TitleTextInput",
             0x21: "TitleTextSelection",
@@ -87,7 +88,7 @@ class MESSAGE {
         return packet;
     };
 
-    setFlags(type) {
+    setFlag(type) {
         const messageFlags = {
             acknowledge: Buffer.from('8001', 'hex'),
             0x2: "Group",
@@ -98,7 +99,7 @@ class MESSAGE {
             0x1B: "Navigate",
             json: Buffer.from('a01c', 'hex'),
             0x1D: "Tunnel",
-            status: Buffer.from('a01e', 'hex'),
+            consoleStatus: Buffer.from('a01e', 'hex'),
             0x1F: "TitleTextConfiguration",
             0x20: "TitleTextInput",
             0x21: "TitleTextSelection",
@@ -144,7 +145,7 @@ class MESSAGE {
         };
     }
 
-    pack(crypto, requestNum, targetParticipantId) {
+    pack(crypto, sequenceNumber, targetParticipantId) {
         const packetStructure = new PacketStructure();
         let packet;
 
@@ -155,10 +156,10 @@ class MESSAGE {
         const header = new PacketStructure();
         header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(packetStructure.toBuffer().length);
-        header.writeUInt32(requestNum);
+        header.writeUInt32(sequenceNumber);
         header.writeUInt32(targetParticipantId);
         header.writeUInt32(targetParticipantId);
-        header.writeBytes(this.setFlags(this.packetType));
+        header.writeBytes(this.setFlag(this.type));
         header.writeBytes(CHANNELID);
 
         if (packetStructure.toBuffer().length % 16 > 0) {
@@ -185,7 +186,7 @@ class MESSAGE {
     };
 
     unpack(crypto = undefined) {
-        const packetStructure = new PacketStructure(this.packetData);
+        const packetStructure = new PacketStructure(this.data);
 
         let packet = {
             type: packetStructure.readBytes(2).toString('hex'),
@@ -204,11 +205,10 @@ class MESSAGE {
         // Lets decrypt the data when the payload is encrypted
         if (packet.protectedPayload) {
             const protectedStructure = this.packet[packet.type];
-            const decryptedPayload = crypto.decrypt(packet.protectedPayload, crypto.encrypt(this.packetData.slice(0, 16), crypto.getIv()));
+            const decryptedPayload = crypto.decrypt(packet.protectedPayload, crypto.encrypt(this.data.slice(0, 16), crypto.getIv()));
             const decryptedPacket = new PacketStructure(decryptedPayload);
 
             packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
-            packet.structure = protectedStructure;
             packet.protectedPayload = {};
 
             for (const name in protectedStructure) {
