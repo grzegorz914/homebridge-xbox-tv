@@ -3,16 +3,9 @@ const PacketStructure = require('./structure.js');
 const Packets = require('./packets.js');
 
 class SIMPLE {
-    constructor(type, data = false) {
-
-        switch (type.slice(0, 6)) {
-            case 'simple':
-                type = type.slice(7);
-                break;
-            case 'messag':
-                type = type.slice(8);
-                break;
-        };
+    constructor(type) {
+        //type
+        this.type = type;
 
         //structure
         const structure = new Packets();
@@ -20,8 +13,6 @@ class SIMPLE {
 
         //packet
         this.packet = new Packets(this.structure);
-        this.type = type;
-        this.data = data;
         this.structureProtected = this.structure.protectedPayload !== undefined ? this.packet[`${type}Protected`] : false;
     };
 
@@ -150,8 +141,8 @@ class SIMPLE {
         return packet;
     };
 
-    unpack(crypto = undefined) {
-        const packetStructure = new PacketStructure(this.data);
+    unpack(crypto = undefined, data = false) {
+        const packetStructure = new PacketStructure(data);
         const type = packetStructure.readBytes(2).toString('hex') === 'dd02' ? 'powerOn' : this.type;
 
         let packet = {
@@ -175,13 +166,13 @@ class SIMPLE {
             packet.protectedPayload = packet.protectedPayload.slice(0, -32);
             packet.signature = packet.protectedPayload.slice(-32);
 
-            const protectedStructure = this.packet[`${packet.type}Protected`];
+            const packetStructureProtected = this.packet[`${packet.type}Protected`];
             const decryptedPayload = crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
             const decryptedPacket = new PacketStructure(decryptedPayload);
             packet.protectedPayload = {};
 
-            for (const name in protectedStructure) {
-                packet.protectedPayload[name] = protectedStructure[name].unpack(decryptedPacket);
+            for (const name in packetStructureProtected) {
+                packet.protectedPayload[name] = packetStructureProtected[name].unpack(decryptedPacket);
                 this.set('protectedPayload', packet.protectedPayload);
             }
         }

@@ -41,25 +41,34 @@ class XBOXLOCALAPI extends EventEmitter {
             }).on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
 
-                const packetTypeHex = message.slice(0, 2).toString('hex');
-                //const debug1 = this.debugLog ? this.emit('debug', `Received packet type hex: ${packetTypeHex}`) : false;
+                const messageTypeHex = message.slice(0, 2).toString('hex');
+                const keysTypes = Object.keys(CONSTANTS.Types);
+                const keysTypesExist = keysTypes.includes(messageTypeHex);
+                const messageType = keysTypesExist ? CONSTANTS.Types[messageTypeHex] : false;
+                const messageRequest = keysTypesExist ? CONSTANTS.Messages[messageTypeHex] : false;
+                const messageData = keysTypesExist ? message : false;
 
-                const keysOfTypes = Object.keys(CONSTANTS.Types);
-                const keyOfTypeExist = keysOfTypes.includes(packetTypeHex);
-                const keyType = keyOfTypeExist ? CONSTANTS.Types[packetTypeHex] : message;
-                message = keyOfTypeExist ? message : false;
+                const debug1 = !this.debugLog ? this.emit('debug', `Received packet type hex: ${messageTypeHex}`) : false;
+                const debug11 = !this.debugLog ? this.emit('debug', `Received message type: ${messageType}`) : false;
+                const debug12 = !this.debugLog ? this.emit('debug', `Received key type: ${messageRequest}`) : false;
+                const debug13 = this.debugLog ? this.emit('debug', `Received data: ${messageData}`) : false;
 
-                let packeStructuret;
-                switch (keyType.slice(0, 6)) {
+
+                let packeStructure;
+                switch (messageType) {
                     case 'simple':
-                        packeStructuret = new SimplePacket(keyType, message);
+                        packeStructure = new SimplePacket(messageRequest);
                         break;
-                    case 'messag':
-                        packeStructuret = new MessagePacket(keyType, message);
+                    case 'message':
+                        packeStructure = new MessagePacket(messageRequest);
+                        break;
+                    default:
+                        const debug = !this.debugLog ? this.emit('debug', `Received default message type: ${messageType}`) : false;
+                        packeStructure = new MessagePacket(messageRequest);
                         break;
                 };
 
-                let packet = packeStructuret.unpack(this.crypto);
+                let packet = packeStructure.unpack(this.crypto, messageData);
                 let type = packet.type;
 
                 if (type === 'json') {
@@ -103,8 +112,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 this.heartBeatStartTime = Date.now();
                 const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
-                //const debug5 = this.debugLog ? this.emit('debug', `Received packet type: ${type}`) : false;
-                //const debug6 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
+                const debug5 = this.debugLog ? this.emit('debug', `Received packet type: ${type}`) : false;
+                const debug6 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
                 this.emit(type, packet);
             }).on('listening', () => {
                 const address = this.client.address();
@@ -122,7 +131,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         return;
                     }
 
-                    const discoveryPacket = new SimplePacket('simple.discoveryRequest');
+                    const discoveryPacket = new SimplePacket('discoveryRequest');
                     const message = discoveryPacket.pack(this.crypto);
                     await this.sendSocketMessage(message);
                 }, 10000);
@@ -135,7 +144,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
         //EventEmmiter
         this.on('discoveryResponse', async (packet) => {
-            const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(packet)}.`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Discovery response: ${JSON.stringify(packet, null, 2)}.`) : false;
 
             if (packet && !this.isConnected) {
                 try {
@@ -144,7 +153,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const debug2 = this.debugLog ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
 
                     // Connect request
-                    const connectRequest = new SimplePacket('simple.connectRequest');
+                    const connectRequest = new SimplePacket('connectRequest');
                     connectRequest.set('uuid', Buffer.from(UuIdParse(UuIdv4())));
                     connectRequest.set('publicKey', data.publicKey);
                     connectRequest.set('iv', data.iv);
@@ -152,7 +161,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const tokenData = await this.readToken();
                     const tokenExist = tokenData !== false ? true : false;
                     if (tokenExist) {
-                        connectRequest.set('userHash', tokenData.user.DisplayClaims.xui[0].uhs, true);
+                        connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
                         connectRequest.set('jwt', tokenData.xsts.Token, true);
                         this.isAuthorized = true;
                     }
@@ -188,7 +197,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             this.isConnected = true;
             try {
-                const localJoin = new MessagePacket('message.localJoin');
+                const localJoin = new MessagePacket('localJoin');
                 const localJointMessage = localJoin.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
                 await this.sendSocketMessage(localJointMessage);
             } catch (error) {
@@ -197,13 +206,13 @@ class XBOXLOCALAPI extends EventEmitter {
         }).on('acknowledge', async (packet) => {
             const debug = this.debugLog ? this.emit('debug', 'Acknowledge received.') : false;
 
-            const needAck = packet.flags.needAck
+            const needAck = packet.flags.needAck;
             if (!needAck) {
                 return;
             };
 
             try {
-                const acknowledge = new MessagePacket('message.acknowledge');
+                const acknowledge = new MessagePacket('acknowledge');
                 acknowledge.set('lowWatermark', this.sequenceNumber);
                 acknowledge.structure.processedList.value.push({
                     id: this.sequenceNumber
@@ -253,7 +262,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const debug = this.debugLog ? this.emit('debug', `Last heart beat was: ${elapse} sec ago.`) : false;
                 if (elapse > 5 && elapse < 6) {
                     try {
-                        const acknowledge = new MessagePacket('message.acknowledge');
+                        const acknowledge = new MessagePacket('acknowledge');
                         acknowledge.set('lowWatermark', this.sequenceNumber);
                         const message = acknowledge.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
                         await this.sendSocketMessage(message);
@@ -311,7 +320,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         resolve();
                         return;
                     }
-                    const powerOn = new SimplePacket('simple.powerOn');
+                    const powerOn = new SimplePacket('powerOn');
                     powerOn.set('liveId', this.xboxLiveId);
                     const message = powerOn.pack(this.crypto);
                     await this.sendSocketMessage(message);
@@ -336,7 +345,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
             try {
-                const powerOff = new MessagePacket('message.powerOff');
+                const powerOff = new MessagePacket('powerOff');
                 powerOff.set('liveId', this.xboxLiveId);
                 const message = powerOff.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
                 await this.sendSocketMessage(message);
@@ -359,7 +368,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             const info = this.infoLog ? false : this.emit('message', 'Send record game.');
             try {
-                const recordGameDvr = new MessagePacket('message.recordGameDvr');
+                const recordGameDvr = new MessagePacket('recordGameDvr');
                 recordGameDvr.set('startTimeDelta', -60);
                 recordGameDvr.set('endTimeDelta', 0);
                 const message = recordGameDvr.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
@@ -378,7 +387,7 @@ class XBOXLOCALAPI extends EventEmitter {
             this.heartBeatConnection = false;
 
             try {
-                const disconnect = new MessagePacket('message.disconnect');
+                const disconnect = new MessagePacket('disconnect');
                 disconnect.set('reason', 2);
                 disconnect.set('errorCode', 0);
                 const message = disconnect.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
