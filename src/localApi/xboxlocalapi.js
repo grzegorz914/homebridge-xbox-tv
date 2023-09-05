@@ -41,17 +41,21 @@ class XBOXLOCALAPI extends EventEmitter {
             }).on('message', (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
 
+                //get message type in hex
                 const messageTypeHex = message.slice(0, 2).toString('hex');
+                const debug1 = this.debugLog ? this.emit('debug', `Received packet type hex: ${messageTypeHex}`) : false;
+
+                //check message type exist in types
                 const keysTypes = Object.keys(CONSTANTS.Types);
                 const keysTypesExist = keysTypes.includes(messageTypeHex);
-                const messageType = keysTypesExist ? CONSTANTS.Types[messageTypeHex] : false;
-                const messageRequest = keysTypesExist ? CONSTANTS.Messages[messageTypeHex] : false;
-                const messageData = keysTypesExist ? message : false;
 
-                const debug1 = !this.debugLog ? this.emit('debug', `Received packet type hex: ${messageTypeHex}`) : false;
-                const debug11 = !this.debugLog ? this.emit('debug', `Received message type: ${messageType}`) : false;
-                const debug12 = !this.debugLog ? this.emit('debug', `Received key type: ${messageRequest}`) : false;
-                const debug13 = this.debugLog ? this.emit('debug', `Received data: ${messageData}`) : false;
+                //get message type
+                const messageType = keysTypesExist ? CONSTANTS.Types[messageTypeHex] : false;
+                const debug2 = this.debugLog ? this.emit('debug', `Received message type: ${messageType}`) : false;
+
+                //get message request
+                const messageRequest = keysTypesExist ? CONSTANTS.Messages[messageTypeHex] : false;
+                const debug3 = this.debugLog ? this.emit('debug', `Received message request: ${messageRequest}`) : false;
 
 
                 let packeStructure;
@@ -63,12 +67,12 @@ class XBOXLOCALAPI extends EventEmitter {
                         packeStructure = new MessagePacket(messageRequest);
                         break;
                     default:
-                        const debug = !this.debugLog ? this.emit('debug', `Received default message type: ${messageType}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Received default message type: ${messageType}`) : false;
                         packeStructure = new MessagePacket(messageRequest);
                         break;
                 };
 
-                let packet = packeStructure.unpack(this.crypto, messageData);
+                let packet = packeStructure.unpack(this.crypto, message);
                 let type = packet.type;
 
                 if (type === 'json') {
@@ -78,7 +82,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId) {
-                        const debug2 = this.debugLog ? this.emit('debug', `JSON message is fragmented: ${jsonMessage.datagramId}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `JSON message is fragmented: ${jsonMessage.datagramId}`) : false;
 
                         if (!fragments[jsonMessage.datagramId]) {
                             fragments[jsonMessage.datagramId] = {
@@ -101,19 +105,19 @@ class XBOXLOCALAPI extends EventEmitter {
 
                         fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                         if (fragments[jsonMessage.datagramId].isValid()) {
-                            const debug3 = this.debugLog ? this.emit('debug', 'JSON completed fragmented packet.') : false;
+                            const debug1 = this.debugLog ? this.emit('debug', 'JSON completed fragmented packet.') : false;
                             packet.payloadProtected.json = fragments[jsonMessage.datagramId].getValue();
                             delete fragments[jsonMessage.datagramId];
                         }
                         type = 'jsonFragment';
-                        const debu4 = this.debugLog ? this.emit('debug', `JSON fragment: ${packet}`) : false;
+                        const debug1 = this.debugLog ? this.emit('debug', `JSON fragment: ${packet}`) : false;
                     };
                 };
 
                 this.heartBeatStartTime = Date.now();
                 const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
-                const debug5 = this.debugLog ? this.emit('debug', `Received packet type: ${type}`) : false;
-                const debug6 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
+                const debug4 = this.debugLog ? this.emit('debug', `Received packet type: ${type}`) : false;
+                const debug5 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
                 this.emit(type, packet);
             }).on('listening', () => {
                 const address = this.client.address();
