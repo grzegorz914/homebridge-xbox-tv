@@ -162,16 +162,16 @@ class MESSAGE {
             }
         }
 
-        const encryptedPayload = crypto.encrypt(packetStructure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
+        const payloadEncrypted = crypto.encrypt(packetStructure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
         packet = Buffer.concat([
             header.toBuffer(),
-            encryptedPayload
+            payloadEncrypted
         ]);
 
-        const protectedPayload = crypto.sign(packet);
+        const payloadProtected = crypto.sign(packet);
         packet = Buffer.concat([
             packet,
-            Buffer.from(protectedPayload)
+            Buffer.from(payloadProtected)
         ]);
 
         return packet;
@@ -188,23 +188,23 @@ class MESSAGE {
             sourceParticipantId: packetStructure.readUInt32(),
             flags: this.readFlags(packetStructure.readBytes(2)),
             channelId: packetStructure.readBytes(8),
-            protectedPayload: packetStructure.readBytes()
+            payloadProtected: packetStructure.readBytes()
         };
         packet.type = packet.flags.type;
-        packet.protectedPayload = Buffer.from(packet.protectedPayload.slice(0, -32));
-        packet.signature = packet.protectedPayload.slice(-32);
+        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
+        packet.signature = packet.payloadProtected.slice(-32);
 
         // Lets decrypt the data when the payload is encrypted
-        if (packet.protectedPayload) {
+        if (packet.payloadProtected) {
             const packetStructureProtected = this.packet[packet.type];
-            const decryptedPayload = crypto.decrypt(packet.protectedPayload, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
-            const decryptedPacket = new PacketStructure(decryptedPayload);
+            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
+            const packetDecrypted = new PacketStructure(payloadDecrypted);
 
-            packet.decryptedPayload = new PacketStructure(decryptedPayload).toBuffer();
-            packet.protectedPayload = {};
+            packet.payloadDecrypted = new PacketStructure(payloadDecrypted).toBuffer();
+            packet.payloadProtected = {};
 
             for (const name in packetStructureProtected) {
-                packet.protectedPayload[name] = packetStructureProtected[name].unpack(decryptedPacket);
+                packet.payloadProtected[name] = packetStructureProtected[name].unpack(packetDecrypted);
             };
         };
 

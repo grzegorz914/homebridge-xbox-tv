@@ -13,7 +13,7 @@ class SIMPLE {
 
         //packet
         this.packet = new Packets(this.structure);
-        this.structureProtected = this.structure.protectedPayload !== undefined ? this.packet[`${type}Protected`] : false;
+        this.structureProtected = this.structure.payloadProtected !== undefined ? this.packet[`${type}Protected`] : false;
     };
 
     set(key, value, isProtected = false) {
@@ -34,33 +34,33 @@ class SIMPLE {
     pack(crypto = false) {
         const packetStructure = new PacketStructure();
         let packet;
-        let protectedPayloadLength = 0;
-        let protectedPayloadLengthReal = 0;
+        let payloadProtectedLength = 0;
+        let payloadProtectedLengthReal = 0;
 
         for (const name in this.structure) {
             switch (name) {
-                case 'protectedPayload':
-                    const packetProtectedStructure = new PacketStructure();
+                case 'payloadProtected':
+                    const packetStructureProtected = new PacketStructure();
                     for (const nameStruct in this.structureProtected) {
-                        if (this.structure.protectedPayload.value !== undefined) {
-                            this.structureProtected[nameStruct].value = this.structure.protectedPayload.value[nameStruct];
+                        if (this.structure.payloadProtected.value !== undefined) {
+                            this.structureProtected[nameStruct].value = this.structure.payloadProtected.value[nameStruct];
                         }
-                        this.structureProtected[nameStruct].pack(packetProtectedStructure);
+                        this.structureProtected[nameStruct].pack(packetStructureProtected);
                     }
-                    protectedPayloadLength = packetProtectedStructure.toBuffer().length;
+                    payloadProtectedLength = packetStructureProtected.toBuffer().length;
 
                     // Pad packet
-                    if (protectedPayloadLength % 16 > 0) {
-                        const padStart = protectedPayloadLength % 16;
+                    if (payloadProtectedLength % 16 > 0) {
+                        const padStart = payloadProtectedLength % 16;
                         const padTotal = 16 - padStart;
                         for (let paddingnum = padStart + 1; paddingnum <= 16; paddingnum++) {
-                            packetProtectedStructure.writeUInt8(padTotal);
+                            packetStructureProtected.writeUInt8(padTotal);
                         }
                     }
 
-                    protectedPayloadLengthReal = packetProtectedStructure.toBuffer().length;
-                    const encryptedPayload = crypto.encrypt(packetProtectedStructure.toBuffer(), crypto.getKey(), this.structure.iv.value);
-                    packetStructure.writeBytes(encryptedPayload);
+                    payloadProtectedLengthReal = packetStructureProtected.toBuffer().length;
+                    const payloadEncrypted = crypto.encrypt(packetStructureProtected.toBuffer(), crypto.getKey(), this.structure.iv.value);
+                    packetStructure.writeBytes(payloadEncrypted);
                     break;
                 default:
                     this.structure[name].pack(packetStructure);
@@ -78,7 +78,7 @@ class SIMPLE {
                 packet = this.pack1(Buffer.from('dd01', 'hex'), packetStructure.toBuffer(), '2');
                 break;
             case 'connectRequest':
-                packet = this.pack1(Buffer.from('cc00', 'hex'), packetStructure.toBuffer(), Buffer.from('0002', 'hex'), protectedPayloadLength, protectedPayloadLengthReal);
+                packet = this.pack1(Buffer.from('cc00', 'hex'), packetStructure.toBuffer(), Buffer.from('0002', 'hex'), payloadProtectedLength, payloadProtectedLengthReal);
                 // Sign protected payload
                 const protectedPayloadHash = crypto.sign(packet);
                 packet = Buffer.concat([
@@ -98,9 +98,9 @@ class SIMPLE {
                         packetStructure.writeUInt8(padTotal);
                     };
                 };
-                let encryptedPayload = crypto.encrypt(packetStructure.toBuffer(), crypto.getIv());
-                encryptedPayload = new PacketStructure(encryptedPayload)
-                packet = encryptedPayload.toBuffer();
+                let payloadEncrypted = crypto.encrypt(packetStructure.toBuffer(), crypto.getIv());
+                payloadEncrypted = new PacketStructure(payloadEncrypted)
+                packet = payloadEncrypted.toBuffer();
                 break;
             default:
                 packet = packetStructure.toBuffer();
@@ -108,22 +108,22 @@ class SIMPLE {
         return packet;
     };
 
-    pack1(type, payload, version, protectedPayloadLength = 0, protectedPayloadLengthReal = 0) {
+    pack1(type, payload, version, payloadProtectedLength = 0, payloadProtectedLengthReal = 0) {
         const packetStructure = new PacketStructure();
         const packetStructureProtected = new PacketStructure();
         let packet;
         let payloadLength;
 
-        if (protectedPayloadLength > 0) {
-            packetStructure.writeUInt16(payload.length - protectedPayloadLengthReal);
+        if (payloadProtectedLength > 0) {
+            packetStructure.writeUInt16(payload.length - payloadProtectedLengthReal);
             payloadLength = packetStructure.toBuffer();
 
-            packetStructureProtected.writeUInt16(protectedPayloadLength);
-            const protectedLength = packetStructureProtected.toBuffer();
+            packetStructureProtected.writeUInt16(payloadProtectedLength);
+            const payloadProtectedLength = packetStructureProtected.toBuffer();
             packet = Buffer.concat([
                 type,
                 payloadLength,
-                protectedLength,
+                payloadProtectedLength,
                 version,
                 payload
             ]);
@@ -152,7 +152,7 @@ class SIMPLE {
         };
 
         if (packet.version !== 0 && packet.version !== 2) {
-            packet.protectedPayloadLength = packet.version;
+            packet.payloadProtectedLength = packet.version;
             packet.version = packetStructure.readUInt16();
         }
 
@@ -162,18 +162,18 @@ class SIMPLE {
         }
 
         // Lets decrypt the data when the payload is encrypted
-        if (packet.protectedPayload) {
-            packet.protectedPayload = packet.protectedPayload.slice(0, -32);
-            packet.signature = packet.protectedPayload.slice(-32);
+        if (packet.payloadProtected) {
+            packet.payloadProtected = packet.payloadProtected.slice(0, -32);
+            packet.signature = packet.payloadProtected.slice(-32);
 
             const packetStructureProtected = this.packet[`${packet.type}Protected`];
-            const decryptedPayload = crypto.decrypt(packet.protectedPayload, packet.iv).slice(0, packet.protectedPayloadLength);
-            const decryptedPacket = new PacketStructure(decryptedPayload);
-            packet.protectedPayload = {};
+            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, packet.iv).slice(0, packet.payloadProtectedLength);
+            const packetDecrypted = new PacketStructure(payloadDecrypted);
+            packet.payloadProtected = {};
 
             for (const name in packetStructureProtected) {
-                packet.protectedPayload[name] = packetStructureProtected[name].unpack(decryptedPacket);
-                this.set('protectedPayload', packet.protectedPayload);
+                packet.payloadProtected[name] = packetStructureProtected[name].unpack(packetDecrypted);
+                this.set('payloadProtected', packet.payloadProtected);
             }
         }
 

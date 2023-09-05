@@ -74,7 +74,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 if (type === 'json') {
                     // Object to hold fragments 
                     const fragments = {};
-                    const jsonMessage = JSON.parse(packet.protectedPayload.json);
+                    const jsonMessage = JSON.parse(packet.payloadProtected.json);
 
                     // Check if JSON is fragmented
                     if (jsonMessage.datagramId) {
@@ -102,7 +102,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         fragments[jsonMessage.datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                         if (fragments[jsonMessage.datagramId].isValid()) {
                             const debug3 = this.debugLog ? this.emit('debug', 'JSON completed fragmented packet.') : false;
-                            packet.protectedPayload.json = fragments[jsonMessage.datagramId].getValue();
+                            packet.payloadProtected.json = fragments[jsonMessage.datagramId].getValue();
                             delete fragments[jsonMessage.datagramId];
                         }
                         type = 'jsonFragment';
@@ -174,8 +174,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
             };
         }).on('connectResponse', async (packet) => {
-            const connectionResult = packet.protectedPayload.connectResult;
-            this.sourceParticipantId = packet.protectedPayload.participantId;
+            const connectionResult = packet.payloadProtected.connectResult;
+            this.sourceParticipantId = packet.payloadProtected.participantId;
             const debug = this.debugLog ? this.emit('debug', `Connect response state: ${connectionResult === 0 ? 'Connected' : 'Not Connected'}.`) : false;
 
             if (connectionResult !== 0) {
@@ -223,30 +223,30 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.emit('error', `Send acknowledge error: ${error}`)
             };
         }).on('consoleStatus', (packet) => {
-            const debug = this.debugLog ? this.emit('debug', `Status received: ${JSON.stringify(packet.protectedPayload, null, 2)}`) : false;
-            if (!packet.protectedPayload) {
+            const debug = this.debugLog ? this.emit('debug', `Status received: ${JSON.stringify(packet.payloadProtected, null, 2)}`) : false;
+            if (!packet.payloadProtected) {
                 return;
             };
 
             if (this.emitDevInfo) {
-                const majorVersion = packet.protectedPayload.majorVersion;
-                const minorVersion = packet.protectedPayload.minorVersion;
-                const buildNumber = packet.protectedPayload.buildNumber;
-                const locale = packet.protectedPayload.locale;
+                const majorVersion = packet.payloadProtected.majorVersion;
+                const minorVersion = packet.payloadProtected.minorVersion;
+                const buildNumber = packet.payloadProtected.buildNumber;
+                const locale = packet.payloadProtected.locale;
                 const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
                 this.emit('connected', 'Connected.');
                 this.emit('deviceInfo', firmwareRevision, locale);
                 this.emitDevInfo = false;
             };
 
-            const appsCount = Array.isArray(packet.protectedPayload.activeTitles) ? packet.protectedPayload.activeTitles.length : 0;
+            const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
             if (appsCount > 0) {
                 const power = true;
                 const volume = 0;
                 const mute = power ? power : true;
                 const mediaState = 0;
-                const titleId = appsCount === 2 ? packet.protectedPayload.activeTitles[1].titleId : packet.protectedPayload.activeTitles[0].titleId;
-                const reference = appsCount === 2 ? packet.protectedPayload.activeTitles[1].aumId : packet.protectedPayload.activeTitles[0].aumId;
+                const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[1].titleId : packet.payloadProtected.activeTitles[0].titleId;
+                const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[1].aumId : packet.payloadProtected.activeTitles[0].aumId;
 
                 this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
                 const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;

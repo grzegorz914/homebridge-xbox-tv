@@ -183,11 +183,11 @@ class PACKETS {
                 publicKeyType: types.uInt16('0'),
                 publicKey: types.bytes(64, ''),
                 iv: types.bytes(16, ''),
-                protectedPayload: types.bytes()
+                payloadProtected: types.bytes()
             },
             connectResponse: {
                 iv: types.bytes(16, ''),
-                protectedPayload: types.bytes()
+                payloadProtected: types.bytes()
             },
             connectRequestProtected: {
                 userHash: types.sgString(''),
