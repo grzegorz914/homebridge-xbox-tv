@@ -163,6 +163,9 @@ class PACKETS {
             powerOn: {
                 liveId: types.sgString(),
             },
+            json: {
+                json: types.sgString('{}')
+            },
             discoveryRequest: {
                 flags: types.uInt32('0'),
                 clientType: types.uInt16('3'),
@@ -201,6 +204,29 @@ class PACKETS {
                 pairingState: types.uInt16('2'),
                 participantId: types.uInt32('0')
             },
+            localJoin: {
+                clientType: types.uInt16('3'),
+                nativeWidth: types.uInt16('1080'),
+                nativeHeight: types.uInt16('1920'),
+                dpiX: types.uInt16('96'),
+                dpiY: types.uInt16('96'),
+                deviceCapabilities: types.bytes(8, Buffer.from('ffffffffffffffff', 'hex')),
+                clientVersion: types.uInt32('15'),
+                osMajorVersion: types.uInt32('6'),
+                osMinorVersion: types.uInt32('2'),
+                displayName: types.sgString('Xbox-TV'),
+            },
+            acknowledge: {
+                lowWatermark: types.uInt32('0'),
+                processedList: types.sgList('processedList', []),
+                rejectedList: types.sgList('rejectedList', []),
+            },
+            processedList: {
+                id: types.uInt32('0'),
+            },
+            rejectedList: {
+                id: types.uInt32('0'),
+            },
             consoleStatus: {
                 liveTvProvider: types.uInt32('0'),
                 majorVersion: types.uInt32('0'),
@@ -215,20 +241,6 @@ class PACKETS {
                 productId: types.bytes(16, ''),
                 sandboxId: types.bytes(16, ''),
                 aumId: types.sgString('')
-            },
-            powerOff: {
-                liveId: types.sgString(),
-            },
-            acknowledge: {
-                lowWatermark: types.uInt32('0'),
-                processedList: types.sgList('processedList', []),
-                rejectedList: types.sgList('rejectedList', []),
-            },
-            processedList: {
-                id: types.uInt32('0'),
-            },
-            rejectedList: {
-                id: types.uInt32('0'),
             },
             recordGameDvr: {
                 startTimeDelta: types.sInt32('0'),
@@ -280,20 +292,8 @@ class PACKETS {
                 titleId: types.uInt32('0'),
                 command: types.uInt32('0'),
             },
-            localJoin: {
-                clientType: types.uInt16('3'),
-                nativeWidth: types.uInt16('1080'),
-                nativeHeight: types.uInt16('1920'),
-                dpiX: types.uInt16('96'),
-                dpiY: types.uInt16('96'),
-                deviceCapabilities: types.bytes(8, Buffer.from('ffffffffffffffff', 'hex')),
-                clientVersion: types.uInt32('15'),
-                osMajorVersion: types.uInt32('6'),
-                osMinorVersion: types.uInt32('2'),
-                displayName: types.sgString('Xbox-TV'),
-            },
-            json: {
-                json: types.sgString('{}')
+            powerOff: {
+                liveId: types.sgString(),
             },
             disconnect: {
                 reason: types.uInt32('1'),

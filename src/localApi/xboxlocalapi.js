@@ -49,14 +49,18 @@ class XBOXLOCALAPI extends EventEmitter {
                 const keysTypes = Object.keys(CONSTANTS.Types);
                 const keysTypesExist = keysTypes.includes(messageTypeHex);
 
+                if (!keysTypesExist) {
+                    const debug = this.debugLog ? this.emit('debug', `Received unknown message type: ${messageTypeHex}`) : false;
+                    return;
+                };
+
                 //get message type
-                const messageType = keysTypesExist ? CONSTANTS.Types[messageTypeHex] : false;
+                const messageType = CONSTANTS.Types[messageTypeHex];
                 const debug2 = this.debugLog ? this.emit('debug', `Received message type: ${messageType}`) : false;
 
                 //get message request
-                const messageRequest = keysTypesExist ? CONSTANTS.Messages[messageTypeHex] : false;
+                const messageRequest = CONSTANTS.Messages[messageTypeHex];
                 const debug3 = this.debugLog ? this.emit('debug', `Received message request: ${messageRequest}`) : false;
-
 
                 let packeStructure;
                 switch (messageType) {
@@ -64,10 +68,6 @@ class XBOXLOCALAPI extends EventEmitter {
                         packeStructure = new SimplePacket(messageRequest);
                         break;
                     case 'message':
-                        packeStructure = new MessagePacket(messageRequest);
-                        break;
-                    default:
-                        const debug = this.debugLog ? this.emit('debug', `Received default message type: ${messageType}`) : false;
                         packeStructure = new MessagePacket(messageRequest);
                         break;
                 };
@@ -115,7 +115,6 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 this.heartBeatStartTime = Date.now();
-                const sendHeartBeat = this.isConnected ? this.emit('heartBeat') : false;
                 const debug4 = this.debugLog ? this.emit('debug', `Received packet type: ${type}`) : false;
                 const debug5 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
                 this.emit(type, packet);
@@ -227,7 +226,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.emit('error', `Send acknowledge error: ${error}`)
             };
         }).on('consoleStatus', (packet) => {
-            const debug = this.debugLog ? this.emit('debug', `Status received: ${JSON.stringify(packet.payloadProtected, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Console status received: ${JSON.stringify(packet.payloadProtected, null, 2)}`) : false;
             if (!packet.payloadProtected) {
                 return;
             };
@@ -255,6 +254,9 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
                 const debug1 = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
             };
+
+            //start heart beat
+            const sendHeartBeat = !this.heartBeatConnection ? this.emit('heartBeat') : false;
         }).on('heartBeat', () => {
             if (this.heartBeatConnection) {
                 return;

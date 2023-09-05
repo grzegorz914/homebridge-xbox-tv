@@ -80,10 +80,10 @@ class SIMPLE {
             case 'connectRequest':
                 packet = this.pack1(Buffer.from('cc00', 'hex'), packetStructure.toBuffer(), Buffer.from('0002', 'hex'), payloadProtectedLength, payloadProtectedLengthReal);
                 // Sign protected payload
-                const protectedPayloadHash = crypto.sign(packet);
+                const payloadProtected = crypto.sign(packet);
                 packet = Buffer.concat([
                     packet,
-                    Buffer.from(protectedPayloadHash)
+                    Buffer.from(payloadProtected)
                 ]);
                 break;
             case 'connectResponse':
@@ -119,7 +119,7 @@ class SIMPLE {
             payloadLength = packetStructure.toBuffer();
 
             packetStructureProtected.writeUInt16(payloadProtectedLength);
-            const payloadProtectedLength = packetStructureProtected.toBuffer();
+            payloadProtectedLength = packetStructureProtected.toBuffer();
             packet = Buffer.concat([
                 type,
                 payloadLength,
