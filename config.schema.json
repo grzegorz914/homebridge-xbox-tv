@@ -491,6 +491,16 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
+						"webApiRcControl": {
+							"title": "Remote Control",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable remote control over Web Api.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
 						"xboxLiveUser": {
 							"title": "Xbox Live User",
 							"type": "string",
@@ -851,6 +861,7 @@
 									"items": [
 										"devices[].webApiControl",
 										"devices[].webApiPowerOnOff",
+										"devices[].webApiRcControl",
 										"devices[].xboxLiveUser",
 										"devices[].xboxLivePasswd",
 										"devices[].xboxWebApiToken",

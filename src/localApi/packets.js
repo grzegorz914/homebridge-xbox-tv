@@ -216,6 +216,17 @@ class PACKETS {
                 osMinorVersion: types.uInt32('2'),
                 displayName: types.sgString('Xbox-TV'),
             },
+            channelStartRequest: {
+                channelRequestId: types.uInt32('0'),
+                titleId: types.uInt32('0'),
+                service: types.bytes(16, ''),
+                activityId: types.uInt32('0'),
+            },
+            channelStartResponse: {
+                channelRequestId: types.uInt32('0'),
+                channelTargetId: types.bytes(8, ''),
+                result: types.uInt32('0'),
+            },
             acknowledge: {
                 lowWatermark: types.uInt32('0'),
                 processedList: types.sgList('processedList', []),
@@ -245,17 +256,6 @@ class PACKETS {
             recordGameDvr: {
                 startTimeDelta: types.sInt32('0'),
                 endTimeDelta: types.sInt32('0'),
-            },
-            channelRequest: {
-                channelRequestId: types.uInt32('0'),
-                titleId: types.uInt32('0'),
-                service: types.bytes(16, ''),
-                activityId: types.uInt32('0'),
-            },
-            channelResponse: {
-                channelRequestId: types.uInt32('0'),
-                channelTargetId: types.bytes(8, ''),
-                result: types.uInt32('0'),
             },
             gamepad: {
                 timestamp: types.bytes(8, ''),

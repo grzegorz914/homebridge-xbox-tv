@@ -3,7 +3,6 @@ const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
 const Packets = require('./packets.js');
 const CHANNELID = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
-const CONSTANTS = require('../constans.json');
 
 class MESSAGE {
     constructor(type) {
@@ -35,9 +34,9 @@ class MESSAGE {
             0x21: "titleTextSelection",
             0x22: "mirroringRequest",
             0x23: "titleLaunch",
-            0x26: "channelRequest",
-            0x27: "channelResponse",
-            0x28: "stopChannel",
+            0x26: "channelStartRequest",
+            0x27: "channelStartResponse",
+            0x28: "channelStop",
             0x29: "system",
             0x2A: "disconnect",
             0x2E: "titleTouch",
@@ -97,9 +96,9 @@ class MESSAGE {
             0x21: "titleTextSelection",
             0x22: "mirroringRequest",
             0x23: "titleLaunch",
-            channelRequest: Buffer.from('a026', 'hex'),
-            channelResponse: Buffer.from('a027', 'hex'),
-            0x28: "stopChannel",
+            channelStartRequest: Buffer.from('a026', 'hex'),
+            channelStartResponse: Buffer.from('a027', 'hex'),
+            0x28: "channelStop",
             0x29: "system",
             disconnect: Buffer.from('802a', 'hex'),
             0x2E: "titleTouch",

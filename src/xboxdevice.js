@@ -25,6 +25,7 @@ class XboxDevice extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.webApiControl = config.webApiControl || false;
         this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
+        this.webApiRcControl = this.webApiControl ? config.webApiRcControl : false;
         this.getInputsFromDevice = this.webApiControl ? config.getInputsFromDevice : false;
         this.filterGames = config.filterGames || false;
         this.filterApps = config.filterApps || false;
@@ -531,7 +532,7 @@ class XboxDevice extends EventEmitter {
                                     break;
                             };
 
-                            await this.xboxWebApi.sendButtonPress(command);
+                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendRcCommand(command);
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
