@@ -295,19 +295,16 @@ class XBOXLOCALAPI extends EventEmitter {
                     }, 100)
                     break;
                 case 2:
-                    const timestampNow1 = new Date().getTime();
-                    this.emit('channelStartRequest');
-
-                    const jsonRequest = {
+                    const jsonRequest = JSON.stringify({
                         msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
                         request: 'SendKey',
                         params: {
                             button_id: CONSTANTS.TvRemoteCommands[this.command],
                             device_id: null
                         }
-                    };
+                    });
                     const json = new MessagePacket('json');
-                    json.set('json', JSON.stringify(jsonRequest));
+                    json.set('json', jsonRequest);
                     json.setChannel('2');
                     const message1 = json.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
                     this.sendSocketMessage(message);
@@ -470,6 +467,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 reject(`Unknown TV remote command: ${command}.`);
                 return;
             }
+
             this.emit('channelStartRequest', 2, 'tvRemote', command);
             resolve();
         });
