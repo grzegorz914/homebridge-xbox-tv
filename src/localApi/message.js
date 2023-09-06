@@ -2,7 +2,6 @@
 const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
 const Packets = require('./packets.js');
-const CHANNELID = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
 
 class MESSAGE {
     constructor(type) {
@@ -15,6 +14,7 @@ class MESSAGE {
 
         //packet
         this.packet = new Packets(this.structure);
+        this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
     };
 
     getMsgType(type) {
@@ -134,7 +134,11 @@ class MESSAGE {
                 this.structure[key].value = value;
                 break;
         };
-    }
+    };
+
+    setChannel(channelId) {
+        this.channelId = Buffer.from(channelId);
+    };
 
     pack(crypto, sequenceNumber, targetParticipantId, sourceParticipantId) {
         const packetStructure = new PacketStructure();
@@ -151,7 +155,7 @@ class MESSAGE {
         header.writeUInt32(targetParticipantId);
         header.writeUInt32(sourceParticipantId);
         header.writeBytes(this.setFlag(this.type));
-        header.writeBytes(CHANNELID);
+        header.writeBytes(this.channelId);
 
         if (packetStructure.toBuffer().length % 16 > 0) {
             const padStart = packetStructure.toBuffer().length % 16;

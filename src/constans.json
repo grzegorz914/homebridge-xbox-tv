@@ -127,7 +127,7 @@
         "menu": 16384,
         "seek": 32786
     },
-    "GamePadCommands": {
+    "SystemInputCommands": {
         "unpress": 0,
         "nexus": 2,
         "view1": 4,
