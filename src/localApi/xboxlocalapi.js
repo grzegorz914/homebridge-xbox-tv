@@ -29,7 +29,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.sequenceNumber = 1;
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
-        this.channelServerId = 0;
+        this.channelTargetId = 0;
         this.mediaRequestId = 0;
         this.emitDevInfo = true;
 
@@ -273,8 +273,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
         }).on('channelStartResponse', async (packet) => {
             const debug = this.debugLog ? this.emit('debug', 'Channel start response received.') : false;
-            this.channelServerId = packet.payloadProtected.result === 0 ? packet.payloadProtected.channelTargetId : 0;
-            const debug1 = this.debugLog ? this.emit('debug', `Channel server id: ${this.channelServerId}.`) : false;
+            this.channelTargetId = packet.payloadProtected.result === 0 ? packet.payloadProtected.channelTargetId : 0;
+            const debug1 = this.debugLog ? this.emit('debug', `Channel server id: ${this.channelTargetId}.`) : false;
         }).on('heartBeat', () => {
             if (this.heartBeatConnection) {
                 return;
@@ -349,7 +349,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const message = powerOn.pack(this.crypto);
                     await this.sendSocketMessage(message);
 
-                    await new Promise(resolve => setTimeout(resolve, 600));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     resolve();
                 }
                 this.emit('disconnected', 'Power On failed, please try again.');
@@ -418,7 +418,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const gamepad = new MessagePacket('gamepad')
                     gamepad.set('timestamp', Buffer.from(`000${timestampNow.toString()}`, 'hex'))
                     gamepad.set('buttons', CONSTANTS.GamePadCommands[command]);
-                    gamepad.setChannel(this.channelServerId);
+                    gamepad.setChannel(this.channelTargetId);
                     const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId)
                     await this.sendSocketMessage(message)
 
@@ -427,7 +427,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         const gamepadUnpress = MessagePacket('gamepad')
                         gamepadUnpress.set('timestamp', Buffer.from(`000${timestamp.toString()}`, 'hex'))
                         gamepadUnpress.set('buttons', 0);
-                        gamepadUnpress.setChannel(this.channelServerId);
+                        gamepadUnpress.setChannel(this.channelTargetId);
                         const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.targetParticipantId, this.sourceParticipantId);
                         await this.sendSocketMessage(message);
                         resolve();

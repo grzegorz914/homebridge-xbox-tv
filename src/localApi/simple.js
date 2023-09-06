@@ -89,19 +89,6 @@ class SIMPLE {
             case 'connectResponse':
                 packet = this.pack1(Buffer.from('cc01', 'hex'), packetStructure.toBuffer(), '2');
                 break;
-            case 'connectRequestProtected':
-                // Pad packet
-                if (packetStructure.toBuffer().length > 16) {
-                    const padStart = packetStructure.toBuffer().length % 16;
-                    const padTotal = (16 - padStart);
-                    for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
-                        packetStructure.writeUInt8(padTotal);
-                    };
-                };
-                let payloadEncrypted = crypto.encrypt(packetStructure.toBuffer(), crypto.getIv());
-                payloadEncrypted = new PacketStructure(payloadEncrypted)
-                packet = payloadEncrypted.toBuffer();
-                break;
             default:
                 packet = packetStructure.toBuffer();
         };

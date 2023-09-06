@@ -164,17 +164,6 @@ class STRUCTURE {
         return int32;
     };
 
-    readUInt64() {
-        let uint64 = 0;
-        try {
-            const rawData = this.readBytes(8);
-            uint64 = Buffer.from(rawData).readUIntBE(0, 8);
-        } catch (error) {
-            console.error(`Error reading unsigned 64-bit integer from packet: ${error}`);
-        }
-        return uint64;
-    };
-
     toBuffer() {
         return this.packet;
     };

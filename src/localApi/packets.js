@@ -227,6 +227,9 @@ class PACKETS {
                 channelTargetId: types.bytes(8, ''),
                 result: types.uInt32('0'),
             },
+            channelStop: {
+                channelTargetId: types.bytes(8, ''),
+            },
             acknowledge: {
                 lowWatermark: types.uInt32('0'),
                 processedList: types.sgList('processedList', []),

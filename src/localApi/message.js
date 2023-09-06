@@ -98,7 +98,7 @@ class MESSAGE {
             0x23: "titleLaunch",
             channelStartRequest: Buffer.from('a026', 'hex'),
             channelStartResponse: Buffer.from('a027', 'hex'),
-            0x28: "channelStop",
+            channelStop: Buffer.from('a028', 'hex'),
             0x29: "system",
             disconnect: Buffer.from('802a', 'hex'),
             0x2E: "titleTouch",
