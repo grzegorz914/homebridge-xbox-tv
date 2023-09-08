@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.10.0] - (xx.09.2023)
+## Changes
+- full code refactor
+- added RC control over local api
+- added Volume control over local api
+- fixed disconnect problem on first run
+- config.schema updated
+
 ## [2.9.0] - (29.07.2023)
 ## Changes
 - added RESTFul server

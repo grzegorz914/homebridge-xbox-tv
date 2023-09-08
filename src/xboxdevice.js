@@ -38,8 +38,6 @@ class XboxDevice extends EventEmitter {
         this.sensorInput = config.sensorInput || false;
         this.sensorScreenSaver = config.sensorScreenSaver || false;
         this.sensorInputs = config.sensorInputs || [];
-        this.xboxLiveUser = config.xboxLiveUser;
-        this.xboxLivePasswd = config.xboxLivePasswd;
         this.xboxWebApiToken = config.xboxWebApiToken;
         this.clientId = config.clientId;
         this.clientSecret = config.clientSecret;
@@ -169,8 +167,6 @@ class XboxDevice extends EventEmitter {
         if (this.webApiControl) {
             this.xboxWebApi = new XboxWebApi({
                 xboxLiveId: this.xboxLiveId,
-                xboxLiveUser: this.xboxLiveUser,
-                xboxLivePasswd: this.xboxLivePasswd,
                 clientId: this.clientId,
                 clientSecret: this.clientSecret,
                 tokensFile: this.authTokenFile,

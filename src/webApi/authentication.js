@@ -8,8 +8,6 @@ const CONSTANTS = require('../constans.json');
 class AUTHENTICATION {
     constructor(config) {
         this.httpClient = new HttpClient();
-        this.xboxLiveUser = config.xboxLiveUser;
-        this.xboxLivePasswd = config.xboxLivePasswd;
         this.clientId = config.clientId || CONSTANTS.ClientId;
         this.clientSecret = config.clientSecret;
         this.tokensFile = config.tokensFile;

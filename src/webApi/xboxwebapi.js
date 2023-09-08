@@ -29,8 +29,6 @@ class XBOXWEBAPI extends EventEmitter {
         this.httpClient = new HttpClient();
 
         const authConfig = {
-            xboxLiveUser: config.xboxLiveUser,
-            xboxLivePasswd: config.xboxLivePasswd,
             clientId: config.clientId,
             clientSecret: config.clientSecret,
             tokensFile: config.tokensFile

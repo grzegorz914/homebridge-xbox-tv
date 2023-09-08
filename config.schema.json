@@ -369,7 +369,7 @@
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
-										"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
+										"description": "Here set the *oneStoreProductId*. If web api enabled, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"required": true,
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -398,7 +398,7 @@
 												]
 											}
 										],
-										"description": "Here select display type in HomeKit app",
+										"description": "Here select display type in HomeKit app.",
 										"required": true
 									}
 								}
@@ -408,21 +408,21 @@
 							"title": "Power",
 							"type": "boolean",
 							"default": false,
-							"description": "This expose Power as a Motion Sensor to use with automations.",
+							"description": "This expose Power as a Motion Sensor.",
 							"required": false
 						},
 						"sensorInput": {
 							"title": "Input",
 							"type": "boolean",
 							"default": false,
-							"description": "This expose Input as a Motion Sensor to use with automations.",
+							"description": "This expose Input as a Motion Sensor.",
 							"required": false
 						},
 						"sensorScreenSaver": {
 							"title": "Screen Saver",
 							"type": "boolean",
 							"default": false,
-							"description": "This expose Screen Saver as a Motion Sensor to use with automations.",
+							"description": "This expose Screen Saver as a Motion Sensor.",
 							"required": false
 						},
 						"sensorInputs": {
@@ -536,26 +536,6 @@
 							"type": "string",
 							"placeholder": "Client Secret",
 							"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"xboxLiveUser": {
-							"title": "Xbox Live User",
-							"type": "string",
-							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set *User* for your Xbox Live account, not used at this time.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"xboxLivePasswd": {
-							"title": "Xbox Live Password",
-							"type": "string",
-							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set *Password* for your Xbox Live account, not used at this time.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -875,9 +855,7 @@
 										"devices[].webApiVolumeControl",
 										"devices[].xboxWebApiToken",
 										"devices[].clientId",
-										"devices[].clientSecret",
-										"devices[].xboxLiveUser",
-										"devices[].xboxLivePasswd"
+										"devices[].clientSecret"
 									]
 								},
 								{
@@ -890,44 +868,41 @@
 										"devices[].infoButtonCommand",
 										"devices[].volumeControl"
 									]
-								}
-							]
-						}
-					]
-				},
-				{
-					"key": "devices[]",
-					"type": "section",
-					"title": "External Integrations",
-					"expandable": true,
-					"expanded": false,
-					"items": [
-						{
-							"key": "devices[]",
-							"type": "tabarray",
-							"title": "{{ value.title }}",
-							"items": [
-								{
-									"key": "devices[]",
-									"title": "RESTFul",
-									"items": [
-										"devices[].enableRestFul",
-										"devices[].restFulDebug",
-										"devices[].restFulPort"
-									]
 								},
 								{
 									"key": "devices[]",
-									"title": "MQTT",
+									"title": "External Integrations",
 									"items": [
-										"devices[].enableMqtt",
-										"devices[].mqttDebug",
-										"devices[].mqttHost",
-										"devices[].mqttPort",
-										"devices[].mqttPrefix",
-										"devices[].mqttAuth",
-										"devices[].mqttUser",
-										"devices[].mqttPasswd"
+										{
+											"key": "devices[]",
+											"type": "tabarray",
+											"title": "{{ value.title }}",
+											"items": [
+												{
+													"key": "devices[]",
+													"title": "RESTFul",
+													"items": [
+														"devices[].enableRestFul",
+														"devices[].restFulDebug",
+														"devices[].restFulPort"
+													]
+												},
+												{
+													"key": "devices[]",
+													"title": "MQTT",
+													"items": [
+														"devices[].enableMqtt",
+														"devices[].mqttDebug",
+														"devices[].mqttHost",
+														"devices[].mqttPort",
+														"devices[].mqttPrefix",
+														"devices[].mqttAuth",
+														"devices[].mqttUser",
+														"devices[].mqttPasswd"
+													]
+												}
+											]
+										}
 									]
 								}
 							]

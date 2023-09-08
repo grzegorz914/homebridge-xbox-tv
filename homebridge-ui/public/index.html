@@ -145,8 +145,6 @@
         document.getElementById('info').innerHTML = '';
 
         const host = pluginConfig[0].devices[this.deviceIndex].host;
-        const xboxLiveUser = pluginConfig[0].devices[this.deviceIndex].xboxLiveUser;
-        const xboxLivePasswd = pluginConfig[0].devices[this.deviceIndex].xboxLivePasswd;
         const clientId = pluginConfig[0].devices[this.deviceIndex].clientId;
         const clientSecret = pluginConfig[0].devices[this.deviceIndex].clientSecret;
         const xboxWebApiToken = pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken;
@@ -154,8 +152,6 @@
         const payload = {
           mode: 'authorization',
           host: host,
-          xboxLiveUser: xboxLiveUser,
-          xboxLivePasswd: xboxLivePasswd,
           clientId: clientId,
           clientSecret: clientSecret,
           webApiToken: xboxWebApiToken

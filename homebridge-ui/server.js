@@ -25,8 +25,6 @@ class PluginUiServer extends HomebridgePluginUiServer {
     const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
 
     const authConfig = {
-      xboxLiveUser: payload.xboxLiveUser,
-      xboxLivePasswd: payload.xboxLivePasswd,
       clientId: payload.clientId,
       clientSecret: payload.clientSecret,
       tokensFile: tokensFile
