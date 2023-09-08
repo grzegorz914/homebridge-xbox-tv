@@ -26,6 +26,7 @@ class XboxDevice extends EventEmitter {
         this.webApiControl = config.webApiControl || false;
         this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
         this.webApiRcControl = this.webApiControl ? config.webApiRcControl : false;
+        this.webApiVolumeControl = this.webApiControl ? config.webApiVolumeControl : false;
         this.getInputsFromDevice = this.webApiControl ? config.getInputsFromDevice : false;
         this.filterGames = config.filterGames || false;
         this.filterApps = config.filterApps || false;
@@ -488,51 +489,54 @@ class XboxDevice extends EventEmitter {
                     });
 
                 this.televisionService.getCharacteristic(Characteristic.RemoteKey)
-                    .onSet(async (command) => {
+                    .onSet(async (remoteKey) => {
                         try {
-                            switch (command) {
-                                case Characteristic.RemoteKey.REWIND:
+                            let command;
+                            switch (remoteKey) {
+                                case 0: //REWIND
                                     command = 'rewind';
                                     break;
-                                case Characteristic.RemoteKey.FAST_FORWARD:
+                                case 1: //FAST_FORWARD
                                     command = 'fastForward';
                                     break;
-                                case Characteristic.RemoteKey.NEXT_TRACK:
+                                case 2: //NEXT_TRACK
                                     command = 'nextTrack';
                                     break;
-                                case Characteristic.RemoteKey.PREVIOUS_TRACK:
+                                case 3: //PREVIOUS_TRACK
                                     command = 'prevTrack';
                                     break;
-                                case Characteristic.RemoteKey.ARROW_UP:
+                                case 4: //ARROW_UP
                                     command = 'up';
                                     break;
-                                case Characteristic.RemoteKey.ARROW_DOWN:
+                                case 5: //ARROW_DOWN
                                     command = 'down';
                                     break;
-                                case Characteristic.RemoteKey.ARROW_LEFT:
+                                case 6: //ARROW_LEFT
                                     command = 'left';
                                     break;
-                                case Characteristic.RemoteKey.ARROW_RIGHT:
+                                case 7: //ARROW_RIGHT
                                     command = 'right';
                                     break;
-                                case Characteristic.RemoteKey.SELECT:
+                                case 8: //SELECT
                                     command = 'a';
                                     break;
-                                case Characteristic.RemoteKey.BACK:
+                                case 9: //BACK
                                     command = 'b';
                                     break;
-                                case Characteristic.RemoteKey.EXIT:
+                                case 10: //EXIT
                                     command = 'nexus';
                                     break;
-                                case Characteristic.RemoteKey.PLAY_PAUSE:
-                                    command = 'playpause';
+                                case 11: //PLAY_PAUSE
+                                    command = 'playPause';
                                     break;
-                                case Characteristic.RemoteKey.INFORMATION:
+                                case 15: //INFORMATION
                                     command = this.infoButtonCommand;
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendRcCommand(command);
+                            let channelId = command === 'playPause' ? 0 : 1;
+                            channelId = CONSTANTS.Channels[channelId].ChannelId;
+                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
@@ -566,18 +570,20 @@ class XboxDevice extends EventEmitter {
                     });
 
                 this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
-                    .onSet(async (command) => {
+                    .onSet(async (powerModeSelection) => {
                         try {
-                            switch (command) {
-                                case Characteristic.PowerModeSelection.SHOW:
+                            let command;
+                            switch (powerModeSelection) {
+                                case 0: //SHOW
                                     command = 'nexus';
                                     break;
-                                case Characteristic.PowerModeSelection.HIDE:
+                                case 1: //HIDE
                                     command = 'b';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendRcCommand(command);
+                            const channelId = CONSTANTS.Channels[1].ChannelId;
+                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power Mode Selection: ${command === 'nexus' ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
@@ -605,18 +611,20 @@ class XboxDevice extends EventEmitter {
                     });
 
                 this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-                    .onSet(async (command) => {
+                    .onSet(async (volumeSelector) => {
                         try {
-                            switch (command) {
-                                case Characteristic.VolumeSelector.INCREMENT:
+                            let command;
+                            switch (volumeSelector) {
+                                case 0: //INCREMENT
                                     command = 'volUp';
                                     break;
-                                case Characteristic.VolumeSelector.DECREMENT:
+                                case 1: //DECREMENT
                                     command = 'volDown';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendTvRemoteCommand(command);
+                            const channelId = CONSTANTS.Channels[2].ChannelId;
+                            const sendRcCommand = this.webApiVolumeControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume Selector: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector error: ${error}`);
@@ -644,7 +652,7 @@ class XboxDevice extends EventEmitter {
                     })
                     .onSet(async (state) => {
                         try {
-                            switch (this.webApiRcControl) {
+                            switch (this.webApiVolumeControl) {
                                 case true:
                                     switch (state) {
                                         case true: //mute
@@ -656,7 +664,8 @@ class XboxDevice extends EventEmitter {
                                     }
                                     break;
                                 case false:
-                                    const toggleMute = this.power ? await this.xboxLocalApi.sendTvRemoteCommand('volMute') : false;
+                                    const channelId = CONSTANTS.Channels[2].ChannelId;
+                                    const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelId, 'volMute') : false;
                                     break;
                             }
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);

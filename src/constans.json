@@ -110,10 +110,13 @@
         "USB",
         "APPLICATION"
     ],
+    "ParticipantId": {
+        "Target": 0
+    },
     "SystemMediaCommands": {
         "play": 2,
         "pause": 4,
-        "playpause": 8,
+        "playPause": 8,
         "stop": 16,
         "record": 32,
         "nextTrack": 64,
@@ -129,9 +132,10 @@
     },
     "SystemInputCommands": {
         "unpress": 0,
+        "enroll": 1,
         "nexus": 2,
-        "view1": 4,
-        "menu1": 8,
+        "view": 4,
+        "menu": 8,
         "a": 16,
         "b": 32,
         "x": 64,
@@ -139,30 +143,38 @@
         "up": 256,
         "down": 512,
         "left": 1024,
-        "right": 2048
+        "right": 2048,
+        "leftShoulder": 4096,
+        "rightShoulder": 8192,
+        "leftThumbstick": 16384,
+        "rightThumbstick": 32768
     },
     "TvRemoteCommands": {
         "volUp": "btn.vol_up",
         "volDown": "btn.vol_down",
         "volMute": "btn.vol_mute"
     },
-    "ChannelIds": {
-        "systemMedia": 0,
-        "systemInput": 1,
-        "tvRemote": 2,
-        "sysConfig": 3
-    },
-    "ChannelUuids": {
-        "systemMedia": "48a9ca24eb6d4e128c43d57469edd3cd",
-        "systemInput": "fa20b8ca66fb46e0adb60b978a59d35f",
-        "tvRemote": "d451e3b360bb4c71b3dbf994b1aca3a7",
-        "sysConfig": "d451e3b360bb4c71b3dbf994b1aca3a7"
-    },
-    "ChannelNames": [
-        "systemMedia",
-        "systemInput",
-        "tvRemote",
-        "sysConfig"
+    "Channels": [
+        {
+            "ChannelId": 0,
+            "ChannelName": "systemMedia",
+            "ChannelsUuid": "48a9ca24eb6d4e128c43d57469edd3cd"
+        },
+        {
+            "ChannelId": 1,
+            "ChannelName": "systemInput",
+            "ChannelsUuid": "fa20b8ca66fb46e0adb60b978a59d35f"
+        },
+        {
+            "ChannelId": 2,
+            "ChannelName": "tvRemote",
+            "ChannelsUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
+        },
+        {
+            "ChannelId": 3,
+            "ChannelName": "sysConfig",
+            "ChannelsUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
+        }
     ],
     "ConfigNames": [
         "GetConfiguration",
@@ -186,7 +198,7 @@
         "4": "Conversation",
         "5": "Game"
     },
-    "SoundStatus": {
+    "SoundLevel": {
         "0": "Muted",
         "1": "Low",
         "2": "Full"

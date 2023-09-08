@@ -86,6 +86,19 @@ class SIMPLE {
                     Buffer.from(payloadProtected)
                 ]);
                 break;
+            case 'connectRequestProtected':
+                // Pad packet
+                if (packetStructure.toBuffer().length > 16) {
+                    const padStart = packetStructure.toBuffer().length % 16;
+                    const padTotal = (16 - padStart);
+                    for (let paddingnum = (padStart + 1); paddingnum <= 16; paddingnum++) {
+                        packetStructure.writeUInt8(padTotal);
+                    };
+                };
+                let payloadEncrypted = crypto.encrypt(packetStructure.toBuffer(), crypto.getIv());
+                payloadEncrypted = new PacketStructure(payloadEncrypted)
+                packet = payloadEncrypted.toBuffer();
+                break;
             case 'connectResponse':
                 packet = this.pack1(Buffer.from('cc01', 'hex'), packetStructure.toBuffer(), '2');
                 break;
@@ -153,11 +166,11 @@ class SIMPLE {
             packet.payloadProtected = packet.payloadProtected.slice(0, -32);
             packet.signature = packet.payloadProtected.slice(-32);
 
-            const packetStructureProtected = this.packet[`${packet.type}Protected`];
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, packet.iv).slice(0, packet.payloadProtectedLength);
-            const packetDecrypted = new PacketStructure(payloadDecrypted);
             packet.payloadProtected = {};
 
+            const packetStructureProtected = this.packet[`${packet.type}Protected`];
+            const packetDecrypted = new PacketStructure(payloadDecrypted);
             for (const name in packetStructureProtected) {
                 packet.payloadProtected[name] = packetStructureProtected[name].unpack(packetDecrypted);
                 this.set('payloadProtected', packet.payloadProtected);

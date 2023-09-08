@@ -77,6 +77,7 @@
 					"webApiControl": false,
 					"webApiPowerOnOff": false,
 					"webApiRcControl": false,
+					"webApiVolumeControl": false,
 					"xboxLiveUser": "",
 					"xboxLivePasswd": "",
 					"xboxWebApiToken": "",

@@ -39,7 +39,7 @@
 							"title": "Web Api",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable control Xbox over Web Api.",
+							"description": "This enable console control over Web Api.",
 							"required": false
 						},
 						"getInputsFromDevice": {
@@ -485,7 +485,7 @@
 							"title": "Power Control",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable power ON/OFF control over Web Api.",
+							"description": "This enable power control over Web Api.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -495,28 +495,18 @@
 							"title": "Remote Control",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable remote control over Web Api.",
+							"description": "This enable game pad control over Web Api.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"xboxLiveUser": {
-							"title": "Xbox Live User",
-							"type": "string",
-							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set *User* for your Xbox Live account, not used at this time.",
-							"required": true,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
-						},
-						"xboxLivePasswd": {
-							"title": "Xbox Live Password",
-							"type": "string",
-							"placeholder": "abcdefg@hotmail.com",
-							"description": "Here set *Password* for your Xbox Live account, not used at this time.",
-							"required": true,
+						"webApiVolumeControl": {
+							"title": "Volume Control",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable volume/mute control over Web Api.",
+							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
@@ -546,6 +536,26 @@
 							"type": "string",
 							"placeholder": "Client Secret",
 							"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"xboxLiveUser": {
+							"title": "Xbox Live User",
+							"type": "string",
+							"placeholder": "abcdefg@hotmail.com",
+							"description": "Here set *User* for your Xbox Live account, not used at this time.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							}
+						},
+						"xboxLivePasswd": {
+							"title": "Xbox Live Password",
+							"type": "string",
+							"placeholder": "abcdefg@hotmail.com",
+							"description": "Here set *Password* for your Xbox Live account, not used at this time.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
@@ -862,11 +872,12 @@
 										"devices[].webApiControl",
 										"devices[].webApiPowerOnOff",
 										"devices[].webApiRcControl",
-										"devices[].xboxLiveUser",
-										"devices[].xboxLivePasswd",
+										"devices[].webApiVolumeControl",
 										"devices[].xboxWebApiToken",
 										"devices[].clientId",
-										"devices[].clientSecret"
+										"devices[].clientSecret",
+										"devices[].xboxLiveUser",
+										"devices[].xboxLivePasswd"
 									]
 								},
 								{

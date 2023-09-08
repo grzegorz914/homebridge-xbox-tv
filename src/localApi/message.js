@@ -2,6 +2,7 @@
 const HexToBin = require('hex-to-binary');
 const PacketStructure = require('./structure');
 const Packets = require('./packets.js');
+const CONSTANTS = require('../constans.json');
 
 class MESSAGE {
     constructor(type) {
@@ -140,7 +141,7 @@ class MESSAGE {
         this.channelId = Buffer.from(channelId);
     };
 
-    pack(crypto, sequenceNumber, targetParticipantId, sourceParticipantId) {
+    pack(crypto, sequenceNumber, sourceParticipantId) {
         const packetStructure = new PacketStructure();
         let packet;
 
@@ -152,7 +153,7 @@ class MESSAGE {
         header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(packetStructure.toBuffer().length);
         header.writeUInt32(sequenceNumber);
-        header.writeUInt32(targetParticipantId);
+        header.writeUInt32(CONSTANTS.ParticipantId.Target);
         header.writeUInt32(sourceParticipantId);
         header.writeBytes(this.setFlag(this.type));
         header.writeBytes(this.channelId);
@@ -199,13 +200,12 @@ class MESSAGE {
 
         // Lets decrypt the data when the payload is encrypted
         if (packet.payloadProtected) {
-            const packetStructureProtected = this.packet[packet.type];
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
-            const packetDecrypted = new PacketStructure(payloadDecrypted);
-
             packet.payloadDecrypted = new PacketStructure(payloadDecrypted).toBuffer();
             packet.payloadProtected = {};
 
+            const packetStructureProtected = this.packet[packet.type];
+            const packetDecrypted = new PacketStructure(payloadDecrypted);
             for (const name in packetStructureProtected) {
                 packet.payloadProtected[name] = packetStructureProtected[name].unpack(packetDecrypted);
             };

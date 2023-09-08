@@ -95,9 +95,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). | 
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
-| `webApiControl` | This enable control Xbox over Web Api. Additional functions are available in `Advanced Settings` section. |
-| `webApiPowerOnOff` | This enable power ON/OFF control over Web Api. |
+| `webApiControl` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
+| `webApiPowerOnOff` | This enable power control over Web Api. |
 | `webApiRcControl` | This enable remote control over Web Api. |
+| `webApiVolumeControl` | This enable volume/mute control over Web Api. |
 | `xboxLiveUser` | Prepare for feature use. |
 | `xboxLivePasswd` | Prepare for feature use. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |

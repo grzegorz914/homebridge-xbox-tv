@@ -275,7 +275,7 @@ class PACKETS {
                 aumId: types.sgString(),
                 assetId: types.sgString(),
                 mediaType: types.mapper(CONSTANTS.MediaTypes, types.uInt16('0')),
-                soundLevel: types.mapper(CONSTANTS.SoundStatus, types.uInt16('0')),
+                soundLevel: types.mapper(CONSTANTS.SoundLevel, types.uInt16('0')),
                 enabledCommands: types.uInt32('0'),
                 playbackStatus: types.mapper(CONSTANTS.PlaybackStatus, types.uInt16('0')),
                 rate: types.uInt32('0'),
