@@ -99,8 +99,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `webApiPowerOnOff` | This enable power control over Web Api. |
 | `webApiRcControl` | This enable remote control over Web Api. |
 | `webApiVolumeControl` | This enable volume/mute control over Web Api. |
-| `xboxLiveUser` | Prepare for feature use. |
-| `xboxLivePasswd` | Prepare for feature use. |
 | `xboxWebApiToken` | Required if `webApiControl` enabled. |
 | `clientId` | If You create app on Azure AD then You can use your own Client Id. |
 | `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
