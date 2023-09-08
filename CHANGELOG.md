@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.10.0] - (xx.09.2023)
 ## Changes
 - full code refactor
-- added RC control over local api
-- added Volume control over local api
+- added possibility to enable/disable power, rc and volume control over web api
+- fixed RC control over local api (only if disabled over web api)
+- fixed Volume control over local api (only if disabled over web api)
 - fixed disconnect problem on first run
 - config.schema updated
+- cleanup
 
 ## [2.9.0] - (29.07.2023)
 ## Changes
