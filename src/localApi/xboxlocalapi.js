@@ -16,7 +16,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
         this.crypto = new SGCrypto();
         this.host = config.host;
-        this.port = config.dgramPort;
         this.xboxLiveId = config.xboxLiveId;
         this.infoLog = config.infoLog;
         this.tokensFile = config.tokensFile;
@@ -30,7 +29,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channelRequestId = 0;
         this.channelTargetId = 0;
         this.channelStateOpen = false;
-        this.mediaRequestId = 1;
         this.emitDevInfo = true;
 
         //dgram socket
@@ -510,7 +508,6 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.channelRequestId = 0;
                 this.channelTargetId = 0;
                 this.channelStateOpen = false;
-                this.mediaRequestId = 1;
                 this.emitDevInfo = true;
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 this.emit('stateChanged', false, 0, true, 0, -1, -1);
