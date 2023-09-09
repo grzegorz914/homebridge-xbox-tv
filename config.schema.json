@@ -516,16 +516,16 @@
 							"type": "string",
 							"placeholder": "Web Api Token",
 							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
-							"required": false,
+							"required": true,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
 						"webApiClientId": {
-							"title": "Client ID",
+							"title": "Client Id",
 							"type": "string",
 							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
-							"description": "Here set your own Client ID from Azure AD or leave empty if you do not have own account.",
+							"description": "Here set your own Client Id from Azure AD or leave empty if you do not have own account.",
 							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
