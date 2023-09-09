@@ -53,7 +53,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
   * Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
 
-<p align="left">
+<p align="center">
   <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Authentication Manager" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/config manager.png" width="540"></a>
 </p>
 
