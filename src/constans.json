@@ -135,25 +135,78 @@
             }
         },
         "Channels": {
-            "SystemMedia": {
-                "ChannelId": 0,
-                "ChannelName": "SystemMedia",
-                "ChannelUuid": "48a9ca24eb6d4e128c43d57469edd3cd"
-            },
-            "SystemInput": {
-                "ChannelId": 1,
-                "ChannelName": "SystemInput",
-                "ChannelUuid": "fa20b8ca66fb46e0adb60b978a59d35f"
-            },
-            "TvRemote": {
-                "ChannelId": 2,
-                "ChannelName": "TvRemote",
-                "ChannelUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
-            },
-            "SystemConfig": {
-                "ChannelId": 3,
-                "ChannelName": "SystemConfig",
-                "ChannelUuid": "d451e3b360bb4c71b3dbf994b1aca3a7",
+            "System": {
+                "Input": {
+                    "Id": 0,
+                    "Name": "Input",
+                    "Uuid": "fa20b8ca66fb46e0adb60b978a59d35f",
+                    "Commands": {
+                        "unpress": 0,
+                        "enroll": 1,
+                        "nexus": 2,
+                        "view": 4,
+                        "menu": 8,
+                        "a": 16,
+                        "b": 32,
+                        "x": 64,
+                        "y": 128,
+                        "up": 256,
+                        "down": 512,
+                        "left": 1024,
+                        "right": 2048,
+                        "leftShoulder": 4096,
+                        "rightShoulder": 8192,
+                        "leftThumbstick": 16384,
+                        "rightThumbstick": 32768
+                    }
+                },
+                "TvRemote": {
+                    "Id": 1,
+                    "Name": "TvRemote",
+                    "Uuid": "d451e3b360bb4c71b3dbf994b1aca3a7",
+                    "Commands": {
+                        "volUp": "btn.vol_up",
+                        "volDown": "btn.vol_down",
+                        "volMute": "btn.vol_mute"
+                    }
+                },
+                "Media": {
+                    "Id": 2,
+                    "Name": "Media",
+                    "Uuid": "48a9ca24eb6d4e128c43d57469edd3cd",
+                    "Commands": {
+                        "play": 2,
+                        "pause": 4,
+                        "playPause": 8,
+                        "stop": 16,
+                        "record": 32,
+                        "nextTrack": 64,
+                        "prevTrack": 128,
+                        "fastForward": 256,
+                        "rewind": 512,
+                        "channelUp": 1024,
+                        "channelDown": 2048,
+                        "back": 4096,
+                        "view": 8192,
+                        "menu": 16384,
+                        "seek": 32786
+                    }
+                },
+                "Text": {
+                    "Id": 3,
+                    "Name": "Text",
+                    "Uuid": "7af3e6a2488b40cba93179c04b7da3a0"
+                },
+                "Broadcast": {
+                    "Id": 4,
+                    "Name": "Broadcast",
+                    "Uuid": "b6a117d8f5e245d7862e8fd8e3156476"
+                },
+                "Title": {
+                    "Id": 5,
+                    "Name": "Title",
+                    "Uuid": "00000000000000000000000000000000"
+                },
                 "ChannelsConfigNames": [
                     "GetConfiguration",
                     "GetHeadendInfo",
@@ -161,49 +214,6 @@
                     "GetTunerLineups",
                     "GetAppChannelLineups"
                 ]
-            },
-            "Commands": {
-                "SystemMedia": {
-                    "play": 2,
-                    "pause": 4,
-                    "playPause": 8,
-                    "stop": 16,
-                    "record": 32,
-                    "nextTrack": 64,
-                    "prevTrack": 128,
-                    "fastForward": 256,
-                    "rewind": 512,
-                    "channelUp": 1024,
-                    "channelDown": 2048,
-                    "back": 4096,
-                    "view": 8192,
-                    "menu": 16384,
-                    "seek": 32786
-                },
-                "SystemInput": {
-                    "unpress": 0,
-                    "enroll": 1,
-                    "nexus": 2,
-                    "view": 4,
-                    "menu": 8,
-                    "a": 16,
-                    "b": 32,
-                    "x": 64,
-                    "y": 128,
-                    "up": 256,
-                    "down": 512,
-                    "left": 1024,
-                    "right": 2048,
-                    "leftShoulder": 4096,
-                    "rightShoulder": 8192,
-                    "leftThumbstick": 16384,
-                    "rightThumbstick": 32768
-                },
-                "TvRemote": {
-                    "volUp": "btn.vol_up",
-                    "volDown": "btn.vol_down",
-                    "volMute": "btn.vol_mute"
-                }
             }
         },
         "Media": {

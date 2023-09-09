@@ -492,23 +492,23 @@ class XboxDevice extends EventEmitter {
                             switch (remoteKey) {
                                 case 0: //REWIND
                                     command = 'rewind';
-                                    channelName = 'SystemMedia';
+                                    channelName = 'Media';
                                     break;
                                 case 1: //FAST_FORWARD
                                     command = 'fastForward';
-                                    channelName = 'SystemMedia';
+                                    channelName = 'Media';
                                     break;
                                 case 2: //NEXT_TRACK
                                     command = 'nextTrack';
-                                    channelName = 'SystemMedia';
+                                    channelName = 'Media';
                                     break;
                                 case 3: //PREVIOUS_TRACK
                                     command = 'prevTrack';
-                                    channelName = 'SystemMedia';
+                                    channelName = 'Media';
                                     break;
                                 case 4: //ARROW_UP
                                     command = 'up';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 5: //ARROW_DOWN
                                     command = 'down';
@@ -516,31 +516,31 @@ class XboxDevice extends EventEmitter {
                                     break;
                                 case 6: //ARROW_LEFT
                                     command = 'left';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 7: //ARROW_RIGHT
                                     command = 'right';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 8: //SELECT
                                     command = 'a';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 9: //BACK
                                     command = 'b';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 10: //EXIT
                                     command = 'nexus';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 11: //PLAY_PAUSE
                                     command = 'playPause';
-                                    channelName = 'SystemMedia';
+                                    channelName = 'Media';
                                     break;
                                 case 15: //INFORMATION
                                     command = this.infoButtonCommand;
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                             };
 
@@ -585,11 +585,11 @@ class XboxDevice extends EventEmitter {
                             switch (powerModeSelection) {
                                 case 0: //SHOW
                                     command = 'nexus';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                                 case 1: //HIDE
                                     command = 'b';
-                                    channelName = 'SystemInput';
+                                    channelName = 'Input';
                                     break;
                             };
 
@@ -640,11 +640,11 @@ class XboxDevice extends EventEmitter {
                                     switch (volumeSelector) {
                                         case 0: //volUp
                                             command = 'volUp';
-                                            channelName = 'SystemMedia';
+                                            channelName = 'Media';
                                             break;
                                         case 1: //volDown
                                             command = 'volDown';
-                                            channelName = 'SystemMedia';
+                                            channelName = 'Media';
                                             break;
                                     };
 
@@ -690,7 +690,7 @@ class XboxDevice extends EventEmitter {
                                     }
                                     break;
                                 case false:
-                                    const channelName = 'SystemMedia';
+                                    const channelName = 'Media';
                                     const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelName, 'volMute') : false;
                                     break;
                             }
@@ -976,11 +976,11 @@ class XboxDevice extends EventEmitter {
 
                         //get button mode
                         let mode;
-                        if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.SystemMedia) {
+                        if (buttonCommand in CONSTANTS.LocalApi.Channels.System.Media.Commands) {
                             mode = 0;
-                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.SystemInput) {
+                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.System.Input.Commands) {
                             mode = 1;
-                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.TvRemote) {
+                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.System.TvRemote.Commands) {
                             mode = 2;
                         } else if (buttonCommand === 'recordGameDvr') {
                             mode = 3;

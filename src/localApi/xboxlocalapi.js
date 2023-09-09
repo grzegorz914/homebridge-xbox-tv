@@ -315,32 +315,16 @@ class XBOXLOCALAPI extends EventEmitter {
                     switch (channeRequestId) {
                         case 0:
                             try {
-                                let requestId = '0000000000000000';
-                                requestId = (`${requestId}${this.mediaRequestId}`).slice(-requestId.length);
-
-                                const mediaCommand = new MessagePacket('mediaCommand');
-                                mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                                mediaCommand.set('titleId', 0);
-                                mediaCommand.set('command', CONSTANTS.LocalApi.Channels.Commands.SystemMedia[command]);
-                                const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
-                                this.sendSocketMessage(message, 'mediaCommand');
-                                this.mediaRequestId++;
-                            } catch (error) {
-                                this.emit('error', `Send system media command error: ${error}`)
-                            };
-                            break;
-                        case 1:
-                            try {
                                 const gamepad = new MessagePacket('gamepad');
                                 gamepad.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                gamepad.set('buttons', CONSTANTS.LocalApi.Channels.Commands.SystemInput[command]);
+                                gamepad.set('buttons', command);
                                 const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                 await this.sendSocketMessage(message, 'gamepad');
 
                                 setTimeout(async () => {
                                     const gamepadUnpress = new MessagePacket('gamepad');
                                     gamepadUnpress.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                    gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.Commands.SystemInput.unpress);
+                                    gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.System.Input.Commands.unpress);
                                     const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                     await this.sendSocketMessage(message, 'gamepadUnpress');
                                 }, 150)
@@ -348,13 +332,13 @@ class XBOXLOCALAPI extends EventEmitter {
                                 this.emit('error', `Send system input command error: ${error}`)
                             };
                             break;
-                        case 2:
+                        case 1:
                             try {
                                 const jsonRequest = JSON.stringify({
                                     msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
                                     request: 'SendKey',
                                     params: {
-                                        button_id: CONSTANTS.LocalApi.Channels.Commands.TvRemote[command],
+                                        button_id: command,
                                         device_id: null
                                     }
                                 });
@@ -364,6 +348,22 @@ class XBOXLOCALAPI extends EventEmitter {
                                 this.sendSocketMessage(message, 'json');
                             } catch (error) {
                                 this.emit('error', `Send tv remote command error: ${error}`)
+                            };
+                            break;
+                        case 2:
+                            try {
+                                let requestId = '0000000000000000';
+                                requestId = (`${requestId}${this.mediaRequestId}`).slice(-requestId.length);
+
+                                const mediaCommand = new MessagePacket('mediaCommand');
+                                mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                                mediaCommand.set('titleId', 0);
+                                mediaCommand.set('command', command);
+                                const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
+                                this.sendSocketMessage(message, 'mediaCommand');
+                                this.mediaRequestId++;
+                            } catch (error) {
+                                this.emit('error', `Send system media command error: ${error}`)
                             };
                             break;
                     }
@@ -483,9 +483,10 @@ class XBOXLOCALAPI extends EventEmitter {
                 return;
             };
 
-            const channeRequestId = CONSTANTS.LocalApi.Channels[channelName].ChannelId
-            const channelUuid = CONSTANTS.LocalApi.Channels[channelName].ChannelUuid;
-            this.emit('channelOpen', channeRequestId, channelUuid, command);
+            const requestId = CONSTANTS.LocalApi.Channels.System[channelName].Id
+            const uuid = CONSTANTS.LocalApi.Channels.System[channelName].Uuid;
+            command = CONSTANTS.LocalApi.Channels.System[channelName][command];
+            this.emit('channelOpen', requestId, uuid, command);
             resolve();
         });
     };
