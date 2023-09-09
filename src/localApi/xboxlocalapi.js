@@ -74,7 +74,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const debug4 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
 
                 if (messageType === 'message' && packet.targetParticipantId !== this.sourceParticipantId) {
-                    const debug = this.debugLog ? this.emit('debug', `Participantid does not match. Ignoring packet.`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet.`) : false;
                     return;
                 };
 
@@ -144,7 +144,7 @@ class XBOXLOCALAPI extends EventEmitter {
                                         connectRequest.set('jwt', tokenData.xsts.Token, true);
                                     }
                                     this.isAuthorized = tokenExist;
-                                    const debug = this.debugLog ? tokenExist ? this.emit('debug', `Client connecting using XSTS token.`) : this.emit('debug', 'Client connecting anonymous.') : false;
+                                    const debug = this.debugLog ? this.emit('debug', `Client connecting using: ${tokenExist ? 'XSTS token' : 'Anonymous'}.`) : false;
 
                                     const message = connectRequest.pack(this.crypto);
                                     await this.sendSocketMessage(message, 'connectRequest');
