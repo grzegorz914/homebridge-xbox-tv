@@ -8,7 +8,7 @@ const CONSTANTS = require('../constans.json');
 class AUTHENTICATION {
     constructor(config) {
         this.httpClient = new HttpClient();
-        this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.webApiClientId;
+        this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.ClientId;
         this.webApiClientSecret = config.webApiClientSecret;
         this.tokensFile = config.tokensFile;
         this.tokens = {
