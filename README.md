@@ -99,9 +99,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `webApiPowerOnOff` | This enable power control over Web Api. |
 | `webApiRcControl` | This enable remote control over Web Api. |
 | `webApiVolumeControl` | This enable volume/mute control over Web Api. |
-| `xboxWebApiToken` | Required if `webApiControl` enabled. |
-| `clientId` | If You create app on Azure AD then You can use your own Client Id. |
-| `clientSecret` | If You create app on Azure AD then You can use own Client Secret. |
+| `webApiToken` | Required if `webApiControl` enabled. |
+| `webApiClientId` | If You create app on Azure AD then You can use your own Client Id. |
+| `webApiClientSecret` | If You create app on Azure AD then You can use own Client Secret. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |

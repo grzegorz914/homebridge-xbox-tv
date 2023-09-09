@@ -125,7 +125,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         const deviceType = packet.clientType;
                         const deviceName = packet.name;
                         const certificate = packet.certificate;
-                        const debug = this.debugLog ? this.emit('debug', `Discovered device: ${CONSTANTS.LocalApi.Console[deviceType]}, name: ${deviceName}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Discovered device: ${CONSTANTS.LocalApi.Console.Name[deviceType]}, name: ${deviceName}`) : false;
 
                         try {
                             // Sign public key
@@ -182,7 +182,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         this.isConnected = true;
                         this.sourceParticipantId = sourceParticipantId;
                         const debug1 = this.debugLog ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}.`) : false;
-                        const debug2 = this.debugLog ? this.emit('debug', `Client pairing state: ${pairingState ? 'Paired' : 'Not Paired'}.`) : false;
+                        const debug2 = this.debugLog ? this.emit('debug', `Client pairing state: ${CONSTANTS.LocalApi.Console.PairingState[pairingState]}.`) : false;
 
                         try {
                             const localJoin = new MessagePacket('localJoin');
@@ -248,8 +248,8 @@ class XBOXLOCALAPI extends EventEmitter {
                         this.channelStateOpen = packet.payloadProtected.result === 0;
                         break;
                     case 'pairedIdentityStateChanged':
-                        const pairingState1 = packet.payloadProtected.pairingState;
-                        const debug4 = this.debugLog ? this.emit('debug', `Client pairing state: ${pairingState1 ? 'Paaired' : 'Not Paired'}.`) : false;
+                        const pairingState1 = packet.payloadProtected.pairingState || 0;
+                        const debug4 = this.debugLog ? this.emit('debug', `Client pairing state: ${CONSTANTS.LocalApi.Console.PairingState[pairingState]}.`) : false;
                         break;
                 };
             }).on('listening', () => {

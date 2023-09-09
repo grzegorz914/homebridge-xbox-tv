@@ -8,8 +8,8 @@ const CONSTANTS = require('../constans.json');
 class AUTHENTICATION {
     constructor(config) {
         this.httpClient = new HttpClient();
-        this.clientId = config.clientId || CONSTANTS.WebApi.ClientId;
-        this.clientSecret = config.clientSecret;
+        this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.webApiClientId;
+        this.webApiClientSecret = config.webApiClientSecret;
         this.tokensFile = config.tokensFile;
         this.tokens = {
             oauth: {},
@@ -91,12 +91,12 @@ class AUTHENTICATION {
         return new Promise(async (resolve, reject) => {
             try {
                 const payload = {
-                    "client_id": this.clientId,
+                    "client_id": this.webApiClientId,
                     "grant_type": "refresh_token",
                     "scope": CONSTANTS.WebApi.Scopes,
                     "refresh_token": token,
                 }
-                const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
+                const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -165,13 +165,13 @@ class AUTHENTICATION {
         return new Promise(async (resolve, reject) => {
             try {
                 const payload = {
-                    "client_id": this.clientId,
+                    "client_id": this.webApiClientId,
                     "grant_type": 'authorization_code',
                     "scope": CONSTANTS.WebApi.Scopes,
                     "code": webApiToken,
                     "redirect_uri": CONSTANTS.WebApi.Url.Redirect
                 }
-                const addClientSecret = this.clientSecret ? payload.client_secret = this.clientSecret : false;
+                const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -194,7 +194,7 @@ class AUTHENTICATION {
                 this.tokens = JSON.parse(tokens);
             }
 
-            if (this.clientId) {
+            if (this.webApiClientId) {
                 if (this.tokens.oauth.refresh_token) {
                     try {
                         await this.refreshTokens('user');
@@ -207,7 +207,7 @@ class AUTHENTICATION {
                     reject('No oauth token found. Use authorization manager first.')
                 }
             } else {
-                reject(`Authorization not possible, check plugin settings - Client Id: ${this.clientId}`);
+                reject(`Authorization not possible, check plugin settings - Client Id: ${this.webApiClientId}`);
             }
         })
     }
@@ -216,7 +216,7 @@ class AUTHENTICATION {
         return new Promise(async (resolve, reject) => {
             try {
                 const payload = {
-                    "client_id": this.clientId,
+                    "client_id": this.webApiClientId,
                     "response_type": 'code',
                     "approval_prompt": 'auto',
                     "scope": CONSTANTS.WebApi.Scopes,

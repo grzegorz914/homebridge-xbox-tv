@@ -20,8 +20,8 @@ class XBOXWEBAPI extends EventEmitter {
     constructor(config) {
         super();
         this.xboxLiveId = config.xboxLiveId;
-        this.clientId = config.clientId;
-        this.clientSecret = config.clientSecret;
+        this.webApiClientId = config.webApiClientId;
+        this.webApiClientSecret = config.webApiClientSecret;
         this.debugLog = config.debugLog;
 
         //variables
@@ -29,8 +29,8 @@ class XBOXWEBAPI extends EventEmitter {
         this.httpClient = new HttpClient();
 
         const authConfig = {
-            clientId: config.clientId,
-            clientSecret: config.clientSecret,
+            webApiClientId: config.webApiClientId,
+            webApiClientSecret: config.webApiClientSecret,
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);

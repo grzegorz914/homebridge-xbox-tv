@@ -115,18 +115,24 @@
         }
     },
     "LocalApi": {
-        "Console": {
-            "1": "Xbox One",
-            "2": "Xbox 360",
-            "3": "Windows Desktop",
-            "4": "Windows Store",
-            "5": "Windows Phone",
-            "6": "iPhone",
-            "7": "iPad",
-            "8": "Android"
-        },
         "ParticipantId": {
             "Target": 0
+        },
+        "Console": {
+            "Name": {
+                "1": "Xbox One",
+                "2": "Xbox 360",
+                "3": "Windows Desktop",
+                "4": "Windows Store",
+                "5": "Windows Phone",
+                "6": "iPhone",
+                "7": "iPad",
+                "8": "Android"
+            },
+            "PairingState": {
+                "0": "Not Paired",
+                "1": "Paired"
+            }
         },
         "Channels": {
             "SystemMedia": {

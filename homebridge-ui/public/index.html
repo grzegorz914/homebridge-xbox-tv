@@ -60,10 +60,10 @@
         document.getElementById('deviceName').innerHTML = pluginConfig[0].devices[i].name || '';
         document.getElementById('deviceHost').value = pluginConfig[0].devices[i].host || '';
         document.getElementById('deviceLiveId').value = pluginConfig[0].devices[i].xboxLiveId || '';
-        document.getElementById('deviceToken').value = pluginConfig[0].devices[i].xboxWebApiToken || '';
+        document.getElementById('deviceToken').value = pluginConfig[0].devices[i].webApiToken || '';
         document.getElementById('deviceWebApiControl').checked = pluginConfig[0].devices[i].webApiControl || false;
 
-        const tokenLength = (pluginConfig[0].devices[i].xboxWebApiToken).length || 0;
+        const tokenLength = (pluginConfig[0].devices[i].webApiToken).length || 0;
         const setButtonName = tokenLength <= 10 ? document.getElementById('startAuthorizationButton').innerText = "Start authorization" : document.getElementById('startAuthorizationButton').innerText = "Check state";
         const setCheckboxState = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').checked = false : false;
         const setCheckboxMode = tokenLength <= 10 ? document.getElementById('deviceWebApiControl').disabled = true : document.getElementById('deviceWebApiControl').disabled = false;
@@ -88,7 +88,7 @@
     document.getElementById('configForm').addEventListener('input', async () => {
       pluginConfig[0].devices[this.deviceIndex].host = document.querySelector('#deviceHost').value;
       pluginConfig[0].devices[this.deviceIndex].xboxLiveId = document.querySelector('#deviceLiveId').value;
-      pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = document.querySelector('#deviceToken').value;
+      pluginConfig[0].devices[this.deviceIndex].webApiToken = document.querySelector('#deviceToken').value;
       pluginConfig[0].devices[this.deviceIndex].webApiControl = document.querySelector('#deviceWebApiControl').checked;
 
       const tokenLength1 = (document.querySelector('#deviceToken').value).length || 0;
@@ -118,7 +118,7 @@
             document.getElementById('deviceWebApiControl').checked = false;
             document.getElementById('deviceWebApiControl').disabled = true;
             document.getElementById('info').innerHTML = info;
-            pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken = '';
+            pluginConfig[0].devices[this.deviceIndex].webApiToken = '';
             pluginConfig[0].devices[this.deviceIndex].webApiControl = false;
 
             await homebridge.updatePluginConfig(pluginConfig);
@@ -145,16 +145,16 @@
         document.getElementById('info').innerHTML = '';
 
         const host = pluginConfig[0].devices[this.deviceIndex].host;
-        const clientId = pluginConfig[0].devices[this.deviceIndex].clientId;
-        const clientSecret = pluginConfig[0].devices[this.deviceIndex].clientSecret;
-        const xboxWebApiToken = pluginConfig[0].devices[this.deviceIndex].xboxWebApiToken;
+        const webApiClientId = pluginConfig[0].devices[this.deviceIndex].webApiClientId;
+        const webApiClientSecret = pluginConfig[0].devices[this.deviceIndex].webApiClientSecret;
+        const webApiToken = pluginConfig[0].devices[this.deviceIndex].webApiToken;
 
         const payload = {
           mode: 'authorization',
           host: host,
-          clientId: clientId,
-          clientSecret: clientSecret,
-          webApiToken: xboxWebApiToken
+          webApiClientId: webApiClientId,
+          webApiClientSecret: webApiClientSecret,
+          webApiToken: webApiToken
         };
         const response = await homebridge.request('/startAuthorization', payload);
         const info = response.info;

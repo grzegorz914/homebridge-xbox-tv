@@ -511,7 +511,7 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"xboxWebApiToken": {
+						"webApiToken": {
 							"title": "Web Api Token",
 							"type": "string",
 							"placeholder": "Web Api Token",
@@ -521,7 +521,7 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"clientId": {
+						"webApiClientId": {
 							"title": "Client ID",
 							"type": "string",
 							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
@@ -531,7 +531,7 @@
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							}
 						},
-						"clientSecret": {
+						"webApiClientSecret": {
 							"title": "Client Secret",
 							"type": "string",
 							"placeholder": "Client Secret",
@@ -853,9 +853,9 @@
 										"devices[].webApiPowerOnOff",
 										"devices[].webApiRcControl",
 										"devices[].webApiVolumeControl",
-										"devices[].xboxWebApiToken",
-										"devices[].clientId",
-										"devices[].clientSecret"
+										"devices[].webApiToken",
+										"devices[].webApiClientId",
+										"devices[].webApiClientSecret"
 									]
 								},
 								{
