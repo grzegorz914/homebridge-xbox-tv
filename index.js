@@ -22,7 +22,7 @@ class XboxPlatform {
 		api.on('didFinishLaunching', () => {
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
-					log.warn('Device Name, Host or Xbox Live ID Missing');
+					log.warn(`Device Name: ${device.name ? device.name : 'Missing'}, Host: ${device.host ? device.host : 'Missing'} or Xbox Live ID: ${device.xboxLiveId ? device.xboxLiveId : 'Missing'}.`);
 					return;
 				}
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;

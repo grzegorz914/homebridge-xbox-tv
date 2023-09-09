@@ -1,37 +1,6 @@
 {
     "PlatformName": "XboxTv",
     "PluginName": "homebridge-xbox-tv",
-    "ClientId": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
-    "Scopes": "XboxLive.signin XboxLive.offline_access",
-    "Url": {
-        "oauth2": "https://login.live.com/oauth20_authorize.srf",
-        "AccessToken": "https://login.live.com/oauth20_token.srf",
-        "RefreshToken": "https://login.live.com/oauth20_token.srf",
-        "UserToken": "https://user.auth.xboxlive.com/user/authenticate",
-        "XstsToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
-        "Redirect": "http://localhost:8888/auth/callback",
-        "Xccs": "https://xccs.xboxlive.com"
-    },
-    "ConsoleName": {
-        "XboxSeriesX": "Xbox Series X",
-        "XboxSeriesS": "Xbox Series S",
-        "XboxOne": "Xbox One",
-        "XboxOneS": "Xbox One S",
-        "XboxOneX": "Xbox One X"
-    },
-    "ConsolePowerState": {
-        "Off": 0,
-        "On": 1,
-        "ConnectedStandby": 2,
-        "SystemUpdate": 3,
-        "Unknown": 4
-    },
-    "ConsolePlaybackState": {
-        "Stopped": 0,
-        "Playing": 1,
-        "Paused": 2,
-        "Unknown": 3
-    },
     "DefaultInputs": [
         {
             "name": "Screensaver",
@@ -110,113 +79,166 @@
         "USB",
         "APPLICATION"
     ],
-    "ParticipantId": {
-        "Target": 0
-    },
-    "SystemMediaCommands": {
-        "play": 2,
-        "pause": 4,
-        "playPause": 8,
-        "stop": 16,
-        "record": 32,
-        "nextTrack": 64,
-        "prevTrack": 128,
-        "fastForward": 256,
-        "rewind": 512,
-        "channelUp": 1024,
-        "channelDown": 2048,
-        "back": 4096,
-        "view": 8192,
-        "menu": 16384,
-        "seek": 32786
-    },
-    "SystemInputCommands": {
-        "unpress": 0,
-        "enroll": 1,
-        "nexus": 2,
-        "view": 4,
-        "menu": 8,
-        "a": 16,
-        "b": 32,
-        "x": 64,
-        "y": 128,
-        "up": 256,
-        "down": 512,
-        "left": 1024,
-        "right": 2048,
-        "leftShoulder": 4096,
-        "rightShoulder": 8192,
-        "leftThumbstick": 16384,
-        "rightThumbstick": 32768
-    },
-    "TvRemoteCommands": {
-        "volUp": "btn.vol_up",
-        "volDown": "btn.vol_down",
-        "volMute": "btn.vol_mute"
-    },
-    "Channels": [
-        {
-            "ChannelId": 0,
-            "ChannelName": "systemMedia",
-            "ChannelsUuid": "48a9ca24eb6d4e128c43d57469edd3cd"
+    "WebApi": {
+        "Url": {
+            "oauth2": "https://login.live.com/oauth20_authorize.srf",
+            "AccessToken": "https://login.live.com/oauth20_token.srf",
+            "RefreshToken": "https://login.live.com/oauth20_token.srf",
+            "UserToken": "https://user.auth.xboxlive.com/user/authenticate",
+            "XstsToken": "https://xsts.auth.xboxlive.com/xsts/authorize",
+            "Redirect": "http://localhost:8888/auth/callback",
+            "Xccs": "https://xccs.xboxlive.com"
         },
-        {
-            "ChannelId": 1,
-            "ChannelName": "systemInput",
-            "ChannelsUuid": "fa20b8ca66fb46e0adb60b978a59d35f"
-        },
-        {
-            "ChannelId": 2,
-            "ChannelName": "tvRemote",
-            "ChannelsUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
-        },
-        {
-            "ChannelId": 3,
-            "ChannelName": "sysConfig",
-            "ChannelsUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
+        "Scopes": "XboxLive.signin XboxLive.offline_access",
+        "ClientId": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
+        "Console": {
+            "Name": {
+                "XboxSeriesX": "Xbox Series X",
+                "XboxSeriesS": "Xbox Series S",
+                "XboxOne": "Xbox One",
+                "XboxOneS": "Xbox One S",
+                "XboxOneX": "Xbox One X"
+            },
+            "PowerState": {
+                "Off": 0,
+                "On": 1,
+                "ConnectedStandby": 2,
+                "SystemUpdate": 3,
+                "Unknown": 4
+            },
+            "PlaybackState": {
+                "Stopped": 0,
+                "Playing": 1,
+                "Paused": 2,
+                "Unknown": 3
+            }
         }
-    ],
-    "ConfigNames": [
-        "GetConfiguration",
-        "GetHeadendInfo",
-        "GetLiveTVInfo",
-        "GetTunerLineups",
-        "GetAppChannelLineups"
-    ],
-    "PlaybackStatus": {
-        "0": "Closed",
-        "1": "Changing",
-        "2": "Stopped",
-        "3": "Playing",
-        "4": "Paused"
     },
-    "MediaTypes": {
-        "0": "No Media",
-        "1": "Music",
-        "2": "Video",
-        "3": "Image",
-        "4": "Conversation",
-        "5": "Game"
-    },
-    "SoundLevel": {
-        "0": "Muted",
-        "1": "Low",
-        "2": "Full"
-    },
-    "MessageTypes": {
-        "d00d": "message",
-        "cc00": "simple",
-        "cc01": "simple",
-        "dd00": "simple",
-        "dd01": "simple",
-        "dd02": "simple"
-    },
-    "MessageRequests": {
-        "d00d": "message",
-        "dd02": "powerOn",
-        "dd00": "discoveryRequest",
-        "dd01": "discoveryResponse",
-        "cc00": "connectRequest",
-        "cc01": "connectResponse"
+    "LocalApi": {
+        "Console": {
+            "1": "Xbox One",
+            "2": "Xbox 360",
+            "3": "Windows Desktop",
+            "4": "Windows Store",
+            "5": "Windows Phone",
+            "6": "iPhone",
+            "7": "iPad",
+            "8": "Android"
+        },
+        "ParticipantId": {
+            "Target": 0
+        },
+        "Channels": {
+            "SystemMedia": {
+                "ChannelId": 0,
+                "ChannelName": "SystemMedia",
+                "ChannelUuid": "48a9ca24eb6d4e128c43d57469edd3cd"
+            },
+            "SystemInput": {
+                "ChannelId": 1,
+                "ChannelName": "SystemInput",
+                "ChannelUuid": "fa20b8ca66fb46e0adb60b978a59d35f"
+            },
+            "TvRemote": {
+                "ChannelId": 2,
+                "ChannelName": "TvRemote",
+                "ChannelUuid": "d451e3b360bb4c71b3dbf994b1aca3a7"
+            },
+            "SystemConfig": {
+                "ChannelId": 3,
+                "ChannelName": "SystemConfig",
+                "ChannelUuid": "d451e3b360bb4c71b3dbf994b1aca3a7",
+                "ChannelsConfigNames": [
+                    "GetConfiguration",
+                    "GetHeadendInfo",
+                    "GetLiveTVInfo",
+                    "GetTunerLineups",
+                    "GetAppChannelLineups"
+                ]
+            },
+            "Commands": {
+                "SystemMedia": {
+                    "play": 2,
+                    "pause": 4,
+                    "playPause": 8,
+                    "stop": 16,
+                    "record": 32,
+                    "nextTrack": 64,
+                    "prevTrack": 128,
+                    "fastForward": 256,
+                    "rewind": 512,
+                    "channelUp": 1024,
+                    "channelDown": 2048,
+                    "back": 4096,
+                    "view": 8192,
+                    "menu": 16384,
+                    "seek": 32786
+                },
+                "SystemInput": {
+                    "unpress": 0,
+                    "enroll": 1,
+                    "nexus": 2,
+                    "view": 4,
+                    "menu": 8,
+                    "a": 16,
+                    "b": 32,
+                    "x": 64,
+                    "y": 128,
+                    "up": 256,
+                    "down": 512,
+                    "left": 1024,
+                    "right": 2048,
+                    "leftShoulder": 4096,
+                    "rightShoulder": 8192,
+                    "leftThumbstick": 16384,
+                    "rightThumbstick": 32768
+                },
+                "TvRemote": {
+                    "volUp": "btn.vol_up",
+                    "volDown": "btn.vol_down",
+                    "volMute": "btn.vol_mute"
+                }
+            }
+        },
+        "Media": {
+            "Types": {
+                "0": "No Media",
+                "1": "Music",
+                "2": "Video",
+                "3": "Image",
+                "4": "Conversation",
+                "5": "Game"
+            },
+            "PlaybackState": {
+                "0": "Closed",
+                "1": "Changing",
+                "2": "Stopped",
+                "3": "Playing",
+                "4": "Paused"
+            },
+            "SoundLevel": {
+                "0": "Muted",
+                "1": "Low",
+                "2": "Full"
+            }
+        },
+        "Messages": {
+            "Types": {
+                "d00d": "message",
+                "dd00": "simple",
+                "dd01": "simple",
+                "dd02": "simple",
+                "cc00": "simple",
+                "cc01": "simple"
+            },
+            "Requests": {
+                "d00d": "message",
+                "dd00": "discoveryRequest",
+                "dd01": "discoveryResponse",
+                "dd02": "powerOn",
+                "cc00": "connectRequest",
+                "cc01": "connectResponse"
+            }
+        }
     }
 }

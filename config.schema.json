@@ -184,7 +184,7 @@
 											{
 												"title": "Media Play/Pause",
 												"enum": [
-													"playpause"
+													"playPause"
 												]
 											},
 											{
@@ -250,7 +250,7 @@
 											{
 												"title": "Media Menu",
 												"enum": [
-													"Menu"
+													"menu"
 												]
 											},
 											{
@@ -268,13 +268,13 @@
 											{
 												"title": "Game Pad View",
 												"enum": [
-													"view1"
+													"view"
 												]
 											},
 											{
 												"title": "Game Pad Menu",
 												"enum": [
-													"menu1"
+													"menu"
 												]
 											},
 											{
@@ -581,7 +581,7 @@
 								{
 									"title": "Game Pad Menu",
 									"enum": [
-										"menu1"
+										"menu"
 									]
 								},
 								{

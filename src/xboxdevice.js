@@ -7,6 +7,7 @@ const Mqtt = require('./mqtt.js');
 const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
 const CONSTANTS = require('./constans.json');
+
 let Accessory, Characteristic, Service, Categories, UUID;
 
 class XboxDevice extends EventEmitter {
@@ -488,51 +489,63 @@ class XboxDevice extends EventEmitter {
                     .onSet(async (remoteKey) => {
                         try {
                             let command;
+                            let channelName;
                             switch (remoteKey) {
                                 case 0: //REWIND
                                     command = 'rewind';
+                                    channelName = 'SystemMedia';
                                     break;
                                 case 1: //FAST_FORWARD
                                     command = 'fastForward';
+                                    channelName = 'SystemMedia';
                                     break;
                                 case 2: //NEXT_TRACK
                                     command = 'nextTrack';
+                                    channelName = 'SystemMedia';
                                     break;
                                 case 3: //PREVIOUS_TRACK
                                     command = 'prevTrack';
+                                    channelName = 'SystemMedia';
                                     break;
                                 case 4: //ARROW_UP
                                     command = 'up';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 5: //ARROW_DOWN
                                     command = 'down';
+                                    channelName = 1;
                                     break;
                                 case 6: //ARROW_LEFT
                                     command = 'left';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 7: //ARROW_RIGHT
                                     command = 'right';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 8: //SELECT
                                     command = 'a';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 9: //BACK
                                     command = 'b';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 10: //EXIT
                                     command = 'nexus';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 11: //PLAY_PAUSE
                                     command = 'playPause';
+                                    channelName = 'SystemMedia';
                                     break;
                                 case 15: //INFORMATION
                                     command = this.infoButtonCommand;
+                                    channelName = 'SystemInput';
                                     break;
                             };
 
-                            let channelId = command === 'playPause' ? 0 : 1;
-                            channelId = CONSTANTS.Channels[channelId].ChannelId;
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
+                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
@@ -569,18 +582,20 @@ class XboxDevice extends EventEmitter {
                     .onSet(async (powerModeSelection) => {
                         try {
                             let command;
+                            let channelName;
                             switch (powerModeSelection) {
                                 case 0: //SHOW
                                     command = 'nexus';
+                                    channelName = 'SystemInput';
                                     break;
                                 case 1: //HIDE
                                     command = 'b';
+                                    channelName = 'SystemInput';
                                     break;
                             };
 
-                            const channelId = CONSTANTS.Channels[1].ChannelId;
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power Mode Selection: ${command === 'nexus' ? 'SHOW' : 'HIDE'}`);
+                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
+                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
                         };
@@ -610,18 +625,34 @@ class XboxDevice extends EventEmitter {
                     .onSet(async (volumeSelector) => {
                         try {
                             let command;
-                            switch (volumeSelector) {
-                                case 0: //INCREMENT
-                                    command = 'volUp';
+                            let channelName;
+                            switch (this.webApiVolumeControl) {
+                                case true:
+                                    switch (volumeSelector) {
+                                        case 0: //volUp
+                                            const volDown = this.power ? await this.xboxWebApi.volumeUp() : false;
+                                            break;
+                                        case 1: //volDown
+                                            const volUp = this.power ? await this.xboxWebApi.volumeDown() : false;
+                                            break;
+                                    }
                                     break;
-                                case 1: //DECREMENT
-                                    command = 'volDown';
-                                    break;
-                            };
+                                case false:
+                                    switch (volumeSelector) {
+                                        case 0: //volUp
+                                            command = 'volUp';
+                                            channelName = 'SystemMedia';
+                                            break;
+                                        case 1: //volDown
+                                            command = 'volDown';
+                                            channelName = 'SystemMedia';
+                                            break;
+                                    };
 
-                            const channelId = CONSTANTS.Channels[2].ChannelId;
-                            const sendRcCommand = this.webApiVolumeControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelId, command);
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume Selector: ${command}`);
+                                    await this.xboxLocalApi.sendButtonPress(channelName, command)
+                                    break;
+                            }
+                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector error: ${error}`);
                         };
@@ -660,8 +691,8 @@ class XboxDevice extends EventEmitter {
                                     }
                                     break;
                                 case false:
-                                    const channelId = CONSTANTS.Channels[2].ChannelId;
-                                    const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelId, 'volMute') : false;
+                                    const channelName = 'SystemMedia';
+                                    const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelName, 'volMute') : false;
                                     break;
                             }
                             const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
@@ -946,11 +977,11 @@ class XboxDevice extends EventEmitter {
 
                         //get button mode
                         let mode;
-                        if (buttonCommand in CONSTANTS.SystemMediaCommands) {
+                        if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.SystemMedia) {
                             mode = 0;
-                        } else if (buttonCommand in CONSTANTS.SystemInputCommands) {
+                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.SystemInput) {
                             mode = 1;
-                        } else if (buttonCommand in CONSTANTS.TvRemoteCommands) {
+                        } else if (buttonCommand in CONSTANTS.LocalApi.Channels.Commands.TvRemote) {
                             mode = 2;
                         } else if (buttonCommand === 'recordGameDvr') {
                             mode = 3;

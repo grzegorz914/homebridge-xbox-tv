@@ -25,14 +25,13 @@ class XBOXLOCALAPI extends EventEmitter {
         this.isConnected = false;
         this.isAuthorized = false;
 
-        this.sequenceNumber = 1;
+        this.sequenceNumber = 0;
         this.sourceParticipantId = 0;
         this.channelRequestId = 0;
         this.channelTargetId = 0;
         this.channelStateOpen = false;
         this.mediaRequestId = 1;
         this.emitDevInfo = true;
-        this.command = '';
 
         //dgram socket
         this.connect = () => {
@@ -49,7 +48,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const debug1 = this.debugLog ? this.emit('debug', `Received message type hex: ${messageTypeHex}`) : false;
 
                 //check message type exist in types
-                const keysTypes = Object.keys(CONSTANTS.MessageTypes);
+                const keysTypes = Object.keys(CONSTANTS.LocalApi.Messages.Types);
                 const keysTypesExist = keysTypes.includes(messageTypeHex);
 
                 if (!keysTypesExist) {
@@ -58,8 +57,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 //get message type and request
-                const messageType = CONSTANTS.MessageTypes[messageTypeHex];
-                const messageRequest = CONSTANTS.MessageRequests[messageTypeHex];
+                const messageType = CONSTANTS.LocalApi.Messages.Types[messageTypeHex];
+                const messageRequest = CONSTANTS.LocalApi.Messages.Requests[messageTypeHex];
                 const debug2 = this.debugLog ? this.emit('debug', `Received message type: ${messageType}, request: ${messageRequest}`) : false;
 
                 let packeStructure;
@@ -73,7 +72,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 };
 
                 let packet = packeStructure.unpack(this.crypto, message);
-                let type = packet.type;
+                const type = packet.type;
                 const debug3 = this.debugLog ? this.emit('debug', `Received type: ${type}`) : false;
                 const debug4 = this.debugLog ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
 
@@ -105,7 +104,7 @@ class XBOXLOCALAPI extends EventEmitter {
                                             JSON.parse(this.getValue());
                                             return true;
                                         } catch (error) {
-                                            this.emit('error', `Valid packet error: ${error}`);
+                                            this.emit('error', `Valid fragments error: ${error}`);
                                             return false;
                                         }
                                     }
@@ -114,17 +113,23 @@ class XBOXLOCALAPI extends EventEmitter {
 
                             partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
                             if (fragments[datagramId].isValid()) {
-                                const debug = this.debugLog ? this.emit('debug', 'JSON completed fragmented packet.') : false;
                                 packet.payloadProtected.json = fragments[datagramId].getValue();
+                                const debug = this.debugLog ? this.emit('debug', `JSON fragments: ${fragments}`) : false;
+
+                                // Delete
                                 delete fragments[datagramId];
                             }
-                            const debug1 = this.debugLog ? this.emit('debug', `JSON fragment: ${packet}`) : false;
                         };
                         break;
                     case 'discoveryResponse':
+                        const deviceType = packet.clientType;
+                        const deviceName = packet.name;
+                        const certificate = packet.certificate;
+                        const debug = this.debugLog ? this.emit('debug', `Discovered device: ${CONSTANTS.LocalApi.Console[deviceType]}, name: ${deviceName}`) : false;
+
                         try {
                             // Sign public key
-                            const data = await this.crypto.getPublicKey(packet);
+                            const data = await this.crypto.getPublicKey(certificate);
                             const debug = this.debugLog ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
 
                             // Connect request
@@ -141,12 +146,11 @@ class XBOXLOCALAPI extends EventEmitter {
                                         connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
                                         connectRequest.set('jwt', tokenData.xsts.Token, true);
                                     }
+                                    this.isAuthorized = tokenExist;
+                                    const debug = this.debugLog ? tokenExist ? this.emit('debug', `Client connecting using XSTS token.`) : this.emit('debug', 'Client connecting anonymous.') : false;
 
                                     const message = connectRequest.pack(this.crypto);
                                     await this.sendSocketMessage(message, 'connectRequest');
-
-                                    this.isAuthorized = tokenExist;
-                                    const debug = this.debugLog ? tokenExist ? this.emit('debug', `Connected using XSTS token.`) : this.emit('debug', 'Connecteed anonymous.') : false;
                                 } catch (error) {
                                     this.emit('error', `Send connect request error: ${error}`)
                                 };
@@ -157,6 +161,8 @@ class XBOXLOCALAPI extends EventEmitter {
                         break;
                     case 'connectResponse':
                         const connectionResult = packet.payloadProtected.connectResult;
+                        const pairingState = packet.payloadProtected.pairingState;
+                        const sourceParticipantId = packet.payloadProtected.participantId;
                         if (connectionResult !== 0) {
                             const errorTable = {
                                 0: 'Success.',
@@ -173,15 +179,15 @@ class XBOXLOCALAPI extends EventEmitter {
                             this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
                             return;
                         }
+                        this.isConnected = true;
+                        this.sourceParticipantId = sourceParticipantId;
+                        const debug1 = this.debugLog ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}.`) : false;
+                        const debug2 = this.debugLog ? this.emit('debug', `Client pairing state: ${pairingState ? 'Paired' : 'Not Paired'}.`) : false;
 
                         try {
-                            this.sourceParticipantId = packet.payloadProtected.participantId;
                             const localJoin = new MessagePacket('localJoin');
-                            const localJointMessage = localJoin.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                            const localJointMessage = localJoin.pack(this.crypto, this.getSequenceNumber(), sourceParticipantId);
                             await this.sendSocketMessage(localJointMessage, 'localJoin');
-
-                            this.isConnected = true;
-                            const debug1 = this.debugLog ? this.emit('debug', `Connect state: Connected.`) : false;
                         } catch (error) {
                             this.emit('error', `Send local join error: ${error}`)
                         };
@@ -196,9 +202,7 @@ class XBOXLOCALAPI extends EventEmitter {
                             const sequenceNumber = packet.sequenceNumber;
                             const acknowledge = new MessagePacket('acknowledge');
                             acknowledge.set('lowWatermark', sequenceNumber);
-                            acknowledge.structure.processedList.value.push({
-                                id: sequenceNumber
-                            });
+                            acknowledge.packet.processedList.value.push({ id: sequenceNumber });
                             const message = acknowledge.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
                             await this.sendSocketMessage(message, 'acknowledge');
                         } catch (error) {
@@ -227,8 +231,8 @@ class XBOXLOCALAPI extends EventEmitter {
                             const volume = 0;
                             const mute = power ? power : true;
                             const mediaState = 0;
-                            const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[1].titleId : packet.payloadProtected.activeTitles[0].titleId;
-                            const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[1].aumId : packet.payloadProtected.activeTitles[0].aumId;
+                            const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[0].titleId : packet.payloadProtected.activeTitles[0].titleId;
+                            const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[0].aumId : packet.payloadProtected.activeTitles[0].aumId;
 
                             this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
                             const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
@@ -238,10 +242,14 @@ class XBOXLOCALAPI extends EventEmitter {
                         const acknowledge = packet.flags.needAck ? this.emit('acknowledge', packet.sequenceNumber) : false;
                         break;
                     case 'channelStartResponse':
-                        const debug = this.debugLog ? this.emit('debug', `Channel start response, request Id: ${packet.payloadProtected.channelRequestId}.`) : false;
+                        const debug3 = this.debugLog ? this.emit('debug', `Channel start response, request Id: ${packet.payloadProtected.channelRequestId}.`) : false;
                         this.channelRequestId = packet.payloadProtected.channelRequestId;
                         this.channelTargetId = packet.payloadProtected.channelTargetId;
                         this.channelStateOpen = packet.payloadProtected.result === 0;
+                        break;
+                    case 'pairedIdentityStateChanged':
+                        const pairingState1 = packet.payloadProtected.pairingState;
+                        const debug4 = this.debugLog ? this.emit('debug', `Client pairing state: ${pairingState1 ? 'Paaired' : 'Not Paired'}.`) : false;
                         break;
                 };
             }).on('listening', () => {
@@ -292,7 +300,7 @@ class XBOXLOCALAPI extends EventEmitter {
             try {
                 const acknowledge = new MessagePacket('acknowledge');
                 acknowledge.set('lowWatermark', sequenceNumber);
-                acknowledge.structure.processedList.value.push({
+                acknowledge.packet.processedList.value.push({
                     id: sequenceNumber
                 });
                 const message = acknowledge.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
@@ -300,14 +308,14 @@ class XBOXLOCALAPI extends EventEmitter {
             } catch (error) {
                 this.emit('error', `Send acknowledge error: ${error}`)
             };
-        }).on('channelOpen', async (channelId, channelUuid) => {
-            const debug = this.debugLog ? this.emit('debug', `Received channel open, Id: ${channelId}, UuId: ${channelUuid} received.`) : false;
+        }).on('channelOpen', async (channeRequestId, channelUuid, command) => {
+            const debug = this.debugLog ? this.emit('debug', `Received channel open.`) : false;
 
-            const channelState = this.channelStateOpen && channelId === this.channelRequestId;
+            const channelState = this.channelStateOpen && this.channelRequestId === channeRequestId;
             switch (channelState) {
                 case true:
-                    const debug = this.debugLog ? this.emit('debug', `Channel Id: ${channelId} open, send command; ${this.command}.`) : false;
-                    switch (channelId) {
+                    const debug = this.debugLog ? this.emit('debug', `Channel Id: ${channeRequestId} opened, send command; ${this.command}.`) : false;
+                    switch (channeRequestId) {
                         case 0:
                             try {
                                 let requestId = '0000000000000000';
@@ -316,34 +324,31 @@ class XBOXLOCALAPI extends EventEmitter {
                                 const mediaCommand = new MessagePacket('mediaCommand');
                                 mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
                                 mediaCommand.set('titleId', 0);
-                                mediaCommand.set('command', CONSTANTS.SystemMediaCommands[this.command]);
-                                mediaCommand.setChannel(this.channelTargetId);
-                                const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                                mediaCommand.set('command', CONSTANTS.LocalApi.Channels.Commands.SystemMedia[command]);
+                                const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                 this.sendSocketMessage(message, 'mediaCommand');
                                 this.mediaRequestId++;
                             } catch (error) {
-                                this.emit('error', `Send system inpiut command error: ${error}`)
+                                this.emit('error', `Send system media command error: ${error}`)
                             };
                             break;
                         case 1:
                             try {
                                 const gamepad = new MessagePacket('gamepad');
                                 gamepad.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                gamepad.set('buttons', CONSTANTS.SystemInputCommands[this.command]);
-                                gamepad.setChannel(this.channelTargetId);
-                                const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId)
+                                gamepad.set('buttons', CONSTANTS.LocalApi.Channels.Commands.SystemInput[command]);
+                                const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                 await this.sendSocketMessage(message, 'gamepad');
 
                                 setTimeout(async () => {
                                     const gamepadUnpress = new MessagePacket('gamepad');
                                     gamepadUnpress.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                    gamepadUnpress.set('buttons', CONSTANTS.SystemInputCommands.unpress);
-                                    gamepadUnpress.setChannel(this.channelTargetId);
-                                    const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                                    gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.Commands.SystemInput.unpress);
+                                    const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                     await this.sendSocketMessage(message, 'gamepadUnpress');
                                 }, 150)
                             } catch (error) {
-                                this.emit('error', `Send system inpiut command error: ${error}`)
+                                this.emit('error', `Send system input command error: ${error}`)
                             };
                             break;
                         case 2:
@@ -352,14 +357,13 @@ class XBOXLOCALAPI extends EventEmitter {
                                     msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
                                     request: 'SendKey',
                                     params: {
-                                        button_id: CONSTANTS.TvRemoteCommands[this.command],
+                                        button_id: CONSTANTS.LocalApi.Channels.Commands.TvRemote[command],
                                         device_id: null
                                     }
                                 });
                                 const json = new MessagePacket('json');
                                 json.set('json', jsonRequest);
-                                json.setChannel(this.channelTargetId);
-                                const message = json.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                                const message = json.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
                                 this.sendSocketMessage(message, 'json');
                             } catch (error) {
                                 this.emit('error', `Send tv remote command error: ${error}`)
@@ -368,9 +372,9 @@ class XBOXLOCALAPI extends EventEmitter {
                     }
                     break;
                 case false:
-                    const debug1 = !this.debugLog ? this.emit('debug', `Channel Id: ${channelId} closed, trying to open.`) : false;
+                    const debug1 = this.debugLog ? this.emit('debug', `Channel Id: ${channeRequestId} is closed, trying to open.`) : false;
                     const channelStartRequest = new MessagePacket('channelStartRequest');
-                    channelStartRequest.set('channelRequestId', channelId);
+                    channelStartRequest.set('channelRequestId', channeRequestId);
                     channelStartRequest.set('titleId', 0);
                     channelStartRequest.set('service', Buffer.from(channelUuid, 'hex'));
                     channelStartRequest.set('activityId', 0);
@@ -475,16 +479,16 @@ class XBOXLOCALAPI extends EventEmitter {
         });
     };
 
-    sendButtonPress(channelId, command) {
+    sendButtonPress(channelName, command) {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected) {
                 reject(`Send command ignored, connection state: ${this.isConnected}.`);
                 return;
             };
 
-            this.command = command;
-            const channelUuid = CONSTANTS.Channels[channelId].ChannelsUuid;
-            this.emit('channelOpen', channelId, channelUuid);
+            const channeRequestId = CONSTANTS.LocalApi.Channels[channelName].ChannelId
+            const channelUuid = CONSTANTS.LocalApi.Channels[channelName].ChannelUuid;
+            this.emit('channelOpen', channeRequestId, channelUuid, command);
             resolve();
         });
     };
@@ -501,7 +505,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 await this.sendSocketMessage(message, 'disconnect');
 
                 this.isConnected = false;
-                this.sequenceNumber = 1;
+                this.sequenceNumber = 0;
                 this.sourceParticipantId = 0;
                 this.channelRequestId = 0;
                 this.channelTargetId = 0;
@@ -519,8 +523,14 @@ class XBOXLOCALAPI extends EventEmitter {
     };
 
     getSequenceNumber() {
+        this.sequenceNumber++;
         const debug = this.debugLog ? this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`) : false;
-        return this.sequenceNumber++;
+        return this.sequenceNumber;
+    };
+
+    getChannelId() {
+        const debug = this.debugLog ? this.emit('debug', `Channel Id set to: ${this.channelTargetId}`) : false;
+        return this.channelTargetId;
     };
 
     sendSocketMessage(message, type) {
@@ -534,7 +544,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     return;
                 }
 
-                const debug = this.debugLog ? this.emit('debug', `Socket send type: ${type}, ${bytes} bytes.`) : false;
+                const debug = this.debugLog ? this.emit('debug', `Socket send: ${type}, ${bytes}B.`) : false;
                 resolve();
             });
         });

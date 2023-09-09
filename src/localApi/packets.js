@@ -13,7 +13,8 @@ class PACKETS {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readBytes(length);
+                        this.value = packetStructure.readBytes(length);
+                        return this.value;
                     }
                 }
                 return packet;
@@ -25,7 +26,8 @@ class PACKETS {
                         return packetStructure.writeUInt16(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readUInt16();
+                        this.value = packetStructure.readUInt16();
+                        return this.value;
                     }
                 }
                 return packet;
@@ -37,7 +39,8 @@ class PACKETS {
                         return packetStructure.writeUInt32(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readUInt32();
+                        this.value = packetStructure.readUInt32();
+                        return this.value;
                     }
                 }
                 return packet;
@@ -49,7 +52,8 @@ class PACKETS {
                         return packetStructure.writeInt32(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readInt32();
+                        this.value = packetStructure.readInt32();
+                        return this.value;
                     }
                 }
                 return packet;
@@ -61,7 +65,8 @@ class PACKETS {
                         return packetStructure.writeSGString(this.value);
                     },
                     unpack(packetStructure) {
-                        return packetStructure.readSGString().toString();
+                        this.value = packetStructure.readSGString().toString();
+                        return this.value;
                     }
                 }
                 return packet;
@@ -74,7 +79,8 @@ class PACKETS {
                         return packetStructure.writeBytes(setFlags(this.value));
                     },
                     unpack(packetStructure) {
-                        return readFlags(packetStructure.readBytes(this.length));
+                        this.value = readFlags(packetStructure.readBytes(this.length));
+                        return this.value;
                     }
                 }
                 return packet;
@@ -107,7 +113,8 @@ class PACKETS {
                             }
                             array.push(item);
                         }
-                        return array;
+                        this.value = array;
+                        return this.value;
                     }
                 }
                 return packet;
@@ -140,7 +147,8 @@ class PACKETS {
                             }
                             array.push(item);
                         }
-                        return array;
+                        this.value = array;
+                        return this.value;
                     }
                 };
                 return packet;
@@ -153,7 +161,8 @@ class PACKETS {
                         return item.pack(packetStructure);
                     },
                     unpack(packetStructure) {
-                        return map[item.unpack(packetStructure)];
+                        this.value = item.unpack(packetStructure);
+                        return map[this.value];
                     }
                 };
             }
@@ -274,10 +283,10 @@ class PACKETS {
                 titleId: types.uInt32('0'),
                 aumId: types.sgString(),
                 assetId: types.sgString(),
-                mediaType: types.mapper(CONSTANTS.MediaTypes, types.uInt16('0')),
-                soundLevel: types.mapper(CONSTANTS.SoundLevel, types.uInt16('0')),
+                mediaType: types.mapper(CONSTANTS.LocalApi.Media.Types, types.uInt16('0')),
+                soundLevel: types.mapper(CONSTANTS.LocalApi.Media.SoundLevel, types.uInt16('0')),
                 enabledCommands: types.uInt32('0'),
-                playbackStatus: types.mapper(CONSTANTS.PlaybackStatus, types.uInt16('0')),
+                playbackStatus: types.mapper(CONSTANTS.LocalApi.Media.PlaybackState, types.uInt16('0')),
                 rate: types.uInt32('0'),
                 position: types.bytes(8, ''),
                 enabmediaStart: types.bytes(8, ''),
@@ -296,7 +305,7 @@ class PACKETS {
                 command: types.uInt32('0'),
             },
             powerOff: {
-                liveId: types.sgString(),
+                liveId: types.sgString(''),
             },
             disconnect: {
                 reason: types.uInt32('1'),

@@ -1,7 +1,7 @@
 "use strict";
 const HexToBin = require('hex-to-binary');
-const PacketStructure = require('./structure');
 const Packets = require('./packets.js');
+const Structure = require('./structure');
 const CONSTANTS = require('../constans.json');
 
 class MESSAGE {
@@ -9,13 +9,12 @@ class MESSAGE {
         //type
         this.type = type;
 
-        //structure
-        const structure = new Packets();
-        this.structure = structure[type];
-
         //packet
-        this.packet = new Packets(this.structure);
-        this.channelId = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00');
+        this.packets = new Packets();
+        this.packet = this.packets[type];
+
+        //channelId
+        this.channelId = '\x00\x00\x00\x00\x00\x00\x00\x00';
     };
 
     getMsgType(type) {
@@ -66,10 +65,10 @@ class MESSAGE {
 
     readFlags(flags) {
         const binaryFlag = HexToBin(flags.toString('hex'));
-        const type = this.getMsgType(parseInt(binaryFlag.slice(4, 16), 2));
-        const version = parseInt(binaryFlag.slice(0, 2), 2).toString();
+        const version = parseInt(binaryFlag.slice(0, 2), 2);
         const needAck = binaryFlag.slice(2, 3) === '1';
         const isFragment = binaryFlag.slice(3, 4) === '1';
+        const type = this.getMsgType(parseInt(binaryFlag.slice(4, 16), 2));
 
         const packet = {
             version,
@@ -128,45 +127,42 @@ class MESSAGE {
 
     set(key, value, subkey = false) {
         switch (subkey) {
-            case true:
-                this.structure[subkey][key].value = value;
-                break;
             case false:
-                this.structure[key].value = value;
+                this.packet[key].value = value;
+                break;
+            default:
+                this.packet[subkey][key].value = value;
                 break;
         };
     };
 
-    setChannel(channelId) {
-        this.channelId = Buffer.from(channelId);
-    };
 
-    pack(crypto, sequenceNumber, sourceParticipantId) {
-        const packetStructure = new PacketStructure();
+    pack(crypto, sequenceNumber, sourceParticipantId, channelId = false) {
+        const structure = new Structure();
         let packet;
 
-        for (const name in this.structure) {
-            this.structure[name].pack(packetStructure);
+        for (const name in this.packet) {
+            this.packet[name].pack(structure);
         }
 
-        const header = new PacketStructure();
+        const header = new Structure();
         header.writeBytes(Buffer.from('d00d', 'hex'));
-        header.writeUInt16(packetStructure.toBuffer().length);
+        header.writeUInt16(structure.toBuffer().length);
         header.writeUInt32(sequenceNumber);
-        header.writeUInt32(CONSTANTS.ParticipantId.Target);
+        header.writeUInt32(CONSTANTS.LocalApi.ParticipantId.Target);
         header.writeUInt32(sourceParticipantId);
         header.writeBytes(this.setFlag(this.type));
-        header.writeBytes(this.channelId);
+        const addChannelId = channelId ? header.writeBytes(Buffer.from(channelId)) : header.writeBytes(Buffer.from(this.channelId));
 
-        if (packetStructure.toBuffer().length % 16 > 0) {
-            const padStart = packetStructure.toBuffer().length % 16;
+        if (structure.toBuffer().length % 16 > 0) {
+            const padStart = structure.toBuffer().length % 16;
             const padTotal = 16 - padStart;
             for (let paddingNum = padStart + 1; paddingNum <= 16; paddingNum++) {
-                packetStructure.writeUInt8(padTotal);
+                structure.writeUInt8(padTotal);
             }
         }
 
-        const payloadEncrypted = crypto.encrypt(packetStructure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
+        const payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
         packet = Buffer.concat([
             header.toBuffer(),
             payloadEncrypted
@@ -182,32 +178,35 @@ class MESSAGE {
     };
 
     unpack(crypto = undefined, data = false) {
-        const packetStructure = new PacketStructure(data);
+        const structure = new Structure(data);
+        const type = structure.readBytes(2).toString('hex');
 
         let packet = {
-            type: packetStructure.readBytes(2).toString('hex'),
-            payloadLength: packetStructure.readUInt16(),
-            sequenceNumber: packetStructure.readUInt32(),
-            targetParticipantId: packetStructure.readUInt32(),
-            sourceParticipantId: packetStructure.readUInt32(),
-            flags: this.readFlags(packetStructure.readBytes(2)),
-            channelId: packetStructure.readBytes(8),
-            payloadProtected: packetStructure.readBytes()
+            type: type,
+            payloadLength: structure.readUInt16(),
+            sequenceNumber: structure.readUInt32(),
+            targetParticipantId: structure.readUInt32(),
+            sourceParticipantId: structure.readUInt32(),
+            flags: this.readFlags(structure.readBytes(2)),
+            channelId: structure.readBytes(8),
+            payloadProtected: structure.readBytes()
         };
         packet.type = packet.flags.type;
-        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
-        packet.signature = packet.payloadProtected.slice(-32);
+        this.channelId = packet.channelId;
 
         // Lets decrypt the data when the payload is encrypted
-        if (packet.payloadProtected) {
+        const payloadProtectedExist = packet.payloadProtected !== undefined;
+        if (payloadProtectedExist) {
+            packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
+            packet.signature = packet.payloadProtected.slice(-32);
+
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
-            packet.payloadDecrypted = new PacketStructure(payloadDecrypted).toBuffer();
             packet.payloadProtected = {};
 
-            const packetStructureProtected = this.packet[packet.type];
-            const packetDecrypted = new PacketStructure(payloadDecrypted);
-            for (const name in packetStructureProtected) {
-                packet.payloadProtected[name] = packetStructureProtected[name].unpack(packetDecrypted);
+            const packetProtected = this.packets[packet.type];
+            const structurePayloadDecrypted = new Structure(payloadDecrypted);
+            for (const name in packetProtected) {
+                packet.payloadProtected[name] = packetProtected[name].unpack(structurePayloadDecrypted);
             };
         };
 

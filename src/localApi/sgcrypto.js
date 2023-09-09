@@ -13,14 +13,14 @@ class SGCRYPTO {
 
     };
 
-    getPublicKey(decodedMessage) {
+    getPublicKey(certificate) {
         return new Promise(async (resolve, reject) => {
             try {
                 // Set certyficate
-                const certyficate = (decodedMessage.certificate).toString('base64').match(/.{0,64}/g).join('\n');
+                certificate = certificate.toString('base64').match(/.{0,64}/g).join('\n');
 
                 // Set pem
-                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certyficate}-----END CERTIFICATE-----`;
+                const pem = `-----BEGIN CERTIFICATE-----${EOL}${certificate}-----END CERTIFICATE-----`;
 
                 // Create public key
                 const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
