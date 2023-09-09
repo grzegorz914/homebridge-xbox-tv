@@ -23,7 +23,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
         this.isConnected = false;
         this.isAuthorized = false;
-
         this.sequenceNumber = 0;
         this.sourceParticipantId = 0;
         this.channelRequestId = 0;
