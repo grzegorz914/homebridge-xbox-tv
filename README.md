@@ -124,12 +124,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ## Create App on Azure AD
 * Go to [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
-* Register new app *+ New registration*
+* Register new *App* + *New registration*
   * Enter a name for your app
   * Set *Supported account types* to *Personal Microsoft accounts only*
   * Click register
   * Choose *Redirect URIs* -> *Add a Redirect URI*
-  * Click "Add a platform" -> "Mobile and desktop applications"
+  * Click *Add a platform* -> *Mobile and desktop applications*
   * Enter custom redirect URI *http://localhost:8888/auth/callback*
 * From the overview of your app page, copy *Application (client) ID* to `webApiClientId`
 * Save restart plugin and authorize console again and have fun.
