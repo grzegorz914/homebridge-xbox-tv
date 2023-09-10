@@ -64,8 +64,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 * Run this plugin as a [Child Bridge](https://github.com/homebridge/homebridge/wiki/Child-Bridges) (Highly Recommended), this prevent crash Homebridge if plugin crashes.
 * Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin. 
-* The `sample-config.json` can be edited and used as an alternative. 
-* Be sure to always make a backup copy of your config.json file before making any changes to it.
+* The `sample-config.json` can be edited and used as an alternative (advanced users). 
 
 <p align="center">
 	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/plugin settings.png" width="840"></a>
