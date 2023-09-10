@@ -25,9 +25,8 @@ class XBOXLOCALAPI extends EventEmitter {
         this.isAuthorized = false;
         this.sequenceNumber = 0;
         this.sourceParticipantId = 0;
+        this.channels = [];
         this.channelRequestId = 0;
-        this.channelTargetId = 0;
-        this.channelStateOpen = false;
         this.emitDevInfo = true;
 
         //dgram socket
@@ -185,6 +184,10 @@ class XBOXLOCALAPI extends EventEmitter {
                             const localJoin = new MessagePacket('localJoin');
                             const localJointMessage = localJoin.pack(this.crypto, this.getSequenceNumber(), sourceParticipantId);
                             await this.sendSocketMessage(localJointMessage, 'localJoin');
+
+                            // Open channels
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            this.emit('channelOpen');
                         } catch (error) {
                             this.emit('error', `Send local join error: ${error}`)
                         };
@@ -239,10 +242,16 @@ class XBOXLOCALAPI extends EventEmitter {
                         const acknowledge = packet.flags.needAck ? this.emit('acknowledge', packet.sequenceNumber) : false;
                         break;
                     case 'channelStartResponse':
-                        const debug3 = this.debugLog ? this.emit('debug', `Channel start response, request Id: ${packet.payloadProtected.channelRequestId}.`) : false;
-                        this.channelRequestId = packet.payloadProtected.channelRequestId;
-                        this.channelTargetId = packet.payloadProtected.channelTargetId;
-                        this.channelStateOpen = packet.payloadProtected.result === 0;
+                        const requestIdMatch = this.channelRequestId === packet.payloadProtected.channelRequestId;
+                        const channelState = requestIdMatch ? packet.payloadProtected.result === 0 : false;
+                        const channelTargetId = packet.payloadProtected.channelTargetId;
+                        const channel = {
+                            id: channelTargetId,
+                            open: channelState
+                        }
+
+                        this.channels.push(channel);
+                        const debug3 = this.debugLog ? this.emit('debug', `Channel Id: ${channelTargetId}, state: ${channelState ? 'Open' : 'Closed'}.`) : false;
                         break;
                     case 'pairedIdentityStateChanged':
                         const pairingState1 = packet.payloadProtected.pairingState || 0;
@@ -305,79 +314,23 @@ class XBOXLOCALAPI extends EventEmitter {
             } catch (error) {
                 this.emit('error', `Send acknowledge error: ${error}`)
             };
-        }).on('channelOpen', async (channeRequestId, channelUuid, command) => {
+        }).on('channelOpen', async () => {
             const debug = this.debugLog ? this.emit('debug', `Received channel open.`) : false;
 
-            const channelState = this.channelStateOpen && this.channelRequestId === channeRequestId;
-            switch (channelState) {
-                case true:
-                    const debug = this.debugLog ? this.emit('debug', `Channel Id: ${channeRequestId} opened, send command; ${this.command}.`) : false;
-                    switch (channeRequestId) {
-                        case 0:
-                            try {
-                                const gamepad = new MessagePacket('gamepad');
-                                gamepad.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                gamepad.set('buttons', command);
-                                const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
-                                await this.sendSocketMessage(message, 'gamepad');
+            for (let i = 0; i < 3; i++) {
+                const name = ['Input', 'TvRemote', 'Media'][i];
+                const channelRequestId = CONSTANTS.LocalApi.Channels.System[name].Id
+                const service = CONSTANTS.LocalApi.Channels.System[name].Uuid
+                this.channelRequestId = channelRequestId;
+                const debug1 = this.debugLog ? this.emit('debug', `Channel Id: ${channelRequestId}, name: ${name} opening.`) : false;
 
-                                setTimeout(async () => {
-                                    const gamepadUnpress = new MessagePacket('gamepad');
-                                    gamepadUnpress.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
-                                    gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.System.Input.Commands.unpress);
-                                    const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
-                                    await this.sendSocketMessage(message, 'gamepadUnpress');
-                                }, 150)
-                            } catch (error) {
-                                this.emit('error', `Send system input command error: ${error}`)
-                            };
-                            break;
-                        case 1:
-                            try {
-                                const jsonRequest = JSON.stringify({
-                                    msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
-                                    request: 'SendKey',
-                                    params: {
-                                        button_id: command,
-                                        device_id: null
-                                    }
-                                });
-                                const json = new MessagePacket('json');
-                                json.set('json', jsonRequest);
-                                const message = json.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
-                                this.sendSocketMessage(message, 'json');
-                            } catch (error) {
-                                this.emit('error', `Send tv remote command error: ${error}`)
-                            };
-                            break;
-                        case 2:
-                            try {
-                                let requestId = '0000000000000000';
-                                requestId = (`${requestId}${this.mediaRequestId}`).slice(-requestId.length);
-
-                                const mediaCommand = new MessagePacket('mediaCommand');
-                                mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
-                                mediaCommand.set('titleId', 0);
-                                mediaCommand.set('command', command);
-                                const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, this.getChannelId());
-                                this.sendSocketMessage(message, 'mediaCommand');
-                                this.mediaRequestId++;
-                            } catch (error) {
-                                this.emit('error', `Send system media command error: ${error}`)
-                            };
-                            break;
-                    }
-                    break;
-                case false:
-                    const debug1 = this.debugLog ? this.emit('debug', `Channel Id: ${channeRequestId} is closed, trying to open.`) : false;
-                    const channelStartRequest = new MessagePacket('channelStartRequest');
-                    channelStartRequest.set('channelRequestId', channeRequestId);
-                    channelStartRequest.set('titleId', 0);
-                    channelStartRequest.set('service', Buffer.from(channelUuid, 'hex'));
-                    channelStartRequest.set('activityId', 0);
-                    const message = channelStartRequest.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
-                    await this.sendSocketMessage(message, 'channelStartRequest');
-                    break;
+                const channelStartRequest = new MessagePacket('channelStartRequest');
+                channelStartRequest.set('channelRequestId', channelRequestId);
+                channelStartRequest.set('titleId', 0);
+                channelStartRequest.set('service', Buffer.from(service, 'hex'));
+                channelStartRequest.set('activityId', 0);
+                const message = channelStartRequest.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                await this.sendSocketMessage(message, 'channelStartRequest');
             };
         });
 
@@ -479,14 +432,81 @@ class XBOXLOCALAPI extends EventEmitter {
     sendButtonPress(channelName, command) {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected) {
-                reject(`Send command ignored, connection state: ${this.isConnected}.`);
+                reject(`Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}.`);
                 return;
             };
 
             const requestId = CONSTANTS.LocalApi.Channels.System[channelName].Id
-            const uuid = CONSTANTS.LocalApi.Channels.System[channelName].Uuid;
+            const channelId = this.channels[requestId].channelTargetId;
+            const channelOpen = this.channels[requestId].channelOpen;
+
+            if (!channelOpen) {
+                reject(`Channel Id: ${channelId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
+                this.channels = [];
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+                this.emit('channelOpen');
+                return;
+            };
+
             command = CONSTANTS.LocalApi.Channels.System[channelName][command];
-            this.emit('channelOpen', requestId, uuid, command);
+            const debug = this.debugLog ? this.emit('debug', `Channel Id: ${channelId}, name:  ${channelName} opened, send command; ${command}.`) : false;
+
+            switch (requestId) {
+                case 0:
+                    try {
+                        const gamepad = new MessagePacket('gamepad');
+                        gamepad.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
+                        gamepad.set('buttons', command);
+                        const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelId);
+                        await this.sendSocketMessage(message, 'gamepad');
+
+                        setTimeout(async () => {
+                            const gamepadUnpress = new MessagePacket('gamepad');
+                            gamepadUnpress.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
+                            gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.System.Input.Commands.unpress);
+                            const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelId);
+                            await this.sendSocketMessage(message, 'gamepadUnpress');
+                        }, 150)
+                    } catch (error) {
+                        this.emit('error', `Send system input command error: ${error}`)
+                    };
+                    break;
+                case 1:
+                    try {
+                        const jsonRequest = JSON.stringify({
+                            msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
+                            request: 'SendKey',
+                            params: {
+                                button_id: command,
+                                device_id: null
+                            }
+                        });
+                        const json = new MessagePacket('json');
+                        json.set('json', jsonRequest);
+                        const message = json.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelId);
+                        this.sendSocketMessage(message, 'json');
+                    } catch (error) {
+                        this.emit('error', `Send tv remote command error: ${error}`)
+                    };
+                    break;
+                case 2:
+                    try {
+                        let requestId = '0000000000000000';
+                        requestId = (`${requestId}${this.mediaRequestId}`).slice(-requestId.length);
+
+                        const mediaCommand = new MessagePacket('mediaCommand');
+                        mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
+                        mediaCommand.set('titleId', 0);
+                        mediaCommand.set('command', command);
+                        const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelId);
+                        this.sendSocketMessage(message, 'mediaCommand');
+                        this.mediaRequestId++;
+                    } catch (error) {
+                        this.emit('error', `Send system media command error: ${error}`)
+                    };
+                    break;
+            }
             resolve();
         });
     };
@@ -505,9 +525,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 this.isConnected = false;
                 this.sequenceNumber = 0;
                 this.sourceParticipantId = 0;
+                this.channels = [];
                 this.channelRequestId = 0;
-                this.channelTargetId = 0;
-                this.channelStateOpen = false;
                 this.emitDevInfo = true;
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 this.emit('stateChanged', false, 0, true, 0, -1, -1);
@@ -523,11 +542,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.sequenceNumber++;
         const debug = this.debugLog ? this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`) : false;
         return this.sequenceNumber;
-    };
-
-    getChannelId() {
-        const debug = this.debugLog ? this.emit('debug', `Channel Id set to: ${this.channelTargetId}`) : false;
-        return this.channelTargetId;
     };
 
     sendSocketMessage(message, type) {
