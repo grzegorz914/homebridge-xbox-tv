@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed disconnect problem on first run
 - performance and stability improvements
 - config.schema updated
+- readme updated
 - cleanup
 
 ## [2.9.0] - (29.07.2023)
