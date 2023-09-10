@@ -95,12 +95,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). | 
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
 | `webApiControl` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
-| `webApiPowerOnOff` | This enable power control over Web Api. |
-| `webApiRcControl` | This enable remote control over Web Api. |
-| `webApiVolumeControl` | This enable volume/mute control over Web Api. |
-| `webApiToken` | Required if `webApiControl` enabled. |
-| `webApiClientId` | If You create app on Azure AD then You can use your own Client Id. |
-| `webApiClientSecret` | If You create app on Azure AD then You can use own Client Secret. |
+| `webApiPowerOnOff` | This enable `Power` control over Web Api. |
+| `webApiRcControl` | This enable `Remote` control over Web Api. |
+| `webApiVolumeControl` | This enable `Volume/Mute` control over Web Api. |
+| `webApiToken` | Required if `webApiControl` enabled, use Authorization Manager to get it. |
+| `webApiClientId` | If You are created App on Azure AD then You can use your own Client Id. |
+| `webApiClientSecret` | If You are created App on Azure AD then You can use own Client Secret. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
@@ -110,12 +110,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `restFulPort` | Here set the listening `Port` for RESTful server. |
 | `restFulDebug` | If enabled, deep log will be present in homebridge console for RESTFul server. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
-| `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker. |
-| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |
-| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty. |
+| `mqttHost` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
+| `mqttPort` | Here set the `Port` for MQTT Broker, default 1883. |
+| `mqttPrefix` | Here set the`Prefix` for `Topic` or leave empty. |
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
-| `mqttUser` | Here set the MQTT Broker user. |
-| `mqttPasswd` | Here set the MQTT Broker password. |
+| `mqttUser` | Here set the `User` for MQTT Broker. |
+| `mqttPasswd` | Here set the `Password` for MQTT Broker. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 | `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`. |
