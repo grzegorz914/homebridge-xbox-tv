@@ -131,5 +131,5 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Choose *Redirect URIs* -> *Add a Redirect URI*
   * Click "Add a platform" -> "Mobile and desktop applications"
   * Enter custom redirect URI *http://localhost:8888/auth/callback*
-* From the overview of your app page, copy *Application (client) ID* to `clientId`
+* From the overview of your app page, copy *Application (client) ID* to `webApiClientId`
 * Save restart plugin and authorize console again and have fun.
