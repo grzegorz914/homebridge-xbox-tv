@@ -8,13 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
 ## [2.10.0] - (xx.09.2023)
-## After update to this version the plugin properties are changed and console must be authorized again.
+## After update to this version the plugin properties are changed and console must be authorized and settings need to be corrected.
 ## Changes
 - full code refactor
-- added possibility to enable/disable power, rc and volume control over web api
-- fixed RC control over local api (only if disabled over web api)
-- fixed Volume control over local api (only if disabled over web api)
+- added possibility toggle Power control between local/web api
+- added possibility toggle RC control between local/web api
+- added possibility toggle Volume control between local/web api
+- fixed [#140](https://github.com/grzegorz914/homebridge-xbox-tv/issues/140)
 - fixed disconnect problem on first run
+- performance and stability improvements
 - config.schema updated
 - cleanup
 
