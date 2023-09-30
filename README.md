@@ -112,6 +112,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `mqttHost` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
 | `mqttPort` | Here set the `Port` for MQTT Broker, default 1883. |
+| `mqttClientId` | Here optional set the `Client Id` of MQTT Broker. |
 | `mqttPrefix` | Here set the`Prefix` for `Topic` or leave empty. |
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
 | `mqttUser` | Here set the `User` for MQTT Broker. |

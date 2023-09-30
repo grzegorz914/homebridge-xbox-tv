@@ -138,7 +138,6 @@
             "System": {
                 "Input": {
                     "Id": 0,
-                    "Name": "Input",
                     "Uuid": "fa20b8ca66fb46e0adb60b978a59d35f",
                     "Commands": {
                         "unpress": 0,
@@ -162,17 +161,29 @@
                 },
                 "TvRemote": {
                     "Id": 1,
-                    "Name": "TvRemote",
                     "Uuid": "d451e3b360bb4c71b3dbf994b1aca3a7",
                     "Commands": {
                         "volUp": "btn.vol_up",
                         "volDown": "btn.vol_down",
                         "volMute": "btn.vol_mute"
+                    },
+                    "MessageType": {
+                        "Error": "Error",
+                        "GetConfiguration": "GetConfiguration",
+                        "GetHeadendInfo": "GetHeadendInfo",
+                        "GetLiveTVInfo": "GetLiveTVInfo",
+                        "GetProgramInfo": "GetProgramInfo",
+                        "GetRecentChannels": "GetRecentChannels",
+                        "GetTunerLineups": "GetTunerLineups",
+                        "GetAppChannelData": "GetAppChannelData",
+                        "GetAppChannelLineups": "GetAppChannelLineups",
+                        "GetAppChannelProgramData": "GetAppChannelProgramData",
+                        "SendKey": "SendKey",
+                        "SetChannel": "SetChannel"
                     }
                 },
                 "Media": {
                     "Id": 2,
-                    "Name": "Media",
                     "Uuid": "48a9ca24eb6d4e128c43d57469edd3cd",
                     "Commands": {
                         "play": 2,
@@ -181,7 +192,7 @@
                         "stop": 16,
                         "record": 32,
                         "nextTrack": 64,
-                        "prevTrack": 128,
+                        "previousTrack": 128,
                         "fastForward": 256,
                         "rewind": 512,
                         "channelUp": 1024,
@@ -194,26 +205,16 @@
                 },
                 "Text": {
                     "Id": 3,
-                    "Name": "Text",
                     "Uuid": "7af3e6a2488b40cba93179c04b7da3a0"
                 },
                 "Broadcast": {
                     "Id": 4,
-                    "Name": "Broadcast",
                     "Uuid": "b6a117d8f5e245d7862e8fd8e3156476"
                 },
                 "Title": {
                     "Id": 5,
-                    "Name": "Title",
                     "Uuid": "00000000000000000000000000000000"
-                },
-                "ChannelsConfigNames": [
-                    "GetConfiguration",
-                    "GetHeadendInfo",
-                    "GetLiveTVInfo",
-                    "GetTunerLineups",
-                    "GetAppChannelLineups"
-                ]
+                }
             }
         },
         "Media": {

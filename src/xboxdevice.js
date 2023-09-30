@@ -53,6 +53,7 @@ class XboxDevice extends EventEmitter {
         this.mqttDebug = config.mqttDebug || false;
         this.mqttHost = config.mqttHost;
         this.mqttPort = config.mqttPort || 1883;
+        this.mqttClientId = config.mqttClientId || `mqtt_${Math.random().toString(16).slice(3)}`;
         this.mqttPrefix = config.mqttPrefix;
         this.mqttAuth = config.mqttAuth || false;
         this.mqttUser = config.mqttUser;
@@ -68,7 +69,6 @@ class XboxDevice extends EventEmitter {
         this.firmwareRevision = 'Firmware Revision';
 
         //setup variables
-        this.firstRun = true;
         this.restFulConnected = false;
         this.mqttConnected = false;
 
@@ -144,10 +144,10 @@ class XboxDevice extends EventEmitter {
             this.mqtt = new Mqtt({
                 host: this.mqttHost,
                 port: this.mqttPort,
-                prefix: `${this.mqttPrefix}/${this.name}`,
-                auth: this.mqttAuth,
+                clientId: this.mqttClientId,
                 user: this.mqttUser,
                 passwd: this.mqttPasswd,
+                prefix: `${this.mqttPrefix}/${this.name}`,
                 debug: this.mqttDebug
             });
 
@@ -319,7 +319,6 @@ class XboxDevice extends EventEmitter {
                     }
                 }
 
-                this.firstRun = false;
                 this.power = power;
                 this.volume = volume;
                 this.mute = mute;
@@ -389,13 +388,13 @@ class XboxDevice extends EventEmitter {
                 this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
                 this.televisionService.getCharacteristic(Characteristic.ConfiguredName)
                     .onGet(async () => {
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Accessory Nane: ${accessoryName}.`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Accessory Nane: ${accessoryName}.`);
                         return accessoryName;
                     })
                     .onSet(async (value) => {
                         try {
                             this.name = value;
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Accessory Name: ${value}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Accessory Name: ${value}`);
                         } catch (error) {
                             this.emit('error', `set Accessory Name error: ${error}`);
                         };
@@ -403,12 +402,12 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.SleepDiscoveryMode)
                     .onGet(async () => {
                         const state = 1;
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
                         return state;
                     })
                     .onSet(async (state) => {
                         try {
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
                         } catch (error) {
                             this.emit('error', `set Discovery Mode error: ${error}`);
                         };
@@ -417,7 +416,7 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
                         const state = this.power;
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Power: ${state ? 'ON' : 'OFF'}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Power: ${state ? 'ON' : 'OFF'}`);
                         return state;
                     })
                     .onSet(async (state) => {
@@ -443,7 +442,7 @@ class XboxDevice extends EventEmitter {
                                             break;
                                     }
                             }
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            const logInfo = this.disableLogInfo || (state === this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power, error: ${error}`);
                         };
@@ -455,7 +454,7 @@ class XboxDevice extends EventEmitter {
                         const inputName = this.inputsName[inputIdentifier];
                         const inputReference = this.inputsReference[inputIdentifier];
                         const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
                     .onSet(async (inputIdentifier) => {
@@ -464,21 +463,29 @@ class XboxDevice extends EventEmitter {
                             const inputReference = this.inputsReference[inputIdentifier];
                             const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
 
-                            switch (inputOneStoreProductId) {
-                                case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                    await this.xboxWebApi.goHome();
+                            switch (this.power) {
+                                case false:
+                                    await new Promise(resolve => setTimeout(resolve, 3000));
+                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
                                     break;
-                                case 'Television':
-                                    await this.xboxWebApi.showTVGuide();
-                                    break;
-                                case 'XboxGuide':
-                                    await this.xboxWebApi.showGuideTab();
-                                    break;
-                                default:
-                                    await this.xboxWebApi.launchApp(inputOneStoreProductId);
+                                case true:
+                                    switch (inputOneStoreProductId) {
+                                        case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+                                            await this.xboxWebApi.goHome();
+                                            break;
+                                        case 'Television':
+                                            await this.xboxWebApi.showTVGuide();
+                                            break;
+                                        case 'XboxGuide':
+                                            await this.xboxWebApi.showGuideTab();
+                                            break;
+                                        default:
+                                            await this.xboxWebApi.launchApp(inputOneStoreProductId);
+                                            break;
+                                    }
+                                    const logInfo = this.disableLogInfo ? false : this.emit('message', `set Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                                     break;
                             }
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         } catch (error) {
                             this.emit('error', `set Input error: ${JSON.stringify(error, null, 2)}`);
                         };
@@ -503,7 +510,7 @@ class XboxDevice extends EventEmitter {
                                     channelName = 'Media';
                                     break;
                                 case 3: //PREVIOUS_TRACK
-                                    command = 'prevTrack';
+                                    command = 'previousTrack';
                                     channelName = 'Media';
                                     break;
                                 case 4: //ARROW_UP
@@ -545,7 +552,7 @@ class XboxDevice extends EventEmitter {
                             };
 
                             const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Remote Key: ${command}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
                         };
@@ -556,7 +563,7 @@ class XboxDevice extends EventEmitter {
                         //apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
                         //xbox, 0 - STOP, 1 - PLAY, 2 - PAUSE
                         const value = [2, 0, 1, 3, 4][this.mediaState];
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Current Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Current Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     });
 
@@ -564,14 +571,14 @@ class XboxDevice extends EventEmitter {
                     .onGet(async () => {
                         //0 - PLAY, 1 - PAUSE, 2 - STOP
                         const value = [2, 0, 1, 3, 4][this.mediaState];
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     })
                     .onSet(async (value) => {
                         try {
                             const newMediaState = value;
                             const setMediaState = this.power ? false : false;
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         } catch (error) {
                             this.emit('error', `set Target Media error: ${error}`);
                         };
@@ -594,7 +601,7 @@ class XboxDevice extends EventEmitter {
                             };
 
                             const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
                         };
@@ -651,7 +658,7 @@ class XboxDevice extends EventEmitter {
                                     await this.xboxLocalApi.sendButtonPress(channelName, command)
                                     break;
                             }
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector error: ${error}`);
                         };
@@ -660,14 +667,14 @@ class XboxDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.Volume)
                     .onGet(async () => {
                         const volume = this.volume;
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Volume: ${volume}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Volume: ${volume}`);
                         return volume;
                     })
                     .onSet(async (volume) => {
                         if (volume === 0 || volume === 100) {
                             volume = this.volume;
                         };
-                        const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume: ${volume}`);
+                        const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                     });
 
                 this.speakerService.getCharacteristic(Characteristic.Mute)
@@ -694,7 +701,7 @@ class XboxDevice extends EventEmitter {
                                     const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelName, 'volMute') : false;
                                     break;
                             }
-                            const logInfo = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Mute error: ${error}`);
                         };

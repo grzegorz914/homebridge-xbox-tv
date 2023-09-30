@@ -5,6 +5,20 @@ class PACKETS {
     constructor(structure) {
         this.structure = structure;
         const types = {
+            flags(length, value) {
+                const packet = {
+                    value: value,
+                    length: length,
+                    pack(packetStructure) {
+                        return packetStructure.writeBytes(setFlags(this.value));
+                    },
+                    unpack(packetStructure) {
+                        return readFlags(packetStructure.readBytes(this.length));
+
+                    }
+                }
+                return packet;
+            },
             bytes(length, value) {
                 const packet = {
                     value: value,
@@ -13,8 +27,8 @@ class PACKETS {
                         return packetStructure.writeBytes(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readBytes(length);
-                        return this.value;
+                        return packetStructure.readBytes(length);
+
                     }
                 }
                 return packet;
@@ -26,8 +40,8 @@ class PACKETS {
                         return packetStructure.writeUInt16(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readUInt16();
-                        return this.value;
+                        return packetStructure.readUInt16();
+
                     }
                 }
                 return packet;
@@ -39,8 +53,8 @@ class PACKETS {
                         return packetStructure.writeUInt32(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readUInt32();
-                        return this.value;
+                        return packetStructure.readUInt32();
+
                     }
                 }
                 return packet;
@@ -52,8 +66,22 @@ class PACKETS {
                         return packetStructure.writeInt32(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readInt32();
-                        return this.value;
+                        return packetStructure.readInt32();
+
+                    }
+                }
+                return packet;
+            },
+            uInt64(length, value) {
+                const packet = {
+                    value: value,
+                    length: length,
+                    pack(packetStructure) {
+                        return packetStructure.writeBytes(this.value);
+                    },
+                    unpack(packetStructure) {
+                        return packetStructure.readBytes(length);
+
                     }
                 }
                 return packet;
@@ -65,22 +93,8 @@ class PACKETS {
                         return packetStructure.writeSGString(this.value);
                     },
                     unpack(packetStructure) {
-                        this.value = packetStructure.readSGString().toString();
-                        return this.value;
-                    }
-                }
-                return packet;
-            },
-            flags(length, value) {
-                const packet = {
-                    value: value,
-                    length: length,
-                    pack(packetStructure) {
-                        return packetStructure.writeBytes(setFlags(this.value));
-                    },
-                    unpack(packetStructure) {
-                        this.value = readFlags(packetStructure.readBytes(this.length));
-                        return this.value;
+                        return packetStructure.readSGString().toString();
+
                     }
                 }
                 return packet;
@@ -113,8 +127,8 @@ class PACKETS {
                             }
                             array.push(item);
                         }
-                        this.value = array;
-                        return this.value;
+                        return array;
+
                     }
                 }
                 return packet;
@@ -147,24 +161,24 @@ class PACKETS {
                             }
                             array.push(item);
                         }
-                        this.value = array;
-                        return this.value;
+                        return array;
+
                     }
                 };
                 return packet;
             },
             mapper(map, item) {
-                return {
+                const packet = {
                     item: item,
                     value: false,
                     pack(packetStructure) {
                         return item.pack(packetStructure);
                     },
                     unpack(packetStructure) {
-                        this.value = item.unpack(packetStructure);
-                        return map[this.value];
+                        return map[item.unpack(packetStructure)];
                     }
                 };
+                return packet;
             }
         };
 
@@ -219,7 +233,7 @@ class PACKETS {
                 nativeHeight: types.uInt16('1920'),
                 dpiX: types.uInt16('96'),
                 dpiY: types.uInt16('96'),
-                deviceCapabilities: types.bytes(8, Buffer.from('ffffffffffffffff', 'hex')),
+                deviceCapabilities: types.uInt64(8, Buffer.from('ffffffffffffffff', 'hex')),
                 clientVersion: types.uInt32('15'),
                 osMajorVersion: types.uInt32('6'),
                 osMinorVersion: types.uInt32('2'),
@@ -233,11 +247,8 @@ class PACKETS {
             },
             channelStartResponse: {
                 channelRequestId: types.uInt32('0'),
-                channelTargetId: types.bytes(8, ''),
+                channelTargetId: types.uInt64(8, ''),
                 result: types.uInt32('0'),
-            },
-            channelStop: {
-                channelTargetId: types.bytes(8, ''),
             },
             acknowledge: {
                 lowWatermark: types.uInt32('0'),
@@ -270,7 +281,7 @@ class PACKETS {
                 endTimeDelta: types.sInt32('0'),
             },
             gamepad: {
-                timestamp: types.bytes(8, ''),
+                timestamp: types.uInt64(8, ''),
                 buttons: types.uInt16('0'),
                 leftTrigger: types.uInt32('0'),
                 rightTrigger: types.uInt32('0'),
@@ -288,11 +299,11 @@ class PACKETS {
                 enabledCommands: types.uInt32('0'),
                 playbackStatus: types.mapper(CONSTANTS.LocalApi.Media.PlaybackState, types.uInt16('0')),
                 rate: types.uInt32('0'),
-                position: types.bytes(8, ''),
-                enabmediaStart: types.bytes(8, ''),
-                mediaEnd: types.bytes(8, ''),
-                minSeek: types.bytes(8, ''),
-                maxSeek: types.bytes(8, ''),
+                position: types.uInt64(8, ''),
+                mediaStart: types.uInt64(8, ''),
+                mediaEnd: types.uInt64(8, ''),
+                minSeek: types.uInt64(8, ''),
+                maxSeek: types.uInt64(8, ''),
                 metadata: types.sgArray('mediaStateList', []),
             },
             mediaStateList: {
@@ -300,7 +311,7 @@ class PACKETS {
                 value: types.sgString(),
             },
             mediaCommand: {
-                requestId: types.bytes(8, ''),
+                requestId: types.uInt64(8, ''),
                 titleId: types.uInt32('0'),
                 command: types.uInt32('0'),
             },

@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added possibility toggle Power control between local/web api
 - added possibility toggle RC control between local/web api
 - added possibility toggle Volume control between local/web api
-- fixed [#140](https://github.com/grzegorz914/homebridge-xbox-tv/issues/140)
+- fixed laggy remote control [#140](https://github.com/grzegorz914/homebridge-xbox-tv/issues/140)
 - fixed disconnect problem on first run
 - performance and stability improvements
 - config.schema updated

@@ -93,6 +93,7 @@
 					"mqttDebug": false,
 					"mqttHost": "192.168.1.33",
 					"mqttPort": 1883,
+					"mqttClientId": "",
 					"mqttPrefix": "home/xbox",
 					"mqttAuth": false,
 					"mqttUser": "user",

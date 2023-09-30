@@ -1,11 +1,16 @@
 'use strict';
-const HttpClient = require('../httpclient.js');
+const axios = require('axios');
 
 class TITLEHUB {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
-        this.headers = authorizationHeaders;
-        this.httpClient = new HttpClient();
+        const headers = authorizationHeaders;
+
+        //create axios instance
+        this.axiosInstance = axios.create({
+            method: 'GET',
+            headers: headers
+        });
     }
 
     getTitleHistory() {
@@ -18,8 +23,8 @@ class TITLEHUB {
                 ]
 
                 const url = `https://titlehub.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/titles/titlehistory/decoration/${params.join(',')}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -38,8 +43,8 @@ class TITLEHUB {
                 ]
 
                 const url = `https://titlehub.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/titles/titleid(${titleId})/decoration/${params.join(',')}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };

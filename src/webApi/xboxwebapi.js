@@ -2,7 +2,7 @@
 const EventEmitter = require('events');
 const { v4: UuIdv4 } = require('uuid');
 const Authentication = require('./authentication.js')
-const HttpClient = require('./httpclient.js')
+const axios = require('axios');
 const Achievements = require('./providers/achievements.js');
 const Catalog = require('./providers/catalog.js');
 const Gameclips = require('./providers/gameclips.js');
@@ -26,7 +26,6 @@ class XBOXWEBAPI extends EventEmitter {
 
         //variables
         this.authorized = false;
-        this.httpClient = new HttpClient();
 
         const authConfig = {
             webApiClientId: config.webApiClientId,
@@ -41,7 +40,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const data = await this.authentication.checkAuthorization();
             const debug = this.debugLog ? this.emit('debug', `authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
-            this.headers = {
+            const headers = {
                 'Authorization': data.headers,
                 'Accept-Language': 'en-US',
                 'x-xbl-contract-version': '4',
@@ -52,6 +51,17 @@ class XBOXWEBAPI extends EventEmitter {
             }
             this.tokens = data.tokens;
             this.authorized = true;
+
+            //create axios instance
+            this.axiosInstance = axios.create({
+                method: 'GET',
+                headers: headers
+            });
+
+            this.axiosInstancePost = axios.create({
+                method: 'POST',
+                headers: headers
+            });
 
             try {
                 await this.xboxLiveData();
@@ -86,8 +96,8 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
-                const getConsoleStatusData = await this.httpClient.request('GET', url, this.headers);
-                const responseObject = JSON.parse(getConsoleStatusData);
+                const getConsoleStatusData = await this.axiosInstance(url);
+                const responseObject = getConsoleStatusData.data;
                 const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
                 //get console status
@@ -118,8 +128,8 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
-                const getConsolesListData = await this.httpClient.request('GET', url, this.headers);
-                const responseObject = JSON.parse(getConsolesListData);
+                const getConsolesListData = await this.axiosInstance(url);
+                const responseObject = getConsolesListData.data;
                 const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false;
 
                 //get consoles list
@@ -198,8 +208,8 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
-                const getInstalledAppsData = await this.httpClient.request('GET', url, this.headers);
-                const responseObject = JSON.parse(getInstalledAppsData);
+                const getInstalledAppsData = await this.axiosInstance(url);
+                const responseObject = getInstalledAppsData.data;
                 const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false;
 
                 //get installed apps
@@ -246,8 +256,8 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
-                const getStorageDevicesData = await this.httpClient.request('GET', url, this.headers);
-                const responseObject = JSON.parse(getStorageDevicesData);
+                const getStorageDevicesData = await this.axiosInstance(url);
+                const responseObject = getStorageDevicesData.data;
                 const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 
                 //get console storages
@@ -289,8 +299,8 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
-                const getUserProfileData = await this.httpClient.request('GET', url, this.headers);
-                const responseObject = JSON.parse(getUserProfileData);
+                const getUserProfileData = await this.axiosInstance(url);
+                const responseObject = getUserProfileData.data;
                 const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(responseObject.profileUsers[0], null, 2)}, ${JSON.stringify(responseObject.profileUsers[0].settings[0], null, 2)}`) : false
 
                 //get user profiles
@@ -540,7 +550,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             try {
                 const postData = JSON.stringify(postParams);
-                const response = await this.httpClient.request('POST', `${CONSTANTS.WebApi.Url.Xccs}/commands`, this.headers, postData);
+                const response = await this.axiosInstancePost(`${CONSTANTS.WebApi.Url.Xccs}/commands`, postData);
                 const responseObject = JSON.parse(response);
                 const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
 

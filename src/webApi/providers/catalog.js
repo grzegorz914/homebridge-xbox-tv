@@ -1,12 +1,17 @@
 'use strict';
 const QueryString = require('querystring');
-const HttpClient = require('../httpclient.js');
+const axios = require('axios');
 
 class CATALOG {
     constructor(authorizationHeaders) {
-        this.headers = authorizationHeaders;
-        this.headers = { 'MS-CV': '0' };
-        this.httpClient = new HttpClient();
+        const headers = authorizationHeaders;
+        headers = { 'MS-CV': '0' };
+
+        //create axios instance
+        this.axiosInstance = axios.create({
+            method: 'GET',
+            headers: headers
+        });
     }
 
     searchTitle(query, marketLocale = 'US', languagesLocale = 'en-US') {
@@ -20,10 +25,10 @@ class CATALOG {
                     "query": query,
                     "topProducts": 25,
                 }
-                const queryParams = QueryString.stringify(searchParams)
+                const queryParams = QueryString.stringify(searchParams);
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/productFamilies/autosuggest?${queryParams}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -41,10 +46,10 @@ class CATALOG {
                     "market": marketLocale,
                 }
 
-                const queryParams = QueryString.stringify(searchParams)
+                const queryParams = QueryString.stringify(searchParams);
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/products?${queryParams}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -58,17 +63,15 @@ class CATALOG {
                     "top": 25,
                     "alternateId": titleType,
                     "fieldsTemplate": 'details',
-                    // "languages": 'en-US',
-                    // "market": 'US',
                     "languages": languagesLocale,
                     "market": marketLocale,
                     "value": titleId,
                 }
 
-                const queryParams = QueryString.stringify(searchParams)
+                const queryParams = QueryString.stringify(searchParams);
                 const url = `https://displaycatalog.mp.microsoft.com/v7.0/products/lookup${queryParams}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };

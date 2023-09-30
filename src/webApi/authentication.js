@@ -2,12 +2,11 @@
 const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
-const HttpClient = require('./httpclient.js');
+const axios = require('axios');
 const CONSTANTS = require('../constans.json');
 
 class AUTHENTICATION {
     constructor(config) {
-        this.httpClient = new HttpClient();
         this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.ClientId;
         this.webApiClientSecret = config.webApiClientSecret;
         this.tokensFile = config.tokensFile;
@@ -100,8 +99,8 @@ class AUTHENTICATION {
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.request('POST', CONSTANTS.WebApi.Url.RefreshToken, headers, postData);
-                const refreshToken = JSON.parse(data);
+                const response = await axios.post(CONSTANTS.WebApi.Url.RefreshToken, postData, headers);
+                const refreshToken = response.data;
                 refreshToken.issued = new Date().toISOString();
                 this.tokens.oauth = refreshToken;
                 resolve();
@@ -126,8 +125,8 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json' };
-                const data = await this.httpClient.request('POST', CONSTANTS.WebApi.Url.UserToken, headers, postData);
-                const userToken = JSON.parse(data);
+                const response = await axios.post(CONSTANTS.WebApi.Url.UserToken, postData, { headers });
+                const userToken = response.data;
                 this.tokens.user = userToken;
                 this.tokens.xsts = {};
                 resolve();
@@ -151,8 +150,8 @@ class AUTHENTICATION {
 
                 const postData = JSON.stringify(payload);
                 const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-                const data = await this.httpClient.request('POST', CONSTANTS.WebApi.Url.XstsToken, headers, postData);
-                const xstsToken = JSON.parse(data);
+                const response = await axios.post(CONSTANTS.WebApi.Url.XstsToken, postData, headers);
+                const xstsToken = response.data;
                 this.tokens.xsts = xstsToken;
                 resolve();
             } catch (error) {
@@ -175,8 +174,8 @@ class AUTHENTICATION {
 
                 const postData = QueryString.stringify(payload);
                 const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                const data = await this.httpClient.request('POST', CONSTANTS.WebApi.Url.AccessToken, headers, postData);
-                const accessToken = JSON.parse(data);
+                const response = await axios.post(CONSTANTS.WebApi.Url.AccessToken, postData, headers);
+                const accessToken = response.data;
                 accessToken.issued = new Date().toISOString();
                 this.tokens.oauth = accessToken;
                 await this.saveTokens(this.tokens);

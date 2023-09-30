@@ -1,21 +1,26 @@
 'use strict';
 const QueryString = require('querystring')
-const HttpClient = require('../httpclient.js');
+const axios = require('axios');
 
 class CATALOG {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
-        this.headers = authorizationHeaders;
-        this.headers['x-xbl-contract-version'] = '5';
-        this.httpClient = new HttpClient();
+        const headers = authorizationHeaders;
+        headers['x-xbl-contract-version'] = '5';
+
+        //create axios instance
+        this.axiosInstance = axios.create({
+            method: 'GET',
+            headers: headers
+        });
     }
 
     getUserScreenshots() {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://screenshotsmetadata.xboxlive.com/users/me/screenshot`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response,data);
             } catch (error) {
                 reject(error);
             };
@@ -27,8 +32,8 @@ class CATALOG {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://screenshotsmetadata.xboxlive.com/public/titles/${titleId}/screenshots?qualifier=created&maxItems=10`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -47,10 +52,10 @@ class CATALOG {
                     params.titleid = titleId
                 }
 
-                const queryParams = QueryString.stringify(params)
+                const queryParams = QueryString.stringify(params);
                 const url = `https://screenshotsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/screenshots?${queryParams}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };

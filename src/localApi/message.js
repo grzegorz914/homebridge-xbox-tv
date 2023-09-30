@@ -98,7 +98,7 @@ class MESSAGE {
             0x23: "titleLaunch",
             channelStartRequest: Buffer.from('a026', 'hex'),
             channelStartResponse: Buffer.from('a027', 'hex'),
-            channelStop: Buffer.from('a028', 'hex'),
+            0x28: "channelStop",
             0x29: "system",
             disconnect: Buffer.from('802a', 'hex'),
             0x2E: "titleTouch",
@@ -192,16 +192,16 @@ class MESSAGE {
             payloadProtected: structure.readBytes()
         };
         packet.type = packet.flags.type;
+        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
+        packet.signature = packet.payloadProtected.slice(-32);
         this.channelId = packet.channelId;
 
         // Lets decrypt the data when the payload is encrypted
         const payloadProtectedExist = packet.payloadProtected !== undefined;
         if (payloadProtectedExist) {
-            packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
-            packet.signature = packet.payloadProtected.slice(-32);
-
-            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
-            packet.payloadProtected = {};
+            let payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
+            packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
+            packet['payloadProtected'] = {};
 
             const packetProtected = this.packets[packet.type];
             const structurePayloadDecrypted = new Structure(payloadDecrypted);

@@ -167,9 +167,10 @@ class SIMPLE {
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, packet.iv).slice(0, packet.payloadProtectedLength);
             packet.payloadProtected = {};
 
+            const packetProtected = this.packets[`${packet.type}Protected`]
             const structurePayloadDecrypted = new Structure(payloadDecrypted);
-            for (const name in this.packetProtected) {
-                packet.payloadProtected[name] = this.packetProtected[name].unpack(structurePayloadDecrypted);
+            for (const name in packetProtected) {
+                packet.payloadProtected[name] = packetProtected[name].unpack(structurePayloadDecrypted);
                 this.set('payloadProtected', packet.payloadProtected);
             }
         }

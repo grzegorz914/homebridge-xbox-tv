@@ -1,21 +1,26 @@
 'use strict';
 const QueryString = require('querystring')
-const HttpClient = require('../httpclient.js');
+const axios = require('axios');
 
 class GAMECLIP {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
-        this.headers = authorizationHeaders;
-        this.headers['x-xbl-contract-version'] = '1';
-        this.httpClient = new HttpClient();
+        const headers = authorizationHeaders;
+        headers['x-xbl-contract-version'] = '1';
+
+        //create axios instance
+        this.axiosInstance = axios.create({
+            method: 'GET',
+            headers: headers
+        });
     }
 
     getUserGameclips() {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://gameclipsmetadata.xboxlive.com/users/me/clips`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -26,8 +31,8 @@ class GAMECLIP {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://gameclipsmetadata.xboxlive.com/public/titles/${titleId}clips/saved?qualifier=created`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -46,10 +51,10 @@ class GAMECLIP {
                     params.titleid = titleId
                 }
 
-                const queryParams = QueryString.stringify(params)
+                const queryParams = QueryString.stringify(params);
                 const url = `https://gameclipsmetadata.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/clips?${queryParams}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };

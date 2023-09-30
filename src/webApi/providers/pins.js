@@ -1,20 +1,25 @@
 'use strict';
-const HttpClient = require('../httpclient.js');
+const axios = require('axios');
 
 class PINS {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
-        this.headers = authorizationHeaders;
-        this.headers['Content-Type'] = 'application/json';
-        this.httpClient = new HttpClient();
+        const headers = authorizationHeaders;
+        headers['Content-Type'] = 'application/json';
+       
+         //create axios instance
+         this.axiosInstance = axios.create({
+            method: 'GET',
+            headers: headers
+        });
     }
 
     getPins(list = 'XBLPins') {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/${list}`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
@@ -25,8 +30,8 @@ class PINS {
         return new Promise(async (resolve, reject) => {
             try {
                 const url = `https://eplists.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/lists/PINS/SaveForLater`;
-                const response = await this.httpClient.request('GET', url, this.headers);
-                resolve(response);
+                const response = await this.axiosInstance(url);
+                resolve(response.data);
             } catch (error) {
                 reject(error);
             };
