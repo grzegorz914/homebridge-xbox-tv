@@ -759,6 +759,7 @@ class XboxDevice extends EventEmitter {
 
                     //get input visibility state
                     const currentVisibility = savedInputsTargetVisibility[inputReference] || savedInputsTargetVisibility[inputOneStoreProductId] || 0;
+                    const targetVisibility = currentVisibility;
 
                     if (inputReference && inputName) {
                         const inputService = new Service.InputSource(inputName, `Input ${i}`);
@@ -770,9 +771,6 @@ class XboxDevice extends EventEmitter {
                             .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
                         inputService.getCharacteristic(Characteristic.ConfiguredName)
-                            .onGet(async () => {
-                                return inputName;
-                            })
                             .onSet(async (value) => {
                                 try {
                                     const nameIdentifier = inputReference || inputOneStoreProductId;
@@ -790,7 +788,7 @@ class XboxDevice extends EventEmitter {
                         inputService
                             .getCharacteristic(Characteristic.TargetVisibilityState)
                             .onGet(async () => {
-                                return currentVisibility;
+                                return targetVisibility;
                             })
                             .onSet(async (state) => {
                                 try {
