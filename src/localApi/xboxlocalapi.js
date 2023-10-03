@@ -237,7 +237,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                         //Start prepare accessory
                         const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
-                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1500)) : false;
+                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1000)) : false;
                         this.startPrepareAccessory = false;
 
                         const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;

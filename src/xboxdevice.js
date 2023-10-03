@@ -166,11 +166,6 @@ class XboxDevice extends EventEmitter {
             });
 
             this.xboxWebApi.on('consoleStatus', (consoleStatusData, consoleType) => {
-                if (this.informationService) {
-                    this.informationService
-                        .setCharacteristic(Characteristic.Model, consoleType)
-                };
-
                 //this.serialNumber = id;
                 this.modelName = consoleType;
                 //this.power = powerState;
@@ -239,7 +234,7 @@ class XboxDevice extends EventEmitter {
                     if (!this.disableLogDeviceInfo) {
                         this.emit('devInfo', `-------- ${this.name} --------'`);
                         this.emit('devInfo', `Manufacturer: ${'Microsoft'}`);
-                        this.emit('devInfo', `Model: ${this.modelName ?? 'Model Name'}`);
+                        this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
                         this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
                         this.emit('devInfo', `Firmware: ${firmwareRevision}`);
                         this.emit('devInfo', `Locale: ${locale}`);
@@ -248,7 +243,7 @@ class XboxDevice extends EventEmitter {
 
                     const data = await fsPromises.readFile(this.devInfoFile);
                     const savedInfo = data.length > 5 ? JSON.parse(data) : {};
-                    const infoHasNotchanged = firmwareRevision === savedInfo.firmwareRevision && locale === savedInfo.locale;
+                    const infoHasNotchanged = this.modelName === savedInfo.modelName && firmwareRevision === savedInfo.firmwareRevision && locale === savedInfo.locale;
 
                     if (infoHasNotchanged) {
                         return;
@@ -257,14 +252,14 @@ class XboxDevice extends EventEmitter {
                     if (this.informationService) {
                         this.informationService
                             .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
-                            .setCharacteristic(Characteristic.Model, this.modelName ?? 'Model Name')
+                            .setCharacteristic(Characteristic.Model, this.modelName ?? 'Xbox')
                             .setCharacteristic(Characteristic.SerialNumber, this.xboxLiveId)
                             .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision ?? 'Firmware Revision');
                     };
 
                     const obj = {
                         manufacturer: 'Microsoft',
-                        modelName: data.modelName ?? 'Model Name',
+                        modelName: this.modelName ?? 'Xbox',
                         serialNumber: this.xboxLiveId,
                         firmwareRevision: firmwareRevision ?? 'Firmware Revision',
                         locale: locale
@@ -357,6 +352,7 @@ class XboxDevice extends EventEmitter {
             })
             .on('prepareAccessory', async () => {
                 try {
+
                     //read dev info from file
                     try {
                         const data = await fsPromises.readFile(this.devInfoFile);
@@ -393,6 +389,7 @@ class XboxDevice extends EventEmitter {
                         this.emit('error', `read saved Inputs/Channels Target Visibility error: ${error}`);
                     };
 
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     const accessory = await this.prepareAccessory();
                     this.emit('publishAccessory', accessory)
                 } catch (error) {
@@ -428,8 +425,8 @@ class XboxDevice extends EventEmitter {
                 //Pinformation service
                 this.informationService = accessory.getService(Service.AccessoryInformation)
                     .setCharacteristic(Characteristic.Manufacturer, this.savedInfo.manufacturer ?? 'Microsoft')
-                    .setCharacteristic(Characteristic.Model, this.savedInfo.modelName ?? 'Model Name')
-                    .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? 'Serial Number')
+                    .setCharacteristic(Characteristic.Model, this.savedInfo.modelName ?? 'Xbox')
+                    .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? this.xboxLiveId)
                     .setCharacteristic(Characteristic.FirmwareRevision, this.savedInfo.firmwareRevision ?? 'Firmware Revision');
                 this.allServices.push(this.informationService);
 
@@ -501,17 +498,17 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const inputName = this.inputsName[inputIdentifier];
-                        const inputReference = this.inputsReference[inputIdentifier];
                         const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+                        const inputReference = this.inputsReference[inputIdentifier];
+                        const inputName = this.inputsName[inputIdentifier];
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const inputName = this.inputsName[inputIdentifier];
-                            const inputReference = this.inputsReference[inputIdentifier];
                             const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+                            const inputReference = this.inputsReference[inputIdentifier];
+                            const inputName = this.inputsName[inputIdentifier];
 
                             switch (this.power) {
                                 case false:
@@ -783,11 +780,11 @@ class XboxDevice extends EventEmitter {
                     //get input 
                     const input = inputs[i];
 
-                    //get input reference
-                    const inputReference = input.reference || input.titleId || input.oneStoreProductId;
-
                     //get input oneStoreProductId
                     const inputOneStoreProductId = input.oneStoreProductId;
+
+                    //get input reference
+                    const inputReference = input.reference || input.titleId || input.oneStoreProductId;
 
                     //get input name
                     const inputName = this.savedInputsNames[inputReference] ?? input.name;
@@ -832,10 +829,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    const targetVisibilityIdentifier = inputReference || inputOneStoreProductId;
-                                    this.savedInputsTargetVisibility[this.targetVisibilityIdentifier] = state;
-
+                                    this.savedInputsTargetVisibility[inputReference] = state;
                                     const newTargetVisibility = JSON.stringify(this.savedInputsTargetVisibility, null, 2);
+
                                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
                                     inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
@@ -844,8 +840,8 @@ class XboxDevice extends EventEmitter {
                                 }
                             });
 
-                        this.inputsReference.push(inputReference);
                         this.inputsOneStoreProductId.push(inputOneStoreProductId);
+                        this.inputsReference.push(inputReference);
                         this.inputsName.push(inputName);
 
                         this.televisionService.addLinkedService(inputService);
