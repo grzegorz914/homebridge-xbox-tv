@@ -1,4 +1,5 @@
 'use strict';
+const QueryString = require('querystring');
 const EventEmitter = require('events');
 const { v4: UuIdv4 } = require('uuid');
 const Authentication = require('./authentication.js')
@@ -51,15 +52,11 @@ class XBOXWEBAPI extends EventEmitter {
             }
             this.tokens = data.tokens;
             this.authorized = true;
+            this.headers = headers;
 
             //create axios instance
             this.axiosInstance = axios.create({
                 method: 'GET',
-                headers: headers
-            });
-
-            this.axiosInstancePost = axios.create({
-                method: 'POST',
                 headers: headers
             });
 
@@ -548,11 +545,14 @@ class XBOXWEBAPI extends EventEmitter {
                 "linkedXboxId": this.xboxLiveId
             }
 
+            const stringifyPostParam = JSON.stringify(postParams);
+            this.headers['Content-Length'] = stringifyPostParam.length;
+            const headers = {
+                headers: this.headers
+            }
             try {
-                const postData = JSON.stringify(postParams);
-                const response = await this.axiosInstancePost(`${CONSTANTS.WebApi.Url.Xccs}/commands`, postData);
-                const responseObject = JSON.parse(response);
-                const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
+                const response = await axios.post(`${CONSTANTS.WebApi.Url.Xccs}/commands`, postParams, headers);
+                const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
 
                 resolve();
             } catch (error) {

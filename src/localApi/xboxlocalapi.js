@@ -29,6 +29,7 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channelRequestId = 0;
         this.mediaRequestId = 0;
         this.emitDevInfo = true;
+        this.startPrepareAccessory = true;
 
         //dgram socket
         this.connect = () => {
@@ -234,6 +235,11 @@ class XBOXLOCALAPI extends EventEmitter {
                             this.emitDevInfo = false;
                         };
 
+                        //Start prepare accessory
+                        const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
+                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1500)) : false;
+                        this.startPrepareAccessory = false;
+
                         const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
                         if (appsCount > 0) {
                             const power = true;
@@ -278,7 +284,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         const debug4 = this.debugLog ? this.emit('debug', `Client pairing state: ${CONSTANTS.LocalApi.Console.PairingState[pairingState1]}.`) : false;
                         break;
                 };
-            }).on('listening', () => {
+            }).on('listening', async () => {
                 const address = this.client.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
 
@@ -314,6 +320,11 @@ class XBOXLOCALAPI extends EventEmitter {
                     const debug = this.debugLog && elapse >= 12 ? this.emit('debug', `Last message was: ${elapse} sec ago.`) : false;
                     const disconnect = elapse >= 12 ? this.disconnect() : false;
                 }, 1000);
+
+                //Prepare accessory
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
+                this.startPrepareAccessory = false;
             }).on('close', () => {
                 const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
                 this.isConnected = false;
