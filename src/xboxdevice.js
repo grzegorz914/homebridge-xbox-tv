@@ -233,7 +233,7 @@ class XboxDevice extends EventEmitter {
                 try {
                     if (!this.disableLogDeviceInfo) {
                         this.emit('devInfo', `-------- ${this.name} --------'`);
-                        this.emit('devInfo', `Manufacturer: ${'Microsoft'}`);
+                        this.emit('devInfo', `Manufacturer: Microsoft`);
                         this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
                         this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
                         this.emit('devInfo', `Firmware: ${firmwareRevision}`);
@@ -243,7 +243,11 @@ class XboxDevice extends EventEmitter {
 
                     const data = await fsPromises.readFile(this.devInfoFile);
                     const savedInfo = data.length > 5 ? JSON.parse(data) : {};
-                    const infoHasNotchanged = this.modelName === savedInfo.modelName && firmwareRevision === savedInfo.firmwareRevision && locale === savedInfo.locale;
+                    const infoHasNotchanged =
+                        'Microsoft' === savedInfo.manufacturer
+                        && this.modelName === savedInfo.modelName
+                        && firmwareRevision === savedInfo.firmwareRevision
+                        && locale === savedInfo.locale;
 
                     if (infoHasNotchanged) {
                         return;
@@ -254,14 +258,14 @@ class XboxDevice extends EventEmitter {
                             .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
                             .setCharacteristic(Characteristic.Model, this.modelName ?? 'Xbox')
                             .setCharacteristic(Characteristic.SerialNumber, this.xboxLiveId)
-                            .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision ?? 'Firmware Revision');
+                            .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
                     };
 
                     const obj = {
                         manufacturer: 'Microsoft',
-                        modelName: this.modelName ?? 'Xbox',
+                        modelName: this.modelName,
                         serialNumber: this.xboxLiveId,
-                        firmwareRevision: firmwareRevision ?? 'Firmware Revision',
+                        firmwareRevision: firmwareRevision,
                         locale: locale
                     };
                     const devInfo = JSON.stringify(obj, null, 2);
@@ -375,7 +379,7 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
                         this.savedInputsNames = data.length > 5 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
+                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `read saved Inputs/Channels Names error: ${error}`);
                     };
@@ -384,12 +388,12 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
                         this.savedInputsTargetVisibility = data.length > 5 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
+                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `read saved Inputs/Channels Target Visibility error: ${error}`);
                     };
 
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     const accessory = await this.prepareAccessory();
                     this.emit('publishAccessory', accessory)
                 } catch (error) {
@@ -467,29 +471,33 @@ class XboxDevice extends EventEmitter {
                         return state;
                     })
                     .onSet(async (state) => {
+                        if (this.power == state) {
+                            return;
+                        }
+
                         try {
                             switch (this.webApiPowerOnOff) {
                                 case true:
-                                    switch (state) {
-                                        case 0: //off
-                                            const powerOff = this.power ? await this.xboxWebApi.powerOff() : false;
+                                    switch (this.power) {
+                                        case true: //off
+                                            await this.xboxWebApi.powerOff();
                                             break;
-                                        case 1: //on
-                                            const powerOn = !this.power ? await this.xboxWebApi.powerOn() : false;
+                                        case false: //on
+                                            await this.xboxWebApi.powerOn();
                                             break;
                                     }
                                     break;
                                 case false:
-                                    switch (state) {
-                                        case 0: //off
-                                            const powerOff = this.power ? await this.xboxLocalApi.powerOff() : false;
+                                    switch (this.power) {
+                                        case true: //off
+                                            await this.xboxLocalApi.powerOff();
                                             break;
-                                        case 1: //on
-                                            const powerOn = !this.power ? await this.xboxLocalApi.powerOn() : false;
+                                        case false: //on
+                                            await this.xboxLocalApi.powerOn();
                                             break;
                                     }
                             }
-                            const logInfo = this.disableLogInfo || (state === this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power, error: ${error}`);
                         };
@@ -758,8 +766,7 @@ class XboxDevice extends EventEmitter {
                 accessory.addService(this.speakerService);
 
                 //Prepare inputs services
-                const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare input service`);
-
+                const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
                 //check possible inputs and filter custom unnecessary inputs
                 const filteredInputsArr = [];
                 for (const input of this.savedInputs) {
@@ -809,6 +816,9 @@ class XboxDevice extends EventEmitter {
                             .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
                         inputService.getCharacteristic(Characteristic.ConfiguredName)
+                            .onGet(async () => {
+                                return inputName;
+                            })
                             .onSet(async (value) => {
                                 try {
                                     this.savedInputsNames[inputReference] = value;
@@ -816,7 +826,8 @@ class XboxDevice extends EventEmitter {
 
                                     await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
-                                    inputService.setCharacteristic(Characteristic.Name, value);
+                                    inputService.updateCharacteristic(Characteristic.Name, value);
+                                    inputService.updateCharacteristic(Characteristic.ConfiguredName, value);
                                 } catch (error) {
                                     this.emit('error', `save Input Name error: ${error}`);
                                 }
@@ -834,7 +845,8 @@ class XboxDevice extends EventEmitter {
 
                                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
-                                    inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
+                                    inputService.updateCharacteristic(Characteristic.CurrentVisibilityState, state);
+                                    inputService.updateCharacteristic(Characteristic.TargetVisibilityState, state);
                                 } catch (error) {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
