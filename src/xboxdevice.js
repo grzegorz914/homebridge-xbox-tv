@@ -476,16 +476,23 @@ class XboxDevice extends EventEmitter {
                         }
 
                         try {
+                            let channelName;
+                            let command;
+
                             switch (this.webApiPowerOnOff) {
                                 case true:
                                     switch (this.power) {
                                         case true: //off
-                                            await this.xboxWebApi.powerOff();
+                                            channelName = 'Power';
+                                            command = 'WakeUp';
                                             break;
                                         case false: //on
-                                            await this.xboxWebApi.powerOn();
+                                            channelName = 'Power';
+                                            command = 'TurnOff';
                                             break;
                                     }
+
+                                    await this.xboxWebApi.send(channelName, command);
                                     break;
                                 case false:
                                     switch (this.power) {
@@ -497,6 +504,7 @@ class XboxDevice extends EventEmitter {
                                             break;
                                     }
                             }
+
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power, error: ${error}`);
@@ -518,6 +526,9 @@ class XboxDevice extends EventEmitter {
                             const inputReference = this.inputsReference[inputIdentifier];
                             const inputName = this.inputsName[inputIdentifier];
 
+                            let channelName;
+                            let command;
+                            let payload;
                             switch (this.power) {
                                 case false:
                                     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -526,18 +537,26 @@ class XboxDevice extends EventEmitter {
                                 case true:
                                     switch (inputOneStoreProductId) {
                                         case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                            await this.xboxWebApi.goHome();
+                                            channelName = 'Shell';
+                                            command = 'GoHome';
                                             break;
                                         case 'Television':
-                                            await this.xboxWebApi.showTVGuide();
+                                            channelName = 'TV';
+                                            command = 'ShowGuide';
                                             break;
                                         case 'XboxGuide':
-                                            await this.xboxWebApi.showGuideTab();
+                                            channelName = 'Shell';
+                                            command = 'ShowGuideTab';
+                                            payload = [{ 'tabName': 'Guide' }];
                                             break;
                                         default:
-                                            await this.xboxWebApi.launchApp(inputOneStoreProductId);
+                                            channelName = 'Shell';
+                                            command = 'ActivateApplicationWithOneStoreProductId';
+                                            payload = [{ 'oneStoreProductId': inputOneStoreProductId }];
                                             break;
                                     }
+
+                                    await this.xboxWebApi.send(channelName, command, payload);
                                     const logInfo = this.disableLogInfo ? false : this.emit('message', `set Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                                     break;
                             }
@@ -549,64 +568,65 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                     .onSet(async (remoteKey) => {
                         try {
-                            let command;
                             let channelName;
+                            let command;
+
                             switch (remoteKey) {
                                 case 0: //REWIND
+                                    channelName = 'Shell';
                                     command = 'rewind';
-                                    channelName = 'Media';
                                     break;
                                 case 1: //FAST_FORWARD
+                                    channelName = 'Shell';
                                     command = 'fastForward';
-                                    channelName = 'Media';
                                     break;
                                 case 2: //NEXT_TRACK
+                                    channelName = 'Shell';
                                     command = 'nextTrack';
-                                    channelName = 'Media';
                                     break;
                                 case 3: //PREVIOUS_TRACK
+                                    channelName = 'Shell';
                                     command = 'previousTrack';
-                                    channelName = 'Media';
                                     break;
                                 case 4: //ARROW_UP
+                                    channelName = 'Shell';
                                     command = 'up';
-                                    channelName = 'Input';
                                     break;
                                 case 5: //ARROW_DOWN
+                                    channelName = 'Shell';
                                     command = 'down';
-                                    channelName = 1;
                                     break;
                                 case 6: //ARROW_LEFT
+                                    channelName = 'Shell';
                                     command = 'left';
-                                    channelName = 'Input';
                                     break;
                                 case 7: //ARROW_RIGHT
+                                    channelName = 'Shell';
                                     command = 'right';
-                                    channelName = 'Input';
                                     break;
                                 case 8: //SELECT
+                                    channelName = 'Shell';
                                     command = 'a';
-                                    channelName = 'Input';
                                     break;
                                 case 9: //BACK
+                                    channelName = 'Shell';
                                     command = 'b';
-                                    channelName = 'Input';
                                     break;
                                 case 10: //EXIT
+                                    channelName = 'Shell';
                                     command = 'nexus';
-                                    channelName = 'Input';
                                     break;
                                 case 11: //PLAY_PAUSE
+                                    channelName = 'Shell';
                                     command = 'playPause';
-                                    channelName = 'Media';
                                     break;
                                 case 15: //INFORMATION
+                                    channelName = 'Shell';
                                     command = this.infoButtonCommand;
-                                    channelName = 'Input';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
+                            await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
@@ -642,20 +662,20 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
                     .onSet(async (powerModeSelection) => {
                         try {
-                            let command;
                             let channelName;
+                            let command;
                             switch (powerModeSelection) {
                                 case 0: //SHOW
+                                    channelName = 'Shell';
                                     command = 'nexus';
-                                    channelName = 'Input';
                                     break;
                                 case 1: //HIDE
+                                    channelName = 'Shell';
                                     command = 'b';
-                                    channelName = 'Input';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
+                            await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
@@ -685,34 +705,20 @@ class XboxDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
                     .onSet(async (volumeSelector) => {
                         try {
-                            let command;
                             let channelName;
-                            switch (this.webApiVolumeControl) {
-                                case true:
-                                    switch (volumeSelector) {
-                                        case 0: //volUp
-                                            const volDown = this.power ? await this.xboxWebApi.volumeUp() : false;
-                                            break;
-                                        case 1: //volDown
-                                            const volUp = this.power ? await this.xboxWebApi.volumeDown() : false;
-                                            break;
-                                    }
+                            let command;
+                            switch (volumeSelector) {
+                                case 0: //Up
+                                    channelName = 'Volume';
+                                    command = 'Up';
                                     break;
-                                case false:
-                                    switch (volumeSelector) {
-                                        case 0: //volUp
-                                            command = 'volUp';
-                                            channelName = 'Media';
-                                            break;
-                                        case 1: //volDown
-                                            command = 'volDown';
-                                            channelName = 'Media';
-                                            break;
-                                    };
-
-                                    await this.xboxLocalApi.sendButtonPress(channelName, command)
+                                case 1: //Down
+                                    channelName = 'Volume';
+                                    command = 'Down';
                                     break;
                             }
+
+                            await this.xboxWebApi.send(channelName, command);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector error: ${error}`);
@@ -740,22 +746,20 @@ class XboxDevice extends EventEmitter {
                     })
                     .onSet(async (state) => {
                         try {
-                            switch (this.webApiVolumeControl) {
-                                case true:
-                                    switch (state) {
-                                        case true: //mute
-                                            const mute = this.power ? await this.xboxWebApi.mute() : false;
-                                            break;
-                                        case false: //unmute
-                                            const unmute = this.power ? await this.xboxWebApi.unmute() : false;
-                                            break;
-                                    }
+                            let channelName;
+                            let command;
+                            switch (volumeSelector) {
+                                case 0: //Mute
+                                    channelName = 'Audio';
+                                    command = 'Mute';
                                     break;
-                                case false:
-                                    const channelName = 'Media';
-                                    const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelName, 'volMute') : false;
+                                case 1: //Unmute
+                                    channelName = 'Audio';
+                                    command = 'Unmute';
                                     break;
                             }
+
+                            await this.xboxWebApi.send(channelName, command);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Mute error: ${error}`);
@@ -1065,36 +1069,53 @@ class XboxDevice extends EventEmitter {
                                     .onSet(async (state) => {
                                         if (state) {
                                             try {
+                                                let channelName;
+                                                let command;
+                                                let payload;
+
                                                 switch (buttonMode) {
                                                     case 0: case 1: case 2:
-                                                        await this.xboxWebApi.sendButtonPress(buttonCommand);
+                                                        channelName = 'Shell';
+                                                        command = 'InjectKey';
+                                                        payload = [{ 'keyType': buttonCommand }];
                                                         break;
                                                     case 3:
+                                                        channelName = 'TV';
+                                                        command = 'ShowGuide';
                                                         await this.xboxLocalApi.recordGameDvr();
                                                         break;
                                                     case 4:
-                                                        await this.xboxWebApi.reboot();
+                                                        channelName = 'Power';
+                                                        command = 'Reboot';
                                                         break;
                                                     case 5:
                                                         switch (buttonOneStoreProductId) {
                                                             case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                                await this.xboxWebApi.goGome();
+                                                                channelName = 'Shell';
+                                                                command = 'GoHome';
                                                                 break;
                                                             case 'Television':
-                                                                await this.xboxWebApi.showTVGuide();
+                                                                channelName = 'TV';
+                                                                command = 'ShowGuide';
                                                                 break;
                                                             case 'XboxGuide':
-                                                                await this.xboxWebApi.showGuideTab();
+                                                                channelName = 'Shell';
+                                                                command = 'ShowGuideTab';
+                                                                payload = [{ 'tabName': 'Guide' }];
                                                                 break;
                                                             case 'Not set': case 'Web api disabled':
                                                                 this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
                                                                 break;
                                                             default:
-                                                                await this.xboxWebApi.launchApp(buttonOneStoreProductId);
+                                                                channelName = 'Shell';
+                                                                command = 'ActivateApplicationWithOneStoreProductId';
+                                                                payload = [{ 'oneStoreProductId': buttonOneStoreProductId }];
                                                                 break;
                                                         }
                                                         break;
                                                 }
+
+                                                const send = buttonMode !== 3 ? await this.xboxWebApi.send(channelName, command, payload) : false;
                                                 const logInfo = this.disableLogInfo ? false : this.emit('message', `set Button Name:  ${buttonName}, Command: ${buttonCommand}`);
                                             } catch (error) {
                                                 this.emit('error', `set Button error: ${error}`);

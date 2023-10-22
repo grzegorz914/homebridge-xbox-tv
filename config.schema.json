@@ -861,8 +861,6 @@
 									"items": [
 										"devices[].webApiControl",
 										"devices[].webApiPowerOnOff",
-										"devices[].webApiRcControl",
-										"devices[].webApiVolumeControl",
 										"devices[].webApiToken",
 										"devices[].webApiClientId",
 										"devices[].webApiClientSecret"
