@@ -484,11 +484,11 @@ class XboxDevice extends EventEmitter {
                                     switch (this.power) {
                                         case true: //off
                                             channelName = 'Power';
-                                            command = 'WakeUp';
+                                            command = 'TurnOff';
                                             break;
                                         case false: //on
                                             channelName = 'Power';
-                                            command = 'TurnOff';
+                                            command = 'WakeUp';
                                             break;
                                     }
 
