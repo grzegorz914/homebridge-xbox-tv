@@ -811,7 +811,7 @@ class XboxDevice extends EventEmitter {
                     const targetVisibility = currentVisibility;
 
                     if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(inputName, `Input ${i}`);
+                        const inputService = new Service.InputSource(`${inputName} ${i}`, `Input ${i}`);
                         inputService
                             .setCharacteristic(Characteristic.Identifier, i)
                             .setCharacteristic(Characteristic.Name, inputName)
