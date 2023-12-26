@@ -76,8 +76,6 @@
 					],
 					"webApiControl": false,
 					"webApiPowerOnOff": false,
-					"webApiRcControl": false,
-					"webApiVolumeControl": false,
 					"webApiToken": "",
 					"webApiClientId": "",
 					"webApiClientSecret": "",

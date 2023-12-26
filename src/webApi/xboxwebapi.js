@@ -50,9 +50,9 @@ class XBOXWEBAPI extends EventEmitter {
                 'x-xbl-client-version': '39.39.22001.0',
                 'skillplatform': 'RemoteManagement'
             }
+            this.headers = headers;
             this.tokens = data.tokens;
             this.authorized = true;
-            this.headers = headers;
 
             //create axios instance
             this.axiosInstance = axios.create({
@@ -94,11 +94,10 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
                 const getConsoleStatusData = await this.axiosInstance(url);
-                const responseObject = getConsoleStatusData.data;
-                const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
+                const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
 
                 //get console status
-                const consoleStatusData = responseObject;
+                const consoleStatusData = getConsoleStatusData.data;
                 const id = consoleStatusData.id;
                 const name = consoleStatusData.name;
                 const locale = consoleStatusData.locale;
@@ -126,8 +125,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
                 const getConsolesListData = await this.axiosInstance(url);
-                const responseObject = getConsolesListData.data;
-                const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${responseObject.result[0]}, ${responseObject.result[0].storageDevices[0]}`) : false;
+                const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
 
                 //get consoles list
                 this.consolesId = [];
@@ -149,7 +147,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.consolesTotalSpaceBytes = [];
                 this.consolesIsGen9Compatible = [];
 
-                const consolesList = responseObject.result;
+                const consolesList = getConsolesListData.data.result;
                 for (const console of consolesList) {
                     const id = console.id;
                     const name = console.name;
@@ -206,12 +204,11 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
                 const getInstalledAppsData = await this.axiosInstance(url);
-                const responseObject = getInstalledAppsData.data;
-                const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(responseObject.result, null, 2)}`) : false;
+                const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
 
                 //get installed apps
                 const appsArray = [];
-                const apps = responseObject.result;
+                const apps = getInstalledAppsData.data.result;
                 for (const app of apps) {
                     const oneStoreProductId = app.oneStoreProductId;
                     const titleId = app.titleId;
@@ -254,8 +251,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
                 const getStorageDevicesData = await this.axiosInstance(url);
-                const responseObject = getStorageDevicesData.data;
-                const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(responseObject, null, 2)}`) : false;
+                const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
 
                 //get console storages
                 this.storageDeviceId = [];
@@ -265,9 +261,9 @@ class XBOXWEBAPI extends EventEmitter {
                 this.totalSpaceBytes = [];
                 this.isGen9Compatible = [];
 
-                const storageDevices = responseObject.result;
-                const deviceId = responseObject.deviceId;
-                const agentUserId = responseObject.agentUserId;
+                const storageDevices = getStorageDevicesData.data.result;
+                const deviceId = getStorageDevicesData.data.deviceId;
+                const agentUserId = getStorageDevicesData.data.agentUserId;
                 for (const storageDevice of storageDevices) {
                     const storageDeviceId = storageDevice.storageDeviceId;
                     const storageDeviceName = storageDevice.storageDeviceName;
@@ -297,8 +293,7 @@ class XBOXWEBAPI extends EventEmitter {
             try {
                 const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
                 const getUserProfileData = await this.axiosInstance(url);
-                const responseObject = getUserProfileData.data;
-                const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(responseObject.profileUsers[0], null, 2)}, ${JSON.stringify(responseObject.profileUsers[0].settings[0], null, 2)}`) : false
+                const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
 
                 //get user profiles
                 this.userProfileId = [];
@@ -307,7 +302,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.userProfileSettingsId = [];
                 this.userProfileSettingsValue = [];
 
-                const profileUsers = responseObject.profileUsers;
+                const profileUsers = getUserProfileData.data.profileUsers;
                 for (const userProfile of profileUsers) {
                     const id = userProfile.id;
                     const hostId = userProfile.hostId;
@@ -331,84 +326,6 @@ class XBOXWEBAPI extends EventEmitter {
                 resolve();
             } catch (error) {
                 reject(`User profile error: ${error}`);
-            };
-        });
-    }
-
-    powerOn() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Power', 'WakeUp');
-                resolve();
-            } catch (error) {
-                this.emit('powerOnError', false);
-                reject(error);
-            };
-        });
-    }
-
-    powerOff() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Power', 'TurnOff');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    reboot() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Power', 'Reboot');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    mute() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Audio', 'Mute');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    unmute() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Audio', 'Unmute');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    volumeUp() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Volume', 'Up');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    volumeDown() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Volume', 'Down');
-                resolve();
-            } catch (error) {
-                reject(error);
             };
         });
     }
@@ -461,64 +378,6 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.send('Shell', 'GoBack');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-
-    goHome() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Shell', 'GoHome');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    launchApp(oneStoreProductId) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': oneStoreProductId }]);
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    showGuideTab() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Shell', 'ShowGuideTab', [{
-                    'tabName': 'Guide'
-                }]);
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    showTVGuide() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('TV', 'ShowGuide');
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
-    }
-
-    sendButtonPress(button) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.send('Shell', 'InjectKey', [{ 'keyType': button }]);
                 resolve();
             } catch (error) {
                 reject(error);

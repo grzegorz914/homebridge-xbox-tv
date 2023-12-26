@@ -2,6 +2,7 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 const Dgram = require('dgram');
+const Net = require('net');
 const { parse: UuIdParse, v4: UuIdv4 } = require('uuid');
 const EventEmitter = require('events');
 const Ping = require('ping');
@@ -33,10 +34,15 @@ class XBOXLOCALAPI extends EventEmitter {
 
         //dgram socket
         this.connect = () => {
-            this.client = new Dgram.createSocket('udp4');
-            this.client.on('error', (error) => {
+            const udpType = Net.isIPv6(this.host) ? 'udp6' : 'udp4';
+            const socket = Dgram.createSocket(udpType);
+            socket.on('error', (error) => {
                 this.emit('error', `Socket error: ${error}`);
-                this.client.close();
+                socket.close();
+            }).on('close', () => {
+                const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
+                this.isConnected = false;
+                this.reconnect();
             }).on('message', async (message, remote) => {
                 const debug = this.debugLog ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
                 this.heartBeatStartTime = Date.now();
@@ -237,7 +243,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                         //Start prepare accessory
                         const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
-                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1500)) : false;
+                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1000)) : false;
                         this.startPrepareAccessory = false;
 
                         const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
@@ -285,8 +291,10 @@ class XBOXLOCALAPI extends EventEmitter {
                         break;
                 };
             }).on('listening', async () => {
-                const address = this.client.address();
+                //socket.setBroadcast(true);
+                const address = socket.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
+                this.socket = socket;
 
                 //ping console
                 setInterval(async () => {
@@ -325,10 +333,6 @@ class XBOXLOCALAPI extends EventEmitter {
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
                 this.startPrepareAccessory = false;
-            }).on('close', () => {
-                const debug = this.debugLog ? this.emit('debug', 'Socket closed.') : false;
-                this.isConnected = false;
-                this.reconnect();
             }).bind();
         };
 
@@ -581,7 +585,7 @@ class XBOXLOCALAPI extends EventEmitter {
             const offset = 0;
             const length = message.byteLength;
 
-            this.client.send(message, offset, length, 5050, this.host, (error, bytes) => {
+            this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
                 if (error) {
                     reject(error);
                     return;

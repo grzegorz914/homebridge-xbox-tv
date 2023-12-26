@@ -3,66 +3,75 @@
     "PluginName": "homebridge-xbox-tv",
     "DefaultInputs": [
         {
-            "name": "Screensaver",
+            "oneStoreProductId": "Screensaver",
             "titleId": "851275400",
             "reference": "Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application",
-            "oneStoreProductId": "Screensaver",
+            "isGame": false,
+            "name": "Screensaver",
             "contentType": "Dashboard"
         },
         {
-            "name": "Dashboard",
+            "oneStoreProductId": "Dashboard",
             "titleId": "750323071",
             "reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-            "oneStoreProductId": "Dashboard",
+            "isGame": false,
+            "name": "Dashboard",
             "contentType": "Dashboard"
         },
         {
-            "name": "Settings",
+            "oneStoreProductId": "Settings",
             "titleId": "1837352387",
             "reference": "Microsoft.Xbox.Settings_8wekyb3d8bbwe!Xbox.Settings.Application",
-            "oneStoreProductId": "Settings",
+            "isGame": false,
+            "name": "Settings",
             "contentType": "Dashboard"
         },
         {
-            "name": "Television",
+            "oneStoreProductId": "Television",
             "titleId": "371594669",
             "reference": "Microsoft.Xbox.LiveTV_8wekyb3d8bbwe!Microsoft.Xbox.LiveTV.Application",
-            "oneStoreProductId": "Television",
+            "isGame": false,
+            "name": "Television",
             "contentType": "systemApp"
         },
         {
-            "name": "Settings TV",
+            "oneStoreProductId": "SettingsTv",
             "titleId": "2019308066",
             "reference": "Microsoft.Xbox.TvSettings_8wekyb3d8bbwe!Microsoft.Xbox.TvSettings.Application",
-            "oneStoreProductId": "SettingsTv",
+            "isGame": false,
+            "name": "Settings TV",
             "contentType": "Dashboard"
         },
         {
-            "name": "Accessory",
+            "oneStoreProductId": "Accessory",
             "titleId": "758407307",
             "reference": "Microsoft.XboxDevices_8wekyb3d8bbwe!App",
-            "oneStoreProductId": "Accessory",
+            "isGame": false,
+            "name": "Accessory",
             "contentType": "systemApp"
         },
         {
-            "name": "Network Troubleshooter",
+            "oneStoreProductId": "NetworkTroubleshooter",
             "titleId": "1614319806",
             "reference": "Xbox.NetworkTroubleshooter_8wekyb3d8bbwe!Xbox.NetworkTroubleshooter.Application",
-            "oneStoreProductId": "NetworkTroubleshooter",
+            "isGame": false,
+            "name": "Network Troubleshooter",
             "contentType": "systemApp"
         },
         {
-            "name": "Microsoft Store",
+            "oneStoreProductId": "MicrosoftStore",
             "titleId": "1864271209",
             "reference": "Microsoft.storify_8wekyb3d8bbwe!App",
-            "oneStoreProductId": "MicrosoftStore",
+            "isGame": false,
+            "name": "Microsoft Store",
             "contentType": "Dashboard"
         },
         {
-            "name": "Xbox Guide",
+            "oneStoreProductId": "XboxGuide",
             "titleId": "1052052983",
             "reference": "Xbox.Guide_8wekyb3d8bbwe!Xbox.Guide.Application",
-            "oneStoreProductId": "XboxGuide",
+            "isGame": false,
+            "name": "Xbox Guide",
             "contentType": "systemApp"
         }
     ],

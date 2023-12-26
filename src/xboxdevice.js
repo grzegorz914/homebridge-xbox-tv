@@ -166,11 +166,6 @@ class XboxDevice extends EventEmitter {
             });
 
             this.xboxWebApi.on('consoleStatus', (consoleStatusData, consoleType) => {
-                if (this.informationService) {
-                    this.informationService
-                        .setCharacteristic(Characteristic.Model, consoleType)
-                };
-
                 //this.serialNumber = id;
                 this.modelName = consoleType;
                 //this.power = powerState;
@@ -238,8 +233,8 @@ class XboxDevice extends EventEmitter {
                 try {
                     if (!this.disableLogDeviceInfo) {
                         this.emit('devInfo', `-------- ${this.name} --------'`);
-                        this.emit('devInfo', `Manufacturer: ${'Microsoft'}`);
-                        this.emit('devInfo', `Model: ${this.modelName ?? 'Model Name'}`);
+                        this.emit('devInfo', `Manufacturer: Microsoft`);
+                        this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
                         this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
                         this.emit('devInfo', `Firmware: ${firmwareRevision}`);
                         this.emit('devInfo', `Locale: ${locale}`);
@@ -248,7 +243,11 @@ class XboxDevice extends EventEmitter {
 
                     const data = await fsPromises.readFile(this.devInfoFile);
                     const savedInfo = data.length > 5 ? JSON.parse(data) : {};
-                    const infoHasNotchanged = firmwareRevision === savedInfo.firmwareRevision && locale === savedInfo.locale;
+                    const infoHasNotchanged =
+                        'Microsoft' === savedInfo.manufacturer
+                        && this.modelName === savedInfo.modelName
+                        && firmwareRevision === savedInfo.firmwareRevision
+                        && locale === savedInfo.locale;
 
                     if (infoHasNotchanged) {
                         return;
@@ -257,16 +256,16 @@ class XboxDevice extends EventEmitter {
                     if (this.informationService) {
                         this.informationService
                             .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
-                            .setCharacteristic(Characteristic.Model, this.modelName ?? 'Model Name')
+                            .setCharacteristic(Characteristic.Model, this.modelName ?? 'Xbox')
                             .setCharacteristic(Characteristic.SerialNumber, this.xboxLiveId)
-                            .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision ?? 'Firmware Revision');
+                            .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
                     };
 
                     const obj = {
                         manufacturer: 'Microsoft',
-                        modelName: data.modelName ?? 'Model Name',
+                        modelName: this.modelName,
                         serialNumber: this.xboxLiveId,
-                        firmwareRevision: firmwareRevision ?? 'Firmware Revision',
+                        firmwareRevision: firmwareRevision,
                         locale: locale
                     };
                     const devInfo = JSON.stringify(obj, null, 2);
@@ -357,6 +356,7 @@ class XboxDevice extends EventEmitter {
             })
             .on('prepareAccessory', async () => {
                 try {
+
                     //read dev info from file
                     try {
                         const data = await fsPromises.readFile(this.devInfoFile);
@@ -379,7 +379,7 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
                         this.savedInputsNames = data.length > 5 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
+                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `read saved Inputs/Channels Names error: ${error}`);
                     };
@@ -388,11 +388,12 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
                         this.savedInputsTargetVisibility = data.length > 5 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
+                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `read saved Inputs/Channels Target Visibility error: ${error}`);
                     };
 
+                    await new Promise(resolve => setTimeout(resolve, 2000));
                     const accessory = await this.prepareAccessory();
                     this.emit('publishAccessory', accessory)
                 } catch (error) {
@@ -428,8 +429,8 @@ class XboxDevice extends EventEmitter {
                 //Pinformation service
                 this.informationService = accessory.getService(Service.AccessoryInformation)
                     .setCharacteristic(Characteristic.Manufacturer, this.savedInfo.manufacturer ?? 'Microsoft')
-                    .setCharacteristic(Characteristic.Model, this.savedInfo.modelName ?? 'Model Name')
-                    .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? 'Serial Number')
+                    .setCharacteristic(Characteristic.Model, this.savedInfo.modelName ?? 'Xbox')
+                    .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? this.xboxLiveId)
                     .setCharacteristic(Characteristic.FirmwareRevision, this.savedInfo.firmwareRevision ?? 'Firmware Revision');
                 this.allServices.push(this.informationService);
 
@@ -470,29 +471,41 @@ class XboxDevice extends EventEmitter {
                         return state;
                     })
                     .onSet(async (state) => {
+                        if (this.power == state) {
+                            return;
+                        }
+
                         try {
+                            let channelName;
+                            let command;
+
                             switch (this.webApiPowerOnOff) {
                                 case true:
-                                    switch (state) {
-                                        case 0: //off
-                                            const powerOff = this.power ? await this.xboxWebApi.powerOff() : false;
+                                    switch (this.power) {
+                                        case true: //off
+                                            channelName = 'Power';
+                                            command = 'TurnOff';
                                             break;
-                                        case 1: //on
-                                            const powerOn = !this.power ? await this.xboxWebApi.powerOn() : false;
+                                        case false: //on
+                                            channelName = 'Power';
+                                            command = 'WakeUp';
                                             break;
                                     }
+
+                                    await this.xboxWebApi.send(channelName, command);
                                     break;
                                 case false:
-                                    switch (state) {
-                                        case 0: //off
-                                            const powerOff = this.power ? await this.xboxLocalApi.powerOff() : false;
+                                    switch (this.power) {
+                                        case true: //off
+                                            await this.xboxLocalApi.powerOff();
                                             break;
-                                        case 1: //on
-                                            const powerOn = !this.power ? await this.xboxLocalApi.powerOn() : false;
+                                        case false: //on
+                                            await this.xboxLocalApi.powerOn();
                                             break;
                                     }
                             }
-                            const logInfo = this.disableLogInfo || (state === this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+
+                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power, error: ${error}`);
                         };
@@ -501,18 +514,21 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const inputName = this.inputsName[inputIdentifier];
-                        const inputReference = this.inputsReference[inputIdentifier];
                         const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+                        const inputReference = this.inputsReference[inputIdentifier];
+                        const inputName = this.inputsName[inputIdentifier];
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const inputName = this.inputsName[inputIdentifier];
-                            const inputReference = this.inputsReference[inputIdentifier];
                             const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
+                            const inputReference = this.inputsReference[inputIdentifier];
+                            const inputName = this.inputsName[inputIdentifier];
 
+                            let channelName;
+                            let command;
+                            let payload;
                             switch (this.power) {
                                 case false:
                                     await new Promise(resolve => setTimeout(resolve, 3000));
@@ -521,18 +537,26 @@ class XboxDevice extends EventEmitter {
                                 case true:
                                     switch (inputOneStoreProductId) {
                                         case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                            await this.xboxWebApi.goHome();
+                                            channelName = 'Shell';
+                                            command = 'GoHome';
                                             break;
                                         case 'Television':
-                                            await this.xboxWebApi.showTVGuide();
+                                            channelName = 'TV';
+                                            command = 'ShowGuide';
                                             break;
                                         case 'XboxGuide':
-                                            await this.xboxWebApi.showGuideTab();
+                                            channelName = 'Shell';
+                                            command = 'ShowGuideTab';
+                                            payload = [{ 'tabName': 'Guide' }];
                                             break;
                                         default:
-                                            await this.xboxWebApi.launchApp(inputOneStoreProductId);
+                                            channelName = 'Shell';
+                                            command = 'ActivateApplicationWithOneStoreProductId';
+                                            payload = [{ 'oneStoreProductId': inputOneStoreProductId }];
                                             break;
                                     }
+
+                                    await this.xboxWebApi.send(channelName, command, payload);
                                     const logInfo = this.disableLogInfo ? false : this.emit('message', `set Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                                     break;
                             }
@@ -544,64 +568,65 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                     .onSet(async (remoteKey) => {
                         try {
-                            let command;
                             let channelName;
+                            let command;
+
                             switch (remoteKey) {
                                 case 0: //REWIND
+                                    channelName = 'Shell';
                                     command = 'rewind';
-                                    channelName = 'Media';
                                     break;
                                 case 1: //FAST_FORWARD
+                                    channelName = 'Shell';
                                     command = 'fastForward';
-                                    channelName = 'Media';
                                     break;
                                 case 2: //NEXT_TRACK
+                                    channelName = 'Shell';
                                     command = 'nextTrack';
-                                    channelName = 'Media';
                                     break;
                                 case 3: //PREVIOUS_TRACK
+                                    channelName = 'Shell';
                                     command = 'previousTrack';
-                                    channelName = 'Media';
                                     break;
                                 case 4: //ARROW_UP
+                                    channelName = 'Shell';
                                     command = 'up';
-                                    channelName = 'Input';
                                     break;
                                 case 5: //ARROW_DOWN
+                                    channelName = 'Shell';
                                     command = 'down';
-                                    channelName = 1;
                                     break;
                                 case 6: //ARROW_LEFT
+                                    channelName = 'Shell';
                                     command = 'left';
-                                    channelName = 'Input';
                                     break;
                                 case 7: //ARROW_RIGHT
+                                    channelName = 'Shell';
                                     command = 'right';
-                                    channelName = 'Input';
                                     break;
                                 case 8: //SELECT
+                                    channelName = 'Shell';
                                     command = 'a';
-                                    channelName = 'Input';
                                     break;
                                 case 9: //BACK
+                                    channelName = 'Shell';
                                     command = 'b';
-                                    channelName = 'Input';
                                     break;
                                 case 10: //EXIT
+                                    channelName = 'Shell';
                                     command = 'nexus';
-                                    channelName = 'Input';
                                     break;
                                 case 11: //PLAY_PAUSE
+                                    channelName = 'Shell';
                                     command = 'playPause';
-                                    channelName = 'Media';
                                     break;
                                 case 15: //INFORMATION
+                                    channelName = 'Shell';
                                     command = this.infoButtonCommand;
-                                    channelName = 'Input';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
+                            await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
@@ -637,20 +662,20 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
                     .onSet(async (powerModeSelection) => {
                         try {
-                            let command;
                             let channelName;
+                            let command;
                             switch (powerModeSelection) {
                                 case 0: //SHOW
+                                    channelName = 'Shell';
                                     command = 'nexus';
-                                    channelName = 'Input';
                                     break;
                                 case 1: //HIDE
+                                    channelName = 'Shell';
                                     command = 'b';
-                                    channelName = 'Input';
                                     break;
                             };
 
-                            const sendRcCommand = this.webApiRcControl ? await this.xboxWebApi.sendButtonPress(command) : await this.xboxLocalApi.sendButtonPress(channelName, command);
+                            await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
@@ -680,34 +705,20 @@ class XboxDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
                     .onSet(async (volumeSelector) => {
                         try {
-                            let command;
                             let channelName;
-                            switch (this.webApiVolumeControl) {
-                                case true:
-                                    switch (volumeSelector) {
-                                        case 0: //volUp
-                                            const volDown = this.power ? await this.xboxWebApi.volumeUp() : false;
-                                            break;
-                                        case 1: //volDown
-                                            const volUp = this.power ? await this.xboxWebApi.volumeDown() : false;
-                                            break;
-                                    }
+                            let command;
+                            switch (volumeSelector) {
+                                case 0: //Up
+                                    channelName = 'Volume';
+                                    command = 'Up';
                                     break;
-                                case false:
-                                    switch (volumeSelector) {
-                                        case 0: //volUp
-                                            command = 'volUp';
-                                            channelName = 'Media';
-                                            break;
-                                        case 1: //volDown
-                                            command = 'volDown';
-                                            channelName = 'Media';
-                                            break;
-                                    };
-
-                                    await this.xboxLocalApi.sendButtonPress(channelName, command)
+                                case 1: //Down
+                                    channelName = 'Volume';
+                                    command = 'Down';
                                     break;
                             }
+
+                            await this.xboxWebApi.send(channelName, command);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector error: ${error}`);
@@ -735,22 +746,20 @@ class XboxDevice extends EventEmitter {
                     })
                     .onSet(async (state) => {
                         try {
-                            switch (this.webApiVolumeControl) {
-                                case true:
-                                    switch (state) {
-                                        case true: //mute
-                                            const mute = this.power ? await this.xboxWebApi.mute() : false;
-                                            break;
-                                        case false: //unmute
-                                            const unmute = this.power ? await this.xboxWebApi.unmute() : false;
-                                            break;
-                                    }
+                            let channelName;
+                            let command;
+                            switch (volumeSelector) {
+                                case 0: //Mute
+                                    channelName = 'Audio';
+                                    command = 'Mute';
                                     break;
-                                case false:
-                                    const channelName = 'Media';
-                                    const toggleMute = this.power ? await this.xboxLocalApi.sendButtonPress(channelName, 'volMute') : false;
+                                case 1: //Unmute
+                                    channelName = 'Audio';
+                                    command = 'Unmute';
                                     break;
                             }
+
+                            await this.xboxWebApi.send(channelName, command);
                             const logInfo = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Mute error: ${error}`);
@@ -761,8 +770,7 @@ class XboxDevice extends EventEmitter {
                 accessory.addService(this.speakerService);
 
                 //Prepare inputs services
-                const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare input service`);
-
+                const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
                 //check possible inputs and filter custom unnecessary inputs
                 const filteredInputsArr = [];
                 for (const input of this.savedInputs) {
@@ -783,11 +791,11 @@ class XboxDevice extends EventEmitter {
                     //get input 
                     const input = inputs[i];
 
-                    //get input reference
-                    const inputReference = input.reference || input.titleId || input.oneStoreProductId;
-
                     //get input oneStoreProductId
                     const inputOneStoreProductId = input.oneStoreProductId;
+
+                    //get input reference
+                    const inputReference = input.reference || input.titleId || input.oneStoreProductId;
 
                     //get input name
                     const inputName = this.savedInputsNames[inputReference] ?? input.name;
@@ -803,7 +811,7 @@ class XboxDevice extends EventEmitter {
                     const targetVisibility = currentVisibility;
 
                     if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(inputName, `Input ${i}`);
+                        const inputService = new Service.InputSource(`${inputName} ${i}`, `Input ${i}`);
                         inputService
                             .setCharacteristic(Characteristic.Identifier, i)
                             .setCharacteristic(Characteristic.Name, inputName)
@@ -812,14 +820,23 @@ class XboxDevice extends EventEmitter {
                             .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
                         inputService.getCharacteristic(Characteristic.ConfiguredName)
+                            .onGet(async () => {
+                                return inputName;
+                            })
                             .onSet(async (value) => {
+                                const valueExist = value === this.savedInputsNames[inputReference];
+                                if (valueExist) {
+                                    return;
+                                }
+
                                 try {
                                     this.savedInputsNames[inputReference] = value;
                                     const newCustomName = JSON.stringify(this.savedInputsNames, null, 2);
 
                                     await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
-                                    inputService.setCharacteristic(Characteristic.Name, value);
+                                    inputService.updateCharacteristic(Characteristic.Name, value);
+                                    inputService.updateCharacteristic(Characteristic.ConfiguredName, value);
                                 } catch (error) {
                                     this.emit('error', `save Input Name error: ${error}`);
                                 }
@@ -831,21 +848,26 @@ class XboxDevice extends EventEmitter {
                                 return targetVisibility;
                             })
                             .onSet(async (state) => {
-                                try {
-                                    const targetVisibilityIdentifier = inputReference || inputOneStoreProductId;
-                                    this.savedInputsTargetVisibility[this.targetVisibilityIdentifier] = state;
+                                const stateExist = state === this.savedInputsTargetVisibility[inputReference];
+                                if (stateExist) {
+                                    return;
+                                };
 
+                                try {
+                                    this.savedInputsTargetVisibility[inputReference] = state;
                                     const newTargetVisibility = JSON.stringify(this.savedInputsTargetVisibility, null, 2);
+
                                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
-                                    inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
+                                    inputService.updateCharacteristic(Characteristic.CurrentVisibilityState, state);
+                                    inputService.updateCharacteristic(Characteristic.TargetVisibilityState, state);
                                 } catch (error) {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
                             });
 
-                        this.inputsReference.push(inputReference);
                         this.inputsOneStoreProductId.push(inputOneStoreProductId);
+                        this.inputsReference.push(inputReference);
                         this.inputsName.push(inputName);
 
                         this.televisionService.addLinkedService(inputService);
@@ -1057,36 +1079,53 @@ class XboxDevice extends EventEmitter {
                                     .onSet(async (state) => {
                                         if (state) {
                                             try {
+                                                let channelName;
+                                                let command;
+                                                let payload;
+
                                                 switch (buttonMode) {
                                                     case 0: case 1: case 2:
-                                                        await this.xboxWebApi.sendButtonPress(buttonCommand);
+                                                        channelName = 'Shell';
+                                                        command = 'InjectKey';
+                                                        payload = [{ 'keyType': buttonCommand }];
                                                         break;
                                                     case 3:
+                                                        channelName = 'TV';
+                                                        command = 'ShowGuide';
                                                         await this.xboxLocalApi.recordGameDvr();
                                                         break;
                                                     case 4:
-                                                        await this.xboxWebApi.reboot();
+                                                        channelName = 'Power';
+                                                        command = 'Reboot';
                                                         break;
                                                     case 5:
                                                         switch (buttonOneStoreProductId) {
                                                             case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                                await this.xboxWebApi.goGome();
+                                                                channelName = 'Shell';
+                                                                command = 'GoHome';
                                                                 break;
                                                             case 'Television':
-                                                                await this.xboxWebApi.showTVGuide();
+                                                                channelName = 'TV';
+                                                                command = 'ShowGuide';
                                                                 break;
                                                             case 'XboxGuide':
-                                                                await this.xboxWebApi.showGuideTab();
+                                                                channelName = 'Shell';
+                                                                command = 'ShowGuideTab';
+                                                                payload = [{ 'tabName': 'Guide' }];
                                                                 break;
                                                             case 'Not set': case 'Web api disabled':
                                                                 this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
                                                                 break;
                                                             default:
-                                                                await this.xboxWebApi.launchApp(buttonOneStoreProductId);
+                                                                channelName = 'Shell';
+                                                                command = 'ActivateApplicationWithOneStoreProductId';
+                                                                payload = [{ 'oneStoreProductId': buttonOneStoreProductId }];
                                                                 break;
                                                         }
                                                         break;
                                                 }
+
+                                                const send = buttonMode !== 3 ? await this.xboxWebApi.send(channelName, command, payload) : false;
                                                 const logInfo = this.disableLogInfo ? false : this.emit('message', `set Button Name:  ${buttonName}, Command: ${buttonCommand}`);
                                             } catch (error) {
                                                 this.emit('error', `set Button error: ${error}`);
