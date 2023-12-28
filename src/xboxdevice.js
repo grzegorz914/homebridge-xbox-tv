@@ -437,32 +437,8 @@ class XboxDevice extends EventEmitter {
                 //Prepare television service
                 const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
                 this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
-                this.televisionService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onGet(async () => {
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Accessory Nane: ${accessoryName}.`);
-                        return accessoryName;
-                    })
-                    .onSet(async (value) => {
-                        try {
-                            this.name = value;
-                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Accessory Name: ${value}`);
-                        } catch (error) {
-                            this.emit('error', `set Accessory Name error: ${error}`);
-                        };
-                    });
-                this.televisionService.getCharacteristic(Characteristic.SleepDiscoveryMode)
-                    .onGet(async () => {
-                        const state = 1;
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                        try {
-                            const logInfo = this.disableLogInfo ? false : this.emit('message', `set Discovery Mode: ${state ? 'Always Discoverable' : 'Not Discoverable'}`);
-                        } catch (error) {
-                            this.emit('error', `set Discovery Mode error: ${error}`);
-                        };
-                    });
+                this.televisionService.getCharacteristic(Characteristic.ConfiguredName, accessoryName)
+                    .setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
 
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
@@ -787,6 +763,7 @@ class XboxDevice extends EventEmitter {
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 90 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
+                inputs.sort((a, b) => a.name.localeCompare(b.name));
                 for (let i = 0; i < maxInputsCount; i++) {
                     //get input 
                     const input = inputs[i];
@@ -798,7 +775,8 @@ class XboxDevice extends EventEmitter {
                     const inputReference = input.reference || input.titleId || input.oneStoreProductId;
 
                     //get input name
-                    const inputName = this.savedInputsNames[inputReference] ?? input.name;
+                    const name = input.name ?? 'App/Input';
+                    const inputName = this.savedInputsNames[inputReference] ?? name;
 
                     //get input type
                     const inputType = 0;
