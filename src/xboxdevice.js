@@ -8,7 +8,7 @@ const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
 const CONSTANTS = require('./constans.json');
 
-let Accessory, Characteristic, Service, Categories, UUID;
+let Accessory, Characteristic, Service, Categories, Encode, UUID;
 
 class XboxDevice extends EventEmitter {
     constructor(api, prefDir, config) {
@@ -18,6 +18,7 @@ class XboxDevice extends EventEmitter {
         Characteristic = api.hap.Characteristic;
         Service = api.hap.Service;
         Categories = api.hap.Categories;
+        Encode = api.hap.encode;
         UUID = api.hap.uuid;
 
         //device configuration
@@ -61,6 +62,7 @@ class XboxDevice extends EventEmitter {
 
         //add configured inputs to the default inputs
         this.inputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
+        this.displayOrder = []
 
         //setup variables
         this.restFulConnected = false;
@@ -396,6 +398,10 @@ class XboxDevice extends EventEmitter {
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     const accessory = await this.prepareAccessory();
                     this.emit('publishAccessory', accessory)
+
+                    if (this.televisionService) {
+                        this.televisionService.updateCharacteristic(Characteristic.DisplayOrder, Encode(1, this.displayOrder).toString('base64'));
+                    }
                 } catch (error) {
                     this.emit('error', `prepare accessory error: ${error}`);
                 };
@@ -844,6 +850,7 @@ class XboxDevice extends EventEmitter {
                                 }
                             });
 
+                        this.displayOrder.push(i + 1);
                         this.inputsOneStoreProductId.push(inputOneStoreProductId);
                         this.inputsReference.push(inputReference);
                         this.inputsName.push(inputName);
