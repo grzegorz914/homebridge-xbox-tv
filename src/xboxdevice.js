@@ -437,7 +437,7 @@ class XboxDevice extends EventEmitter {
                 //Prepare television service
                 const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
                 this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
-                this.televisionService.getCharacteristic(Characteristic.ConfiguredName, accessoryName)
+                this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName)
                     .setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
 
                 this.televisionService.getCharacteristic(Characteristic.Active)
