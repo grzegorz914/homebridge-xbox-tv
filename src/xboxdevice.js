@@ -282,10 +282,9 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Active, power)
                 };
 
-                if (this.televisionService && inputIdentifier !== 0) {
+                if (this.televisionService && inputIdentifier > 0) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-                    this.inputIdentifier = inputIdentifier;
                 };
 
                 if (this.speakerService) {
@@ -309,12 +308,11 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, power)
                 }
 
-                if (this.sensorInputService && inputIdentifier !== 0) {
+                if (this.sensorInputService && inputIdentifier > 0) {
                     const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                     this.sensorInputState = state;
-                    this.inputIdentifier = inputIdentifier;
                 }
 
                 if (this.sensorScreenSaverService) {
@@ -324,22 +322,25 @@ class XboxDevice extends EventEmitter {
                     this.sensorScreenSaverState = state;
                 }
 
-                if (this.sensorInputsServices) {
-                    const servicesCount = this.sensorInputsServices.length;
-                    for (let i = 0; i < servicesCount; i++) {
-                        const state = power ? (this.sensorInputs[i].reference === reference) : false;
-                        const displayType = this.sensorInputs[i].displayType;
-                        const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-                        this.sensorInputsServices[i]
-                            .updateCharacteristic(characteristicType, state);
+                if (reference !== undefined) {
+                    this.reference = reference;
+                    if (this.sensorInputsServices) {
+                        const servicesCount = this.sensorInputsServices.length;
+                        for (let i = 0; i < servicesCount; i++) {
+                            const state = power ? (this.sensorInputs[i].reference === reference) : false;
+                            const displayType = this.sensorInputs[i].displayType;
+                            const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+                            this.sensorInputsServices[i]
+                                .updateCharacteristic(characteristicType, state);
+                        }
                     }
                 }
 
+                this.inputIdentifier = inputIdentifier > 0 ? inputIdentifier : this.inputIdentifier;
                 this.power = power;
                 this.volume = volume;
                 this.mute = mute;
                 this.mediaState = mediaState;
-                this.reference = reference;
 
                 const obj = {
                     'power': power,
@@ -500,9 +501,10 @@ class XboxDevice extends EventEmitter {
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const inputOneStoreProductId = this.inputsConfigured[inputIdentifier].oneStoreProductId;
-                            const inputReference = this.inputsConfigured[inputIdentifier].reference;
-                            const inputName = this.inputsConfigured[inputIdentifier].name;
+                            const identifier = inputIdentifier - 1;
+                            const inputOneStoreProductId = this.inputsConfigured[identifier].oneStoreProductId;
+                            const inputReference = this.inputsConfigured[identifier].reference;
+                            const inputName = this.inputsConfigured[identifier].name;
 
                             let channelName;
                             let command;
