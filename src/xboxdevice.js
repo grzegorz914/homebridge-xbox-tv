@@ -274,7 +274,8 @@ class XboxDevice extends EventEmitter {
                 }
             })
             .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                const inputIdentifier = this.inputsConfigured.findIndex(index => index.reference === reference) + 1 ?? this.inputsConfigured.findIndex(index => index.titleId === titleId) + 1;
+                const inputIdentifierR = this.inputsConfigured.findIndex(index => index.reference === reference) + 1 ?? 0;
+                const inputIdentifier = inputIdentifierR > 0 ? inputIdentifierR : this.inputsConfigured.findIndex(index => index.titleId === titleId) + 1;
 
                 //update characteristics
                 if (this.televisionService) {
@@ -315,15 +316,16 @@ class XboxDevice extends EventEmitter {
                     this.sensorInputState = state;
                 }
 
-                if (this.sensorScreenSaverService) {
-                    const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                    this.sensorScreenSaverService
-                        .updateCharacteristic(Characteristic.ContactSensorState, state)
-                    this.sensorScreenSaverState = state;
-                }
-
                 if (reference !== undefined) {
                     this.reference = reference;
+
+                    if (this.sensorScreenSaverService) {
+                        const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
+                        this.sensorScreenSaverService
+                            .updateCharacteristic(Characteristic.ContactSensorState, state)
+                        this.sensorScreenSaverState = state;
+                    }
+
                     if (this.sensorInputsServices) {
                         const servicesCount = this.sensorInputsServices.length;
                         for (let i = 0; i < servicesCount; i++) {
