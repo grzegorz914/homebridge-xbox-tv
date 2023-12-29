@@ -62,20 +62,16 @@ class XboxDevice extends EventEmitter {
 
         //add configured inputs to the default inputs
         this.inputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
-        this.displayOrder = []
+        this.inputsConfigured = [];
+        this.displayOrder = [];
 
         //setup variables
         this.restFulConnected = false;
         this.mqttConnected = false;
 
         this.allServices = [];
-        this.inputsName = [];
-        this.inputsReference = [];
-        this.inputsOneStoreProductId = [];
-
         this.sensorInputsServices = [];
-        this.sensorInputsReference = [];
-        this.sensorInputsDisplayType = [];
+        this.sensorInputs = [];
         this.buttonsServices = [];
 
         this.power = false;
@@ -278,7 +274,7 @@ class XboxDevice extends EventEmitter {
                 }
             })
             .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputsReference.includes(titleId) ? this.inputsReference.findIndex(index => index === titleId) : undefined;
+                const inputIdentifier = this.inputsConfigured.findIndex(index => index.reference === reference) + 1 ?? this.inputsConfigured.findIndex(index => index.titleId === titleId) + 1;
 
                 //update characteristics
                 if (this.televisionService) {
@@ -286,7 +282,7 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Active, power)
                 };
 
-                if (this.televisionService && inputIdentifier !== undefined) {
+                if (this.televisionService && inputIdentifier !== 0) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
                     this.inputIdentifier = inputIdentifier;
@@ -313,7 +309,7 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, power)
                 }
 
-                if (this.sensorInputService && inputIdentifier !== undefined) {
+                if (this.sensorInputService && inputIdentifier !== 0) {
                     const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
@@ -331,8 +327,8 @@ class XboxDevice extends EventEmitter {
                 if (this.sensorInputsServices) {
                     const servicesCount = this.sensorInputsServices.length;
                     for (let i = 0; i < servicesCount; i++) {
-                        const state = power ? (this.sensorInputsReference[i] === reference) : false;
-                        const displayType = this.sensorInputsDisplayType[i];
+                        const state = power ? (this.sensorInputs[i].reference === reference) : false;
+                        const displayType = this.sensorInputs[i].displayType;
                         const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
                         this.sensorInputsServices[i]
                             .updateCharacteristic(characteristicType, state);
@@ -496,17 +492,17 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-                        const inputReference = this.inputsReference[inputIdentifier];
-                        const inputName = this.inputsName[inputIdentifier];
+                        const inputOneStoreProductId = this.inputsConfigured[inputIdentifier].oneStoreProductId;
+                        const inputReference = this.inputsConfigured[inputIdentifier].reference;
+                        const inputName = this.inputsConfigured[inputIdentifier].name;
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const inputOneStoreProductId = this.inputsOneStoreProductId[inputIdentifier];
-                            const inputReference = this.inputsReference[inputIdentifier];
-                            const inputName = this.inputsName[inputIdentifier];
+                            const inputOneStoreProductId = this.inputsConfigured[inputIdentifier].oneStoreProductId;
+                            const inputReference = this.inputsConfigured[inputIdentifier].reference;
+                            const inputName = this.inputsConfigured[inputIdentifier].name;
 
                             let channelName;
                             let command;
@@ -765,7 +761,19 @@ class XboxDevice extends EventEmitter {
                 }
 
                 //check possible inputs and possible inputs count (max 80)
-                const inputs = filteredInputsArr;
+                let inputs = filteredInputsArr;
+                switch (this.inputsDisplayOrder) {
+                    case 0:
+                        inputs = inputs
+                        break;
+                    case 1:
+                        inputs.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 2:
+                        inputs.sort((a, b) => a.reference.localeCompare(b.reference));
+                        break;
+                }
+
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 90 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
@@ -797,7 +805,7 @@ class XboxDevice extends EventEmitter {
                     if (inputReference && inputName) {
                         const inputService = new Service.InputSource(`${inputName} ${i}`, `Input ${i}`);
                         inputService
-                            .setCharacteristic(Characteristic.Identifier, i)
+                            .setCharacteristic(Characteristic.Identifier, i + 1)
                             .setCharacteristic(Characteristic.Name, inputName)
                             .setCharacteristic(Characteristic.InputSourceType, inputType)
                             .setCharacteristic(Characteristic.IsConfigured, isConfigured)
@@ -808,7 +816,7 @@ class XboxDevice extends EventEmitter {
                                 return inputName;
                             })
                             .onSet(async (value) => {
-                                const valueExist = value === this.savedInputsNames[inputReference];
+                                const valueExist = inputName;
                                 if (valueExist) {
                                     return;
                                 }
@@ -832,7 +840,7 @@ class XboxDevice extends EventEmitter {
                                 return targetVisibility;
                             })
                             .onSet(async (state) => {
-                                const stateExist = state === this.savedInputsTargetVisibility[inputReference];
+                                const stateExist = state === currentVisibility;
                                 if (stateExist) {
                                     return;
                                 };
@@ -851,9 +859,7 @@ class XboxDevice extends EventEmitter {
                             });
 
                         this.displayOrder.push(i + 1);
-                        this.inputsOneStoreProductId.push(inputOneStoreProductId);
-                        this.inputsReference.push(inputReference);
-                        this.inputsName.push(inputName);
+                        this.inputsConfigured.push(input);
 
                         this.televisionService.addLinkedService(inputService);
                         this.allServices.push(inputService);
@@ -863,6 +869,7 @@ class XboxDevice extends EventEmitter {
 
                     };
                 }
+                this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, this.displayOrder).toString('base64'));
 
                 //Prepare volume service
                 if (this.volumeControl >= 0) {
@@ -997,8 +1004,7 @@ class XboxDevice extends EventEmitter {
                                         return state;
                                     });
 
-                                this.sensorInputsReference.push(sensorInputReference);
-                                this.sensorInputsDisplayType.push(sensorInputDisplayType);
+                                this.sensorInputs.push(sensorInput);
                                 this.sensorInputsServices.push(sensorInputService);
                                 this.allServices.push(sensorInputService);
                                 accessory.addService(this.sensorInputsServices[i]);

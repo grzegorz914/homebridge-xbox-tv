@@ -27,6 +27,7 @@
 					"filterApps": false,
 					"filterSystemApps": false,
 					"filterDlc": false,
+					"inputsDisplayOrder": 0,
 					"inputs": [
 						{
 							"name": "A Way Out",

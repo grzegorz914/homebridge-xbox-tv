@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.11.0] - (29.12.2023)
+## Changes
+- added possibility to select display inputs order, possible by `None`, `Alphabetically Name`, `Alphabetically Reference`
+- config schema updated
+- cleanup
+
 ## [2.10.0] - (26.12.2023)
 ## After update to this version the plugin properties are changed and console must be authorized and settings need to be corrected.
 ## Changes
