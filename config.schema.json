@@ -84,31 +84,43 @@
 							"title": "Inputs Display Order",
 							"type": "integer",
 							"minimum": 0,
-							"maximum": 2,
+							"maximum": 4,
 							"default": 0,
 							"description": "Here select display order of the inputs list.",
 							"oneOf": [
-							  {
-								"title": "None",
-								"enum": [
-								  0
-								]
-							  },
-							  {
-								"title": "Alphabetically Name",
-								"enum": [
-								  1
-								]
-							  },
-							  {
-								"title": "Alphabetically Reference",
-								"enum": [
-								  2
-								]
-							  }
+								{
+									"title": "None",
+									"enum": [
+										0
+									]
+								},
+								{
+									"title": "Ascending by Name",
+									"enum": [
+										1
+									]
+								},
+								{
+									"title": "Descending by Name",
+									"enum": [
+										2
+									]
+								},
+								{
+									"title": "Ascending by Reference",
+									"enum": [
+										3
+									]
+								},
+								{
+									"title": "Descending by Reference",
+									"enum": [
+										4
+									]
+								}
 							],
 							"required": true
-						  },
+						},
 						"inputs": {
 							"type": "array",
 							"items": {
@@ -749,9 +761,9 @@
 							"required": false,
 							"description": "Here optional set the Client ID of MQTT Broker.",
 							"condition": {
-							  "functionBody": "return model.devices[arrayIndices].enableMqtt === true"
+								"functionBody": "return model.devices[arrayIndices].enableMqtt === true"
 							}
-						  },
+						},
 						"mqttAuth": {
 							"title": "Authorization",
 							"type": "boolean",
