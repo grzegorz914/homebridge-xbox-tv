@@ -441,6 +441,13 @@
 										],
 										"description": "Here select display type in HomeKit app.",
 										"required": true
+									},
+									"namePrefix": {
+										"title": "Prefix",
+										"type": "boolean",
+										"default": false,
+										"description": "Here enable/disable the accessory name as a prefix for button name.",
+										"required": true
 									}
 								}
 							}
@@ -517,6 +524,13 @@
 											}
 										],
 										"description": "Here select sensor type to be exposed in HomeKit app.",
+										"required": true
+									},
+									"namePrefix": {
+										"title": "Prefix",
+										"type": "boolean",
+										"default": false,
+										"description": "Here enable/disable the accessory name as a prefix for sensor name.",
 										"required": true
 									}
 								}
@@ -803,7 +817,7 @@
 		{
 			"key": "devices",
 			"type": "tabarray",
-			"title": "{{ value.name || 'new device' }}",
+			"title": "{{ value.name || 'device' }}",
 			"items": [
 				"devices[].name",
 				"devices[].host",
@@ -824,7 +838,7 @@
 						{
 							"key": "devices[].inputs",
 							"type": "tabarray",
-							"title": "{{ value.name || 'new input' }}",
+							"title": "{{ value.name || 'input' }}",
 							"items": [
 								"devices[].inputs[].name",
 								"devices[].inputs[].reference",
@@ -847,12 +861,13 @@
 						{
 							"key": "devices[].buttons",
 							"type": "tabarray",
-							"title": "{{ value.name || 'new button' }}",
+							"title": "{{ value.name || 'button' }}",
 							"items": [
 								"devices[].buttons[].name",
 								"devices[].buttons[].command",
 								"devices[].buttons[].oneStoreProductId",
-								"devices[].buttons[].displayType"
+								"devices[].buttons[].displayType",
+								"devices[].buttons[].namePrefix"
 							]
 						}
 					]
@@ -886,11 +901,12 @@
 												{
 													"key": "devices[].sensorInputs",
 													"type": "tabarray",
-													"title": "{{ value.name || 'new sensor' }}",
+													"title": "{{ value.name || 'sensor' }}",
 													"items": [
 														"devices[].sensorInputs[].name",
 														"devices[].sensorInputs[].reference",
-														"devices[].sensorInputs[].displayType"
+														"devices[].sensorInputs[].displayType",
+														"devices[].sensorInputs[].namePrefix"
 													]
 												}
 											]
