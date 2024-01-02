@@ -766,10 +766,10 @@ class XboxDevice extends EventEmitter {
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 85 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
-                let inputIdentifier = 0;
                 for (let i = 0; i < maxInputsCount; i++) {
                     //input
                     const input = inputs[i];
+                    input.identifier = i + 1;
 
                     //get input reference
                     const inputReference = input.reference || input.titleId || input.oneStoreProductId;
@@ -778,13 +778,12 @@ class XboxDevice extends EventEmitter {
                     const name = input.name ?? 'App/Input';
                     const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
                     const inputName = !savedInputsNames ? name : savedInputsNames;
+                    input.name = inputName;
 
                     //get visibility
                     const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-
-                    input.identifier = inputIdentifier++;
-                    input.name = inputName;
                     input.visibility = currentVisibility;
+
                     this.inputsConfigured.push(input);
                 }
 
