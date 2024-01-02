@@ -77,7 +77,7 @@ class XboxDevice extends EventEmitter {
         this.volume = 0;
         this.mute = true;
         this.mediaState = 0;
-        this.inputIdentifier = 0;
+        this.inputIdentifier = 1;
         this.reference = '';
 
         this.sensorScreenSaverState = false;
@@ -274,7 +274,7 @@ class XboxDevice extends EventEmitter {
             })
             .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
                 const indexR = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
-                const indexT = this.inputsConfigured.findIndex(input => input.reference === titleId) ?? this.inputIdentifier;
+                const indexT = this.inputsConfigured.findIndex(input => input.titleId === titleId) ?? this.inputIdentifier;
                 const inputIdentifier = indexR !== -1 ? indexR : indexT;
 
                 //update characteristics
