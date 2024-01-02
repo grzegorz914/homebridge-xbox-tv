@@ -491,15 +491,16 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const inputOneStoreProductId = this.inputsConfigured[inputIdentifier].oneStoreProductId;
-                        const inputReference = this.inputsConfigured[inputIdentifier].reference;
-                        const inputName = this.inputsConfigured[inputIdentifier].name;
+                        const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier);
+                        const inputOneStoreProductId = this.inputsConfigured[index].oneStoreProductId;
+                        const inputReference = this.inputsConfigured[index].reference;
+                        const inputName = this.inputsConfigured[index].name;
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
-                    .onSet(async (inputIdentifier) => {
+                    .onSet(async (activeIdentifier) => {
                         try {
-                            const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier) ?? this.inputIdentifier;
+                            const index = this.inputsConfigured.findIndex(input => input.identifier === activeIdentifier);
                             const inputOneStoreProductId = this.inputsConfigured[index].oneStoreProductId;
                             const inputReference = this.inputsConfigured[index].reference;
                             const inputName = this.inputsConfigured[index].name;
@@ -509,8 +510,8 @@ class XboxDevice extends EventEmitter {
                             let payload;
                             switch (this.power) {
                                 case false:
-                                    await new Promise(resolve => setTimeout(resolve, 3000));
-                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                                    await new Promise(resolve => setTimeout(resolve, 4000));
+                                    const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
                                     break;
                                 case true:
                                     switch (inputOneStoreProductId) {
@@ -840,7 +841,7 @@ class XboxDevice extends EventEmitter {
                                 return inputName;
                             })
                             .onSet(async (value) => {
-                                if (value === this.savedInputsNames[inputReference]) {
+                                if (value === inputName) {
                                     return;
                                 }
 
@@ -859,7 +860,7 @@ class XboxDevice extends EventEmitter {
                                 return targetVisibility;
                             })
                             .onSet(async (state) => {
-                                if (state === this.savedInputsTargetVisibility[inputReference]) {
+                                if (state === targetVisibility) {
                                     return;
                                 }
 
