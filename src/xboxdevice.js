@@ -273,9 +273,8 @@ class XboxDevice extends EventEmitter {
                 }
             })
             .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                const indexR = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
-                const indexT = this.inputsConfigured.findIndex(input => input.titleId === titleId) ?? this.inputIdentifier;
-                const inputIdentifier = indexR !== -1 ? indexR : indexT;
+                const index = this.inputsConfigured.findIndex(input => input.reference === reference || input.titleId === titleId) ?? -1;
+                const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
 
                 //update characteristics
                 if (this.televisionService) {
@@ -770,28 +769,40 @@ class XboxDevice extends EventEmitter {
                 for (let i = 0; i < maxInputsCount; i++) {
                     //input
                     const input = inputs[i];
-                    input.identifier = i + 1;
 
                     //get input reference
-                    const inputReference = input.reference || input.titleId || input.oneStoreProductId;
+                    const inputReference = input.reference || input.titleId;
+                    input.reference = inputReference;
 
                     //get input name
-                    const name = input.name ?? 'App/Input';
+                    const name = input.name ?? `Input ${i + 1}`;
                     const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
                     const inputName = !savedInputsNames ? name : savedInputsNames;
                     input.name = inputName;
 
                     //get visibility
                     const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-                    input.visibility = currentVisibility;
 
-                    this.inputsConfigured.push(input);
+                    //add properties to input
+                    input.visibility = currentVisibility;
+                    input.identifier = i + 1;
+
+                    if (inputReference && inputName) {
+                        this.inputsConfigured.push(input);
+                    } else {
+                        this.emit('message', `Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
+                    };
+                }
+
+                if (this.inputsConfigured.length === 0) {
+                    this.emit('message', `No any inputs are configured, check your config and settings.`);
+                    return;
                 }
 
                 //sort inputs list
                 switch (this.inputsDisplayOrder) {
                     case 0:
-                        this.inputsConfigured = this.inputsConfigured;
+                        this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
                         break;
                     case 1:
                         this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
@@ -806,6 +817,7 @@ class XboxDevice extends EventEmitter {
                         this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
                         break;
                 }
+                const debug4 = this.enableDebugMode ? this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`) : false;
 
                 for (const input of this.inputsConfigured) {
                     //get identifier
@@ -818,69 +830,64 @@ class XboxDevice extends EventEmitter {
                     const inputReference = input.reference;
 
                     //get input type
-                    const inputType = 0;
+                    const inputSourceType = 0;
 
                     //get input configured
                     const isConfigured = 1;
 
                     //get input visibility state
                     const currentVisibility = input.visibility;
-                    const targetVisibility = currentVisibility;
 
-                    if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(`${inputName} ${inputIdentifier}`, `Input ${inputIdentifier}`);
-                        inputService
-                            .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                            .setCharacteristic(Characteristic.Name, inputName)
-                            .setCharacteristic(Characteristic.InputSourceType, inputType)
-                            .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                            .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+                    //input service
+                    const inputService = new Service.InputSource(`${inputName} ${inputIdentifier}`, `Input ${inputIdentifier}`);
+                    inputService
+                        .setCharacteristic(Characteristic.Identifier, inputIdentifier)
+                        .setCharacteristic(Characteristic.Name, inputName)
+                        .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
+                        .setCharacteristic(Characteristic.IsConfigured, isConfigured)
+                        .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
-                        inputService.getCharacteristic(Characteristic.ConfiguredName)
-                            .onGet(async () => {
-                                return inputName;
-                            })
-                            .onSet(async (value) => {
-                                if (value === inputName) {
-                                    return;
-                                }
+                    inputService.getCharacteristic(Characteristic.ConfiguredName)
+                        .onGet(async () => {
+                            return inputName;
+                        })
+                        .onSet(async (value) => {
+                            if (value === inputName) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsNames[inputReference] = value;
-                                    await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
-                                    inputService.updateCharacteristic(Characteristic.Name, value);
-                                } catch (error) {
-                                    this.emit('error', `save Input Name error: ${error}`);
-                                }
-                            });
+                            try {
+                                this.savedInputsNames[inputReference] = value;
+                                await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
+                                const debug = this.enableDebugMode ? this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
+                                inputService.updateCharacteristic(Characteristic.Name, value);
+                            } catch (error) {
+                                this.emit('error', `save Input Name error: ${error}`);
+                            }
+                        });
 
-                        inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                            .onGet(async () => {
-                                return targetVisibility;
-                            })
-                            .onSet(async (state) => {
-                                if (state === targetVisibility) {
-                                    return;
-                                }
+                    inputService.getCharacteristic(Characteristic.TargetVisibilityState)
+                        .onGet(async () => {
+                            return currentVisibility;
+                        })
+                        .onSet(async (state) => {
+                            if (state === currentVisibility) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsTargetVisibility[inputReference] = state;
-                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
-                                    inputService.updateCharacteristic(Characteristic.CurrentVisibilityState, state);
-                                } catch (error) {
-                                    this.emit('error', `save Target Visibility error: ${error}`);
-                                }
-                            });
+                            try {
+                                this.savedInputsTargetVisibility[inputReference] = state;
+                                await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
+                                const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
+                                inputService.updateCharacteristic(Characteristic.CurrentVisibilityState, state);
+                            } catch (error) {
+                                this.emit('error', `save Target Visibility error: ${error}`);
+                            }
+                        });
 
-                        this.televisionService.addLinkedService(inputService);
-                        this.allServices.push(inputService);
-                        accessory.addService(inputService);
-                    } else {
-                        this.emit('message', `Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
-
-                    };
+                    this.televisionService.addLinkedService(inputService);
+                    this.allServices.push(inputService);
+                    accessory.addService(inputService);
                 }
 
                 //sort inputs list
