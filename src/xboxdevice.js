@@ -362,11 +362,13 @@ class XboxDevice extends EventEmitter {
                 const mqtt = this.mqttConnected ? this.mqtt.send('State', obj) : false;
 
                 if (!this.disableLogInfo) {
+                    const name = index !== -1 ? this.inputsConfigured[index].name : reference;
+                    const productId = index !== -1 ? this.inputsConfigured[index].oneStoreProductId : reference;
                     this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
-                    this.emit('message', `Input Name: ${this.inputsConfigured[index].name}`);
+                    this.emit('message', `Input Name: ${name}`);
                     this.emit('message', `Reference: ${reference}`);
                     this.emit('message', `Title Id: ${titleId}`);
-                    this.emit('message', `Product Id: ${this.inputsConfigured[index].oneStoreProductId}`);
+                    this.emit('message', `Product Id: ${productId}`);
                     this.emit('message', `Volume: ${volume}%`);
                     this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
                     this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
