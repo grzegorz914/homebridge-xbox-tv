@@ -367,7 +367,7 @@ class XboxDevice extends EventEmitter {
                     this.emit('message', `Reference: ${reference}`);
                     this.emit('message', `Title Id: ${titleId}`);
                     this.emit('message', `Product Id: ${this.inputsConfigured[index].oneStoreProductId}`);
-                    this.emit('message', `Volume: ${volume} %`);
+                    this.emit('message', `Volume: ${volume}%`);
                     this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
                     this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
                 };
