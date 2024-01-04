@@ -326,7 +326,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
                     const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
                     const debug = this.debugLog && elapse >= 12 ? this.emit('debug', `Last message was: ${elapse} sec ago.`) : false;
-                    const disconnect = elapse >= 12 ? this.disconnect() : false;
+                    const disconnect = elapse >= 12 ? await this.disconnect() : false;
                 }, 1000);
 
                 //Prepare accessory
