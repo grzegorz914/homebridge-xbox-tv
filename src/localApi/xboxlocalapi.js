@@ -251,7 +251,7 @@ class XBOXLOCALAPI extends EventEmitter {
                             const power = true;
                             const volume = 0;
                             const mute = power ? power : true;
-                            const mediaState = 0;
+                            const mediaState = 2;
                             const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[0].titleId : packet.payloadProtected.activeTitles[0].titleId;
                             const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[0].aumId : packet.payloadProtected.activeTitles[0].aumId;
 

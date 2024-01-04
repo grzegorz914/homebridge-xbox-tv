@@ -360,6 +360,17 @@ class XboxDevice extends EventEmitter {
                 };
                 const restFul = this.restFulConnected ? this.restFul.update('state', obj) : false;
                 const mqtt = this.mqttConnected ? this.mqtt.send('State', obj) : false;
+
+                if (!this.disableLogInfo) {
+                    this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
+                    this.emit('message', `Input Name: ${this.inputsConfigured[index].name}`);
+                    this.emit('message', `Reference: ${reference}`);
+                    this.emit('message', `Title Id: ${titleId}`);
+                    this.emit('message', `Product Id: ${this.inputsConfigured[index].oneStoreProductId}`);
+                    this.emit('message', `Volume: ${volume} %`);
+                    this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                    this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
+                };
             })
             .on('prepareAccessory', async () => {
                 try {
@@ -368,7 +379,7 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.devInfoFile);
                         this.savedInfo = data.length > 0 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `read saved Info error: ${error}`);
                     };
@@ -377,7 +388,7 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsFile);
                         this.savedInputs = data.length > 0 ? JSON.parse(data) : this.inputs;
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `read saved Inputs error: ${error}`);
                     };
@@ -386,18 +397,18 @@ class XboxDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
                         this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
                     } catch (error) {
-                        this.emit('error', `read saved Inputs/Channels Names error: ${error}`);
+                        this.emit('error', `read saved Inputs Names error: ${error}`);
                     };
 
                     //read inputs visibility from file
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
                         this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
                     } catch (error) {
-                        this.emit('error', `read saved Inputs/Channels Target Visibility error: ${error}`);
+                        this.emit('error', `read saved Inputs Target Visibility error: ${error}`);
                     };
 
                     await new Promise(resolve => setTimeout(resolve, 2500));
@@ -445,7 +456,7 @@ class XboxDevice extends EventEmitter {
                         this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
                         break;
                 }
-                const debug = this.enableDebugMode ? this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`) : false;
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
 
                 const displayOrder = this.inputsConfigured.map(input => input.identifier);
                 this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
@@ -485,7 +496,6 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
                         const state = this.power;
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Power: ${state ? 'ON' : 'OFF'}`);
                         return state;
                     })
                     .onSet(async (state) => {
@@ -532,11 +542,6 @@ class XboxDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier);
-                        const inputOneStoreProductId = this.inputsConfigured[index].oneStoreProductId;
-                        const inputReference = this.inputsConfigured[index].reference;
-                        const inputName = this.inputsConfigured[index].name;
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
                         return inputIdentifier;
                     })
                     .onSet(async (activeIdentifier) => {
@@ -658,7 +663,6 @@ class XboxDevice extends EventEmitter {
                         //apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
                         //xbox, 0 - STOP, 1 - PLAY, 2 - PAUSE
                         const value = [2, 0, 1, 3, 4][this.mediaState];
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Current Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     });
 
@@ -666,7 +670,6 @@ class XboxDevice extends EventEmitter {
                     .onGet(async () => {
                         //0 - PLAY, 1 - PAUSE, 2 - STOP
                         const value = [2, 0, 1, 3, 4][this.mediaState];
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     })
                     .onSet(async (value) => {
@@ -748,7 +751,6 @@ class XboxDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.Volume)
                     .onGet(async () => {
                         const volume = this.volume;
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Volume: ${volume}`);
                         return volume;
                     })
                     .onSet(async (volume) => {
@@ -761,7 +763,6 @@ class XboxDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.Mute)
                     .onGet(async () => {
                         const state = this.mute;
-                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Mute: ${state ? 'ON' : 'OFF'}`);
                         return state;
                     })
                     .onSet(async (state) => {
@@ -860,7 +861,7 @@ class XboxDevice extends EventEmitter {
                                 try {
                                     this.savedInputsNames[inputReference] = value;
                                     await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`) : false;
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`);
 
                                     //sort inputs
                                     const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
@@ -883,7 +884,7 @@ class XboxDevice extends EventEmitter {
                                 try {
                                     this.savedInputsTargetVisibility[inputReference] = state;
                                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                                 } catch (error) {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
