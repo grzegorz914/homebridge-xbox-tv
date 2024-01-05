@@ -18,8 +18,9 @@ class XBOXLOCALAPI extends EventEmitter {
         this.crypto = new SGCrypto();
         this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
-        this.infoLog = config.infoLog;
         this.tokensFile = config.tokensFile;
+        this.devInfoFile = config.devInfoFile;
+        this.infoLog = config.infoLog;
         this.debugLog = config.debugLog;
 
         this.isConnected = false;
@@ -236,7 +237,10 @@ class XBOXLOCALAPI extends EventEmitter {
                             const buildNumber = packet.payloadProtected.buildNumber;
                             const locale = packet.payloadProtected.locale;
                             const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-                            this.emit('connected', 'Connected.');
+
+                            //save device info to the file
+                            await this.saveDevInfo(this.tokensFile, firmwareRevision, locale)
+
                             this.emit('deviceInfo', firmwareRevision, locale);
                             this.emitDevInfo = false;
                         };
@@ -257,6 +261,18 @@ class XBOXLOCALAPI extends EventEmitter {
 
                             this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
                             const debug = this.debugLog ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
+
+                            //emit restFul and mqtt
+                            const obj = {
+                                'power': power,
+                                'titleId': titleId,
+                                'app': reference,
+                                'volume': volume,
+                                'mute': mute,
+                                'mediaState': mediaState,
+                            };
+                            this.emit('restFul', 'state', obj);
+                            this.emit('mqtt', 'State', obj);
                         };
 
                         //acknowledge
@@ -356,6 +372,27 @@ class XBOXLOCALAPI extends EventEmitter {
             }
         });
     }
+
+    saveDevInfo(path, firmwareRevision, locale) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const obj = {
+                    manufacturer: 'Microsoft',
+                    modelName: 'Xbox',
+                    serialNumber: this.xboxLiveId,
+                    firmwareRevision: firmwareRevision,
+                    locale: locale
+                };
+                const devInfo = JSON.stringify(obj, null, 2);
+                await fsPromises.writeFile(path, devInfo);
+                const debug = this.debugLog ? this.emit('debug', `Saved device info: ${devInfo}`) : false;
+
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    };
 
     acknowledge(sequenceNumber) {
         return new Promise(async (resolve, reject) => {

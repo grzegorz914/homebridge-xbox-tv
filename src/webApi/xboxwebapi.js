@@ -1,4 +1,6 @@
 'use strict';
+const fs = require('fs');
+const fsPromises = fs.promises;
 const QueryString = require('querystring');
 const EventEmitter = require('events');
 const { v4: UuIdv4 } = require('uuid');
@@ -23,6 +25,7 @@ class XBOXWEBAPI extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.webApiClientId = config.webApiClientId;
         this.webApiClientSecret = config.webApiClientSecret;
+        this.inputsFile = config.inputsFile;
         this.debugLog = config.debugLog;
 
         //variables
@@ -112,7 +115,13 @@ class XBOXWEBAPI extends EventEmitter {
                 const consoleStreamingEnabled = consoleStatusData.consoleStreamingEnabled;
                 const remoteManagementEnabled = consoleStatusData.remoteManagementEnabled;
 
-                this.emit('consoleStatus', consoleStatusData, consoleType);
+                //emit console type
+                this.emit('consoleStatus', consoleType);
+
+                //emit restFul and mqtt
+                this.emit('restFul', 'status', consoleStatusData);
+                this.emit('mqtt', 'status', consoleStatusData);
+
                 resolve(remoteManagementEnabled);
             } catch (error) {
                 reject(`get status error: ${error}`);
@@ -191,7 +200,10 @@ class XBOXWEBAPI extends EventEmitter {
                     }
                 }
 
-                this.emit('consolesList', consolesList);
+                //emit restFul and mqtt
+                this.emit('restFul', 'consoleslist', consolesList);
+                this.emit('mqtt', 'Consoles List', consolesList);
+
                 resolve();
             } catch (error) {
                 reject(`Consoles list error: ${error}`);
@@ -238,7 +250,13 @@ class XBOXWEBAPI extends EventEmitter {
                     appsArray.push(inputsObj);
                 };
 
-                this.emit('appsList', appsArray);
+                //save apps to the file
+                await this.saveInputs(this.inputsFile, appsArray);
+
+                //emit restFul and mqtt
+                this.emit('restFul', 'apps', apps);
+                this.emit('mqtt', 'Apps', apps);
+
                 resolve();
             } catch (error) {
                 reject(`get installed apps error: ${error}`);
@@ -280,7 +298,10 @@ class XBOXWEBAPI extends EventEmitter {
                     this.isGen9Compatible.push(isGen9Compatible);
                 };
 
-                this.emit('storageDevices', storageDevices);
+                //emit restFul and mqtt
+                this.emit('restFul', 'storages', storageDevices);
+                this.emit('mqtt', 'Storages', storageDevices);
+
                 resolve();
             } catch (error) {
                 reject(`get storage devices error: ${error}`);
@@ -322,13 +343,31 @@ class XBOXWEBAPI extends EventEmitter {
                     };
                 };
 
-                this.emit('userProfile', profileUsers);
+                //emit restFul and mqtt
+                this.emit('restFul', 'profile', profileUsers);
+                this.emit('mqtt', 'Profile', profileUsers);
+
                 resolve();
             } catch (error) {
                 reject(`User profile error: ${error}`);
             };
         });
     }
+
+    saveInputs(path, appsArray) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const allApps = [...CONSTANTS.DefaultInputs, ...appsArray];
+                const apps = JSON.stringify(allApps, null, 2)
+                await fsPromises.writeFile(path, apps);
+                const debug = this.debugLog ? this.emit('debug', `Saved apps: ${apps}`) : false;
+
+                resolve()
+            } catch (error) {
+                reject(error);
+            }
+        });
+    };
 
     next() {
         return new Promise(async (resolve, reject) => {
