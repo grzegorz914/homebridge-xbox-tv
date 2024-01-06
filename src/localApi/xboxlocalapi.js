@@ -365,7 +365,7 @@ class XBOXLOCALAPI extends EventEmitter {
             try {
                 const data = await fsPromises.readFile(this.tokensFile);
                 const parseData = JSON.parse(data);
-                const tokenData = parseData.xsts.Token && parseData.xsts.Token.length > 0 ? parseData : false;
+                const tokenData = parseData.xsts.Token.length > 0 ? parseData : false;
                 resolve(tokenData);
             } catch (error) {
                 reject(`Read token error: ${error}`);
