@@ -239,7 +239,7 @@ class XBOXLOCALAPI extends EventEmitter {
                             const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
 
                             //save device info to the file
-                            await this.saveDevInfo(this.tokensFile, firmwareRevision, locale)
+                            await this.saveDevInfo(this.devInfoFile, firmwareRevision, locale)
 
                             this.emit('deviceInfo', firmwareRevision, locale);
                             this.emitDevInfo = false;
