@@ -320,7 +320,7 @@ class XboxDevice extends EventEmitter {
                     //read dev info from file
                     try {
                         const data = await fsPromises.readFile(this.devInfoFile);
-                        this.savedInfo = data.trim().length > 0 ? JSON.parse(data) : {};
+                        this.savedInfo = data.length > 0 ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `read saved Info error: ${error}`);
@@ -338,7 +338,7 @@ class XboxDevice extends EventEmitter {
                     //read inputs names from file
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
-                        this.savedInputsNames = data.trim().length > 0 ? JSON.parse(data) : {};
+                        this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `read saved Inputs Names error: ${error}`);
@@ -347,7 +347,7 @@ class XboxDevice extends EventEmitter {
                     //read inputs visibility from file
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = data.trim().length > 0 ? JSON.parse(data) : {};
+                        this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `read saved Inputs Target Visibility error: ${error}`);
