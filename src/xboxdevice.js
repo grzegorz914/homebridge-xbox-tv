@@ -274,8 +274,6 @@ class XboxDevice extends EventEmitter {
                 }
 
                 if (reference !== undefined) {
-                    this.reference = reference;
-
                     if (this.sensorScreenSaverService) {
                         const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
                         this.sensorScreenSaverService
@@ -293,6 +291,7 @@ class XboxDevice extends EventEmitter {
                                 .updateCharacteristic(characteristicType, state);
                         }
                     }
+                    this.reference = reference;
                 }
 
                 this.inputIdentifier = inputIdentifier;
@@ -977,12 +976,12 @@ class XboxDevice extends EventEmitter {
 
                         if (sensorInputDisplayType >= 0) {
                             if (sensorInputName && sensorInputReference) {
+                                const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
-                                const name = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                                const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+                                const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
                                 sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, name);
+                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 sensorInputService.getCharacteristic(characteristicType)
                                     .onGet(async () => {
                                         const state = this.power ? (this.reference === sensorInputReference) : false;
@@ -1045,11 +1044,11 @@ class XboxDevice extends EventEmitter {
 
                         if (buttonDisplayType >= 0) {
                             if (buttonName && buttonCommand && buttonMode) {
+                                const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-                                const name = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
-                                const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+                                const buttonService = new serviceType(serviceName, `Button ${i}`);
                                 buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                buttonService.setCharacteristic(Characteristic.ConfiguredName, name);
+                                buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         const state = false;
