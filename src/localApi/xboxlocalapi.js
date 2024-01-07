@@ -146,7 +146,8 @@ class XBOXLOCALAPI extends EventEmitter {
                                     connectRequest.set('iv', data.iv);
 
                                     const tokenData = await this.readToken();
-                                    if (tokenData) {
+                                    const tokenExist = tokenData ? true : false;
+                                    if (tokenExist) {
                                         connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
                                         connectRequest.set('jwt', tokenData.xsts.Token, true);
                                     }
