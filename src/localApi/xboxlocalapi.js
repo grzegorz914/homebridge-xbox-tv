@@ -146,8 +146,7 @@ class XBOXLOCALAPI extends EventEmitter {
                                     connectRequest.set('iv', data.iv);
 
                                     const tokenData = await this.readToken();
-                                    const tokenExist = tokenData !== false ? true : false;
-                                    if (tokenExist) {
+                                    if (tokenData) {
                                         connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
                                         connectRequest.set('jwt', tokenData.xsts.Token, true);
                                     }
@@ -191,7 +190,8 @@ class XBOXLOCALAPI extends EventEmitter {
 
                         try {
                             const localJoin = new MessagePacket('localJoin');
-                            const localJointMessage = localJoin.pack(this.crypto, this.getSequenceNumber(), sourceParticipantId);
+                            const sequenceNumber = await this.getSequenceNumber();
+                            const localJointMessage = localJoin.pack(this.crypto, sequenceNumber, sourceParticipantId);
                             await this.sendSocketMessage(localJointMessage, 'localJoin');
 
                             // Open channels
@@ -220,7 +220,8 @@ class XBOXLOCALAPI extends EventEmitter {
                             const acknowledge = new MessagePacket('acknowledge');
                             acknowledge.set('lowWatermark', sequenceNumber);
                             acknowledge.packet.processedList.value.push({ id: sequenceNumber });
-                            const message = acknowledge.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                            const sequenceNumber1 = await this.getSequenceNumber();
+                            const message = acknowledge.pack(this.crypto, sequenceNumber1, this.sourceParticipantId);
                             await this.sendSocketMessage(message, 'acknowledge');
                         } catch (error) {
                             this.emit('error', `Send acknowledge error: ${error}`)
@@ -402,7 +403,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 acknowledge.packet.processedList.value.push({
                     id: sequenceNumber
                 });
-                const message = acknowledge.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                const sequenceNumber1 = await this.getSequenceNumber();
+                const message = acknowledge.pack(this.crypto, sequenceNumber1, this.sourceParticipantId);
                 await this.sendSocketMessage(message, 'acknowledge');
                 resolve();
             } catch (error) {
@@ -422,7 +424,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 channelStartRequest.set('titleId', 0);
                 channelStartRequest.set('service', Buffer.from(service, 'hex'));
                 channelStartRequest.set('activityId', 0);
-                const message = channelStartRequest.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                const sequenceNumber = await this.getSequenceNumber();
+                const message = channelStartRequest.pack(this.crypto, sequenceNumber, this.sourceParticipantId);
                 await this.sendSocketMessage(message, 'channelStartRequest');
                 resolve();
             } catch (error) {
@@ -435,7 +438,6 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (this.isConnected) {
                 reject('Console already On.');
-                return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send power On.');
@@ -443,8 +445,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 for (let i = 0; i < 15; i++) {
                     if (this.isConnected) {
                         resolve();
-                        return;
                     }
+
                     const powerOn = new SimplePacket('powerOn');
                     powerOn.set('liveId', this.xboxLiveId);
                     const message = powerOn.pack(this.crypto);
@@ -465,14 +467,14 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected) {
                 reject('Console already Off.');
-                return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
             try {
                 const powerOff = new MessagePacket('powerOff');
                 powerOff.set('liveId', this.xboxLiveId);
-                const message = powerOff.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                const sequenceNumber = await this.getSequenceNumber();
+                const message = powerOff.pack(this.crypto, sequenceNumber, this.sourceParticipantId);
                 await this.sendSocketMessage(message, 'powerOff');
 
                 await new Promise(resolve => setTimeout(resolve, 3500));
@@ -488,7 +490,6 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected || !this.isAuthorized) {
                 reject(`Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`);
-                return;
             };
 
             const info = this.infoLog ? false : this.emit('message', 'Send record game.');
@@ -496,7 +497,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 const recordGameDvr = new MessagePacket('recordGameDvr');
                 recordGameDvr.set('startTimeDelta', -60);
                 recordGameDvr.set('endTimeDelta', 0);
-                const message = recordGameDvr.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                const sequenceNumber = await this.getSequenceNumber();
+                const message = recordGameDvr.pack(this.crypto, sequenceNumber, this.sourceParticipantId);
                 await this.sendSocketMessage(message, 'recordGameDvr');
                 resolve();
             } catch (error) {
@@ -509,7 +511,6 @@ class XBOXLOCALAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (!this.isConnected) {
                 reject(`Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}.`);
-                return;
             };
 
             const channelRequestId = CONSTANTS.LocalApi.Channels.System[channelName].Id
@@ -518,7 +519,6 @@ class XBOXLOCALAPI extends EventEmitter {
 
             if (channelCommunicationId === -1 || !channelOpen) {
                 reject(`Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
-                return;
             };
 
             command = CONSTANTS.LocalApi.Channels.System[channelName][command];
@@ -530,14 +530,16 @@ class XBOXLOCALAPI extends EventEmitter {
                         const gamepad = new MessagePacket('gamepad');
                         gamepad.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
                         gamepad.set('buttons', command);
-                        const message = gamepad.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelCommunicationId);
+                        const sequenceNumber = await this.getSequenceNumber();
+                        const message = gamepad.pack(this.crypto, sequenceNumber, this.sourceParticipantId, channelCommunicationId);
                         await this.sendSocketMessage(message, 'gamepad');
 
                         setTimeout(async () => {
                             const gamepadUnpress = new MessagePacket('gamepad');
                             gamepadUnpress.set('timestamp', Buffer.from(`000${new Date().getTime().toString()}`, 'hex'));
                             gamepadUnpress.set('buttons', CONSTANTS.LocalApi.Channels.System.Input.Commands.unpress);
-                            const message = gamepadUnpress.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelCommunicationId);
+                            const sequenceNumber1 = await this.getSequenceNumber();
+                            const message = gamepadUnpress.pack(this.crypto, sequenceNumber1, this.sourceParticipantId, channelCommunicationId);
                             await this.sendSocketMessage(message, 'gamepadUnpress');
                         }, 150)
                     } catch (error) {
@@ -546,8 +548,9 @@ class XBOXLOCALAPI extends EventEmitter {
                     break;
                 case 1:
                     try {
+                        const sequenceNumber = await this.getSequenceNumber();
                         const jsonRequest = JSON.stringify({
-                            msgid: `2ed6c0fd.${this.getSequenceNumber()}`,
+                            msgid: `2ed6c0fd.${sequenceNumber}`,
                             request: CONSTANTS.LocalApi.Channels.System.TvRemote.MessageType.SendKey,
                             params: {
                                 button_id: command,
@@ -556,7 +559,8 @@ class XBOXLOCALAPI extends EventEmitter {
                         });
                         const json = new MessagePacket('json');
                         json.set('json', jsonRequest);
-                        const message = json.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelCommunicationId);
+                        const sequenceNumber1 = await this.getSequenceNumber();
+                        const message = json.pack(this.crypto, sequenceNumber1, this.sourceParticipantId, channelCommunicationId);
                         this.sendSocketMessage(message, 'json');
                     } catch (error) {
                         this.emit('error', `Send tv remote command error: ${error}`)
@@ -571,7 +575,8 @@ class XBOXLOCALAPI extends EventEmitter {
                         mediaCommand.set('requestId', Buffer.from(requestId, 'hex'));
                         mediaCommand.set('titleId', 0);
                         mediaCommand.set('command', command);
-                        const message = mediaCommand.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId, channelCommunicationId);
+                        const sequenceNumber = await this.getSequenceNumber();
+                        const message = mediaCommand.pack(this.crypto, sequenceNumber, this.sourceParticipantId, channelCommunicationId);
                         this.sendSocketMessage(message, 'mediaCommand');
                         this.mediaRequestId++;
                     } catch (error) {
@@ -591,7 +596,8 @@ class XBOXLOCALAPI extends EventEmitter {
                 const disconnect = new MessagePacket('disconnect');
                 disconnect.set('reason', 2);
                 disconnect.set('errorCode', 0);
-                const message = disconnect.pack(this.crypto, this.getSequenceNumber(), this.sourceParticipantId);
+                const sequenceNumber = await this.getSequenceNumber();
+                const message = disconnect.pack(this.crypto, sequenceNumber, this.sourceParticipantId);
                 await this.sendSocketMessage(message, 'disconnect');
 
                 this.isConnected = false;
@@ -612,9 +618,11 @@ class XBOXLOCALAPI extends EventEmitter {
     };
 
     getSequenceNumber() {
-        this.sequenceNumber++;
-        const debug = this.debugLog ? this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`) : false;
-        return this.sequenceNumber;
+        return new Promise((resolve, reject) => {
+            this.sequenceNumber++;
+            const debug = this.debugLog ? this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`) : false;
+            resolve(this.sequenceNumber);
+        });
     };
 
     sendSocketMessage(message, type) {
@@ -625,7 +633,6 @@ class XBOXLOCALAPI extends EventEmitter {
             this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
                 if (error) {
                     reject(error);
-                    return;
                 }
 
                 const debug = this.debugLog ? this.emit('debug', `Socket send: ${type}, ${bytes}B.`) : false;

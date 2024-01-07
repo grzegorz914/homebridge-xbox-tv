@@ -188,23 +188,21 @@ class AUTHENTICATION {
 
     checkAuthorization() {
         return new Promise(async (resolve, reject) => {
-            if (fs.readFileSync(this.tokensFile).length > 30) {
-                const tokens = fs.readFileSync(this.tokensFile);
-                this.tokens = JSON.parse(tokens);
-            }
-
             if (this.webApiClientId) {
-                if (this.tokens.oauth.refresh_token) {
-                    try {
+                try {
+                    const tokens = await this.readTokens();
+                    this.tokens = !tokens ? this.tokens : tokens;
+
+                    if (this.tokens.oauth.refresh_token) {
                         await this.refreshTokens('user');
                         await this.saveTokens(this.tokens);
                         resolve({ headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens });
-                    } catch (error) {
-                        reject(error);
-                    };
-                } else {
-                    reject('No oauth token found. Use authorization manager first.')
-                }
+                    } else {
+                        reject('No oauth token found. Use authorization manager first.')
+                    }
+                } catch (error) {
+                    reject(error);
+                };
             } else {
                 reject(`Authorization not possible, check plugin settings - Client Id: ${this.webApiClientId}`);
             }
@@ -224,6 +222,18 @@ class AUTHENTICATION {
                 const params = QueryString.stringify(payload);
                 const oauth2URI = `${CONSTANTS.WebApi.Url.oauth2}?${params}`;
                 resolve(oauth2URI);
+            } catch (error) {
+                reject(error);
+            };
+        })
+    }
+
+    readTokens() {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const data = await fsPromises.readFile(this.tokensFile);
+                const tokens = data.length > 0 ? JSON.parse(data) : false;
+                resolve(tokens);
             } catch (error) {
                 reject(error);
             };

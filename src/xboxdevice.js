@@ -171,6 +171,11 @@ class XboxDevice extends EventEmitter {
             });
 
             this.xboxWebApi.on('consoleStatus', (consoleType) => {
+                if (this.informationService) {
+                    this.informationService
+                        .setCharacteristic(Characteristic.Model, consoleType)
+                };
+
                 //this.serialNumber = id;
                 this.modelName = consoleType;
                 //this.power = powerState;
@@ -225,8 +230,6 @@ class XboxDevice extends EventEmitter {
             if (this.informationService) {
                 this.informationService
                     .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
-                    .setCharacteristic(Characteristic.Model, this.modelName ?? 'Xbox')
-                    .setCharacteristic(Characteristic.SerialNumber, this.xboxLiveId)
                     .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
             };
         })
@@ -847,7 +850,7 @@ class XboxDevice extends EventEmitter {
                 }
 
                 if (this.inputsConfigured.length === 0) {
-                    this.emit('message', `No any inputs are configured, check your config and settings.`);
+                    this.emit('message', `No any input exposed, the accessory will not be published, check your inputs config or report this as issue.`);
                     return;
                 }
 
@@ -957,7 +960,7 @@ class XboxDevice extends EventEmitter {
                 const possibleSensorInputsCount = 99 - this.allServices.length;
                 const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
                 if (maxSensorInputsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensor service`);
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
                     for (let i = 0; i < maxSensorInputsCount; i++) {
                         //get sensor
                         const sensorInput = sensorInputs[i];
@@ -1005,7 +1008,7 @@ class XboxDevice extends EventEmitter {
                 const possibleButtonsCount = 99 - this.allServices.length;
                 const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
                 if (maxButtonsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare buttons service`);
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare buttons services`);
                     for (let i = 0; i < maxButtonsCount; i++) {
                         //get button
                         const button = buttons[i];

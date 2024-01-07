@@ -428,7 +428,6 @@ class XBOXWEBAPI extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             if (!this.authorized) {
                 reject('not authorized.');
-                return;
             };
 
             const sessionid = UuIdv4();

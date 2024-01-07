@@ -22,10 +22,13 @@ class XboxPlatform {
 		api.on('didFinishLaunching', () => {
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
-					log.warn(`Name: ${device.name ? 'OK' : device.name}, Host: ${device.host ? 'OK' : device.host}, Xbox Live ID: ${device.xboxLiveId ? 'OK' : device.xboxLiveId}, wromg or missing.`);
+					log.warn(`Name: ${device.name ? 'OK' : device.name}, Host: ${device.host ? 'OK' : device.host}, Xbox Live ID: ${device.xboxLiveId ? 'OK' : device.xboxLiveId}, wrong or missing.`);
 					return;
 				}
+
+				//debug config
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
+				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(device, null, 2)}`) : false;
 
 				//xbox device
 				const xboxDevice = new XboxDevice(api, prefDir, device);
