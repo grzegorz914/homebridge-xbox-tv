@@ -46,26 +46,26 @@
 						{
 							"name": "Play",
 							"command": "play",
-							"displayType": -1,
+							"displayType": 0,
 							"namePrefix": false
 						},
 						{
 							"name": "Record Game DVR",
 							"command": "recordGameDvr",
-							"displayType": -1,
+							"displayType": 0,
 							"namePrefix": false
 						},
 						{
 							"name": "Reboot",
 							"command": "reboot",
-							"displayType": -1,
+							"displayType": 0,
 							"namePrefix": false
 						},
 						{
 							"name": "A Way Out",
 							"command": "switchAppGame",
 							"oneStoreProductId": "oneStoreProductId",
-							"displayType": -1,
+							"displayType": 0,
 							"namePrefix": false
 						}
 					],
@@ -76,7 +76,7 @@
 						{
 							"name": "Dashboard",
 							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"displayType": -1,
+							"displayType": 0,
 							"namePrefix": false
 						}
 					],
