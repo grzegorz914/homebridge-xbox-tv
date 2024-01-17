@@ -20,7 +20,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | Package | Installation | Role | Required |
 | --- | --- | --- | --- |
 | [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
-| [Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Homebridge Web User Interface | Recommended |
+| [Config UI X](https://github.com/homebridge/homebridge-config-ui-x) | [Config UI X Wiki](https://github.com/homebridge/homebridge-config-ui-x/wiki) | Homebridge Web User Interface | Recommended |
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | [Plug-In Wiki](https://github.com/grzegorz914/homebridge-xbox-tv/wiki) | Homebridge Plug-In | Required |
 
 ## About The Plugin
@@ -63,7 +63,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 * Run this plugin as a [Child Bridge](https://github.com/homebridge/homebridge/wiki/Child-Bridges) (Highly Recommended), this prevent crash Homebridge if plugin crashes.
-* Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin. 
+* Install and use [Homebridge Config UI X](https://github.com/homebridge/homebridge-config-ui-x/wiki) to configure this plugin. 
 * The `sample-config.json` can be edited and used as an alternative (advanced users). 
 
 <p align="center">
