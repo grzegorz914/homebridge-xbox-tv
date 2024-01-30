@@ -69,8 +69,16 @@ class XboxDevice extends EventEmitter {
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
 
-        //add configured inputs to the default inputs
-        this.inputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
+        //add configured inputs to the default inputs and chack duplicated inputs
+        const tempInputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
+        const inputsArr = [];
+        for (const input of tempInputs) {
+            const inputReference = input.reference;
+            const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
+            const push = !duplicatedInput ? inputsArr.push(input) : false;
+        }
+        this.inputs = inputsArr;
+
         this.inputsConfigured = [];
         this.inputIdentifier = 1;
 

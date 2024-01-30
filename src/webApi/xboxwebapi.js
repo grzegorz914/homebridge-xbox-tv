@@ -357,10 +357,20 @@ class XBOXWEBAPI extends EventEmitter {
     saveInputs(path, appsArray) {
         return new Promise(async (resolve, reject) => {
             try {
-                const allApps = [...CONSTANTS.DefaultInputs, ...appsArray];
-                const apps = JSON.stringify(allApps, null, 2)
-                await fsPromises.writeFile(path, apps);
-                const debug = this.debugLog ? this.emit('debug', `Saved apps: ${apps}`) : false;
+                const inputs = [...CONSTANTS.DefaultInputs, ...appsArray];
+
+                //chack duplicated inputs
+                const inputsArr = [];
+                for (const input of inputs) {
+                    const inputReference = input.reference;
+                    const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
+                    const push = !duplicatedInput ? inputsArr.push(input) : false;
+                }
+
+                //save inputs
+                const allInputs = JSON.stringify(inputsArr, null, 2);
+                await fsPromises.writeFile(path, allInputs);
+                const debug = this.debugLog ? this.emit('debug', `Saved apps: ${allInputs}`) : false;
 
                 resolve()
             } catch (error) {
