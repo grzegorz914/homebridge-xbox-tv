@@ -362,9 +362,10 @@ class XBOXWEBAPI extends EventEmitter {
                 //chack duplicated inputs
                 const inputsArr = [];
                 for (const input of inputs) {
+                    const inputName = input.name;
                     const inputReference = input.reference;
                     const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
-                    const push = !duplicatedInput ? inputsArr.push(input) : false;
+                    const push = inputName && inputReference && !duplicatedInput ? inputsArr.push(input) : false;
                 }
 
                 //save inputs

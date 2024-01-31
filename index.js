@@ -19,7 +19,7 @@ class XboxPlatform {
 			fs.mkdirSync(prefDir);
 		};
 
-		api.on('didFinishLaunching', () => {
+		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.xboxLiveId) {
 					log.warn(`Name: ${device.name ? 'OK' : device.name}, Host: ${device.host ? 'OK' : device.host}, Xbox Live ID: ${device.xboxLiveId ? 'OK' : device.xboxLiveId}, wrong or missing.`);

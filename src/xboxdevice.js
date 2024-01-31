@@ -73,9 +73,10 @@ class XboxDevice extends EventEmitter {
         const tempInputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
         const inputsArr = [];
         for (const input of tempInputs) {
+            const inputName = input.name;
             const inputReference = input.reference;
             const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
-            const push = !duplicatedInput ? inputsArr.push(input) : false;
+            const push = inputName && inputReference && !duplicatedInput ? inputsArr.push(input) : false;
         }
         this.inputs = inputsArr;
 
@@ -326,43 +327,27 @@ class XboxDevice extends EventEmitter {
             })
             .on('prepareAccessory', async () => {
                 try {
-
                     //read dev info from file
-                    try {
-                        const data = await fsPromises.readFile(this.devInfoFile);
-                        this.savedInfo = data.toString().trim() !== '' ? JSON.parse(data) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `read saved Info error: ${error}`);
-                    };
+                    const savedInfo = await this.readData(this.devInfoFile);
+                    this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
                     //read inputs file
-                    try {
-                        const data = await fsPromises.readFile(this.inputsFile);
-                        this.savedInputs = data.toString().trim() !== '' ? JSON.parse(data) : this.inputs;
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `read saved Inputs error: ${error}`);
-                    };
+                    const savedInputs = await this.readData(this.inputsFile);
+                    this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
+                    const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
                     //read inputs names from file
-                    try {
-                        const data = await fsPromises.readFile(this.inputsNamesFile);
-                        this.savedInputsNames = data.toString().trim() !== '' ? JSON.parse(data) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `read saved Inputs Names error: ${error}`);
-                    };
+                    const savedInputsNames = await this.readData(this.inputsNamesFile);
+                    this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
+                    const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
 
                     //read inputs visibility from file
-                    try {
-                        const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = data.toString().trim() !== '' ? JSON.parse(data) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `read saved Inputs Target Visibility error: ${error}`);
-                    };
+                    const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+                    this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
+                    const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
+                    //prepare accessory
                     await new Promise(resolve => setTimeout(resolve, 2500));
                     const accessory = await this.prepareAccessory();
                     this.emit('publishAccessory', accessory)
@@ -421,6 +406,30 @@ class XboxDevice extends EventEmitter {
                 resolve();
             } catch (error) {
                 reject(error);
+            };
+        });
+    }
+
+    saveData(path, data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    readData(path) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const data = await fsPromises.readFile(path);
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
+                resolve(data);
+            } catch (error) {
+                reject(`Read saved data error: ${error}`);
             };
         });
     }
@@ -798,63 +807,59 @@ class XboxDevice extends EventEmitter {
                     input.identifier = inputIdentifier;
 
                     //input service
-                    if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(inputName, `Input ${inputIdentifier}`);
-                        inputService
-                            .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                            .setCharacteristic(Characteristic.Name, inputName)
-                            .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
-                            .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                            .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+                    const inputService = new Service.InputSource(inputName, `Input ${inputIdentifier}`);
+                    inputService
+                        .setCharacteristic(Characteristic.Identifier, inputIdentifier)
+                        .setCharacteristic(Characteristic.Name, inputName)
+                        .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
+                        .setCharacteristic(Characteristic.IsConfigured, isConfigured)
+                        .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
-                        inputService.getCharacteristic(Characteristic.ConfiguredName)
-                            .onGet(async () => {
-                                return inputName;
-                            })
-                            .onSet(async (value) => {
-                                if (value === this.savedInputsNames[inputReference]) {
-                                    return;
-                                }
+                    inputService.getCharacteristic(Characteristic.ConfiguredName)
+                        .onGet(async () => {
+                            return inputName;
+                        })
+                        .onSet(async (value) => {
+                            if (value === this.savedInputsNames[inputReference]) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsNames[inputReference] = value;
-                                    await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`);
+                            try {
+                                this.savedInputsNames[inputReference] = value;
+                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`);
 
-                                    //sort inputs
-                                    const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
-                                    this.inputsConfigured[index].name = value;
-                                    await this.displayOrder();
-                                } catch (error) {
-                                    this.emit('error', `save Input Name error: ${error}`);
-                                }
-                            });
+                                //sort inputs
+                                const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
+                                this.inputsConfigured[index].name = value;
+                                await this.displayOrder();
+                            } catch (error) {
+                                this.emit('error', `save Input Name error: ${error}`);
+                            }
+                        });
 
-                        inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                            .onGet(async () => {
-                                return currentVisibility;
-                            })
-                            .onSet(async (state) => {
-                                if (state === this.savedInputsTargetVisibility[inputReference]) {
-                                    return;
-                                }
+                    inputService.getCharacteristic(Characteristic.TargetVisibilityState)
+                        .onGet(async () => {
+                            return currentVisibility;
+                        })
+                        .onSet(async (state) => {
+                            if (state === this.savedInputsTargetVisibility[inputReference]) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsTargetVisibility[inputReference] = state;
-                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
-                                } catch (error) {
-                                    this.emit('error', `save Target Visibility error: ${error}`);
-                                }
-                            });
+                            try {
+                                this.savedInputsTargetVisibility[inputReference] = state;
+                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
+                            } catch (error) {
+                                this.emit('error', `save Target Visibility error: ${error}`);
+                            }
+                        });
 
-                        this.inputsConfigured.push(input);
-                        this.televisionService.addLinkedService(inputService);
-                        this.allServices.push(inputService);
-                        accessory.addService(inputService);
-                    } else {
-                        this.emit('message', `Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
-                    };
+                    this.inputsConfigured.push(input);
+                    this.televisionService.addLinkedService(inputService);
+                    this.allServices.push(inputService);
+                    accessory.addService(inputService);
                 }
 
                 //Prepare volume service
