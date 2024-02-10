@@ -28,7 +28,16 @@ class XboxPlatform {
 
 				//debug config
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
-				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(device, null, 2)}`) : false;
+				const config = {
+					...device,
+					xboxLiveId: 'removed',
+					webApiToken: 'removed',
+					webApiClientId: 'removed',
+					webApiClientSecret: 'removed',
+					mqttUser: 'removed',
+					mqttPasswd: 'removed'
+				};
+				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
 				//xbox device
 				const xboxDevice = new XboxDevice(api, prefDir, device);
