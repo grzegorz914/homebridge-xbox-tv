@@ -5,6 +5,7 @@
 <span align="center">
 
 # Homebridge Xbox TV
+
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
 [![npm](https://badgen.net/npm/dt/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv)
 [![npm](https://badgen.net/npm/v/homebridge-xbox-tv?color=purple)](https://www.npmjs.com/package/homebridge-xbox-tv)
@@ -17,6 +18,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 </span>
 
 ## Package Requirements
+
 | Package | Installation | Role | Required |
 | --- | --- | --- | --- |
 | [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
@@ -24,6 +26,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | [Plug-In Wiki](https://github.com/grzegorz914/homebridge-xbox-tv/wiki) | Homebridge Plug-In | Required |
 
 ## About The Plugin
+
 * Power ON/OFF short press tile in HomeKit app.
 * Reboot Console with button, rquired `webApiControl` enabled.
 * Record Game DVR with button, rquired `webApiControl` enabled.
@@ -42,13 +45,14 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Publish as JSON data.
 
 <p align="center">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a> 
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Changing the accessory input" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/inputs.png" width="135" /></a>
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" width="135" /></a>
-		<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Remote control interface" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" width="135" /></a>
+ <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a>
+ <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Changing the accessory input" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/inputs.png" width="135" /></a>
+ <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Arrow pointing to the remote control icon in the control center" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/rc1.png" width="135" /></a>
+  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Remote control interface" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/RC.png" width="135" /></a>
 </p>
 
 ## Authorization Manager
+
 * First of all please use built in Authorization Manager.
   * Start new authorization need remove old token first, to clear token use Authorization Manager GUI.
   * Make sure Your web browser do not block pop-up window, if Yes allow pop-up window for this app.
@@ -58,16 +62,17 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 </p>
 
 ## Configuration
+
 * [Device must have Instant-on power mode enabled](https://support.xbox.com/help/hardware-network/power/learn-about-power-modes)
   * Profile & System > Settings > General > Power mode & startup
   * Console need to allow connect from any 3rd app. *Allow Connections from any device* should be enabled.
   * Profile & System > Settings > Devices & Connections > Remote features > Xbox app preferences.
 * Run this plugin as a [Child Bridge](https://github.com/homebridge/homebridge/wiki/Child-Bridges) (Highly Recommended), this prevent crash Homebridge if plugin crashes.
-* Install and use [Homebridge Config UI X](https://github.com/homebridge/homebridge-config-ui-x/wiki) to configure this plugin. 
-* The `sample-config.json` can be edited and used as an alternative (advanced users). 
+* Install and use [Homebridge Config UI X](https://github.com/homebridge/homebridge-config-ui-x/wiki) to configure this plugin.
+* The `sample-config.json` can be edited and used as an alternative (advanced users).
 
 <p align="center">
-	<a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" width="840"></a>
+ <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/ustawienia.png" width="840"></a>
 </p>
 
 | Key | Description |
@@ -90,9 +95,10 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled. |
 | `buttons.displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`. |
 | `buttons.namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
-| `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` (active on Power ON). |
-| `sensorInput`| If enabled, then the Input will be exposed as a `Motion Sensor` (active on every Input change). |
-| `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor` (active on change to Screen Saver). |
+| `sensorPower`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
+| `sensorInput`| If enabled, then the Input will be exposed as a `Contact Sensor`, fired on every Input change. |
+| `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor`, fired on change to Screen Saver. |
+| `sensorInputs`| Her create custom Inputs sensor, sensors will be exposed as a `Contact Sensor`, fired if switch to it. |
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). |
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
@@ -122,6 +128,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 
 ## Create App on Azure AD
+
 * Go to [Azure Portal](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
 * Register new *App* + *New registration*
   * Enter a name for your app
@@ -129,6 +136,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Click register
   * Choose *Redirect URIs* -> *Add a Redirect URI*
   * Click *Add a platform* -> *Mobile and desktop applications*
-  * Enter custom redirect URI *http://localhost:8888/auth/callback*
+  * Enter custom redirect URI *<http://localhost:8888/auth/callback>*
 * From the overview of your app page, copy *Application (client) ID* to `webApiClientId`
 * Save restart plugin and authorize console again and have fun.
