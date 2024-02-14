@@ -976,7 +976,8 @@ class XboxDevice extends EventEmitter {
                             if (sensorInputName && sensorInputReference) {
                                 const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                                const sensorInputService = ['', accessory.addService(Service.MotionSensor, serviceName, `Sensor ${i}`), accessory.addService(Service.OccupancySensor, serviceName, `Sensor ${i}`), accessory.addService(Service.ContactSensor, serviceName, `Sensor ${i}`)][sensorInputDisplayType];
+                                const serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+                                const sensorInputService = accessory.addService(serviceType, serviceName, `Sensor ${i}`);
                                 sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                                 sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 sensorInputService.getCharacteristic(characteristicType)
@@ -1040,8 +1041,9 @@ class XboxDevice extends EventEmitter {
                         if (buttonDisplayType) {
                             if (buttonName && buttonCommand && buttonMode >= 0) {
                                 const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
-                                const buttonService = ['', accessory.addService(Service.Outlet, serviceName, `Button ${i}`), accessory.addService(Service.Switch, serviceName, `Button ${i}`)][buttonDisplayType];
-                                buttonServiceaddOptionalCharacteristic(Characteristic.ConfiguredName);
+                                const serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
+                                const buttonService = accessory.addService(serviceType, serviceName, `Button ${i}`);
+                                buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                                 buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
