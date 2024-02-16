@@ -278,7 +278,7 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, power)
                 }
 
-                if (this.sensorInputService && inputIdentifier !== this.inputIdentifier) {
+                if (this.sensorInputService && reference !== this.reference) {
                     for (let i = 0; i < 1; i++) {
                         const state = power ? [true, false][i] : false;
                         this.sensorInputService
@@ -287,29 +287,27 @@ class XboxDevice extends EventEmitter {
                     }
                 }
 
-                if (reference !== undefined) {
-                    if (this.sensorScreenSaverService) {
-                        const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                        this.sensorScreenSaverService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
-                        this.sensorScreenSaverState = state;
-                    }
+                if (this.sensorScreenSaverService) {
+                    const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
+                    this.sensorScreenSaverService
+                        .updateCharacteristic(Characteristic.ContactSensorState, state)
+                    this.sensorScreenSaverState = state;
+                }
 
-                    if (this.sensorsInputsServices) {
-                        const servicesCount = this.sensorsInputsServices.length;
-                        for (let i = 0; i < servicesCount; i++) {
-                            const state = power ? (this.sensorsInputsConfigured[i].reference === reference) : false;
-                            const displayType = this.sensorsInputsConfigured[i].displayType;
-                            const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-                            this.sensorsInputsServices[i]
-                                .updateCharacteristic(characteristicType, state);
-                        }
+                if (this.sensorsInputsServices) {
+                    const servicesCount = this.sensorsInputsServices.length;
+                    for (let i = 0; i < servicesCount; i++) {
+                        const state = power ? (this.sensorsInputsConfigured[i].reference === reference) : false;
+                        const displayType = this.sensorsInputsConfigured[i].displayType;
+                        const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+                        this.sensorsInputsServices[i]
+                            .updateCharacteristic(characteristicType, state);
                     }
-                    this.reference = reference;
                 }
 
                 this.inputIdentifier = inputIdentifier;
                 this.power = power;
+                this.reference = reference;
                 this.volume = volume;
                 this.mute = mute;
                 this.mediaState = mediaState;
