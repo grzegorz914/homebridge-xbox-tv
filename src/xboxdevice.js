@@ -806,7 +806,7 @@ class XboxDevice extends EventEmitter {
                     const inputService = accessory.addService(Service.InputSource, inputName, `Input ${inputIdentifier}`);
                     inputService
                         .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                        .setCharacteristic(Characteristic.Name, inputName.substring(0,63))
+                        .setCharacteristic(Characteristic.Name, inputName.substring(0, 64))
                         .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
                         .setCharacteristic(Characteristic.IsConfigured, isConfigured)
                         .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
