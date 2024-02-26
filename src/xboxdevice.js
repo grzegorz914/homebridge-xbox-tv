@@ -2,8 +2,6 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
-const RestFul = require('./restful.js');
-const Mqtt = require('./mqtt.js');
 const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
 const CONSTANTS = require('./constans.json');
@@ -11,7 +9,7 @@ const CONSTANTS = require('./constans.json');
 let Accessory, Characteristic, Service, Categories, Encode, UUID;
 
 class XboxDevice extends EventEmitter {
-    constructor(api, prefDir, config) {
+    constructor(api, prefDir, device) {
         super();
 
         Accessory = api.platformAccessory;
@@ -22,47 +20,31 @@ class XboxDevice extends EventEmitter {
         UUID = api.hap.uuid;
 
         //device configuration
-        this.name = config.name;
-        this.host = config.host;
-        this.xboxLiveId = config.xboxLiveId;
-        this.webApiControl = config.webApiControl || false;
-        this.webApiPowerOnOff = this.webApiControl ? config.webApiPowerOnOff : false;
-        this.webApiRcControl = this.webApiControl ? config.webApiRcControl : false;
-        this.webApiVolumeControl = this.webApiControl ? config.webApiVolumeControl : false;
-        this.getInputsFromDevice = this.webApiControl ? config.getInputsFromDevice : false;
-        this.filterGames = config.filterGames || false;
-        this.filterApps = config.filterApps || false;
-        this.filterSystemApps = config.filterSystemApps || false;
-        this.filterDlc = config.filterDlc || false;
-        this.inputs = config.inputs || [];
-        this.buttons = config.buttons || [];
-        this.sensorPower = config.sensorPower || false;
-        this.sensorInput = config.sensorInput || false;
-        this.sensorScreenSaver = config.sensorScreenSaver || false;
-        this.sensorInputs = config.sensorInputs || [];
-        this.webApiClientId = config.webApiClientId;
-        this.webApiClientSecret = config.webApiClientSecret;
-        this.enableDebugMode = config.enableDebugMode || false;
-        this.disableLogInfo = config.disableLogInfo || false;
-        this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
-        this.infoButtonCommand = config.infoButtonCommand || 'nexus';
-        this.volumeControl = config.volumeControl || false;
-        this.restFulEnabled = config.enableRestFul || false;
-        this.restFulPort = config.restFulPort || 3000;
-        this.restFulDebug = config.restFulDebug || false;
-        this.mqttEnabled = config.enableMqtt || false;
-        this.mqttDebug = config.mqttDebug || false;
-        this.mqttHost = config.mqttHost;
-        this.mqttPort = config.mqttPort || 1883;
-        this.mqttClientId = config.mqttClientId || `mqtt_${Math.random().toString(16).slice(3)}`;
-        this.mqttPrefix = config.mqttPrefix;
-        this.mqttAuth = config.mqttAuth || false;
-        this.mqttUser = config.mqttUser;
-        this.mqttPasswd = config.mqttPasswd;
-
-        //setup variables
-        this.restFulConnected = false;
-        this.mqttConnected = false;
+        this.name = device.name;
+        this.host = device.host;
+        this.xboxLiveId = device.xboxLiveId;
+        this.webApiControl = device.webApiControl || false;
+        this.webApiPowerOnOff = this.webApiControl ? device.webApiPowerOnOff : false;
+        this.webApiRcControl = this.webApiControl ? device.webApiRcControl : false;
+        this.webApiVolumeControl = this.webApiControl ? device.webApiVolumeControl : false;
+        this.getInputsFromDevice = this.webApiControl ? device.getInputsFromDevice : false;
+        this.filterGames = device.filterGames || false;
+        this.filterApps = device.filterApps || false;
+        this.filterSystemApps = device.filterSystemApps || false;
+        this.filterDlc = device.filterDlc || false;
+        this.inputs = device.inputs || [];
+        this.buttons = device.buttons || [];
+        this.sensorPower = device.sensorPower || false;
+        this.sensorInput = device.sensorInput || false;
+        this.sensorScreenSaver = device.sensorScreenSaver || false;
+        this.sensorInputs = device.sensorInputs || [];
+        this.webApiClientId = device.webApiClientId;
+        this.webApiClientSecret = device.webApiClientSecret;
+        this.enableDebugMode = device.enableDebugMode || false;
+        this.disableLogInfo = device.disableLogInfo || false;
+        this.disableLogDeviceInfo = device.disableLogDeviceInfo || false;
+        this.infoButtonCommand = device.infoButtonCommand || 'nexus';
+        this.volumeControl = device.volumeControl || false;
 
         //accessory services
         this.allServices = [];
@@ -125,49 +107,6 @@ class XboxDevice extends EventEmitter {
             this.emit('error', `prepare files error: ${error}`);
         }
 
-        //RESTFul server
-        if (this.restFulEnabled) {
-            this.restFul = new RestFul({
-                port: this.restFulPort,
-                debug: this.restFulDebug
-            });
-
-            this.restFul.on('connected', (message) => {
-                this.emit('message', `${message}`);
-                this.restFulConnected = true;
-            })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                });
-        }
-
-        //MQTT client
-        if (this.mqttEnabled) {
-            this.mqtt = new Mqtt({
-                host: this.mqttHost,
-                port: this.mqttPort,
-                clientId: this.mqttClientId,
-                user: this.mqttUser,
-                passwd: this.mqttPasswd,
-                prefix: `${this.mqttPrefix}/${this.name}`,
-                debug: this.mqttDebug
-            });
-
-            this.mqtt.on('connected', (message) => {
-                this.emit('message', message);
-                this.mqttConnected = true;
-            })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                });
-        };
-
         //web api client
         if (this.webApiControl) {
             this.xboxWebApi = new XboxWebApi({
@@ -197,12 +136,6 @@ class XboxDevice extends EventEmitter {
                     };
                     this.power = power;
                 })
-                .on('restFul', (path, data) => {
-                    const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
-                })
-                .on('mqtt', (topic, data) => {
-                    const mqtt = this.mqttConnected ? this.mqtt.send(topic, data) : false;
-                })
                 .on('message', (message) => {
                     this.emit('message', message);
                 })
@@ -211,6 +144,12 @@ class XboxDevice extends EventEmitter {
                 })
                 .on('error', (error) => {
                     this.emit('error', error);
+                })
+                .on('restFul', (path, data) => {
+                    this.emit('restFul', path, data)
+                })
+                .on('mqtt', (topic, message) => {
+                    this.emit('mqtt', topic, message)
                 });
         };
 
@@ -279,7 +218,7 @@ class XboxDevice extends EventEmitter {
                 }
 
                 if (this.sensorInputService && reference !== this.reference) {
-                    for (let i = 0; i < 1; i++) {
+                    for (let i = 0; i < 2; i++) {
                         const state = power ? [true, false][i] : false;
                         this.sensorInputService
                             .updateCharacteristic(Characteristic.ContactSensorState, state)
@@ -358,12 +297,6 @@ class XboxDevice extends EventEmitter {
                     this.emit('error', `prepare accessory error: ${error}`);
                 };
             })
-            .on('restFul', (path, data) => {
-                const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
-            })
-            .on('mqtt', (topic, data) => {
-                const mqtt = this.mqttConnected ? this.mqtt.send(topic, data) : false;
-            })
             .on('message', (message) => {
                 this.emit('message', message);
             })
@@ -375,6 +308,12 @@ class XboxDevice extends EventEmitter {
             })
             .on('disconnected', (message) => {
                 this.emit('message', message);
+            })
+            .on('restFul', (path, data) => {
+                this.emit('restFul', path, data)
+            })
+            .on('mqtt', (topic, message) => {
+                this.emit('mqtt', topic, message)
             });
     }
 

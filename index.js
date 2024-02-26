@@ -1,6 +1,8 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
+const RestFul = require('./src/restful.js');
+const Mqtt = require('./src/mqtt.js');
 const XboxDevice = require('./src/xboxdevice.js');
 const CONSTANTS = require('./src/constans.json');
 
@@ -21,13 +23,18 @@ class XboxPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				if (!device.name || !device.host || !device.xboxLiveId) {
-					log.warn(`Name: ${device.name ? 'OK' : device.name}, Host: ${device.host ? 'OK' : device.host}, Xbox Live ID: ${device.xboxLiveId ? 'OK' : device.xboxLiveId}, wrong or missing.`);
+				const deviceName = device.name ?? false;
+				const deviceHost = device.host ?? false;
+				const xboxLiveId = device.xboxLiveId ?? false;
+
+				if (!deviceName || !deviceHost || !xboxLiveId) {
+					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, Host: ${deviceHost ? 'OK' : deviceHost}, Xbox Live ID: ${xboxLiveId ? 'OK' : xboxLiveId}, wrong or missing.`);
 					return;
 				}
 
 				//debug config
-				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
+				const debugMode = device.enableDebugMode;
+				const debug = debugMode ? log(`Device: ${deviceHost} ${deviceName}, did finish launching.`) : false;
 				const config = {
 					...device,
 					xboxLiveId: 'removed',
@@ -37,25 +44,89 @@ class XboxPlatform {
 					mqttUser: 'removed',
 					mqttPasswd: 'removed'
 				};
-				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(config, null, 2)}`) : false;
+				const debug1 = debugMode ? log(`Device: ${deviceHost} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
+
+				const restFulEnabled = device.enableRestFul || false;
+				const restFulPort = device.restFulPort || 3000;
+				const restFulDebug = device.restFulDebug || false;
+				const mqttEnabled = device.enableMqtt || false;
+				const mqttDebug = device.mqttDebug || false;
+				const mqttHost = device.mqttHost;
+				const mqttPort = device.mqttPort || 1883;
+				const mqttClientId = device.mqttClientId || `Xbox_${Math.random().toString(16).slice(3)}`;
+				const mqttPrefix = device.mqttPrefix;
+				const mqttAuth = config.mqttAuth || false;
+				const mqttUser = device.mqttUser;
+				const mqttPasswd = device.mqttPasswd;
+
+				//RESTFul server
+				if (restFulEnabled) {
+					this.restFulConnected = false;
+					this.restFul = new RestFul({
+						port: restFulPort,
+						debug: restFulDebug
+					});
+
+					this.restFul.on('connected', (message) => {
+						log(deviceHost, deviceName, message);
+						this.restFulConnected = true;
+					})
+						.on('debug', (debug) => {
+							log(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
+						})
+						.on('error', (error) => {
+							log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
+						});
+				}
+
+				//MQTT client
+				if (mqttEnabled) {
+					this.mqttConnected = false;
+					this.mqtt = new Mqtt({
+						host: mqttHost,
+						port: mqttPort,
+						clientId: mqttClientId,
+						user: mqttUser,
+						passwd: mqttPasswd,
+						prefix: `${mqttPrefix}/${deviceName}`,
+						debug: mqttDebug
+					});
+
+					this.mqtt.on('connected', (message) => {
+						log(deviceHost, deviceName, message);
+						this.mqttConnected = true;
+					})
+						.on('debug', (debug) => {
+							log(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
+						})
+						.on('error', (error) => {
+							log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
+						});
+				};
 
 				//xbox device
 				const xboxDevice = new XboxDevice(api, prefDir, device);
 				xboxDevice.on('publishAccessory', (accessory) => {
 					api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
-					const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, published as external accessory.`) : false;
+					const debug = debugMode ? log(`Device: ${deviceHost} ${deviceName}, published as external accessory.`) : false;
 				})
 					.on('devInfo', (devInfo) => {
 						log(devInfo);
 					})
 					.on('message', (message) => {
-						log(`Device: ${device.host} ${device.name}, ${message}`);
+						log(`Device: ${deviceHost} ${deviceName}, ${message}`);
 					})
 					.on('debug', (debug) => {
-						log(`Device: ${device.host} ${device.name}, debug: ${debug}`);
+						log(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
 					})
 					.on('error', (error) => {
-						log.error(`Device: ${device.host} ${device.name}, ${error}`);
+						log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
+					})
+					.on('restFul', (path, data) => {
+						const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
+					})
+					.on('mqtt', (topic, data) => {
+						const mqtt = this.mqttConnected ? this.mqtt.send(topic, data) : false;
 					});
 			}
 		});
