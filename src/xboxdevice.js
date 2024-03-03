@@ -2,6 +2,8 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
+const RestFul = require('./restful.js');
+const Mqtt = require('./mqtt.js');
 const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
 const CONSTANTS = require('./constans.json');
@@ -45,6 +47,10 @@ class XboxDevice extends EventEmitter {
         this.disableLogDeviceInfo = device.disableLogDeviceInfo || false;
         this.infoButtonCommand = device.infoButtonCommand || 'nexus';
         this.volumeControl = device.volumeControl || false;
+
+        //external integration
+        this.restFulConnected = false;
+        this.mqttConnected = false;
 
         //accessory services
         this.allServices = [];
@@ -106,6 +112,68 @@ class XboxDevice extends EventEmitter {
         } catch (error) {
             this.emit('error', `prepare files error: ${error}`);
         }
+
+        //RESTFul server
+        const restFulEnabled = device.enableRestFul || false;
+        if (restFulEnabled) {
+            this.restFul = new RestFul({
+                port: device.restFulPort || 3000,
+                debug: device.restFulDebug || false
+            });
+
+            this.restFul.on('connected', (message) => {
+                log(`Device: ${host} ${deviceName}, ${message}`);
+                this.restFulConnected = true;
+            })
+                .on('error', (error) => {
+                    this.emit('error', error);
+                })
+                .on('debug', (debug) => {
+                    this.emit('debug', debug);
+                });
+        }
+
+        //mqtt client
+        const mqttEnabled = device.enableMqtt || false;
+        if (mqttEnabled) {
+            this.mqtt = new Mqtt({
+                host: device.mqttHost,
+                port: device.mqttPort || 1883,
+                clientId: device.mqttClientId || `xbox_${Math.random().toString(16).slice(3)}`,
+                prefix: `${device.mqttPrefix}/${device.name}`,
+                user: device.mqttUser,
+                passwd: device.mqttPasswd,
+                debug: device.mqttDebug || false
+            });
+
+            this.mqtt.on('connected', (message) => {
+                this.emit('message', message);
+                this.mqttConnected = true;
+            })
+                .on('changeState', (data) => {
+                    const key = Object.keys(data)[0];
+                    const value = Object.values(data)[0];
+                    switch (key) {
+                        case 'Power':
+                            break;
+                        case 'App':
+                            break;
+                        case 'Volume':
+                            break;
+                        case 'Mute':
+                            break;
+                        default:
+                            this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
+                            break;
+                    };
+                })
+                .on('debug', (debug) => {
+                    this.emit('debug', debug);
+                })
+                .on('error', (error) => {
+                    this.emit('error', error);
+                });
+        };
 
         //web api client
         if (this.webApiControl) {
@@ -310,10 +378,10 @@ class XboxDevice extends EventEmitter {
                 this.emit('message', message);
             })
             .on('restFul', (path, data) => {
-                this.emit('restFul', path, data)
+                const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
             })
             .on('mqtt', (topic, message) => {
-                this.emit('mqtt', topic, message)
+                const mqtt = this.mqttConnected ? this.mqtt.send(topic, message) : false;
             });
     }
 
