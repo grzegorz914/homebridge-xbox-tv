@@ -8,7 +8,7 @@ const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
 const CONSTANTS = require('./constans.json');
 
-let Accessory, Characteristic, Service, Categories, Encode, UUID;
+let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class XboxDevice extends EventEmitter {
     constructor(api, prefDir, device) {
@@ -19,7 +19,7 @@ class XboxDevice extends EventEmitter {
         Service = api.hap.Service;
         Categories = api.hap.Categories;
         Encode = api.hap.encode;
-        UUID = api.hap.uuid;
+        AccessoryUUID = api.hap.uuid;
 
         //device configuration
         this.name = device.name;
@@ -449,7 +449,7 @@ class XboxDevice extends EventEmitter {
                 //prepare accessory
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
                 const accessoryName = this.name;
-                const accessoryUUID = UUID.generate(this.xboxLiveId);
+                const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
                 const accessoryCategory = Categories.TV_SET_TOP_BOX;
                 const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
