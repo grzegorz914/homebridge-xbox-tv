@@ -9,7 +9,7 @@ const Ping = require('ping');
 const SimplePacket = require('./simple.js');
 const MessagePacket = require('./message.js');
 const SGCrypto = require('./sgcrypto.js');
-const CONSTANTS = require('../constans.json');
+const CONSTANTS = require('../constants.json');
 
 class XBOXLOCALAPI extends EventEmitter {
     constructor(config) {

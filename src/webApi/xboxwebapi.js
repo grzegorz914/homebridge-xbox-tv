@@ -17,7 +17,7 @@ const Social = require('./providers/social.js');
 const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
-const CONSTANTS = require('../constans.json');
+const CONSTANTS = require('../constants.json');
 
 class XBOXWEBAPI extends EventEmitter {
     constructor(config) {

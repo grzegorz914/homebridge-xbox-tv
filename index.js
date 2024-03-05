@@ -2,7 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const XboxDevice = require('./src/xboxdevice.js');
-const CONSTANTS = require('./src/constans.json');
+const CONSTANTS = require('./src/constants.json');
 
 class XboxPlatform {
 	constructor(log, config, api) {

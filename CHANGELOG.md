@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### NOTE!!!
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated.
 
+## [2.13.0] - (05.03.2024)
+## Changes
+- added support to subscribe MQTT and control device
+- config schema updated
+- cleanup
+
 ## [2.12.0] - (02.01.2024)
 ## Changes
 - added possibility to disable prefix name for buttons and sensors

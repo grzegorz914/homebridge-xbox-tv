@@ -1,5 +1,5 @@
 "use strict";
-const CONSTANTS = require('../constans.json');
+const CONSTANTS = require('../constants.json');
 
 class PACKETS {
     constructor(structure) {

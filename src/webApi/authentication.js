@@ -3,7 +3,7 @@ const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const axios = require('axios');
-const CONSTANTS = require('../constans.json');
+const CONSTANTS = require('../constants.json');
 
 class AUTHENTICATION {
     constructor(config) {

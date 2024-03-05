@@ -6,7 +6,7 @@ const RestFul = require('./restful.js');
 const Mqtt = require('./mqtt.js');
 const XboxWebApi = require('./webApi/xboxwebapi.js');
 const XboxLocalApi = require('./localApi/xboxlocalapi.js');
-const CONSTANTS = require('./constans.json');
+const CONSTANTS = require('./constants.json');
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
@@ -112,68 +112,6 @@ class XboxDevice extends EventEmitter {
         } catch (error) {
             this.emit('error', `prepare files error: ${error}`);
         }
-
-        //RESTFul server
-        const restFulEnabled = device.enableRestFul || false;
-        if (restFulEnabled) {
-            this.restFul = new RestFul({
-                port: device.restFulPort || 3000,
-                debug: device.restFulDebug || false
-            });
-
-            this.restFul.on('connected', (message) => {
-                log(`Device: ${host} ${deviceName}, ${message}`);
-                this.restFulConnected = true;
-            })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                });
-        }
-
-        //mqtt client
-        const mqttEnabled = device.enableMqtt || false;
-        if (mqttEnabled) {
-            this.mqtt = new Mqtt({
-                host: device.mqttHost,
-                port: device.mqttPort || 1883,
-                clientId: device.mqttClientId || `xbox_${Math.random().toString(16).slice(3)}`,
-                prefix: `${device.mqttPrefix}/${device.name}`,
-                user: device.mqttUser,
-                passwd: device.mqttPasswd,
-                debug: device.mqttDebug || false
-            });
-
-            this.mqtt.on('connected', (message) => {
-                this.emit('message', message);
-                this.mqttConnected = true;
-            })
-                .on('changeState', (data) => {
-                    const key = Object.keys(data)[0];
-                    const value = Object.values(data)[0];
-                    switch (key) {
-                        case 'Power':
-                            break;
-                        case 'App':
-                            break;
-                        case 'Volume':
-                            break;
-                        case 'Mute':
-                            break;
-                        default:
-                            this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
-                            break;
-                    };
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                });
-        };
 
         //web api client
         if (this.webApiControl) {
@@ -333,6 +271,114 @@ class XboxDevice extends EventEmitter {
                 };
             })
             .on('prepareAccessory', async () => {
+                //RESTFul server
+                const restFulEnabled = device.enableRestFul || false;
+                if (restFulEnabled) {
+                    this.restFul = new RestFul({
+                        port: device.restFulPort || 3000,
+                        debug: device.restFulDebug || false
+                    });
+
+                    this.restFul.on('connected', (message) => {
+                        log(`Device: ${host} ${deviceName}, ${message}`);
+                        this.restFulConnected = true;
+                    })
+                        .on('error', (error) => {
+                            this.emit('error', error);
+                        })
+                        .on('debug', (debug) => {
+                            this.emit('debug', debug);
+                        });
+                }
+
+                //mqtt client
+                const mqttEnabled = device.enableMqtt || false;
+                if (mqttEnabled) {
+                    this.mqtt = new Mqtt({
+                        host: device.mqttHost,
+                        port: device.mqttPort || 1883,
+                        clientId: device.mqttClientId || `xbox_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${device.mqttPrefix}/${device.name}`,
+                        user: device.mqttUser,
+                        passwd: device.mqttPasswd,
+                        debug: device.mqttDebug || false
+                    });
+
+                    this.mqtt.on('connected', (message) => {
+                        this.emit('message', message);
+                        this.mqttConnected = true;
+                    })
+                        .on('changeState', async (data) => {
+                            const key = Object.keys(data)[0];
+                            const value = Object.values(data)[0];
+                            try {
+                                switch (key) {
+                                    case 'Power':
+                                        switch (this.webApiPowerOnOff) {
+                                            case true:
+                                                switch (value) {
+                                                    case true: //off
+                                                        await this.xboxWebApi.send('Power', 'WakeUp');
+                                                        break;
+                                                    case false: //on
+                                                        await this.xboxWebApi.send('Power', 'TurnOff');
+                                                        break;
+                                                }
+                                                break;
+                                            case false:
+                                                switch (value) {
+                                                    case true: //off
+                                                        await this.xboxLocalApi.powerOff();
+                                                        break;
+                                                    case false: //on
+                                                        await this.xboxLocalApi.powerOn();
+                                                        break;
+                                                }
+                                        }
+                                        break;
+                                    case 'App':
+                                        const payload = [{ 'oneStoreProductId': value }];
+                                        await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
+                                        break;
+                                    case 'Volume':
+                                        switch (value) {
+                                            case 'up': //Up
+                                                await this.xboxWebApi.send('Volume', 'Up');
+                                                break;
+                                            case 'down': //Down
+                                                await this.xboxWebApi.send('Volume', 'Down');
+                                                break;
+                                        }
+                                        break;
+                                    case 'Mute':
+                                        switch (value) {
+                                            case true: //Mute
+                                                await this.xboxWebApi.send('Audio', 'Mute');
+                                                break;
+                                            case false: //Unmute;
+                                                await this.xboxWebApi.send('Audio', 'Unmute');
+                                                break;
+                                        }
+                                        break;
+                                    case 'RcControl':
+                                        await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': value }]);
+                                        break;
+                                    default:
+                                        this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
+                                        break;
+                                };
+                            } catch (error) {
+                                this.emit('error', `set: ${key}, over MQTT, error: ${error}`);
+                            };
+                        })
+                        .on('debug', (debug) => {
+                            this.emit('debug', debug);
+                        })
+                        .on('error', (error) => {
+                            this.emit('error', error);
+                        });
+                };
+
                 try {
                     //read dev info from file
                     const savedInfo = await this.readData(this.devInfoFile);

@@ -2,7 +2,7 @@
 const HexToBin = require('hex-to-binary');
 const Packets = require('./packets.js');
 const Structure = require('./structure');
-const CONSTANTS = require('../constans.json');
+const CONSTANTS = require('../constants.json');
 
 class MESSAGE {
     constructor(type) {

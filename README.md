@@ -36,13 +36,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 * Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
 * Siri can be used for all functions, some times need to be created legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need to be created legacy buttons/switches/sensors.
-* RESTful server:
-  * Request: `http//homebridge_ip_address:port/path`.
-  * Path: `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`.
-  * Respone as JSON data.
-* MQTT client:
-  * Topic: `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status`.
-  * Publish as JSON data.
+* Support external integrations, [RESTFul](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#restful-integration), [MQTT](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#mqtt-integration).
 
 <p align="center">
  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a>
@@ -139,3 +133,25 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
   * Enter custom redirect URI *<http://localhost:8888/auth/callback>*
 * From the overview of your app page, copy *Application (client) ID* to `webApiClientId`
 * Save restart plugin and authorize console again and have fun.
+
+### RESTFul Integration
+
+* Request: `http//homebridge_ip_address:port/path`.
+  * Path: `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`.
+  * Respone as JSON data.
+
+### MQTT Integration
+
+| Direction | Topic | Message | Payload Data |
+| --- | --- | --- | --- |
+|  Publish   | `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status` | `{power: true, app: Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
+|  Subscribe   | `Set` | `{Power: true}` | JSON object. |
+
+| Subscribe | Key | Value | Type | Description |
+| --- | --- | --- | --- | --- |
+| Xbox |     |     |     |      |
+|     | `Power` | `true`, `false` | boolean | Power state. |
+|     | `App` | `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` | string | Set app. |
+|     | `RcControl` | `fastForward` | string | Send RC command. |
+|     | `Volume` | `up`, `down` | string | Set volume. |
+|     | `Mute` | `true`, `false` | boolean | Set mute. |
