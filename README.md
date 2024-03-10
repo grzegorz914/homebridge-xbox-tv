@@ -138,7 +138,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 * Request: `http//homebridge_ip_address:port/path`.
   * Path: `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`.
-  * Respone as JSON data.
+  * Respone as JSON object.
 
 ### MQTT Integration
 
