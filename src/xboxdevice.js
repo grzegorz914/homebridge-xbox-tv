@@ -280,7 +280,7 @@ class XboxDevice extends EventEmitter {
                     });
 
                     this.restFul.on('connected', (message) => {
-                        log(`Device: ${host} ${deviceName}, ${message}`);
+                        this.emit('message', message);
                         this.restFulConnected = true;
                     })
                         .on('error', (error) => {
