@@ -280,8 +280,8 @@ class XboxDevice extends EventEmitter {
                     });
 
                     this.restFul.on('connected', (message) => {
-                        this.emit('message', message);
                         this.restFulConnected = true;
+                        this.emit('message', message);
                     })
                         .on('error', (error) => {
                             this.emit('error', error);
@@ -305,8 +305,8 @@ class XboxDevice extends EventEmitter {
                     });
 
                     this.mqtt.on('connected', (message) => {
-                        this.emit('message', message);
                         this.mqttConnected = true;
+                        this.emit('message', message);
                     })
                         .on('changeState', async (data) => {
                             const key = Object.keys(data)[0];
@@ -368,7 +368,7 @@ class XboxDevice extends EventEmitter {
                                         break;
                                 };
                             } catch (error) {
-                                this.emit('error', `set: ${key}, over MQTT, error: ${error}`);
+                                this.emit('error', `MQTT send error: ${error}.`);
                             };
                         })
                         .on('debug', (debug) => {
@@ -427,7 +427,7 @@ class XboxDevice extends EventEmitter {
                 const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
             })
             .on('mqtt', (topic, message) => {
-                const mqtt = this.mqttConnected ? this.mqtt.send(topic, message) : false;
+                const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
             });
     }
 

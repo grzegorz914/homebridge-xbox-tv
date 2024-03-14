@@ -144,8 +144,8 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 | Direction | Topic | Message | Payload Data |
 | --- | --- | --- | --- |
-|  Publish   | `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status` | `{power: true, app: Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
-|  Subscribe   | `Set` | `{Power: true}` | JSON object. |
+|  Publish   | `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status` | `{"power": true, "app": Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
+|  Subscribe   | `Set` | `{"Power": true}` | JSON object. |
 
 | Subscribe | Key | Value | Type | Description |
 | --- | --- | --- | --- | --- |

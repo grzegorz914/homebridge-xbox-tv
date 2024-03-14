@@ -2,70 +2,52 @@
 const AsyncMqtt = require("async-mqtt");
 const EventEmitter = require('events');
 
-class MQTTCLIENT extends EventEmitter {
+class Mqtt extends EventEmitter {
     constructor(config) {
         super();
-        this.mqttHost = config.host;
-        this.mqttPort = config.port;
-        this.mqttClientId = config.clientId;
-        this.mqttPrefix = config.prefix;
-        this.mqttUser = config.user;
-        this.mqttPasswd = config.passwd;
-        this.mqttDebug = config.debug;
-        this.isConnected = false;
+        const options = {
+            clientId: config.clientId,
+            username: config.user,
+            password: config.passwd
+        }
+        const url = `mqtt://${config.host}:${config.port}`;
+        const subscribeTopic = `${config.prefix}/Set`;
 
-        this.connect();
-    };
+        this.on('connect', async () => {
+            try {
+                //connect
+                this.mqttClient = await AsyncMqtt.connectAsync(url, options);
+                this.emit('connected', 'MQTT Connected.');
 
-    async connect() {
-        try {
-            const options = {
-                clientId: this.mqttClientId,
-                username: this.mqttUser,
-                password: this.mqttPasswd
-            }
-            const url = `mqtt://${this.mqttHost}:${this.mqttPort}`;
-            this.mqttClient = await AsyncMqtt.connectAsync(url, options);
-            this.emit('connected', 'MQTT Connected.');
-            this.isConnected = true;
+                //subscribe
+                await this.mqttClient.subscribe(subscribeTopic);
+                this.emit('subscribed', `MQTT Subscribe topic: ${subscribeTopic}.`);
 
-            this.subscribe();
-        } catch (error) {
-            this.isConnected = false;
-            this.emit('error', `MQTT Connect error: ${error}`);
-        };
-    };
+                //subscribed message
+                this.mqttClient.on('message', (topic, message) => {
+                    try {
+                        const subscribedMessage = JSON.parse(message.toString());
+                        const emitDebug = config.debug ? this.emit('debug', `MQTT Received topic: ${topic}, message: ${JSON.stringify(subscribedMessage, null, 2)}`) : false;
+                        this.emit('subscribedMessage', subscribedMessage);
+                    } catch (error) {
+                        this.emit('error', `MQTT Parse message error: ${error}`);
+                    };
+                });
+            } catch (error) {
+                this.emit('error', `MQTT Connect error: ${error}`);
+            };
+        }).on('publish', async (topic, message) => {
+            try {
+                const fullTopic = `${config.prefix}/${topic}`;
+                const publishMessage = JSON.stringify(message, null, 2);
+                await this.mqttClient.publish(fullTopic, publishMessage);
+                const emitDebug = config.debug ? this.emit('debug', `MQTT Publish topic: ${fullTopic}, message: ${publishMessage}`) : false;
+            } catch (error) {
+                this.emit('error', `MQTT Publish error: ${error}`);
+            };
+        });
 
-    async subscribe() {
-        try {
-            this.mqttClient.on('message', (topic, message) => {
-                const subscribehMessage = JSON.parse(message.toString());
-                const emitDebug = this.mqttDebug ? this.emit('debug', `MQTT Received topic: ${topic}, message: ${JSON.stringify(subscribehMessage, null, 2)}`) : false;
-                this.emit('changeState', subscribehMessage);
-            });
-
-            const topic = `${this.mqttPrefix}/Set`;
-            await this.mqttClient.subscribe(topic);
-            this.emit('connected', `MQTT Subscribe topic: ${topic}.`);
-        } catch (error) {
-            this.emit('error', `MQTT Subscribe error: ${error}`);
-        };
-    };
-
-    async send(topic, message) {
-        if (!this.isConnected) {
-            const debug = this.mqttDebug ? this.emit('debug', `MQTT client not connected.`) : false;
-            return
-        };
-
-        try {
-            const fullTopic = `${this.mqttPrefix}/${topic}`;
-            const publishMessage = JSON.stringify(message, null, 2);
-            await this.mqttClient.publish(fullTopic, publishMessage);
-            const debug = this.mqttDebug ? this.emit('debug', `MQTT publish: ${fullTopic}: ${publishMessage}`) : false;
-        } catch (error) {
-            this.emit('error', `MQTT Publish error: ${error}`);
-        };
+        this.emit('connect');
     };
 };
-module.exports = MQTTCLIENT;
+module.exports = Mqtt;
