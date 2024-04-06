@@ -771,10 +771,8 @@ class XboxDevice extends EventEmitter {
                         const volume = this.volume;
                         return volume;
                     })
-                    .onSet(async (volume) => {
-                        if (volume === 0 || volume === 100) {
-                            volume = this.volume;
-                        };
+                    .onSet(async (value) => {
+                        volume = (value <= 0 || value >= 100) ? this.volume : value;
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                     });
 
@@ -1018,12 +1016,12 @@ class XboxDevice extends EventEmitter {
                         const sensorInputReference = sensorInput.reference;
 
                         //get sensor display type
-                        const sensorInputDisplayType = sensorInput.displayType || false;
+                        const sensorInputDisplayType = sensorInput.displayType || 0;
 
                         //get sensor name prefix
                         const namePrefix = sensorInput.namePrefix || false;
 
-                        if (sensorInputDisplayType) {
+                        if (sensorInputDisplayType > 0) {
                             if (sensorInputName && sensorInputReference) {
                                 const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
@@ -1084,12 +1082,12 @@ class XboxDevice extends EventEmitter {
                         const buttonOneStoreProductId = button.oneStoreProductId;
 
                         //get button display type
-                        const buttonDisplayType = button.displayType || false;
+                        const buttonDisplayType = button.displayType || 0;
 
                         //get button name prefix
                         const namePrefix = button.namePrefix ?? false;
 
-                        if (buttonDisplayType) {
+                        if (buttonDisplayType > 0) {
                             if (buttonName && buttonCommand && buttonMode >= 0) {
                                 const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
