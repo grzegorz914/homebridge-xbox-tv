@@ -45,7 +45,9 @@
     "homekit",
     "xbox",
     "microsoft",
-    "smartglass"
+    "smartglass",
+    "mqtt",
+    "restful"
   ],
   "funding": {
     "type": "github",
