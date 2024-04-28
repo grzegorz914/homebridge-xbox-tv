@@ -442,7 +442,7 @@ class XBOXWEBAPI extends EventEmitter {
             };
 
             const sessionid = UuIdv4();
-            const params = payload ? payload : [];
+            const params = payload ?? [];
             const postParams = {
                 "destination": 'Xbox',
                 "type": commandType,
@@ -453,12 +453,12 @@ class XBOXWEBAPI extends EventEmitter {
                 "linkedXboxId": this.xboxLiveId
             }
 
-            const stringifyPostParam = JSON.stringify(postParams);
-            this.headers['Content-Length'] = stringifyPostParam.length;
-            const headers = {
-                headers: this.headers
-            }
             try {
+                const stringifyPostParam = JSON.stringify(postParams);
+                this.headers['Content-Length'] = stringifyPostParam.length;
+                const headers = {
+                    headers: this.headers
+                }
                 const response = await axios.post(`${CONSTANTS.WebApi.Url.Xccs}/commands`, postParams, headers);
                 const debug = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
 
