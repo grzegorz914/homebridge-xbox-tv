@@ -80,11 +80,39 @@ class XboxDevice extends EventEmitter {
 
         //sensors variable
         this.sensorsInputsConfigured = [];
+        for (const sensor of this.sensorInputs) {
+            const sensorInputName = sensor.name;
+            const sensorInputReference = sensor.reference;
+            const sensorInputDisplayType = sensor.displayType ?? 0;
+            if (sensorInputName && sensorInputReference >= 0 && sensorInputDisplayType > 0) {
+                sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+                sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
+                sensor.state = false;
+                this.sensorsInputsConfigured.push(sensor);
+            } else {
+                const log = sensorInputDisplayType === 0 ? false : this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
+            };
+        }
+        this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
         this.sensorScreenSaverState = false;
         this.sensorInputState = false;
 
         //buttons variable
         this.buttonsConfigured = [];
+        for (const button of this.buttons) {
+            const buttonName = button.name;
+            const buttonMode = button.mode;
+            const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
+            const buttonDisplayType = button.displayType ?? 0;
+            if (buttonName && buttonReferenceCommand && buttonMode >= 0 && buttonDisplayType > 0) {
+                button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
+                button.state = false;
+                this.buttonsConfigured.push(button);
+            } else {
+                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
+            };
+        }
+        this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
         //check files exists, if not then create it
         const postFix = this.host.split('.').join('');
@@ -240,13 +268,22 @@ class XboxDevice extends EventEmitter {
                 }
 
                 if (this.sensorsInputsServices) {
-                    const servicesCount = this.sensorsInputsServices.length;
-                    for (let i = 0; i < servicesCount; i++) {
-                        const state = power ? (this.sensorsInputsConfigured[i].reference === reference) : false;
-                        const displayType = this.sensorsInputsConfigured[i].displayType;
-                        const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+                    for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
+                        const state = power ? this.sensorsInputsConfigured[i].reference === reference : false;
+                        this.sensorsInputsConfigured[i].state = state;
+                        const characteristicType = this.sensorsInputsConfigured[i].characteristicType;
                         this.sensorsInputsServices[i]
                             .updateCharacteristic(characteristicType, state);
+                    }
+                }
+
+                //buttons
+                if (this.buttonsServices) {
+                    for (let i = 0; i < this.buttonsConfiguredCount; i++) {
+                        const state = power ? this.buttonsConfigured[i].reference === reference : false;
+                        this.buttonsConfigured[i].state = state;
+                        this.buttonsServices[i]
+                            .updateCharacteristic(Characteristic.On, state);
                     }
                 }
 
@@ -1000,10 +1037,8 @@ class XboxDevice extends EventEmitter {
                 };
 
                 //prepare sonsor service
-                const sensorInputs = this.sensorInputs;
-                const sensorInputsCount = sensorInputs.length;
                 const possibleSensorInputsCount = 99 - this.allServices.length;
-                const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
+                const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
                 if (maxSensorInputsCount > 0) {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
                     for (let i = 0; i < maxSensorInputsCount; i++) {
@@ -1016,45 +1051,39 @@ class XboxDevice extends EventEmitter {
                         //get sensor reference
                         const sensorInputReference = sensorInput.reference;
 
-                        //get sensor display type
-                        const sensorInputDisplayType = sensorInput.displayType || 0;
-
                         //get sensor name prefix
                         const namePrefix = sensorInput.namePrefix || false;
 
-                        if (sensorInputDisplayType > 0) {
-                            if (sensorInputName && sensorInputReference) {
-                                const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
-                                const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                                const serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
-                                const sensorInputService = accessory.addService(serviceType, serviceName, `Sensor ${i}`);
-                                sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                                sensorInputService.getCharacteristic(characteristicType)
-                                    .onGet(async () => {
-                                        const state = this.power ? (this.reference === sensorInputReference) : false;
-                                        return state;
-                                    });
-                                this.sensorsInputsConfigured.push(sensorInput);
-                                this.sensorsInputsServices.push(sensorInputService);
-                                this.allServices.push(sensorInputService);
-                            } else {
-                                this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
-                            };
-                        }
+                        //get service type
+                        const serviceType = sensorInput.serviceType;
+
+                        //get service type
+                        const characteristicType = sensorInput.characteristicType;
+
+                        const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
+                        const sensorInputService = accessory.addService(serviceType, serviceName, `Sensor ${i}`);
+                        sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                        sensorInputService.getCharacteristic(characteristicType)
+                            .onGet(async () => {
+                                const state = sensorInput.state
+                                return state;
+                            });
+                        this.sensorsInputsServices.push(sensorInputService);
+                        this.allServices.push(sensorInputService);
+                        accessory.addService(sensorInputService);
                     }
                 }
 
+
                 //Prepare buttons services
-                const buttons = this.buttons;
-                const buttonsCount = buttons.length;
                 const possibleButtonsCount = 99 - this.allServices.length;
-                const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
+                const maxButtonsCount = this.buttonsConfiguredCount >= this.buttonsConfiguredCount ? possibleButtonsCount : this.buttonsConfiguredCount;
                 if (maxButtonsCount > 0) {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare buttons services`);
                     for (let i = 0; i < maxButtonsCount; i++) {
                         //get button
-                        const button = buttons[i];
+                        const button = this.buttonsConfigured[i];
 
                         //get button name
                         const buttonName = button.name;
@@ -1082,93 +1111,64 @@ class XboxDevice extends EventEmitter {
                         //get button inputOneStoreProductId
                         const buttonOneStoreProductId = button.oneStoreProductId;
 
-                        //get button display type
-                        const buttonDisplayType = button.displayType || 0;
-
                         //get button name prefix
                         const namePrefix = button.namePrefix ?? false;
 
-                        if (buttonDisplayType > 0) {
-                            if (buttonName && buttonCommand && buttonMode >= 0) {
-                                const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
-                                const serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
-                                const buttonService = accessory.addService(serviceType, serviceName, `Button ${i}`);
-                                buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                                buttonService.getCharacteristic(Characteristic.On)
-                                    .onGet(async () => {
-                                        const state = false;
-                                        const logInfo = this.disableLogInfo ? false : this.emit('message', `Button state: ${state}`);
-                                        return state;
-                                    })
-                                    .onSet(async (state) => {
-                                        if (state) {
-                                            try {
-                                                let channelName;
-                                                let command;
-                                                let payload;
+                        //get service type
+                        const serviceType = button.serviceType;
 
-                                                switch (buttonMode) {
-                                                    case 0: case 1: case 2:
-                                                        channelName = 'Shell';
-                                                        command = 'InjectKey';
-                                                        payload = [{ 'keyType': buttonCommand }];
+                        const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
+                        const buttonService = accessory.addService(serviceType, serviceName, `Button ${i}`);
+                        buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                        buttonService.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = button.state;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                if (state) {
+                                    try {
+                                        switch (buttonMode) {
+                                            case 0: case 1: case 2:
+                                                const send = state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
+                                                break;
+                                            case 3:
+                                                const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
+                                                break;
+                                            case 4:
+                                                const send2 = this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
+                                                break;
+                                            case 5:
+                                                switch (buttonOneStoreProductId) {
+                                                    case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+                                                        const send3 = this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
                                                         break;
-                                                    case 3:
-                                                        channelName = 'TV';
-                                                        command = 'ShowGuide';
-                                                        await this.xboxLocalApi.recordGameDvr();
+                                                    case 'Television':
+                                                        const send4 = this.power && state ? await this.xboxWebApi.send('TV', 'ShowGuide') : false;
                                                         break;
-                                                    case 4:
-                                                        channelName = 'Power';
-                                                        command = 'Reboot';
+                                                    case 'XboxGuide':
+                                                        const send5 = this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
                                                         break;
-                                                    case 5:
-                                                        switch (buttonOneStoreProductId) {
-                                                            case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                                channelName = 'Shell';
-                                                                command = 'GoHome';
-                                                                break;
-                                                            case 'Television':
-                                                                channelName = 'TV';
-                                                                command = 'ShowGuide';
-                                                                break;
-                                                            case 'XboxGuide':
-                                                                channelName = 'Shell';
-                                                                command = 'ShowGuideTab';
-                                                                payload = [{ 'tabName': 'Guide' }];
-                                                                break;
-                                                            case 'Not set': case 'Web api disabled':
-                                                                this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
-                                                                break;
-                                                            default:
-                                                                channelName = 'Shell';
-                                                                command = 'ActivateApplicationWithOneStoreProductId';
-                                                                payload = [{ 'oneStoreProductId': buttonOneStoreProductId }];
-                                                                break;
-                                                        }
+                                                    case 'Not set': case 'Web api disabled':
+                                                        this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
+                                                        break;
+                                                    default:
+                                                        const send6 = this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
                                                         break;
                                                 }
-
-                                                const send = buttonMode !== 3 ? await this.xboxWebApi.send(channelName, command, payload) : false;
-                                                const logInfo = this.disableLogInfo ? false : this.emit('message', `set Button Name:  ${buttonName}, Command: ${buttonCommand}`);
-                                            } catch (error) {
-                                                this.emit('error', `set Button error: ${error}`);
-                                            };
-                                            await new Promise(resolve => setTimeout(resolve, 350));
-                                            buttonService.updateCharacteristic(Characteristic.On, false);
+                                                break;
                                         }
-                                    });
-                                this.buttonsConfigured.push(button);
-                                this.buttonsServices.push(buttonService);
-                                this.allServices.push(buttonService);
-                            } else {
-                                this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
-                            };
-                        }
+                                    } catch (error) {
+                                        this.emit('error', `set Button error: ${error}`);
+                                    };
+                                }
+                            });
+                        this.buttonsServices.push(buttonService);
+                        this.allServices.push(buttonService);
+                        accessory.addService(buttonService);
                     }
                 }
-
                 resolve(accessory);
             } catch (error) {
                 reject(error)
