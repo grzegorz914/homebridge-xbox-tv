@@ -1158,6 +1158,7 @@ class XboxDevice extends EventEmitter {
                                         }
                                     } catch (error) {
                                         this.emit('error', `set Button error: ${error}`);
+                                        buttonService.updateCharacteristic(Characteristic.On, false);
                                     };
                                 }
                             });
