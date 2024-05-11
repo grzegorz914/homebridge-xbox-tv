@@ -84,7 +84,7 @@ class XboxDevice extends EventEmitter {
             const sensorInputName = sensor.name ?? false;
             const sensorInputReference = sensor.reference ?? false;
             const sensorInputDisplayType = sensor.displayType ?? 0;
-            if (sensorInputName && sensorInputReference >= 0 && sensorInputDisplayType > 0) {
+            if (sensorInputName && sensorInputReference && sensorInputDisplayType > 0) {
                 sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                 sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
                 sensor.state = false;
@@ -104,7 +104,7 @@ class XboxDevice extends EventEmitter {
             const buttonMode = button.mode ?? -1;
             const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
             const buttonDisplayType = button.displayType ?? 0;
-            if (buttonName && buttonReferenceCommand && buttonMode >= 0 && buttonDisplayType > 0) {
+            if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
                 button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
                 button.state = false;
                 this.buttonsConfigured.push(button);
@@ -116,18 +116,18 @@ class XboxDevice extends EventEmitter {
 
         //check files exists, if not then create it
         const postFix = this.host.split('.').join('');
-        this.authTokenFile = `${prefDir}/authToken_${postFix}`;
-        this.devInfoFile = `${prefDir}/devInfo_${postFix}`;
-        this.inputsFile = `${prefDir}/inputs_${postFix}`;
+        const authTokenFile = `${prefDir}/authToken_${postFix}`;
+        const devInfoFile = `${prefDir}/devInfo_${postFix}`;
+        const inputsFile = `${prefDir}/inputs_${postFix}`;
         this.inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
         this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
 
         // Create files if it doesn't exist
         try {
             const files = [
-                this.authTokenFile,
-                this.devInfoFile,
-                this.inputsFile,
+                authTokenFile,
+                devInfoFile,
+                inputsFile,
                 this.inputsNamesFile,
                 this.inputsTargetVisibilityFile,
             ];
@@ -147,8 +147,8 @@ class XboxDevice extends EventEmitter {
                 xboxLiveId: this.xboxLiveId,
                 webApiClientId: this.webApiClientId,
                 webApiClientSecret: this.webApiClientSecret,
-                tokensFile: this.authTokenFile,
-                inputsFile: this.inputsFile,
+                tokensFile: authTokenFile,
+                inputsFile: inputsFile,
                 debugLog: this.enableDebugMode
             });
 
@@ -191,8 +191,8 @@ class XboxDevice extends EventEmitter {
         this.xboxLocalApi = new XboxLocalApi({
             host: this.host,
             xboxLiveId: this.xboxLiveId,
-            tokensFile: this.authTokenFile,
-            devInfoFile: this.devInfoFile,
+            tokensFile: authTokenFile,
+            devInfoFile: devInfoFile,
             infoLog: this.disableLogInfo,
             debugLog: this.enableDebugMode
         });
@@ -419,12 +419,12 @@ class XboxDevice extends EventEmitter {
 
                 try {
                     //read dev info from file
-                    const savedInfo = await this.readData(this.devInfoFile);
+                    const savedInfo = await this.readData(devInfoFile);
                     this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
                     //read inputs file
-                    const savedInputs = await this.readData(this.inputsFile);
+                    const savedInputs = await this.readData(inputsFile);
                     this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
                     const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
