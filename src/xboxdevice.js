@@ -280,7 +280,7 @@ class XboxDevice extends EventEmitter {
                 //buttons
                 if (this.buttonsServices) {
                     for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                        const state = power ? this.buttonsConfigured[i].reference === reference : false;
+                        const state = power ? this.buttonsConfigured[i].oneStoreProductId === reference : false;
                         this.buttonsConfigured[i].state = state;
                         this.buttonsServices[i]
                             .updateCharacteristic(Characteristic.On, state);
