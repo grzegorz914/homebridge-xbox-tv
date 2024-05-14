@@ -101,15 +101,15 @@ class XboxDevice extends EventEmitter {
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
             const buttonName = button.name ?? false;
-            const buttonMode = button.mode ?? -1;
-            const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
+            const buttonCommand = button.command ?? false;
+            const buttonReference = buttonCommand === 'switchAppGame' ? button.oneStoreProductId : false;
             const buttonDisplayType = button.displayType ?? 0;
-            if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
+            if (buttonName && buttonCommand && buttonDisplayType > 0) {
                 button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
+                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Reference: ${buttonReference ? buttonReference : 'Missing'}.`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
