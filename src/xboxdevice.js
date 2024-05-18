@@ -222,7 +222,7 @@ class XboxDevice extends EventEmitter {
                 //update characteristics
                 if (this.televisionService) {
                     this.televisionService
-                        .updateCharacteristic(Characteristic.Active, power)
+                        .updateCharacteristic(Characteristic.Active, power);
                 };
 
                 if (this.televisionService) {
@@ -248,14 +248,14 @@ class XboxDevice extends EventEmitter {
 
                 if (this.sensorPowerService) {
                     this.sensorPowerService
-                        .updateCharacteristic(Characteristic.ContactSensorState, power)
+                        .updateCharacteristic(Characteristic.ContactSensorState, power);
                 }
 
                 if (this.sensorInputService && reference !== this.reference) {
                     for (let i = 0; i < 2; i++) {
                         const state = power ? [true, false][i] : false;
                         this.sensorInputService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
+                            .updateCharacteristic(Characteristic.ContactSensorState, state);
                         this.sensorInputState = state;
                     }
                 }
@@ -263,7 +263,7 @@ class XboxDevice extends EventEmitter {
                 if (this.sensorScreenSaverService) {
                     const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
                     this.sensorScreenSaverService
-                        .updateCharacteristic(Characteristic.ContactSensorState, state)
+                        .updateCharacteristic(Characteristic.ContactSensorState, state);
                     this.sensorScreenSaverState = state;
                 }
 
@@ -1126,43 +1126,41 @@ class XboxDevice extends EventEmitter {
                                 return state;
                             })
                             .onSet(async (state) => {
-                                if (state) {
-                                    try {
-                                        switch (buttonMode) {
-                                            case 0: case 1: case 2:
-                                                const send = state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
-                                                break;
-                                            case 3:
-                                                const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
-                                                break;
-                                            case 4:
-                                                const send2 = this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
-                                                break;
-                                            case 5:
-                                                switch (buttonOneStoreProductId) {
-                                                    case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                        const send3 = this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
-                                                        break;
-                                                    case 'Television':
-                                                        const send4 = this.power && state ? await this.xboxWebApi.send('TV', 'ShowGuide') : false;
-                                                        break;
-                                                    case 'XboxGuide':
-                                                        const send5 = this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
-                                                        break;
-                                                    case 'Not set': case 'Web api disabled':
-                                                        this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
-                                                        break;
-                                                    default:
-                                                        const send6 = this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
-                                                        break;
-                                                }
-                                                break;
-                                        }
-                                    } catch (error) {
-                                        this.emit('error', `set Button error: ${error}`);
-                                        buttonService.updateCharacteristic(Characteristic.On, false);
-                                    };
-                                }
+                                try {
+                                    switch (buttonMode) {
+                                        case 0: case 1: case 2:
+                                            const send = state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
+                                            break;
+                                        case 3:
+                                            const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
+                                            break;
+                                        case 4:
+                                            const send2 = this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
+                                            break;
+                                        case 5:
+                                            switch (buttonOneStoreProductId) {
+                                                case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+                                                    const send3 = this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
+                                                    break;
+                                                case 'Television':
+                                                    const send4 = this.power && state ? await this.xboxWebApi.send('TV', 'ShowGuide') : false;
+                                                    break;
+                                                case 'XboxGuide':
+                                                    const send5 = this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
+                                                    break;
+                                                case 'Not set': case 'Web api disabled':
+                                                    this.emit('message', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
+                                                    break;
+                                                default:
+                                                    const send6 = this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
+                                                    break;
+                                            }
+                                            break;
+                                    }
+                                } catch (error) {
+                                    this.emit('error', `set Button error: ${error}`);
+                                    button.state = false;
+                                };
                             });
                         this.buttonsServices.push(buttonService);
                         this.allServices.push(buttonService);
