@@ -811,8 +811,7 @@ class XboxDevice extends EventEmitter {
                         const volume = this.volume;
                         return volume;
                     })
-                    .onSet(async (value) => {
-                        volume = (value <= 0 || value >= 100) ? this.volume : value;
+                    .onSet(async (volume) => {
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                     });
 
@@ -1159,7 +1158,6 @@ class XboxDevice extends EventEmitter {
                                     }
                                 } catch (error) {
                                     this.emit('error', `set Button error: ${error}`);
-                                    button.state = false;
                                 };
                             });
                         this.buttonsServices.push(buttonService);
