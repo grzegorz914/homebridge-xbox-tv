@@ -597,27 +597,6 @@
 							},
 							"required": false
 						},
-						"enableDebugMode": {
-							"title": "Debug",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable debug mode.",
-							"required": false
-						},
-						"disableLogInfo": {
-							"title": "Disable Log Info",
-							"type": "boolean",
-							"default": false,
-							"description": "This disable logging values and states on every it change.",
-							"required": false
-						},
-						"disableLogDeviceInfo": {
-							"title": "Disable Log Device Info",
-							"type": "boolean",
-							"default": false,
-							"description": "This disable log device info by every connections device to the network.",
-							"required": false
-						},
 						"infoButtonCommand": {
 							"title": "Info Button",
 							"type": "string",
@@ -667,7 +646,7 @@
 								}
 							],
 							"description": "Here select the function of info button in RC.",
-							"required": true
+							"required": false
 						},
 						"volumeControl": {
 							"title": "Volume Control",
@@ -696,7 +675,28 @@
 									]
 								}
 							],
-							"required": true
+							"required": false
+						},
+						"enableDebugMode": {
+							"title": "Debug",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
+						},
+						"disableLogInfo": {
+							"title": "Disable Log Info",
+							"type": "boolean",
+							"default": false,
+							"description": "This disable logging values and states on every it change.",
+							"required": false
+						},
+						"disableLogDeviceInfo": {
+							"title": "Disable Log Device Info",
+							"type": "boolean",
+							"default": false,
+							"description": "This disable log device info by every connections device to the network.",
+							"required": false
 						},
 						"enableRestFul": {
 							"title": "Enable",
