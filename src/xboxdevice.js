@@ -61,9 +61,9 @@ class XboxDevice extends EventEmitter {
         const tempInputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
         const inputsArr = [];
         for (const input of tempInputs) {
-            const inputName = input.name;
-            const inputReference = input.reference;
-            const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
+            const inputName = input.name ?? false;
+            const inputReference = input.reference ?? false;
+            const duplicatedInput = inputsArr.some(input => input.reference === inputReference) ?? false;
             const push = inputName && inputReference && !duplicatedInput ? inputsArr.push(input) : false;
         }
         this.inputs = inputsArr;

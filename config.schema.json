@@ -40,45 +40,45 @@
 							"type": "boolean",
 							"default": false,
 							"description": "This enable console control over Web Api.",
-							"required": false
+							"required": true
 						},
 						"getInputsFromDevice": {
 							"title": "Load Inputs From Device",
 							"type": "boolean",
 							"default": false,
 							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": true
 						},
 						"filterGames": {
 							"title": "Hide Games",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Games will not be displayed on the list of inputs.",
-							"required": false
+							"required": true
 						},
 						"filterApps": {
 							"title": "Hide Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Apps will not be displayed on the list of inputs.",
-							"required": false
+							"required": true
 						},
 						"filterSystemApps": {
 							"title": "Hide System Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs.",
-							"required": false
+							"required": true
 						},
 						"filterDlc": {
 							"title": "Hide DLC",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, DLC will not be displayed on the list of inputs.",
-							"required": false
+							"required": true
 						},
 						"inputsDisplayOrder": {
 							"title": "Inputs Display Order",
@@ -132,7 +132,7 @@
 										"type": "string",
 										"placeholder": "Input name",
 										"description": "Here set Your own name.",
-										"required": true
+										"required": false
 									},
 									"titleId": {
 										"title": "Title Id",
@@ -146,17 +146,17 @@
 										"type": "string",
 										"placeholder": "Input reference",
 										"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": true
+										"required": false
 									},
 									"oneStoreProductId": {
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false,
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-										}
+										},
+										"required": false
 									},
 									"contentType": {
 										"title": "Content Type",
@@ -188,10 +188,11 @@
 												]
 											}
 										],
-										"required": true
+										"required": false
 									}
 								}
-							}
+							},
+							"required": false
 						},
 						"buttons": {
 							"type": "array",
@@ -404,17 +405,17 @@
 											}
 										],
 										"description": "Here select the command or mode of button.",
-										"required": true
+										"required": false
 									},
 									"oneStoreProductId": {
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api enabled, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": true,
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-										}
+										},
+										"required": false
 									},
 									"displayType": {
 										"title": "Display Type",
@@ -440,16 +441,17 @@
 											}
 										],
 										"description": "Here select display type in HomeKit app.",
-										"required": true
+										"required": false
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
 										"description": "Here enable/disable the accessory name as a prefix for button name.",
-										"required": true
+										"required": false
 									}
 								}
-							}
+							},
+							"required": false
 						},
 						"sensorPower": {
 							"title": "Power",
@@ -484,14 +486,14 @@
 										"type": "string",
 										"placeholder": "Name",
 										"description": "Here set Your own name.",
-										"required": true
+										"required": false
 									},
 									"reference": {
 										"title": "Reference",
 										"type": "string",
 										"placeholder": "Input/App reference",
 										"description": "Here set the Input/App reference.",
-										"required": true
+										"required": false
 									},
 									"displayType": {
 										"title": "Type",
@@ -523,76 +525,77 @@
 											}
 										],
 										"description": "Here select sensor type to be exposed in HomeKit app.",
-										"required": true
+										"required": false
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
 										"description": "Here enable/disable the accessory name as a prefix for sensor name.",
-										"required": true
+										"required": false
 									}
 								}
-							}
+							},
+							"required": false
 						},
 						"webApiPowerOnOff": {
 							"title": "Power Control",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable power control over Web Api.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"webApiRcControl": {
 							"title": "Remote Control",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable game pad control over Web Api.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"webApiVolumeControl": {
 							"title": "Volume Control",
 							"type": "boolean",
 							"default": false,
 							"description": "This enable volume/mute control over Web Api.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"webApiToken": {
 							"title": "Web Api Token",
 							"type": "string",
 							"placeholder": "Web Api Token",
 							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
-							"required": true,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"webApiClientId": {
 							"title": "Client Id",
 							"type": "string",
 							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
 							"description": "Here set your own Client Id from Azure AD or leave empty if you do not have own account.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"webApiClientSecret": {
 							"title": "Client Secret",
 							"type": "string",
 							"placeholder": "Client Secret",
 							"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
-							"required": false,
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							}
+							},
+							"required": false
 						},
 						"enableDebugMode": {
 							"title": "Debug",
@@ -618,6 +621,7 @@
 						"infoButtonCommand": {
 							"title": "Info Button",
 							"type": "string",
+							"default": "nexus",
 							"oneOf": [
 								{
 									"title": "Game Pad View",
@@ -698,116 +702,116 @@
 							"title": "Enable",
 							"type": "boolean",
 							"default": false,
-							"required": false,
-							"description": "This enable RESTful server."
+							"description": "This enable RESTful server.",
+							"required": false
 						},
 						"restFulDebug": {
 							"title": "Debug",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "This enable debug mode for RESTFul.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableRestFul === true;"
-							}
+							},
+							"required": false
 						},
 						"restFulPort": {
 							"title": "Port",
 							"type": "integer",
 							"placeholder": 3000,
-							"required": true,
 							"description": "Here set the listening Port for RESTful server.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableRestFul === true;"
-							}
+							},
+							"required": false
 						},
 						"enableMqtt": {
 							"title": "Enable",
 							"type": "boolean",
 							"default": false,
-							"required": false,
-							"description": "This enable MQTT client."
+							"description": "This enable MQTT client.",
+							"required": false
 						},
 						"mqttDebug": {
 							"title": "Debug",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "This enable debug mode for MQTT.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttHost": {
 							"title": "IP/Hostname",
 							"type": "string",
 							"placeholder": "ip or hostname",
-							"required": true,
 							"format": "hostname",
 							"description": "Here set the IP/Hostname of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttPort": {
 							"title": "Port",
 							"type": "integer",
 							"placeholder": 1883,
-							"required": true,
 							"description": "Here set the port of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttPrefix": {
 							"title": "Prefix",
 							"type": "string",
 							"placeholder": "home/xbox",
-							"required": false,
 							"description": "Here set the prefix.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttClientId": {
 							"title": "Client ID",
 							"type": "string",
 							"placeholder": "client id",
-							"required": false,
 							"description": "Here optional set the Client ID of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true"
-							}
+							},
+							"required": false
 						},
 						"mqttAuth": {
 							"title": "Authorization",
 							"type": "boolean",
 							"default": false,
-							"required": false,
 							"description": "This enable authorization for MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttUser": {
 							"title": "User",
 							"type": "string",
 							"placeholder": "user",
-							"required": false,
 							"description": "Here set the user of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
-							}
+							},
+							"required": false
 						},
 						"mqttPasswd": {
 							"title": "Password",
 							"type": "string",
 							"placeholder": "password",
-							"required": false,
 							"description": "Here set the password of MQTT Broker.",
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
-							}
+							},
+							"required": false
 						}
 					}
 				}
