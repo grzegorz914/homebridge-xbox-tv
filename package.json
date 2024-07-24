@@ -34,7 +34,7 @@
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^1.0.3",
     "async-mqtt": "^2.6.3",
-    "elliptic": "^6.5.5",
+    "elliptic": "^6.5.6",
     "hex-to-binary": "^1.0.1",
     "jsrsasign": "^11.1.0",
     "uuid": "^10.0.0",

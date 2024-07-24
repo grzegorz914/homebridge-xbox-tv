@@ -188,7 +188,7 @@
 												]
 											}
 										],
-										"required": false
+										"required": true
 									}
 								}
 							},
@@ -405,7 +405,7 @@
 											}
 										],
 										"description": "Here select the command or mode of button.",
-										"required": false
+										"required": true
 									},
 									"oneStoreProductId": {
 										"title": "Product Id",
@@ -441,7 +441,7 @@
 											}
 										],
 										"description": "Here select display type in HomeKit app.",
-										"required": false
+										"required": true
 									},
 									"namePrefix": {
 										"title": "Prefix",
@@ -525,7 +525,7 @@
 											}
 										],
 										"description": "Here select sensor type to be exposed in HomeKit app.",
-										"required": false
+										"required": true
 									},
 									"namePrefix": {
 										"title": "Prefix",
@@ -646,7 +646,7 @@
 								}
 							],
 							"description": "Here select the function of info button in RC.",
-							"required": false
+							"required": true
 						},
 						"volumeControl": {
 							"title": "Volume Control",
@@ -675,7 +675,7 @@
 									]
 								}
 							],
-							"required": false
+							"required": true
 						},
 						"enableDebugMode": {
 							"title": "Debug",
