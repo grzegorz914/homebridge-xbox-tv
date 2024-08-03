@@ -876,8 +876,7 @@ class XboxDevice extends EventEmitter {
                     //get input name
                     const name = input.name ?? `Input ${inputIdentifier}`;
                     const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
-                    const inputName = !savedInputsNames ? name : savedInputsNames;
-                    input.name = inputName;
+                    input.name = savedInputsNames ? savedInputsNames.substring(0, 64) : name.substring(0, 64);
 
                     //get input type
                     const inputSourceType = 0;
@@ -886,24 +885,23 @@ class XboxDevice extends EventEmitter {
                     const isConfigured = 1;
 
                     //get visibility
-                    const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-                    input.visibility = currentVisibility;
+                    input.visibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
                     //add identifier to the input
                     input.identifier = inputIdentifier;
 
                     //input service
-                    const inputService = accessory.addService(Service.InputSource, inputName, `Input ${inputIdentifier}`);
+                    const inputService = accessory.addService(Service.InputSource, input.name, `Input ${inputIdentifier}`);
                     inputService
                         .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                        .setCharacteristic(Characteristic.Name, inputName.substring(0, 64))
+                        .setCharacteristic(Characteristic.Name, input.name)
                         .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
                         .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                        .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+                        .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
 
                     inputService.getCharacteristic(Characteristic.ConfiguredName)
                         .onGet(async () => {
-                            return inputName;
+                            return input.name;
                         })
                         .onSet(async (value) => {
                             if (value === this.savedInputsNames[inputReference]) {
@@ -911,9 +909,10 @@ class XboxDevice extends EventEmitter {
                             }
 
                             try {
+                                input.name = value;
                                 this.savedInputsNames[inputReference] = value;
                                 await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${nameIdentifier}.`);
+                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}.`);
 
                                 //sort inputs
                                 const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
@@ -926,7 +925,7 @@ class XboxDevice extends EventEmitter {
 
                     inputService.getCharacteristic(Characteristic.TargetVisibilityState)
                         .onGet(async () => {
-                            return currentVisibility;
+                            return input.visibility;
                         })
                         .onSet(async (state) => {
                             if (state === this.savedInputsTargetVisibility[inputReference]) {
@@ -934,9 +933,10 @@ class XboxDevice extends EventEmitter {
                             }
 
                             try {
-                                this.savedInputsTargetVisibility[inputReference] = state;
+                                input.visibility = state,
+                                    this.savedInputsTargetVisibility[inputReference] = state;
                                 await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
+                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                             } catch (error) {
                                 this.emit('error', `save Target Visibility error: ${error}`);
                             }
