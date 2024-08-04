@@ -102,11 +102,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `webApiToken` | Required if `webApiControl` enabled, use Authorization Manager to get it. |
 | `webApiClientId` | If You are created App on Azure AD then You can use your own Client Id. |
 | `webApiClientSecret` | If You are created App on Azure AD then You can use own Client Secret. |
+| `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
+| `volumeControlName` | Here set Your own volume control name or leave empty. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`), not working yet. |
+| `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
-| `infoButtonCommand` | Here select the function of `I` button in RC app. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`), not working yet. |
 | `enableRestFul` | If enabled, RESTful server will start automatically and respond to any path request. |
 | `restFulPort` | Here set the listening `Port` for RESTful server. |
 | `restFulDebug` | If enabled, deep log will be present in homebridge console for RESTFul server. |

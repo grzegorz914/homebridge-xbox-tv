@@ -648,6 +648,20 @@
 							"description": "Here select the function of info button in RC.",
 							"required": true
 						},
+						"volumeControlNamePrefix": {
+							"title": "Volume Control Name Prefix",
+							"type": "boolean",
+							"default": false,
+							"description": "Here enable/disable the accessory name as a prefix for volume control name.",
+							"required": false
+						},
+						"volumeControlName": {
+							"title": "Volume Control Name",
+							"type": "string",
+							"placeholder": "Name",
+							"description": "Here set Your own volume control name or leave empty.",
+							"required": false
+						},
 						"volumeControl": {
 							"title": "Volume Control",
 							"type": "integer",
@@ -891,6 +905,15 @@
 							"items": [
 								{
 									"key": "devices[]",
+									"title": "Volume",
+									"items": [
+										"devices[].volumeControlNamePrefix",
+										"devices[].volumeControlName",
+										"devices[].volumeControl"
+									]
+								},
+								{
+									"key": "devices[]",
 									"title": "Sensors",
 									"items": [
 										"devices[].sensorPower",
@@ -920,6 +943,13 @@
 								},
 								{
 									"key": "devices[]",
+									"title": "Device",
+									"items": [
+										"devices[].infoButtonCommand"
+									]
+								},
+								{
+									"key": "devices[]",
 									"title": "Web Api",
 									"items": [
 										"devices[].webApiControl",
@@ -935,9 +965,7 @@
 									"items": [
 										"devices[].enableDebugMode",
 										"devices[].disableLogInfo",
-										"devices[].disableLogDeviceInfo",
-										"devices[].infoButtonCommand",
-										"devices[].volumeControl"
+										"devices[].disableLogDeviceInfo"
 									]
 								},
 								{
