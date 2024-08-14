@@ -30,6 +30,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
       tokensFile: tokensFile
     }
     const authentication = new Authentication(authConfig);
+    authentication.on('error', (error) => {
+;
+    })
 
     let data = {};
     switch (mode) {

@@ -37,10 +37,11 @@ class XboxPlatform {
 					...device,
 					xboxLiveId: 'removed',
 					webApiToken: 'removed',
-					webApiClientId: 'removed',
 					webApiClientSecret: 'removed',
-					mqttUser: 'removed',
-					mqttPasswd: 'removed'
+					mqtt: {
+						...device.mqtt,
+						passwd: 'removed'
+					  }
 				};
 				const debug1 = debugMode ? log(`Device: ${deviceHost} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 

@@ -6,7 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### NOTE
+
 ## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
+
+## [3.0.0] - (14.08.2024)
+
+## Changes
+
+### After update to v9.0.0 RESTFull and MQTT config settings need to be updated
+
+- hide passwords by typing and display in Config UI
+- remove return duplicate promises from whole code
+- bump dependencies
+- cleanup
 
 ## [2.14.0] - (04.08.2024)
 
