@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-### After update to v9.0.0 RESTFull and MQTT config settings need to be updated
+### After update to v3.0.0 RESTFull and MQTT config settings need to be updated
 
 - hide passwords by typing and display in Config UI
 - remove return duplicate promises from whole code
