@@ -57,7 +57,7 @@ class XboxDevice extends EventEmitter {
         this.restFulConnected = false;
 
         //mqtt
-        const mqtt = device.restFul ?? {};
+        const mqtt = device.mqtt ?? {};
         const mqttEnabled = mqtt.enable || false;
         this.mqttConnected = false;
 
