@@ -86,7 +86,7 @@ class XBOXWEBAPI extends EventEmitter {
             //await this.userProfile();
             return true;;
         } catch (error) {
-            this.emit('error', `get xbox live data error: ${error}`);
+            throw new Error(`get xbox live data error: ${error}`);
         };
     };
 
@@ -121,7 +121,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return remoteManagementEnabled;
         } catch (error) {
-            this.emit('error', `get status error: ${error}`);
+            throw new Error(`get status error: ${error}`);
         };
     }
 
@@ -201,7 +201,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', `Consoles list error: ${error}`);
+            throw new Error(`Consoles list error: ${error}`);
         };
     }
 
@@ -252,7 +252,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', `get installed apps error: ${error}`);
+            throw new Error(`get installed apps error: ${error}`);
         };
     }
 
@@ -295,7 +295,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', `get storage devices error: ${error}`);
+            throw new Error(`get storage devices error: ${error}`);
         };
     }
 
@@ -338,7 +338,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', `User profile error: ${error}`);
+            throw new Error(`User profile error: ${error}`);
         };
     }
 
@@ -362,7 +362,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         }
     };
 
@@ -371,7 +371,7 @@ class XBOXWEBAPI extends EventEmitter {
             await this.send('Media', 'Next');
             return true;;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -380,7 +380,7 @@ class XBOXWEBAPI extends EventEmitter {
             await this.send('Media', 'Previous');
             return true;;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -389,7 +389,7 @@ class XBOXWEBAPI extends EventEmitter {
             await this.send('Media', 'Pause');
             return true;;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -398,7 +398,7 @@ class XBOXWEBAPI extends EventEmitter {
             await this.send('Media', 'Play');
             return true;;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -407,13 +407,13 @@ class XBOXWEBAPI extends EventEmitter {
             await this.send('Shell', 'GoBack');
             return true;;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
     async send(commandType, command, payload) {
         if (!this.authorized) {
-            this.emit('error', 'not authorized.');
+            throw new Error('not authorized.');
         };
 
         const sessionid = UuIdv4();
@@ -440,7 +440,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', `send command type: ${commandType}, command: ${command}, params: ${params}, error: ${error}`);
+            throw new Error(`send command type: ${commandType}, command: ${command}, params: ${params}, error: ${error}`);
         };
     }
 }

@@ -3,12 +3,10 @@ const QueryString = require('querystring');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const axios = require('axios');
-const EventEmitter = require('events');
 const CONSTANTS = require('../constants.json');
 
-class Authentication extends EventEmitter{
+class Authentication {
     constructor(config) {
-        super();
         this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.ClientId;
         this.webApiClientSecret = config.webApiClientSecret;
         this.tokensFile = config.tokensFile;
@@ -32,7 +30,7 @@ class Authentication extends EventEmitter{
                                 await this.refreshTokens('xsts');
                                 return true;
                             } catch (error) {
-                                this.emit('error', error);
+                                throw new Error(error);
                             };
                             break;
                         case false:
@@ -40,7 +38,7 @@ class Authentication extends EventEmitter{
                                 await this.refreshTokens('xsts');
                                 return true;
                             } catch (error) {
-                                this.emit('error', error);
+                                throw new Error(error);
                             };
                             break;
                     }
@@ -50,7 +48,7 @@ class Authentication extends EventEmitter{
                         await this.refreshTokens('xsts');
                         return true;
                     } catch (error) {
-                        this.emit('error', error);
+                        throw new Error(error);
                     };
                 }
                 break;
@@ -64,7 +62,7 @@ class Authentication extends EventEmitter{
                                 await this.refreshTokens('xsts');
                                 return true;
                             } catch (error) {
-                                this.emit('error', error);
+                                throw new Error(error);
                             };
                             break;
                         case false:
@@ -76,12 +74,12 @@ class Authentication extends EventEmitter{
                         await this.getXstsToken(this.tokens.user.Token);
                         return true;
                     } catch (error) {
-                        this.emit('error', error);
+                        throw new Error(error);
                     };
                 }
                 break;
             default:
-                this.emit('error', `Unknow refresh token type: ${type}.`);
+                throw new Error(`Unknow refresh token type: ${type}.`);
                 break;
         }
     }
@@ -104,7 +102,7 @@ class Authentication extends EventEmitter{
             this.tokens.oauth = refreshToken;
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -128,7 +126,7 @@ class Authentication extends EventEmitter{
             this.tokens.xsts = {};
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -150,7 +148,7 @@ class Authentication extends EventEmitter{
             this.tokens.xsts = xstsToken;
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -174,7 +172,7 @@ class Authentication extends EventEmitter{
             await this.saveTokens(this.tokens);
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -183,19 +181,20 @@ class Authentication extends EventEmitter{
             try {
                 const tokens = await this.readTokens();
                 this.tokens = !tokens ? this.tokens : tokens;
+                const refreshToken = this.tokens.oauth.refresh_token ?? false;
 
-                if (this.tokens.oauth.refresh_token) {
+                if (refreshToken) {
                     await this.refreshTokens('user');
                     await this.saveTokens(this.tokens);
                     return { headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens };
                 } else {
-                    this.emit('error', 'No oauth token found. Use authorization manager first.')
+                    throw new Error('No oauth token found. Use authorization manager first.')
                 }
             } catch (error) {
-                this.emit('error', error);
+                throw new Error(error);
             };
         } else {
-            this.emit('error', `Authorization not possible, check plugin settings - Client Id: ${this.webApiClientId}`);
+            throw new Error(`Authorization not possible, check plugin settings - Client Id: ${this.webApiClientId}`);
         }
     }
 
@@ -212,7 +211,7 @@ class Authentication extends EventEmitter{
             const oauth2URI = `${CONSTANTS.WebApi.Url.oauth2}?${params}`;
             return oauth2URI;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -222,7 +221,7 @@ class Authentication extends EventEmitter{
             const tokens = data.length > 0 ? JSON.parse(data) : false;
             return tokens;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -232,7 +231,7 @@ class Authentication extends EventEmitter{
             await fsPromises.writeFile(this.tokensFile, tokens);
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -246,7 +245,7 @@ class Authentication extends EventEmitter{
             await fsPromises.writeFile(this.tokensFile, tokens);
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 }

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
-## After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
+### After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
+### After update to v3.0.0 RESTFull and MQTT config settings need to be updated
+
+## [3.0.2] - (18.08.2024)
+
+## Changes
+
+- fixed authorization manager [#204](https://github.com/grzegorz914/homebridge-xbox-tv/issues/204)
+- cleanup
 
 ## [3.0.0] - (14.08.2024)
 

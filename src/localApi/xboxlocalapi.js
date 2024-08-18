@@ -16,9 +16,6 @@ class XBOXLOCALAPI extends EventEmitter {
         super();
 
         this.crypto = new SGCrypto();
-        this.crypto.on('error', (error) => {
-            this.emit('error', error);
-        });
 
         this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
@@ -373,7 +370,7 @@ class XBOXLOCALAPI extends EventEmitter {
             const tokenData = parseData.xsts.Token.length > 0 ? parseData : false;
             return tokenData;
         } catch (error) {
-            this.emit('error', `Read token error: ${error}`);
+           throw new Error(`Read token error: ${error}`);
         }
     }
 
@@ -392,7 +389,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         };
     };
 
@@ -408,7 +405,7 @@ class XBOXLOCALAPI extends EventEmitter {
             await this.sendSocketMessage(message, 'acknowledge');
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         };
     }
 
@@ -427,7 +424,7 @@ class XBOXLOCALAPI extends EventEmitter {
             await this.sendSocketMessage(message, 'channelStartRequest');
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         }
     }
 
@@ -454,7 +451,7 @@ class XBOXLOCALAPI extends EventEmitter {
             this.emit('disconnected', 'Power On failed, please try again.');
         } catch (error) {
             this.emit('disconnected', 'Power On error, please try again.');
-            this.emit('error', error);
+           throw new Error(error);
         };
     };
 
@@ -475,7 +472,7 @@ class XBOXLOCALAPI extends EventEmitter {
             await this.disconnect();
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         };
 
     };
@@ -495,7 +492,7 @@ class XBOXLOCALAPI extends EventEmitter {
             await this.sendSocketMessage(message, 'recordGameDvr');
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         };
     };
 
@@ -509,7 +506,7 @@ class XBOXLOCALAPI extends EventEmitter {
         const channelOpen = this.channels[requestId].open;
 
         if (channelCommunicationId === -1 || !channelOpen) {
-            this.emit('error', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
+           this.emit('error', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
         };
 
         command = CONSTANTS.LocalApi.Channels.System[channelName][command];
@@ -534,7 +531,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         await this.sendSocketMessage(message, 'gamepadUnpress');
                     }, 150)
                 } catch (error) {
-                    this.emit('error', `Send system input command error: ${error}`)
+                   this.emit('error', `Send system input command error: ${error}`)
                 };
                 break;
             case 1:
@@ -554,7 +551,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const message = json.pack(this.crypto, sequenceNumber1, this.sourceParticipantId, channelCommunicationId);
                     this.sendSocketMessage(message, 'json');
                 } catch (error) {
-                    this.emit('error', `Send tv remote command error: ${error}`)
+                   this.emit('error', `Send tv remote command error: ${error}`)
                 };
                 break;
             case 2:
@@ -571,7 +568,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     this.sendSocketMessage(message, 'mediaCommand');
                     this.mediaRequestId++;
                 } catch (error) {
-                    this.emit('error', `Send system media command error: ${error}`)
+                   this.emit('error', `Send system media command error: ${error}`)
                 };
                 break;
         }
@@ -601,7 +598,7 @@ class XBOXLOCALAPI extends EventEmitter {
             this.emit('disconnected', 'Disconnected.');
             return true;
         } catch (error) {
-            this.emit('error', error);
+           throw new Error(error);
         };
     };
 
@@ -617,7 +614,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
         this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
             if (error) {
-                this.emit('error', error);
+               throw new Error(error);
             }
 
             const debug = this.debugLog ? this.emit('debug', `Socket send: ${type}, ${bytes}B.`) : false;

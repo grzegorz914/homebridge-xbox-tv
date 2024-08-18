@@ -4,11 +4,9 @@ const Crypto = require('crypto');
 const EOL = require('os').EOL;
 const EC = require('elliptic').ec;
 const IV = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
-const EventEmitter = require('events');
 
-class SGCRYPTO extends EventEmitter {
+class SGCRYPTO {
     constructor() {
-        super();
         this.key = false;
         this.iv = false;
         this.hashKey = false;
@@ -61,7 +59,7 @@ class SGCRYPTO extends EventEmitter {
 
             return data;
         } catch (error) {
-            this.emit('error', `sign public key error: ${error}`);
+           throw new Error(`sign public key error: ${error}`);
         };
     };
 
