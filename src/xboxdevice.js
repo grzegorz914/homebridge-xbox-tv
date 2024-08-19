@@ -187,7 +187,7 @@ class XboxDevice extends EventEmitter {
                     this.emit('debug', debug);
                 })
                 .on('warn', (warn) => {
-                    this.emit('waen', warn);
+                    this.emit('warn', warn);
                 })
                 .on('error', (error) => {
                     this.emit('error', error);
@@ -334,11 +334,11 @@ class XboxDevice extends EventEmitter {
                         this.restFulConnected = true;
                         this.emit('message', message);
                     })
-                        .on('error', (error) => {
-                            this.emit('error', error);
-                        })
                         .on('debug', (debug) => {
                             this.emit('debug', debug);
+                        })
+                        .on('error', (error) => {
+                            this.emit('warn', error);
                         });
                 }
 
@@ -426,7 +426,7 @@ class XboxDevice extends EventEmitter {
                             this.emit('debug', debug);
                         })
                         .on('error', (error) => {
-                            this.emit('error', error);
+                            this.emit('warn', error);
                         });
                 };
 
@@ -469,7 +469,7 @@ class XboxDevice extends EventEmitter {
                 this.emit('debug', debug);
             })
             .on('warn', (warn) => {
-                this.emit('waen', warn);
+                this.emit('warn', warn);
             })
             .on('error', (error) => {
                 this.emit('error', error);
