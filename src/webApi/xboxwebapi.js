@@ -69,7 +69,7 @@ class XBOXWEBAPI extends EventEmitter {
                 this.emit('error', JSON.stringify(error, null, 2));
             };
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
 
         await new Promise(resolve => setTimeout(resolve, 900000));

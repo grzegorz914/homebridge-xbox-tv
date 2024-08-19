@@ -148,6 +148,7 @@ class XboxDevice extends EventEmitter {
             });
         } catch (error) {
             this.emit('error', `prepare files error: ${error}`);
+            return;
         }
 
         //web api client
@@ -184,6 +185,9 @@ class XboxDevice extends EventEmitter {
                 })
                 .on('debug', (debug) => {
                     this.emit('debug', debug);
+                })
+                .on('warn', (warn) => {
+                    this.emit('waen', warn);
                 })
                 .on('error', (error) => {
                     this.emit('error', error);
@@ -415,7 +419,7 @@ class XboxDevice extends EventEmitter {
                                         break;
                                 };
                             } catch (error) {
-                                this.emit('error', `MQTT send error: ${error}.`);
+                                this.emit('warn', `MQTT send error: ${error}.`);
                             };
                         })
                         .on('debug', (debug) => {
@@ -464,6 +468,9 @@ class XboxDevice extends EventEmitter {
             .on('debug', (debug) => {
                 this.emit('debug', debug);
             })
+            .on('warn', (warn) => {
+                this.emit('waen', warn);
+            })
             .on('error', (error) => {
                 this.emit('error', error);
             })
@@ -504,7 +511,7 @@ class XboxDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -514,7 +521,7 @@ class XboxDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
             return true;
         } catch (error) {
-            this.emit('error', error);
+            throw new Error(error);
         };
     }
 
@@ -524,7 +531,7 @@ class XboxDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;
         } catch (error) {
-            this.emit('error', `Read saved data error: ${error}`);
+            throw new Error(`Read saved data error: ${error}`);
         };
     }
 
@@ -595,7 +602,7 @@ class XboxDevice extends EventEmitter {
 
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
-                        this.emit('error', `set Power, error: ${error}`);
+                        this.emit('warn', `set Power, error: ${error}`);
                     };
                 });
 
@@ -646,7 +653,7 @@ class XboxDevice extends EventEmitter {
                                 break;
                         }
                     } catch (error) {
-                        this.emit('error', `set Input error: ${JSON.stringify(error, null, 2)}`);
+                        this.emit('warn', `set Input error: ${JSON.stringify(error, null, 2)}`);
                     };
                 });
 
@@ -714,7 +721,7 @@ class XboxDevice extends EventEmitter {
                         await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `Remote Key: ${command}`);
                     } catch (error) {
-                        this.emit('error', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
+                        this.emit('warn', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
                     };
                 });
 
@@ -738,7 +745,7 @@ class XboxDevice extends EventEmitter {
                         const setMediaState = this.power ? false : false;
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
-                        this.emit('error', `set Target Media error: ${error}`);
+                        this.emit('warn', `set Target Media error: ${error}`);
                     };
                 });
 
@@ -761,7 +768,7 @@ class XboxDevice extends EventEmitter {
                         await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
-                        this.emit('error', `set Power Mode Selection error: ${error}`);
+                        this.emit('warn', `set Power Mode Selection error: ${error}`);
                     };
                 });
             this.allServices.push(this.televisionService);
@@ -802,7 +809,7 @@ class XboxDevice extends EventEmitter {
                         await this.xboxWebApi.send(channelName, command);
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                     } catch (error) {
-                        this.emit('error', `set Volume Selector error: ${error}`);
+                        this.emit('warn', `set Volume Selector error: ${error}`);
                     };
                 })
 
@@ -838,7 +845,7 @@ class XboxDevice extends EventEmitter {
                         await this.xboxWebApi.send(channelName, command);
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
-                        this.emit('error', `set Mute error: ${error}`);
+                        this.emit('warn', `set Mute error: ${error}`);
                     };
                 });
             this.allServices.push(this.speakerService);
@@ -919,7 +926,7 @@ class XboxDevice extends EventEmitter {
                             this.inputsConfigured[index].name = value;
                             await this.displayOrder();
                         } catch (error) {
-                            this.emit('error', `save Input Name error: ${error}`);
+                            this.emit('warn', `save Input Name error: ${error}`);
                         }
                     });
 
@@ -938,7 +945,7 @@ class XboxDevice extends EventEmitter {
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name} Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                         } catch (error) {
-                            this.emit('error', `save Target Visibility error: ${error}`);
+                            this.emit('warn', `save Target Visibility error: ${error}`);
                         }
                     });
                 this.inputsConfigured.push(input);
@@ -1158,7 +1165,7 @@ class XboxDevice extends EventEmitter {
                                         break;
                                 }
                             } catch (error) {
-                                this.emit('error', `set Button error: ${error}`);
+                                this.emit('warn', `set Button error: ${error}`);
                             };
                         });
                     this.buttonsServices.push(buttonService);
@@ -1168,7 +1175,7 @@ class XboxDevice extends EventEmitter {
             }
             return accessory;
         } catch (error) {
-            this.emit('error', error)
+            throw new Error(error)
         };
     }
 };

@@ -430,7 +430,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
     async powerOn() {
         if (this.isConnected) {
-            this.emit('error', 'Console already On.');
+            this.emit('warn', 'Console already On.');
         };
 
         const info = this.infoLog ? false : this.emit('message', 'Send power On.');
@@ -457,7 +457,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
     async powerOff() {
         if (!this.isConnected) {
-            this.emit('error', 'Console already Off.');
+            this.emit('warn', 'Console already Off.');
         };
 
         const info = this.infoLog ? false : this.emit('message', 'Send power Off.');
@@ -479,7 +479,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
     async recordGameDvr() {
         if (!this.isConnected || !this.isAuthorized) {
-            this.emit('error', `Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`);
+            this.emit('warn', `Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`);
         };
 
         const info = this.infoLog ? false : this.emit('message', 'Send record game.');
@@ -498,7 +498,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
     async sendButtonPress(channelName, command) {
         if (!this.isConnected) {
-            this.emit('error', `Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}.`);
+            this.emit('waarn', `Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}.`);
         };
 
         const channelRequestId = CONSTANTS.LocalApi.Channels.System[channelName].Id
@@ -506,7 +506,7 @@ class XBOXLOCALAPI extends EventEmitter {
         const channelOpen = this.channels[requestId].open;
 
         if (channelCommunicationId === -1 || !channelOpen) {
-           this.emit('error', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
+           this.emit('warn', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
         };
 
         command = CONSTANTS.LocalApi.Channels.System[channelName][command];
@@ -531,7 +531,7 @@ class XBOXLOCALAPI extends EventEmitter {
                         await this.sendSocketMessage(message, 'gamepadUnpress');
                     }, 150)
                 } catch (error) {
-                   this.emit('error', `Send system input command error: ${error}`)
+                   this.emit('warn', `Send system input command error: ${error}`)
                 };
                 break;
             case 1:
@@ -551,7 +551,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     const message = json.pack(this.crypto, sequenceNumber1, this.sourceParticipantId, channelCommunicationId);
                     this.sendSocketMessage(message, 'json');
                 } catch (error) {
-                   this.emit('error', `Send tv remote command error: ${error}`)
+                   this.emit('warn', `Send tv remote command error: ${error}`)
                 };
                 break;
             case 2:
@@ -568,7 +568,7 @@ class XBOXLOCALAPI extends EventEmitter {
                     this.sendSocketMessage(message, 'mediaCommand');
                     this.mediaRequestId++;
                 } catch (error) {
-                   this.emit('error', `Send system media command error: ${error}`)
+                   this.emit('warn', `Send system media command error: ${error}`)
                 };
                 break;
         }

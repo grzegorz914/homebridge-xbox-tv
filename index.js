@@ -32,7 +32,7 @@ class XboxPlatform {
 
 				//debug config
 				const debugMode = device.enableDebugMode;
-				const debug = debugMode ? log(`Device: ${deviceHost} ${deviceName}, did finish launching.`) : false;
+				const debug = debugMode ? log.info(`Device: ${deviceHost} ${deviceName}, did finish launching.`) : false;
 				const config = {
 					...device,
 					xboxLiveId: 'removed',
@@ -41,24 +41,27 @@ class XboxPlatform {
 					mqtt: {
 						...device.mqtt,
 						passwd: 'removed'
-					  }
+					}
 				};
-				const debug1 = debugMode ? log(`Device: ${deviceHost} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
+				const debug1 = debugMode ? log.info(`Device: ${deviceHost} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
 				//xbox device
 				const xboxDevice = new XboxDevice(api, prefDir, device);
 				xboxDevice.on('publishAccessory', (accessory) => {
 					api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
-					const debug = debugMode ? log(`Device: ${deviceHost} ${deviceName}, published as external accessory.`) : false;
+					log.success(`Device: ${deviceHost} ${deviceName}, published as external accessory.`);
 				})
 					.on('devInfo', (devInfo) => {
-						log(devInfo);
+						log.info(devInfo);
 					})
 					.on('message', (message) => {
-						log(`Device: ${deviceHost} ${deviceName}, ${message}`);
+						log.info(`Device: ${deviceHost} ${deviceName}, ${message}`);
 					})
 					.on('debug', (debug) => {
-						log(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
+						log.info(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
+					})
+					.on('warn', (warn) => {
+						log.warn(`warn: ${deviceHost} ${deviceName}, ${warn}`);
 					})
 					.on('error', (error) => {
 						log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
