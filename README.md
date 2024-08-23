@@ -140,22 +140,32 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 ### RESTFul Integration
 
-* Request: `http//homebridge_ip_address:port/path`.
-  * Path: `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`.
-  * Respone as JSON object.
+* POST data as a JSON Object `{Power: true}`
+
+| Method | URL | Path | Response | Type |
+| --- | --- | --- | --- | --- |
+| GET | `http//ip:port` | `info`, `state`, `consoleslist`, `profile`, `apps`, `storages`, `status`. | `{"power": true, "app": Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
+
+| Method | URL | Key | Value | Type | Description |
+| --- | --- | --- | --- | --- | --- |
+| POST | `http//ip:port` | `Power` | `true`, `false` | boolean | Power state. |
+|      | `http//ip:port` | `App` | `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` | string | Set app. |
+|      | `http//ip:port` | `RcControl` | `fastForward` | string | Send RC command. |
+|      | `http//ip:port` | `Volume` | `up`, `down` | string | Set volume. |
+|      | `http//ip:port` | `Mute` | `true`, `false` | boolean | Set mute. |
 
 ### MQTT Integration
 
-| Direction | Topic | Message | Payload Data |
-| --- | --- | --- | --- |
-|  Publish   | `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status` | `{"power": true, "app": Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
-|  Subscribe   | `Set` | `{"Power": true}` | JSON object. |
+* Subscribe data as a JSON Object `{App: "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"}`
 
-| Subscribe | Key | Value | Type | Description |
-| --- | --- | --- | --- | --- |
-| Xbox |     |     |     |      |
-|     | `Power` | `true`, `false` | boolean | Power state. |
-|     | `App` | `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` | string | Set app. |
-|     | `RcControl` | `fastForward` | string | Send RC command. |
-|     | `Volume` | `up`, `down` | string | Set volume. |
-|     | `Mute` | `true`, `false` | boolean | Set mute. |
+| Method | Topic | Message | Type |
+| --- | --- | --- | --- |
+| Publish | `Info`, `State`, `Consoles List`, `Profile`, `Apps`, `Storages`, `Status` | `{"power": true, "app": Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application}` | JSON object. |
+
+| Method | Topic | Key | Value | Type | Description |
+| --- | --- | --- | --- | --- | --- |
+| Subscribe | `Set` | `Power` | `true`, `false` | boolean | Power state. |
+|           | `Set` | `App` | `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` | string | Set app. |
+|           | `Set` | `RcControl` | `fastForward` | string | Send RC command. |
+|           | `Set` | `Volume` | `up`, `down` | string | Set volume. |
+|           | `Set` | `Mute` | `true`, `false` | boolean | Set mute. |

@@ -50,15 +50,10 @@ class XboxDevice extends EventEmitter {
         this.volumeControlNamePrefix = device.volumeControlNamePrefix || false;
         this.volumeControlName = device.volumeControlName || 'Volume';
 
-        //external integration
-        //restRul
+        //external integrations
         const restFul = device.restFul ?? {};
-        const restFulEnabled = restFul.enable || false;
         this.restFulConnected = false;
-
-        //mqtt
         const mqtt = device.mqtt ?? {};
-        const mqttEnabled = mqtt.enable || false;
         this.mqttConnected = false;
 
         //accessory services
@@ -324,6 +319,7 @@ class XboxDevice extends EventEmitter {
             })
             .on('prepareAccessory', async () => {
                 //RESTFul server
+                const restFulEnabled = restFul.enable || false;
                 if (restFulEnabled) {
                     this.restFul = new RestFul({
                         port: restFul.port || 3000,
@@ -332,8 +328,15 @@ class XboxDevice extends EventEmitter {
 
                     this.restFul.on('connected', (message) => {
                         this.restFulConnected = true;
-                        this.emit('message', message);
+                        this.emit('success', message);
                     })
+                        .on('set', async (key, value) => {
+                            try {
+                                await this.setOverExternalIntegration('RESTFul', key, value);
+                            } catch (error) {
+                                this.emit('warn', `RESTFul set error: ${error}`);
+                            };
+                        })
                         .on('debug', (debug) => {
                             this.emit('debug', debug);
                         })
@@ -343,6 +346,7 @@ class XboxDevice extends EventEmitter {
                 }
 
                 //mqtt client
+                const mqttEnabled = mqtt.enable || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
                         host: mqtt.host,
@@ -356,70 +360,16 @@ class XboxDevice extends EventEmitter {
 
                     this.mqtt.on('connected', (message) => {
                         this.mqttConnected = true;
-                        this.emit('message', message);
+                        this.emit('success', message);
                     })
                         .on('subscribed', (message) => {
-                            this.emit('message', message);
+                            this.emit('success', message);
                         })
-                        .on('subscribedMessage', async (key, value) => {
+                        .on('set', async (key, value) => {
                             try {
-                                switch (key) {
-                                    case 'Power':
-                                        switch (this.webApiPowerOnOff) {
-                                            case true:
-                                                switch (value) {
-                                                    case true: //off
-                                                        await this.xboxWebApi.send('Power', 'WakeUp');
-                                                        break;
-                                                    case false: //on
-                                                        await this.xboxWebApi.send('Power', 'TurnOff');
-                                                        break;
-                                                }
-                                                break;
-                                            case false:
-                                                switch (value) {
-                                                    case true: //off
-                                                        await this.xboxLocalApi.powerOff();
-                                                        break;
-                                                    case false: //on
-                                                        await this.xboxLocalApi.powerOn();
-                                                        break;
-                                                }
-                                        }
-                                        break;
-                                    case 'App':
-                                        const payload = [{ 'oneStoreProductId': value }];
-                                        await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
-                                        break;
-                                    case 'Volume':
-                                        switch (value) {
-                                            case 'up': //Up
-                                                await this.xboxWebApi.send('Volume', 'Up');
-                                                break;
-                                            case 'down': //Down
-                                                await this.xboxWebApi.send('Volume', 'Down');
-                                                break;
-                                        }
-                                        break;
-                                    case 'Mute':
-                                        switch (value) {
-                                            case true: //Mute
-                                                await this.xboxWebApi.send('Audio', 'Mute');
-                                                break;
-                                            case false: //Unmute;
-                                                await this.xboxWebApi.send('Audio', 'Unmute');
-                                                break;
-                                        }
-                                        break;
-                                    case 'RcControl':
-                                        await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': value }]);
-                                        break;
-                                    default:
-                                        this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
-                                        break;
-                                };
+                                await this.setOverExternalIntegration('MQTT', key, value);
                             } catch (error) {
-                                this.emit('warn', `MQTT send error: ${error}.`);
+                                this.emit('warn', `MQTT set error: ${error}.`);
                             };
                         })
                         .on('debug', (debug) => {
@@ -535,6 +485,69 @@ class XboxDevice extends EventEmitter {
         };
     }
 
+    async setOverExternalIntegration(integration, key, value) {
+        try {
+            let set = false
+            switch (key) {
+                case 'Power':
+                    switch (this.webApiPowerOnOff) {
+                        case true:
+                            switch (value) {
+                                case true: //off
+                                    set = await this.xboxWebApi.send('Power', 'WakeUp');
+                                    break;
+                                case false: //on
+                                    set = await this.xboxWebApi.send('Power', 'TurnOff');
+                                    break;
+                            }
+                            break;
+                        case false:
+                            switch (value) {
+                                case true: //off
+                                    set = await this.xboxLocalApi.powerOff();
+                                    break;
+                                case false: //on
+                                    set = await this.xboxLocalApi.powerOn();
+                                    break;
+                            }
+                    }
+                    break;
+                case 'App':
+                    const payload = [{ 'oneStoreProductId': value }];
+                    set = await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
+                    break;
+                case 'Volume':
+                    switch (value) {
+                        case 'up': //Up
+                            set = await this.xboxWebApi.send('Volume', 'Up');
+                            break;
+                        case 'down': //Down
+                            set = await this.xboxWebApi.send('Volume', 'Down');
+                            break;
+                    }
+                    break;
+                case 'Mute':
+                    switch (value) {
+                        case true: //Mute
+                            set = await this.xboxWebApi.send('Audio', 'Mute');
+                            break;
+                        case false: //Unmute;
+                            set = await this.xboxWebApi.send('Audio', 'Unmute');
+                            break;
+                    }
+                    break;
+                case 'RcControl':
+                    set = await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': value }]);
+                    break;
+                default:
+                    this.emit('warn', `${integration}, received key: ${key}, value: ${value}`);
+                    break;
+            };
+            return set;
+        } catch (error) {
+            throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error}`);
+        };
+    }
 
     //Prepare accessory
     async prepareAccessory() {

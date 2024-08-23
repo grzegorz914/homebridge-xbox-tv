@@ -54,6 +54,9 @@ class XboxPlatform {
 					.on('devInfo', (devInfo) => {
 						log.info(devInfo);
 					})
+					.on('success', (message) => {
+						log.success(`Device: ${deviceHost} ${deviceName}, ${message}`);
+					})
 					.on('message', (message) => {
 						log.info(`Device: ${deviceHost} ${deviceName}, ${message}`);
 					})

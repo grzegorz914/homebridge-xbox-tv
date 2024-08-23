@@ -30,7 +30,7 @@ class Mqtt extends EventEmitter {
                         const emitDebug = config.debug ? this.emit('debug', `MQTT Received topic: ${topic}, message: ${JSON.stringify(subscribedMessage, null, 2)}`) : false;
                         const key = Object.keys(subscribedMessage)[0];
                         const value = Object.values(subscribedMessage)[0];
-                        this.emit('subscribedMessage', key, value);
+                        this.emit('set', key, value);
                     } catch (error) {
                         this.emit('error', `MQTT Parse message error: ${error}`);
                     };
