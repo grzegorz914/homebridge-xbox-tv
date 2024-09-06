@@ -1,8 +1,8 @@
-<div>
-  <img src="homebridge-xbox-tv.png" style="text-align: center;" height="150" />
-</div>
-<div id="consoles">
-</div>
+<div style="text-align: center;">
+</divstyle>
+<img src="homebridge-xbox-tv.png" alt="Image" height="120" />
+</div><br>
+
 <div id="authorizationManager" style="display: none;" class="card card-body">
   <form id="configForm">
     <div class="text-center">
@@ -13,9 +13,9 @@
       <label for="deviceHost">Host</label>
       <input id="deviceHost" type="text" class="form-control"><br>
       <label for="deviceLiveId">Xbox Live ID</label>
-      <input id="deviceLiveId" type="text" class="form-control"><br>
+      <input id="deviceLiveId" type="password" class="form-control"><br>
       <label for="deviceToken">Web Api Token</label>
-      <input id="deviceToken" type="text" class="form-control"><br>
+      <input id="deviceToken" type="password" class="form-control"><br>
       <label for="deviceWebApiControl">Web Api Control</label>
       <input id="deviceWebApiControl" type="checkbox" class="form-control">
     </div>
@@ -25,6 +25,9 @@
       <button id="configButton" type="button" class="btn btn-primary"><i class="fas fa-gear"></i></button>
     </div>
   </form>
+</div>
+
+<div id="consoles"></div>
 </div>
 
 <script>
@@ -48,7 +51,8 @@
       button.setAttribute("type", "button");
       button.setAttribute("id", `button${i}`);
       button.setAttribute("class", "btn btn-primary");
-      button.innerText = pluginConfig[0].devices[i].name || 'Name not set';
+      button.style.textTransform = 'none';
+      button.innerText = pluginConfig[0].devices[i].name;
       document.getElementById("consoles").appendChild(button);
 
       //get actuall value on console select
