@@ -104,7 +104,7 @@ class XboxPlatform {
 
 					await xboxDevice.start();
 				} catch (error) {
-					log.error(`Device: ${deviceHost} ${deviceName}, Did finish launching error: ${error}`);
+					log.error(`Device: ${deviceHost} ${deviceName}, did finish launching error: ${error}`);
 				}
 			}
 		});
