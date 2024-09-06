@@ -13,11 +13,14 @@ class XboxPlatform {
 		}
 		this.accessories = [];
 
-		//check if prefs directory exist
+		//create directory if it doesn't exist
 		const prefDir = path.join(api.user.storagePath(), 'xboxTv');
-		if (!fs.existsSync(prefDir)) {
-			fs.mkdirSync(prefDir);
-		};
+		try {
+			fs.mkdirSync(prefDir, { recursive: true });
+		} catch (error) {
+			log.error(`Prepare directory error: ${error.message ?? error}`);
+			return;
+		}
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
@@ -45,30 +48,64 @@ class XboxPlatform {
 				};
 				const debug1 = debugMode ? log.info(`Device: ${deviceHost} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
-				//xbox device
-				const xboxDevice = new XboxDevice(api, prefDir, device);
-				xboxDevice.on('publishAccessory', (accessory) => {
-					api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
-					log.success(`Device: ${deviceHost} ${deviceName}, published as external accessory.`);
-				})
-					.on('devInfo', (devInfo) => {
-						log.info(devInfo);
-					})
-					.on('success', (message) => {
-						log.success(`Device: ${deviceHost} ${deviceName}, ${message}`);
-					})
-					.on('message', (message) => {
-						log.info(`Device: ${deviceHost} ${deviceName}, ${message}`);
-					})
-					.on('debug', (debug) => {
-						log.info(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
-					})
-					.on('warn', (warn) => {
-						log.warn(`warn: ${deviceHost} ${deviceName}, ${warn}`);
-					})
-					.on('error', (error) => {
-						log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
+				//check files exists, if not then create it
+				const postFix = deviceHost.split('.').join('');
+				const authTokenFile = `${prefDir}/authToken_${postFix}`;
+				const devInfoFile = `${prefDir}/devInfo_${postFix}`;
+				const inputsFile = `${prefDir}/inputs_${postFix}`;
+				const inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
+				const inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
+
+				// Create files if it doesn't exist
+				try {
+					const files = [
+						authTokenFile,
+						devInfoFile,
+						inputsFile,
+						inputsNamesFile,
+						inputsTargetVisibilityFile,
+					];
+
+					files.forEach((file) => {
+						if (!fs.existsSync(file)) {
+							fs.writeFileSync(file, '');
+						}
 					});
+				} catch (error) {
+					log.error(`Device: ${deviceHost} ${deviceName}, prepare files error: ${error}`);
+					return;
+				}
+
+				//xbox device
+				try {
+					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile);
+					xboxDevice.on('publishAccessory', (accessory) => {
+						api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
+						log.success(`Device: ${deviceHost} ${deviceName}, published as external accessory.`);
+					})
+						.on('devInfo', (devInfo) => {
+							log.info(devInfo);
+						})
+						.on('success', (message) => {
+							log.success(`Device: ${deviceHost} ${deviceName}, ${message}`);
+						})
+						.on('message', (message) => {
+							log.info(`Device: ${deviceHost} ${deviceName}, ${message}`);
+						})
+						.on('debug', (debug) => {
+							log.info(`Device: ${deviceHost} ${deviceName}, debug: ${debug}`);
+						})
+						.on('warn', (warn) => {
+							log.warn(`warn: ${deviceHost} ${deviceName}, ${warn}`);
+						})
+						.on('error', (error) => {
+							log.error(`Device: ${deviceHost} ${deviceName}, ${error}`);
+						});
+
+					await xboxDevice.start();
+				} catch (error) {
+					log.error(`Device: ${deviceHost} ${deviceName}, Did finish launching error: ${error}`);
+				}
 			}
 		});
 	}

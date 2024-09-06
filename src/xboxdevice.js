@@ -11,7 +11,7 @@ const CONSTANTS = require('./constants.json');
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class XboxDevice extends EventEmitter {
-    constructor(api, prefDir, device) {
+    constructor(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile) {
         super();
 
         Accessory = api.platformAccessory;
@@ -49,11 +49,16 @@ class XboxDevice extends EventEmitter {
         this.volumeControl = device.volumeControl || false;
         this.volumeControlNamePrefix = device.volumeControlNamePrefix || false;
         this.volumeControlName = device.volumeControlName || 'Volume';
+        this.authTokenFile = authTokenFile;
+        this.devInfoFile = devInfoFile;
+        this.inputsFile = inputsFile;
+        this.inputsNamesFile = inputsNamesFile;
+        this.inputsTargetVisibilityFile = inputsTargetVisibilityFile;
 
         //external integrations
-        const restFul = device.restFul ?? {};
+        this.restFul = device.restFul ?? {};
         this.restFulConnected = false;
-        const mqtt = device.mqtt ?? {};
+        this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
 
         //accessory services
@@ -117,63 +122,286 @@ class XboxDevice extends EventEmitter {
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
+    }
 
-        //check files exists, if not then create it
-        const postFix = this.host.split('.').join('');
-        const authTokenFile = `${prefDir}/authToken_${postFix}`;
-        const devInfoFile = `${prefDir}/devInfo_${postFix}`;
-        const inputsFile = `${prefDir}/inputs_${postFix}`;
-        this.inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
-        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
-
-        // Create files if it doesn't exist
+    async start() {
         try {
-            const files = [
-                authTokenFile,
-                devInfoFile,
-                inputsFile,
-                this.inputsNamesFile,
-                this.inputsTargetVisibilityFile,
-            ];
+            //web api client
+            if (this.webApiControl) {
+                try {
+                    this.xboxWebApi = new XboxWebApi({
+                        xboxLiveId: this.xboxLiveId,
+                        webApiClientId: this.webApiClientId,
+                        webApiClientSecret: this.webApiClientSecret,
+                        tokensFile: this.authTokenFile,
+                        inputsFile: this.inputsFile,
+                        debugLog: this.enableDebugMode
+                    });
 
-            files.forEach((file) => {
-                if (!fs.existsSync(file)) {
-                    fs.writeFileSync(file, '');
-                }
-            });
-        } catch (error) {
-            this.emit('error', `prepare files error: ${error}`);
-            return;
-        }
+                    this.xboxWebApi.on('consoleStatus', (consoleType) => {
+                        if (this.informationService) {
+                            this.informationService
+                                .setCharacteristic(Characteristic.Model, consoleType)
+                        };
 
-        //web api client
-        if (this.webApiControl) {
-            this.xboxWebApi = new XboxWebApi({
+                        //this.serialNumber = id;
+                        this.modelName = consoleType;
+                        //this.power = powerState;
+                        //this.mediaState = playbackState;
+                    })
+                        .on('powerOnError', (power) => {
+                            if (this.televisionService) {
+                                this.televisionService
+                                    .updateCharacteristic(Characteristic.Active, power)
+                            };
+                            this.power = power;
+                        })
+                        .on('message', (message) => {
+                            this.emit('message', message);
+                        })
+                        .on('debug', (debug) => {
+                            this.emit('debug', debug);
+                        })
+                        .on('warn', (warn) => {
+                            this.emit('warn', warn);
+                        })
+                        .on('error', (error) => {
+                            this.emit('error', error);
+                        })
+                        .on('restFul', (path, data) => {
+                            this.emit('restFul', path, data)
+                        })
+                        .on('mqtt', (topic, message) => {
+                            this.emit('mqtt', topic, message)
+                        });
+
+                    //check authorization
+                    await this.xboxWebApi.checkAuthorization();
+
+                    //start impulse generator
+                    const timers = [{ name: 'checkAuthorization', sampling: 900000 }];
+                    this.xboxWebApi.impulseGenerator.start(timers);
+                } catch (error) {
+                    this.emit('error', error);
+                };
+            };
+
+            //xbox local client
+            this.xboxLocalApi = new XboxLocalApi({
+                host: this.host,
                 xboxLiveId: this.xboxLiveId,
-                webApiClientId: this.webApiClientId,
-                webApiClientSecret: this.webApiClientSecret,
-                tokensFile: authTokenFile,
-                inputsFile: inputsFile,
+                tokensFile: this.authTokenFile,
+                devInfoFile: this.devInfoFile,
+                infoLog: this.disableLogInfo,
                 debugLog: this.enableDebugMode
             });
 
-            this.xboxWebApi.on('consoleStatus', (consoleType) => {
+            this.xboxLocalApi.on('deviceInfo', (firmwareRevision, locale) => {
+                this.emit('message', 'Connected.');
+                if (!this.disableLogDeviceInfo) {
+                    this.emit('devInfo', `-------- ${this.name} --------'`);
+                    this.emit('devInfo', `Manufacturer: Microsoft`);
+                    this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
+                    this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
+                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                    this.emit('devInfo', `Locale: ${locale}`);
+                    this.emit('devInfo', `----------------------------------`);
+                }
+
                 if (this.informationService) {
                     this.informationService
-                        .setCharacteristic(Characteristic.Model, consoleType)
+                        .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
+                        .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
                 };
-
-                //this.serialNumber = id;
-                this.modelName = consoleType;
-                //this.power = powerState;
-                //this.mediaState = playbackState;
             })
-                .on('powerOnError', (power) => {
+                .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
+                    const index = this.inputsConfigured.findIndex(input => input.reference === reference || input.titleId === titleId) ?? -1;
+                    const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
+
+                    //update characteristics
                     if (this.televisionService) {
                         this.televisionService
-                            .updateCharacteristic(Characteristic.Active, power)
+                            .updateCharacteristic(Characteristic.Active, power);
                     };
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                    };
+
+                    if (this.speakerService) {
+                        this.speakerService
+                            .updateCharacteristic(Characteristic.Volume, volume)
+                            .updateCharacteristic(Characteristic.Mute, mute);
+                        if (this.volumeService) {
+                            this.volumeService
+                                .updateCharacteristic(Characteristic.Brightness, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        };
+                        if (this.volumeServiceFan) {
+                            this.volumeServiceFan
+                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        };
+                    };
+
+                    if (this.sensorPowerService) {
+                        this.sensorPowerService
+                            .updateCharacteristic(Characteristic.ContactSensorState, power);
+                    }
+
+                    if (this.sensorInputService && reference !== this.reference) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            this.sensorInputService
+                                .updateCharacteristic(Characteristic.ContactSensorState, state);
+                            this.sensorInputState = state;
+                        }
+                    }
+
+                    if (this.sensorScreenSaverService) {
+                        const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
+                        this.sensorScreenSaverService
+                            .updateCharacteristic(Characteristic.ContactSensorState, state);
+                        this.sensorScreenSaverState = state;
+                    }
+
+                    if (this.sensorsInputsServices) {
+                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
+                            const sensorInput = this.sensorsInputsConfigured[i];
+                            const state = power ? sensorInput.reference === reference : false;
+                            sensorInput.state = state;
+                            const characteristicType = sensorInput.characteristicType;
+                            this.sensorsInputsServices[i]
+                                .updateCharacteristic(characteristicType, state);
+                        }
+                    }
+
+                    //buttons
+                    if (this.buttonsServices) {
+                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
+                            const button = this.buttonsConfigured[i];
+                            const state = this.power ? button.reference === reference : false;
+                            button.state = state;
+                            this.buttonsServices[i]
+                                .updateCharacteristic(Characteristic.On, state);
+                        }
+                    }
+
+                    this.inputIdentifier = inputIdentifier;
                     this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+                    this.mediaState = mediaState;
+
+                    if (!this.disableLogInfo) {
+                        const name = index !== -1 ? this.inputsConfigured[index].name : reference;
+                        const productId = index !== -1 ? this.inputsConfigured[index].oneStoreProductId : reference;
+                        this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Input Name: ${name}`);
+                        this.emit('message', `Reference: ${reference}`);
+                        this.emit('message', `Title Id: ${titleId}`);
+                        this.emit('message', `Product Id: ${productId}`);
+                        this.emit('message', `Volume: ${volume}%`);
+                        this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
+                    };
+                })
+                .on('prepareAccessory', async () => {
+                    //RESTFul server
+                    const restFulEnabled = this.restFul.enable || false;
+                    if (restFulEnabled) {
+                        this.restFul = new RestFul({
+                            port: this.restFul.port || 3000,
+                            debug: this.restFul.debug || false
+                        });
+
+                        this.restFul.on('connected', (message) => {
+                            this.restFulConnected = true;
+                            this.emit('success', message);
+                        })
+                            .on('set', async (key, value) => {
+                                try {
+                                    await this.setOverExternalIntegration('RESTFul', key, value);
+                                } catch (error) {
+                                    this.emit('warn', `RESTFul set error: ${error}`);
+                                };
+                            })
+                            .on('debug', (debug) => {
+                                this.emit('debug', debug);
+                            })
+                            .on('error', (error) => {
+                                this.emit('warn', error);
+                            });
+                    }
+
+                    //mqtt client
+                    const mqttEnabled = this.mqtt.enable || false;
+                    if (mqttEnabled) {
+                        this.mqtt = new Mqtt({
+                            host: this.mqtt.host,
+                            port: this.mqtt.port || 1883,
+                            clientId: this.mqtt.clientId || `xbox_${Math.random().toString(16).slice(3)}`,
+                            prefix: `${this.mqtt.prefix}/${device.name}`,
+                            user: this.mqtt.user,
+                            passwd: this.mqtt.passwd,
+                            debug: this.mqtt.debug || false
+                        });
+
+                        this.mqtt.on('connected', (message) => {
+                            this.mqttConnected = true;
+                            this.emit('success', message);
+                        })
+                            .on('subscribed', (message) => {
+                                this.emit('success', message);
+                            })
+                            .on('set', async (key, value) => {
+                                try {
+                                    await this.setOverExternalIntegration('MQTT', key, value);
+                                } catch (error) {
+                                    this.emit('warn', `MQTT set error: ${error}.`);
+                                };
+                            })
+                            .on('debug', (debug) => {
+                                this.emit('debug', debug);
+                            })
+                            .on('error', (error) => {
+                                this.emit('warn', error);
+                            });
+                    };
+
+                    try {
+                        //read dev info from file
+                        const savedInfo = await this.readData(this.devInfoFile);
+                        this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
+
+                        //read inputs file
+                        const savedInputs = await this.readData(this.inputsFile);
+                        this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
+                        const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
+
+                        //read inputs names from file
+                        const savedInputsNames = await this.readData(this.inputsNamesFile);
+                        this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
+                        const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
+
+                        //read inputs visibility from file
+                        const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+                        this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
+                        const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
+
+                        //prepare accessory
+                        await new Promise(resolve => setTimeout(resolve, 2500));
+                        const accessory = await this.prepareAccessory();
+                        this.emit('publishAccessory', accessory)
+
+                        //sort inputs list
+                        const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
+                    } catch (error) {
+                        throw new Error(`prepare accessory error: ${error}`);
+                    };
                 })
                 .on('message', (message) => {
                     this.emit('message', message);
@@ -187,252 +415,23 @@ class XboxDevice extends EventEmitter {
                 .on('error', (error) => {
                     this.emit('error', error);
                 })
+                .on('disconnected', (message) => {
+                    this.emit('message', message);
+                })
                 .on('restFul', (path, data) => {
-                    this.emit('restFul', path, data)
+                    const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
                 })
                 .on('mqtt', (topic, message) => {
-                    this.emit('mqtt', topic, message)
+                    const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
                 });
+
+            //connect to local api
+            await this.xboxLocalApi.connect();
+
+            return true;
+        } catch (error) {
+            throw new Error(`start error: ${error}`);
         };
-
-        //xbox local client
-        this.xboxLocalApi = new XboxLocalApi({
-            host: this.host,
-            xboxLiveId: this.xboxLiveId,
-            tokensFile: authTokenFile,
-            devInfoFile: devInfoFile,
-            infoLog: this.disableLogInfo,
-            debugLog: this.enableDebugMode
-        });
-
-        this.xboxLocalApi.on('deviceInfo', (firmwareRevision, locale) => {
-            this.emit('message', 'Connected.');
-            if (!this.disableLogDeviceInfo) {
-                this.emit('devInfo', `-------- ${this.name} --------'`);
-                this.emit('devInfo', `Manufacturer: Microsoft`);
-                this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
-                this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
-                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                this.emit('devInfo', `Locale: ${locale}`);
-                this.emit('devInfo', `----------------------------------`);
-            }
-
-            if (this.informationService) {
-                this.informationService
-                    .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
-                    .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-            };
-        })
-            .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                const index = this.inputsConfigured.findIndex(input => input.reference === reference || input.titleId === titleId) ?? -1;
-                const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
-
-                //update characteristics
-                if (this.televisionService) {
-                    this.televisionService
-                        .updateCharacteristic(Characteristic.Active, power);
-                };
-
-                if (this.televisionService) {
-                    this.televisionService
-                        .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-                };
-
-                if (this.speakerService) {
-                    this.speakerService
-                        .updateCharacteristic(Characteristic.Volume, volume)
-                        .updateCharacteristic(Characteristic.Mute, mute);
-                    if (this.volumeService) {
-                        this.volumeService
-                            .updateCharacteristic(Characteristic.Brightness, volume)
-                            .updateCharacteristic(Characteristic.On, !mute);
-                    };
-                    if (this.volumeServiceFan) {
-                        this.volumeServiceFan
-                            .updateCharacteristic(Characteristic.RotationSpeed, volume)
-                            .updateCharacteristic(Characteristic.On, !mute);
-                    };
-                };
-
-                if (this.sensorPowerService) {
-                    this.sensorPowerService
-                        .updateCharacteristic(Characteristic.ContactSensorState, power);
-                }
-
-                if (this.sensorInputService && reference !== this.reference) {
-                    for (let i = 0; i < 2; i++) {
-                        const state = power ? [true, false][i] : false;
-                        this.sensorInputService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state);
-                        this.sensorInputState = state;
-                    }
-                }
-
-                if (this.sensorScreenSaverService) {
-                    const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                    this.sensorScreenSaverService
-                        .updateCharacteristic(Characteristic.ContactSensorState, state);
-                    this.sensorScreenSaverState = state;
-                }
-
-                if (this.sensorsInputsServices) {
-                    for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                        const sensorInput = this.sensorsInputsConfigured[i];
-                        const state = power ? sensorInput.reference === reference : false;
-                        sensorInput.state = state;
-                        const characteristicType = sensorInput.characteristicType;
-                        this.sensorsInputsServices[i]
-                            .updateCharacteristic(characteristicType, state);
-                    }
-                }
-
-                //buttons
-                if (this.buttonsServices) {
-                    for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                        const button = this.buttonsConfigured[i];
-                        const state = this.power ? button.reference === reference : false;
-                        button.state = state;
-                        this.buttonsServices[i]
-                            .updateCharacteristic(Characteristic.On, state);
-                    }
-                }
-
-                this.inputIdentifier = inputIdentifier;
-                this.power = power;
-                this.reference = reference;
-                this.volume = volume;
-                this.mute = mute;
-                this.mediaState = mediaState;
-
-                if (!this.disableLogInfo) {
-                    const name = index !== -1 ? this.inputsConfigured[index].name : reference;
-                    const productId = index !== -1 ? this.inputsConfigured[index].oneStoreProductId : reference;
-                    this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
-                    this.emit('message', `Input Name: ${name}`);
-                    this.emit('message', `Reference: ${reference}`);
-                    this.emit('message', `Title Id: ${titleId}`);
-                    this.emit('message', `Product Id: ${productId}`);
-                    this.emit('message', `Volume: ${volume}%`);
-                    this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
-                    this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
-                };
-            })
-            .on('prepareAccessory', async () => {
-                //RESTFul server
-                const restFulEnabled = restFul.enable || false;
-                if (restFulEnabled) {
-                    this.restFul = new RestFul({
-                        port: restFul.port || 3000,
-                        debug: restFul.debug || false
-                    });
-
-                    this.restFul.on('connected', (message) => {
-                        this.restFulConnected = true;
-                        this.emit('success', message);
-                    })
-                        .on('set', async (key, value) => {
-                            try {
-                                await this.setOverExternalIntegration('RESTFul', key, value);
-                            } catch (error) {
-                                this.emit('warn', `RESTFul set error: ${error}`);
-                            };
-                        })
-                        .on('debug', (debug) => {
-                            this.emit('debug', debug);
-                        })
-                        .on('error', (error) => {
-                            this.emit('warn', error);
-                        });
-                }
-
-                //mqtt client
-                const mqttEnabled = mqtt.enable || false;
-                if (mqttEnabled) {
-                    this.mqtt = new Mqtt({
-                        host: mqtt.host,
-                        port: mqtt.port || 1883,
-                        clientId: mqtt.clientId || `xbox_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${mqtt.prefix}/${device.name}`,
-                        user: mqtt.user,
-                        passwd: mqtt.passwd,
-                        debug: mqtt.debug || false
-                    });
-
-                    this.mqtt.on('connected', (message) => {
-                        this.mqttConnected = true;
-                        this.emit('success', message);
-                    })
-                        .on('subscribed', (message) => {
-                            this.emit('success', message);
-                        })
-                        .on('set', async (key, value) => {
-                            try {
-                                await this.setOverExternalIntegration('MQTT', key, value);
-                            } catch (error) {
-                                this.emit('warn', `MQTT set error: ${error}.`);
-                            };
-                        })
-                        .on('debug', (debug) => {
-                            this.emit('debug', debug);
-                        })
-                        .on('error', (error) => {
-                            this.emit('warn', error);
-                        });
-                };
-
-                try {
-                    //read dev info from file
-                    const savedInfo = await this.readData(devInfoFile);
-                    this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
-
-                    //read inputs file
-                    const savedInputs = await this.readData(inputsFile);
-                    this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
-                    const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
-
-                    //read inputs names from file
-                    const savedInputsNames = await this.readData(this.inputsNamesFile);
-                    this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
-                    const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
-
-                    //read inputs visibility from file
-                    const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
-                    this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
-                    const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
-
-                    //prepare accessory
-                    await new Promise(resolve => setTimeout(resolve, 2500));
-                    const accessory = await this.prepareAccessory();
-                    this.emit('publishAccessory', accessory)
-
-                    //sort inputs list
-                    const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
-                } catch (error) {
-                    this.emit('error', `prepare accessory error: ${error}`);
-                };
-            })
-            .on('message', (message) => {
-                this.emit('message', message);
-            })
-            .on('debug', (debug) => {
-                this.emit('debug', debug);
-            })
-            .on('warn', (warn) => {
-                this.emit('warn', warn);
-            })
-            .on('error', (error) => {
-                this.emit('error', error);
-            })
-            .on('disconnected', (message) => {
-                this.emit('message', message);
-            })
-            .on('restFul', (path, data) => {
-                const restFul = this.restFulConnected ? this.restFul.update(path, data) : false;
-            })
-            .on('mqtt', (topic, message) => {
-                const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
-            });
     }
 
 
@@ -614,6 +613,7 @@ class XboxDevice extends EventEmitter {
                         }
 
                         const logInfo = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                        await new Promise(resolve => setTimeout(resolve, 3000));
                     } catch (error) {
                         this.emit('warn', `set Power, error: ${error}`);
                     };

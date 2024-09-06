@@ -17,6 +17,7 @@ const Social = require('./providers/social.js');
 const Titlehub = require('./providers/titlehub.js');
 const UserPresence = require('./providers/userpresence.js');
 const UserStats = require('./providers/userstats.js');
+const ImpulseGenerator = require('../impulsegenerator.js');
 const CONSTANTS = require('../constants.json');
 
 class XBOXWEBAPI extends EventEmitter {
@@ -37,7 +38,15 @@ class XBOXWEBAPI extends EventEmitter {
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);
-        this.checkAuthorization();
+
+        this.impulseGenerator = new ImpulseGenerator();
+        this.impulseGenerator.on('checkAuthorization', async () => {
+            try {
+                await this.checkAuthorization(this.contextKey);
+            } catch (error) {
+                this.emit('error', error);
+            };
+        }).on('state', (state) => { });
     }
 
     async checkAuthorization() {
@@ -62,18 +71,12 @@ class XBOXWEBAPI extends EventEmitter {
                 method: 'GET',
                 headers: headers
             });
+            await this.xboxLiveData();
 
-            try {
-                await this.xboxLiveData();
-            } catch (error) {
-                this.emit('error', JSON.stringify(error, null, 2));
-            };
+            return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`check authorization error: ${error}`);
         };
-
-        await new Promise(resolve => setTimeout(resolve, 900000));
-        this.checkAuthorization();
     }
 
     async xboxLiveData() {
@@ -84,9 +87,10 @@ class XBOXWEBAPI extends EventEmitter {
             await this.installedApps();
             //await this.storageDevices();
             //await this.userProfile();
-            return true;;
+
+            return true;
         } catch (error) {
-            throw new Error(`get xbox live data error: ${error}`);
+            throw new Error(`xbox live data error: ${error}`);
         };
     };
 
@@ -94,7 +98,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
             const getConsoleStatusData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `getConsoleStatusData, result: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
 
             //get console status
             const consoleStatusData = getConsoleStatusData.data;
@@ -121,7 +125,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return remoteManagementEnabled;
         } catch (error) {
-            throw new Error(`get status error: ${error}`);
+            throw new Error(`status error: ${error}`);
         };
     }
 
@@ -129,7 +133,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
             const getConsolesListData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `getConsolesListData, result: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
 
             //get consoles list
             this.consolesId = [];
@@ -201,7 +205,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Consoles list error: ${error}`);
+            throw new Error(`consoles list error: ${error}`);
         };
     }
 
@@ -252,7 +256,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`get installed apps error: ${error}`);
+            throw new Error(`installed apps error: ${error}`);
         };
     }
 
@@ -295,7 +299,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`get storage devices error: ${error}`);
+            throw new Error(`storage devices error: ${error}`);
         };
     }
 
@@ -338,7 +342,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`User profile error: ${error}`);
+            throw new Error(`user profile error: ${error}`);
         };
     }
 
