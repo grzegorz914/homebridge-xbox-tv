@@ -31,7 +31,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channels = [];
         this.channelRequestId = 0;
         this.mediaRequestId = 0;
-        this.emitDevInfo = true;
         this.startPrepareAccessory = true;
     };
 
@@ -151,14 +150,15 @@ class XBOXLOCALAPI extends EventEmitter {
                                     connectRequest.set('publicKey', data.publicKey);
                                     connectRequest.set('iv', data.iv);
 
-                                    const tokenData = await this.readToken();
-                                    const tokenExist = tokenData ? true : false;
-                                    if (tokenExist) {
+                                    const token = await this.readData(this.tokensFile);
+                                    const parseTokenData = JSON.parse(token);
+                                    const tokenData = parseTokenData.xsts.Token.length > 0 ? parseTokenData : false;
+                                    if (tokenData) {
                                         connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
                                         connectRequest.set('jwt', tokenData.xsts.Token, true);
+                                        this.isAuthorized = true;
                                     }
-                                    this.isAuthorized = tokenExist;
-                                    const debug = this.debugLog ? this.emit('debug', `Client connecting using: ${tokenExist ? 'XSTS token' : 'Anonymous'}.`) : false;
+                                    const debug = this.debugLog ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}.`) : false;
 
                                     const message = connectRequest.pack(this.crypto);
                                     await this.sendSocketMessage(message, 'connectRequest');
@@ -240,15 +240,27 @@ class XBOXLOCALAPI extends EventEmitter {
                         };
 
                         if (this.emitDevInfo) {
+                            //connect to deice success
+                            this.emit('success', `Connect Success.`)
+
                             const majorVersion = packet.payloadProtected.majorVersion;
                             const minorVersion = packet.payloadProtected.minorVersion;
                             const buildNumber = packet.payloadProtected.buildNumber;
                             const locale = packet.payloadProtected.locale;
                             const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
 
-                            //save device info to the file
-                            await this.saveDevInfo(this.devInfoFile, firmwareRevision, locale)
+                            const obj = {
+                                manufacturer: 'Microsoft',
+                                modelName: 'Xbox',
+                                serialNumber: this.xboxLiveId,
+                                firmwareRevision: firmwareRevision,
+                                locale: locale
+                            };
 
+                            //save device info to the file
+                            await this.saveData(this.devInfoFile, obj)
+
+                            //emit device info
                             this.emit('deviceInfo', firmwareRevision, locale);
                             this.emitDevInfo = false;
                         };
@@ -319,6 +331,7 @@ class XBOXLOCALAPI extends EventEmitter {
                 const address = socket.address();
                 const debug = this.debugLog ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
                 this.socket = socket;
+                this.emitDevInfo = true;
 
                 //ping console
                 setInterval(async () => {
@@ -374,29 +387,19 @@ class XBOXLOCALAPI extends EventEmitter {
         }
     };
 
-    async readToken() {
+    async readData(path) {
         try {
-            const data = await fsPromises.readFile(this.tokensFile);
-            const parseData = JSON.parse(data);
-            const tokenData = parseData.xsts.Token.length > 0 ? parseData : false;
-            return tokenData;
+            const data = await fsPromises.readFile(path);
+            return data;
         } catch (error) {
             throw new Error(`Read token error: ${error}`);
         }
     }
 
-    async saveDevInfo(path, firmwareRevision, locale) {
+    async saveData(path, data) {
         try {
-            const obj = {
-                manufacturer: 'Microsoft',
-                modelName: 'Xbox',
-                serialNumber: this.xboxLiveId,
-                firmwareRevision: firmwareRevision,
-                locale: locale
-            };
-            const devInfo = JSON.stringify(obj, null, 2);
-            await fsPromises.writeFile(path, devInfo);
-            const debug = this.debugLog ? this.emit('debug', `Saved device info: ${devInfo}`) : false;
+            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`) : false;
 
             return true;
         } catch (error) {
@@ -603,7 +606,6 @@ class XBOXLOCALAPI extends EventEmitter {
             this.channels = [];
             this.channelRequestId = 0;
             this.mediaRequestId = 0;
-            this.emitDevInfo = true;
             await new Promise(resolve => setTimeout(resolve, 3000));
             this.emit('stateChanged', false, 0, true, 0, -1, -1);
             this.emit('disconnected', 'Disconnected.');

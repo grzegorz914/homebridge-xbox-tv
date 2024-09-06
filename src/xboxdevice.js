@@ -197,7 +197,6 @@ class XboxDevice extends EventEmitter {
             });
 
             this.xboxLocalApi.on('deviceInfo', (firmwareRevision, locale) => {
-                this.emit('message', 'Connected.');
                 if (!this.disableLogDeviceInfo) {
                     this.emit('devInfo', `-------- ${this.name} --------'`);
                     this.emit('devInfo', `Manufacturer: Microsoft`);
@@ -402,6 +401,9 @@ class XboxDevice extends EventEmitter {
                     } catch (error) {
                         throw new Error(`prepare accessory error: ${error}`);
                     };
+                })
+                .on('success', (message) => {
+                    this.emit('success', message);
                 })
                 .on('message', (message) => {
                     this.emit('message', message);
