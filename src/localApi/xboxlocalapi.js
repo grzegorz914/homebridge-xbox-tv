@@ -398,9 +398,9 @@ class XBOXLOCALAPI extends EventEmitter {
 
     async saveData(path, data) {
         try {
-            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-            const debug = this.debugLog ? this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`) : false;
-
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
             throw new Error(error);

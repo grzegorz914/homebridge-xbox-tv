@@ -244,11 +244,12 @@ class XBOXWEBAPI extends EventEmitter {
                     'name': name,
                     'contentType': contentType
                 };
-                appsArray.push(inputsObj);
+                const duplicatedInput = appsArray.some(input => input.reference === aumid);
+                const push = name && aumid && !duplicatedInput ? appsArray.push(inputsObj) : false;
             };
 
-            //save apps to the file
-            await this.saveInputs(this.inputsFile, appsArray);
+            //save inputs
+            await this.saveData(this.inputsFile, appsArray);
 
             //emit restFul and mqtt
             this.emit('restFul', 'apps', apps);
@@ -346,28 +347,15 @@ class XBOXWEBAPI extends EventEmitter {
         };
     }
 
-    async saveInputs(path, appsArray) {
+    async saveData(path, data) {
         try {
-            const inputs = [...CONSTANTS.DefaultInputs, ...appsArray];
-
-            //chack duplicated inputs
-            const inputsArr = [];
-            for (const input of inputs) {
-                const inputName = input.name;
-                const inputReference = input.reference;
-                const duplicatedInput = inputsArr.some(input => input.reference === inputReference);
-                const push = inputName && inputReference && !duplicatedInput ? inputsArr.push(input) : false;
-            }
-
-            //save inputs
-            const allInputs = JSON.stringify(inputsArr, null, 2);
-            await fsPromises.writeFile(path, allInputs);
-            const debug = this.debugLog ? this.emit('debug', `Saved apps: ${allInputs}`) : false;
-
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
             throw new Error(error);
-        }
+        };
     };
 
     async next() {
