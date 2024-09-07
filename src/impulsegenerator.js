@@ -7,9 +7,9 @@ class ImpulseGenerator extends EventEmitter {
         this.timersState = false;
     }
 
-    start(timers) {
+    async start(timers) {
         if (this.timersState) {
-            this.stop();
+            await this.stop();
         }
 
         this.timers = [];
@@ -22,10 +22,12 @@ class ImpulseGenerator extends EventEmitter {
 
         //update state
         this.timersState = true;
-        this.emit('state', true);
+        this.state();
+
+        return true;
     }
 
-    stop() {
+    async stop() {
         if (this.timersState) {
             this.timers.forEach(timer => clearInterval(timer));
         }
@@ -33,7 +35,9 @@ class ImpulseGenerator extends EventEmitter {
         //update state
         this.timers = [];
         this.timersState = false;
-        this.emit('state', false);
+        this.state();
+
+        return true;
     }
 
     state() {

@@ -102,7 +102,7 @@ class Authentication {
             this.tokens.oauth = refreshToken;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Refresh token error: ${error.message || error}`);
         };
     }
 
@@ -126,7 +126,7 @@ class Authentication {
             this.tokens.xsts = {};
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`User token error: ${error.message || error}`);
         };
     }
 
@@ -148,7 +148,7 @@ class Authentication {
             this.tokens.xsts = xstsToken;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Xsts token error: ${error.message || error}`);
         };
     }
 
@@ -169,23 +169,23 @@ class Authentication {
             const accessToken = response.data;
             accessToken.issued = new Date().toISOString();
             this.tokens.oauth = accessToken;
-            await this.saveTokens(this.tokens);
+            await this.saveData(this.tokensFile, this.tokens);
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Access token error: ${error.message || error}`);
         };
     }
 
     async checkAuthorization() {
         if (this.webApiClientId) {
             try {
-                const tokens = await this.readTokens();
+                const tokens = await this.readData(this.tokensFile);
                 this.tokens = !tokens ? this.tokens : tokens;
                 const refreshToken = this.tokens.oauth.refresh_token ?? false;
 
                 if (refreshToken) {
                     await this.refreshTokens('user');
-                    await this.saveTokens(this.tokens);
+                    await this.saveData(this.tokensFile, this.tokens);
                     return { headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens };
                 } else {
                     throw new Error('No oauth token found. Use authorization manager first.')
@@ -211,41 +211,27 @@ class Authentication {
             const oauth2URI = `${CONSTANTS.WebApi.Url.oauth2}?${params}`;
             return oauth2URI;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Authorization URL error: ${error.message || error}`);
         };
     }
 
-    async readTokens() {
+    async readData(path) {
         try {
-            const data = await fsPromises.readFile(this.tokensFile);
+            const data = await fsPromises.readFile(path);
             const tokens = data.length > 0 ? JSON.parse(data) : false;
             return tokens;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Read data error: ${error.message || error}`);
         };
     }
 
-    async saveTokens(tokens) {
+    async saveData(path, data) {
         try {
-            tokens = JSON.stringify(tokens, null, 2);
-            await fsPromises.writeFile(this.tokensFile, tokens);
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
             return true;
         } catch (error) {
-            throw new Error(error);
-        };
-    }
-
-    async clearTokens() {
-        try {
-            const tokens = JSON.stringify({
-                oauth: {},
-                user: {},
-                xsts: {}
-            }, null, 2);
-            await fsPromises.writeFile(this.tokensFile, tokens);
-            return true;
-        } catch (error) {
-            throw new Error(error);
+            throw new Error(`Save data error: ${error.message || error}`);
         };
     }
 }

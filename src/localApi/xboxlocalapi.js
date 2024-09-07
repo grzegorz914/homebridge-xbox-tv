@@ -265,10 +265,11 @@ class XBOXLOCALAPI extends EventEmitter {
                             this.emitDevInfo = false;
                         };
 
-                        //Start prepare accessory
-                        const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
-                        const awaitToPrepareAccesory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 1000)) : false;
-                        this.startPrepareAccessory = false;
+                        //start external integration
+                        this.emit('externalIntegration');
+
+                        //prepare accessory
+                        this.emit('prepareAccessory');
 
                         const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
                         if (appsCount > 0) {
@@ -374,7 +375,7 @@ class XBOXLOCALAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Connect error: ${error}`);
+            throw new Error(`Connect error: ${error.message || error}`);
         };
     };
 
@@ -383,7 +384,7 @@ class XBOXLOCALAPI extends EventEmitter {
         try {
             await this.connect();
         } catch (error) {
-            throw new Error(`Reconnect error: ${error}`);
+            throw new Error(`Reconnect error: ${error.message || error}`);
         }
     };
 
@@ -392,7 +393,7 @@ class XBOXLOCALAPI extends EventEmitter {
             const data = await fsPromises.readFile(path);
             return data;
         } catch (error) {
-            throw new Error(`Read token error: ${error}`);
+            throw new Error(`Read data error: ${error.message || error}`);
         }
     }
 
@@ -403,7 +404,7 @@ class XBOXLOCALAPI extends EventEmitter {
             const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Save data error: ${error.message || error}`);
         };
     };
 

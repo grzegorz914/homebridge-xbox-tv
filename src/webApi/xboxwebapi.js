@@ -52,7 +52,7 @@ class XBOXWEBAPI extends EventEmitter {
     async checkAuthorization() {
         try {
             const data = await this.authentication.checkAuthorization();
-            const debug = this.debugLog ? this.emit('debug', `authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
             const headers = {
                 'Authorization': data.headers,
                 'Accept-Language': 'en-US',
@@ -75,14 +75,14 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`check authorization error: ${error}`);
+            throw new Error(`Check authorization error: ${error.message || error}`);
         };
     }
 
     async xboxLiveData() {
         try {
             const rmEnabled = await this.consoleStatus();
-            const debug1 = !rmEnabled ? this.emit('message', `remote management not enabled, please check your console settings.`) : false;
+            const debug1 = !rmEnabled ? this.emit('message', `Remote management not enabled, please check your console settings.`) : false;
             //await this.consolesList();
             await this.installedApps();
             //await this.storageDevices();
@@ -90,7 +90,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`xbox live data error: ${error}`);
+            throw new Error(`Xbox live data error: ${error.message || error}`);
         };
     };
 
@@ -98,7 +98,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
             const getConsoleStatusData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
 
             //get console status
             const consoleStatusData = getConsoleStatusData.data;
@@ -125,7 +125,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return remoteManagementEnabled;
         } catch (error) {
-            throw new Error(`status error: ${error}`);
+            throw new Error(`Status error: ${error.message || error}`);
         };
     }
 
@@ -133,7 +133,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
             const getConsolesListData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
 
             //get consoles list
             this.consolesId = [];
@@ -205,7 +205,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`consoles list error: ${error}`);
+            throw new Error(`Consoles list error: ${error.message || error}`);
         };
     }
 
@@ -213,7 +213,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
             const getInstalledAppsData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `getInstalledAppsData: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
 
             //get installed apps
             const appsArray = [];
@@ -257,7 +257,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`installed apps error: ${error}`);
+            throw new Error(`Installed apps error: ${error.message || error}`);
         };
     }
 
@@ -265,7 +265,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
             const getStorageDevicesData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `getStorageDevicesData, result: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
 
             //get console storages
             this.storageDeviceId = [];
@@ -300,7 +300,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`storage devices error: ${error}`);
+            throw new Error(`storage devices error: ${error.message || error}`);
         };
     }
 
@@ -308,7 +308,7 @@ class XBOXWEBAPI extends EventEmitter {
         try {
             const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
             const getUserProfileData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `getUserProfileData, result: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
+            const debug = this.debugLog ? this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
 
             //get user profiles
             this.userProfileId = [];
@@ -343,7 +343,7 @@ class XBOXWEBAPI extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`user profile error: ${error}`);
+            throw new Error(`User profile error: ${error.message || error}`);
         };
     }
 
@@ -354,7 +354,7 @@ class XBOXWEBAPI extends EventEmitter {
             const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Save data error: ${error.message || error}`);
         };
     };
 

@@ -54,6 +54,7 @@ class XboxDevice extends EventEmitter {
         this.inputsFile = inputsFile;
         this.inputsNamesFile = inputsNamesFile;
         this.inputsTargetVisibilityFile = inputsTargetVisibilityFile;
+        this.startPrepareAccessory = true;
 
         //external integrations
         this.restFul = device.restFul ?? {};
@@ -180,7 +181,7 @@ class XboxDevice extends EventEmitter {
 
                     //start impulse generator
                     const timers = [{ name: 'checkAuthorization', sampling: 900000 }];
-                    this.xboxWebApi.impulseGenerator.start(timers);
+                    await this.xboxWebApi.impulseGenerator.start(timers);
                 } catch (error) {
                     this.emit('error', error);
                 };
@@ -214,8 +215,8 @@ class XboxDevice extends EventEmitter {
                 };
             })
                 .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                    const index = this.inputsConfigured.findIndex(input => input.reference === reference || input.titleId === titleId) ?? -1;
-                    const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
+                    const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
+                    const inputIdentifier = input ? input.identifier : this.inputIdentifier;
 
                     //update characteristics
                     if (this.televisionService) {
@@ -307,68 +308,77 @@ class XboxDevice extends EventEmitter {
                         this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
                     };
                 })
-                .on('prepareAccessory', async () => {
-                    //RESTFul server
-                    const restFulEnabled = this.restFul.enable || false;
-                    if (restFulEnabled) {
-                        this.restFul = new RestFul({
-                            port: this.restFul.port || 3000,
-                            debug: this.restFul.debug || false
-                        });
-
-                        this.restFul.on('connected', (message) => {
-                            this.restFulConnected = true;
-                            this.emit('success', message);
-                        })
-                            .on('set', async (key, value) => {
-                                try {
-                                    await this.setOverExternalIntegration('RESTFul', key, value);
-                                } catch (error) {
-                                    this.emit('warn', `RESTFul set error: ${error}`);
-                                };
-                            })
-                            .on('debug', (debug) => {
-                                this.emit('debug', debug);
-                            })
-                            .on('error', (error) => {
-                                this.emit('warn', error);
+                .on('externalIntegrations', (message) => {
+                    try {
+                        //RESTFul server
+                        const restFulEnabled = this.restFul.enable || false;
+                        if (restFulEnabled) {
+                            this.restFul = new RestFul({
+                                port: this.restFul.port || 3000,
+                                debug: this.restFul.debug || false
                             });
-                    }
 
-                    //mqtt client
-                    const mqttEnabled = this.mqtt.enable || false;
-                    if (mqttEnabled) {
-                        this.mqtt = new Mqtt({
-                            host: this.mqtt.host,
-                            port: this.mqtt.port || 1883,
-                            clientId: this.mqtt.clientId || `xbox_${Math.random().toString(16).slice(3)}`,
-                            prefix: `${this.mqtt.prefix}/${device.name}`,
-                            user: this.mqtt.user,
-                            passwd: this.mqtt.passwd,
-                            debug: this.mqtt.debug || false
-                        });
-
-                        this.mqtt.on('connected', (message) => {
-                            this.mqttConnected = true;
-                            this.emit('success', message);
-                        })
-                            .on('subscribed', (message) => {
+                            this.restFul.on('connected', (message) => {
+                                this.restFulConnected = true;
                                 this.emit('success', message);
                             })
-                            .on('set', async (key, value) => {
-                                try {
-                                    await this.setOverExternalIntegration('MQTT', key, value);
-                                } catch (error) {
-                                    this.emit('warn', `MQTT set error: ${error}.`);
-                                };
-                            })
-                            .on('debug', (debug) => {
-                                this.emit('debug', debug);
-                            })
-                            .on('error', (error) => {
-                                this.emit('warn', error);
+                                .on('set', async (key, value) => {
+                                    try {
+                                        await this.setOverExternalIntegration('RESTFul', key, value);
+                                    } catch (error) {
+                                        this.emit('warn', `RESTFul set error: ${error}`);
+                                    };
+                                })
+                                .on('debug', (debug) => {
+                                    this.emit('debug', debug);
+                                })
+                                .on('error', (error) => {
+                                    this.emit('warn', error);
+                                });
+                        }
+
+                        //mqtt client
+                        const mqttEnabled = this.mqtt.enable || false;
+                        if (mqttEnabled) {
+                            this.mqtt = new Mqtt({
+                                host: this.mqtt.host,
+                                port: this.mqtt.port || 1883,
+                                clientId: this.mqtt.clientId || `xbox_${Math.random().toString(16).slice(3)}`,
+                                prefix: `${this.mqtt.prefix}/${device.name}`,
+                                user: this.mqtt.user,
+                                passwd: this.mqtt.passwd,
+                                debug: this.mqtt.debug || false
                             });
+
+                            this.mqtt.on('connected', (message) => {
+                                this.mqttConnected = true;
+                                this.emit('success', message);
+                            })
+                                .on('subscribed', (message) => {
+                                    this.emit('success', message);
+                                })
+                                .on('set', async (key, value) => {
+                                    try {
+                                        await this.setOverExternalIntegration('MQTT', key, value);
+                                    } catch (error) {
+                                        this.emit('warn', `MQTT set error: ${error}.`);
+                                    };
+                                })
+                                .on('debug', (debug) => {
+                                    this.emit('debug', debug);
+                                })
+                                .on('error', (error) => {
+                                    this.emit('warn', error);
+                                });
+                        };
+                    } catch (error) {
+                        this.emit('warn', `External integration start error: ${error.message || error}.`);
                     };
+                })
+                .on('prepareAccessory', async () => {
+                    if (!this.startPrepareAccessory) {
+                        return;
+                    }
 
                     try {
                         //read dev info from file
@@ -392,14 +402,16 @@ class XboxDevice extends EventEmitter {
                         const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
                         //prepare accessory
-                        await new Promise(resolve => setTimeout(resolve, 2500));
                         const accessory = await this.prepareAccessory();
                         this.emit('publishAccessory', accessory)
 
                         //sort inputs list
                         const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
+
+                        this.startPrepareAccessory = false;
                     } catch (error) {
-                        throw new Error(`prepare accessory error: ${error}`);
+                        throw new Error(`
+                            Prepare accessory error: ${error.message || error}`);
                     };
                 })
                 .on('success', (message) => {
@@ -432,7 +444,7 @@ class XboxDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`start error: ${error}`);
+            throw new Error(`Start error: ${error.message || error}`);
         };
     }
 
@@ -462,17 +474,18 @@ class XboxDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Display order error: ${error.message || error}`);
         };
     }
 
     async saveData(path, data) {
         try {
-            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Save data error: ${error.message || error}`);
         };
     }
 
@@ -482,7 +495,7 @@ class XboxDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;
         } catch (error) {
-            throw new Error(`Read saved data error: ${error}`);
+            throw new Error(`Read data error: ${error.message || error}`);
         };
     }
 
@@ -546,7 +559,7 @@ class XboxDevice extends EventEmitter {
             };
             return set;
         } catch (error) {
-            throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error}`);
+            throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error.message || error}`);
         };
     }
 
@@ -628,10 +641,10 @@ class XboxDevice extends EventEmitter {
                 })
                 .onSet(async (activeIdentifier) => {
                     try {
-                        const index = this.inputsConfigured.findIndex(input => input.identifier === activeIdentifier);
-                        const inputOneStoreProductId = this.inputsConfigured[index].oneStoreProductId;
-                        const inputReference = this.inputsConfigured[index].reference;
-                        const inputName = this.inputsConfigured[index].name;
+                        const input = this.inputsConfigured.find(input => input.identifier === activeIdentifier);
+                        const inputOneStoreProductId = input.oneStoreProductId;
+                        const inputReference = input.reference;
+                        const inputName = input.name;
 
                         let channelName;
                         let command;
