@@ -31,7 +31,6 @@ class XBOXLOCALAPI extends EventEmitter {
         this.channels = [];
         this.channelRequestId = 0;
         this.mediaRequestId = 0;
-        this.startPrepareAccessory = true;
     };
 
     //dgram socket
