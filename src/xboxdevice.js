@@ -179,7 +179,7 @@ class XboxDevice extends EventEmitter {
                     //check authorization
                     await this.xboxWebApi.checkAuthorization();
 
-                    //start impulse generator 
+                    //start impulse generator
                     const timers = [{ name: 'checkAuthorization', sampling: 900000 }];
                     await this.xboxWebApi.impulseGenerator.start(timers);
                 } catch (error) {
