@@ -296,8 +296,8 @@ class XboxDevice extends EventEmitter {
                     this.mediaState = mediaState;
 
                     if (!this.disableLogInfo) {
-                        const name = index !== -1 ? this.inputsConfigured[index].name : reference;
-                        const productId = index !== -1 ? this.inputsConfigured[index].oneStoreProductId : reference;
+                        const name = input ? input.name : reference;
+                        const productId = input ? input.oneStoreProductId : reference;
                         this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('message', `Input Name: ${name}`);
                         this.emit('message', `Reference: ${reference}`);
