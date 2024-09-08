@@ -368,8 +368,11 @@ class XBOXLOCALAPI extends EventEmitter {
 
                 //Prepare accessory
                 await new Promise(resolve => setTimeout(resolve, 7500));
-                const prepareAccessory = this.startPrepareAccessory && !this.isConnected ? this.emit('prepareAccessory') : false;
-                this.startPrepareAccessory = false;
+                //start external integration
+                const prepareExtInt = !this.isConnected ? this.emit('externalIntegration') : false;
+
+                //prepare accessory
+                const prepareAccessory = !this.isConnected ? this.emit('prepareAccessory') : false;
             }).bind();
 
             return true;

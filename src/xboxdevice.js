@@ -308,7 +308,7 @@ class XboxDevice extends EventEmitter {
                         this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
                     };
                 })
-                .on('externalIntegrations', (message) => {
+                .on('externalIntegrations', () => {
                     try {
                         //RESTFul server
                         const restFulEnabled = this.restFul.enable || false;
