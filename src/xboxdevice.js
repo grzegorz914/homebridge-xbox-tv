@@ -170,10 +170,10 @@ class XboxDevice extends EventEmitter {
                             this.emit('error', error);
                         })
                         .on('restFul', (path, data) => {
-                            this.emit('restFul', path, data)
+                            const restFul = this.restFulConnected ? this.restFul1.update(path, data) : false;
                         })
                         .on('mqtt', (topic, message) => {
-                            this.emit('mqtt', topic, message)
+                            const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
                         });
 
                     //check authorization
