@@ -40,7 +40,7 @@
 							"type": "boolean",
 							"default": false,
 							"description": "This enable console control over Web Api.",
-							"required": true
+							"required": false
 						},
 						"getInputsFromDevice": {
 							"title": "Load Inputs From Device",
@@ -50,35 +50,35 @@
 							"condition": {
 								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
 							},
-							"required": true
+							"required": false
 						},
 						"filterGames": {
 							"title": "Hide Games",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Games will not be displayed on the list of inputs.",
-							"required": true
+							"required": false
 						},
 						"filterApps": {
 							"title": "Hide Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, Apps will not be displayed on the list of inputs.",
-							"required": true
+							"required": false
 						},
 						"filterSystemApps": {
 							"title": "Hide System Apps",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs.",
-							"required": true
+							"required": false
 						},
 						"filterDlc": {
 							"title": "Hide DLC",
 							"type": "boolean",
 							"default": false,
 							"description": "If enabled, DLC will not be displayed on the list of inputs.",
-							"required": true
+							"required": false
 						},
 						"inputsDisplayOrder": {
 							"title": "Inputs Display Order",
@@ -188,7 +188,7 @@
 												]
 											}
 										],
-										"required": true
+										"required": false
 									}
 								}
 							},
@@ -405,7 +405,7 @@
 											}
 										],
 										"description": "Here select the command or mode of button.",
-										"required": true
+										"required": false
 									},
 									"oneStoreProductId": {
 										"title": "Product Id",
@@ -420,6 +420,7 @@
 									"displayType": {
 										"title": "Display Type",
 										"type": "integer",
+										"default": 0,
 										"oneOf": [
 											{
 												"title": "None/Disabled",
@@ -498,6 +499,7 @@
 									"displayType": {
 										"title": "Type",
 										"type": "integer",
+										"default": 0,
 										"oneOf": [
 											{
 												"title": "None/Disabled",
