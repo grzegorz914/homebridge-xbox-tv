@@ -157,6 +157,9 @@ class XboxDevice extends EventEmitter {
                             };
                             this.power = power;
                         })
+                        .on('success', (message) => {
+                            this.emit('success', message);
+                        })
                         .on('message', (message) => {
                             this.emit('message', message);
                         })
@@ -214,100 +217,6 @@ class XboxDevice extends EventEmitter {
                         .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
                 };
             })
-                .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                    const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
-                    const inputIdentifier = input ? input.identifier : this.inputIdentifier;
-
-                    //update characteristics
-                    if (this.televisionService) {
-                        this.televisionService
-                            .updateCharacteristic(Characteristic.Active, power);
-                    };
-
-                    if (this.televisionService) {
-                        this.televisionService
-                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-                    };
-
-                    if (this.speakerService) {
-                        this.speakerService
-                            .updateCharacteristic(Characteristic.Volume, volume)
-                            .updateCharacteristic(Characteristic.Mute, mute);
-                        if (this.volumeService) {
-                            this.volumeService
-                                .updateCharacteristic(Characteristic.Brightness, volume)
-                                .updateCharacteristic(Characteristic.On, !mute);
-                        };
-                        if (this.volumeServiceFan) {
-                            this.volumeServiceFan
-                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
-                                .updateCharacteristic(Characteristic.On, !mute);
-                        };
-                    };
-
-                    if (this.sensorPowerService) {
-                        this.sensorPowerService
-                            .updateCharacteristic(Characteristic.ContactSensorState, power);
-                    }
-
-                    if (this.sensorInputService && reference !== this.reference) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            this.sensorInputService
-                                .updateCharacteristic(Characteristic.ContactSensorState, state);
-                            this.sensorInputState = state;
-                        }
-                    }
-
-                    if (this.sensorScreenSaverService) {
-                        const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                        this.sensorScreenSaverService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state);
-                        this.sensorScreenSaverState = state;
-                    }
-
-                    if (this.sensorsInputsServices) {
-                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                            const sensorInput = this.sensorsInputsConfigured[i];
-                            const state = power ? sensorInput.reference === reference : false;
-                            sensorInput.state = state;
-                            const characteristicType = sensorInput.characteristicType;
-                            this.sensorsInputsServices[i]
-                                .updateCharacteristic(characteristicType, state);
-                        }
-                    }
-
-                    //buttons
-                    if (this.buttonsServices) {
-                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                            const button = this.buttonsConfigured[i];
-                            const state = this.power ? button.reference === reference : false;
-                            button.state = state;
-                            this.buttonsServices[i]
-                                .updateCharacteristic(Characteristic.On, state);
-                        }
-                    }
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
-                    this.mediaState = mediaState;
-
-                    if (!this.disableLogInfo) {
-                        const name = input ? input.name : reference;
-                        const productId = input ? input.oneStoreProductId : reference;
-                        this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
-                        this.emit('message', `Input Name: ${name}`);
-                        this.emit('message', `Reference: ${reference}`);
-                        this.emit('message', `Title Id: ${titleId}`);
-                        this.emit('message', `Product Id: ${productId}`);
-                        this.emit('message', `Volume: ${volume}%`);
-                        this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
-                        this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
-                    };
-                })
                 .on('externalIntegrations', () => {
                     try {
                         //RESTFul server
@@ -411,11 +320,104 @@ class XboxDevice extends EventEmitter {
 
                         //sort inputs list
                         const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
-
                         this.startPrepareAccessory = false;
                     } catch (error) {
                         throw new Error(`
                             Prepare accessory error: ${error.message || error}`);
+                    };
+                })
+                .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
+                    const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
+                    const inputIdentifier = input ? input.identifier : this.inputIdentifier;
+
+                    //update characteristics
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.Active, power);
+                    };
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                    };
+
+                    if (this.speakerService) {
+                        this.speakerService
+                            .updateCharacteristic(Characteristic.Volume, volume)
+                            .updateCharacteristic(Characteristic.Mute, mute);
+                        if (this.volumeService) {
+                            this.volumeService
+                                .updateCharacteristic(Characteristic.Brightness, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        };
+                        if (this.volumeServiceFan) {
+                            this.volumeServiceFan
+                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        };
+                    };
+
+                    if (this.sensorPowerService) {
+                        this.sensorPowerService
+                            .updateCharacteristic(Characteristic.ContactSensorState, power);
+                    }
+
+                    if (this.sensorInputService && reference !== this.reference) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            this.sensorInputService
+                                .updateCharacteristic(Characteristic.ContactSensorState, state);
+                            this.sensorInputState = state;
+                        }
+                    }
+
+                    if (this.sensorScreenSaverService) {
+                        const state = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
+                        this.sensorScreenSaverService
+                            .updateCharacteristic(Characteristic.ContactSensorState, state);
+                        this.sensorScreenSaverState = state;
+                    }
+
+                    if (this.sensorsInputsServices) {
+                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
+                            const sensorInput = this.sensorsInputsConfigured[i];
+                            const state = power ? sensorInput.reference === reference : false;
+                            sensorInput.state = state;
+                            const characteristicType = sensorInput.characteristicType;
+                            this.sensorsInputsServices[i]
+                                .updateCharacteristic(characteristicType, state);
+                        }
+                    }
+
+                    //buttons
+                    if (this.buttonsServices) {
+                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
+                            const button = this.buttonsConfigured[i];
+                            const state = this.power ? button.reference === reference : false;
+                            button.state = state;
+                            this.buttonsServices[i]
+                                .updateCharacteristic(Characteristic.On, state);
+                        }
+                    }
+
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+                    this.mediaState = mediaState;
+
+                    if (!this.disableLogInfo) {
+                        const name = input ? input.name : reference;
+                        const productId = input ? input.oneStoreProductId : reference;
+                        this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Input Name: ${name}`);
+                        this.emit('message', `Reference: ${reference}`);
+                        this.emit('message', `Title Id: ${titleId}`);
+                        this.emit('message', `Product Id: ${productId}`);
+                        this.emit('message', `Volume: ${volume}%`);
+                        this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
                     };
                 })
                 .on('success', (message) => {

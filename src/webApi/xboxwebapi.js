@@ -46,7 +46,9 @@ class XBOXWEBAPI extends EventEmitter {
             } catch (error) {
                 this.emit('error', error);
             };
-        }).on('state', (state) => { });
+        }).on('state', (state) => {
+            const emitState = state ? this.emit('success', `Web Api monitoring started.`) : this.emit('warn', `Web Api monitoring stopped.`);
+        });
     }
 
     async checkAuthorization() {

@@ -3,6 +3,7 @@
 	"pluginType": "platform",
 	"singular": true,
 	"fixArrays": true,
+	"strictValidation": true,
 	"customUi": true,
 	"headerDisplay": "This plugin works with Xbox Game Consoles. Devices are exposed to HomeKit as separate accessories and each needs to be manually paired.",
 	"footerDisplay": "For documentation please see [GitHub repository](https://github.com/grzegorz914/homebridge-xbox-tv).",
