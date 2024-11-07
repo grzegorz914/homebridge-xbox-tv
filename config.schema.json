@@ -651,7 +651,7 @@
 								}
 							],
 							"description": "Here select the function of info button in RC.",
-							"required": true
+							"required": false
 						},
 						"volumeControlNamePrefix": {
 							"title": "Volume Control Name Prefix",
@@ -694,7 +694,7 @@
 									]
 								}
 							],
-							"required": true
+							"required": false
 						},
 						"enableDebugMode": {
 							"title": "Debug",
@@ -715,13 +715,6 @@
 							"type": "boolean",
 							"default": false,
 							"description": "This disable log device info by every connections device to the network.",
-							"required": false
-						},
-						"enableRestFul": {
-							"title": "Enable",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable RESTful server.",
 							"required": false
 						},
 						"restFul": {
