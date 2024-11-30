@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class PINS {
+class Pins {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -39,4 +39,4 @@ class PINS {
     }
 
 }
-module.exports = PINS;
+export default Pins;

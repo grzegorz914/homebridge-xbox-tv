@@ -1,26 +1,14 @@
 'use strict';
-const fs = require('fs');
-const fsPromises = fs.promises;
-const QueryString = require('querystring');
-const EventEmitter = require('events');
-const { v4: UuIdv4 } = require('uuid');
-const Authentication = require('./authentication.js')
-const axios = require('axios');
-const Achievements = require('./providers/achievements.js');
-const Catalog = require('./providers/catalog.js');
-const Gameclips = require('./providers/gameclips.js');
-const Messages = require('./providers/messages.js');
-const People = require('./providers/people.js');
-const Pins = require('./providers/pins.js');
-const Screenshots = require('./providers/screenshots.js');
-const Social = require('./providers/social.js');
-const Titlehub = require('./providers/titlehub.js');
-const UserPresence = require('./providers/userpresence.js');
-const UserStats = require('./providers/userstats.js');
-const ImpulseGenerator = require('../impulsegenerator.js');
-const CONSTANTS = require('../constants.json');
+import { promises } from 'fs';
+const fsPromises = promises;
+import EventEmitter from 'events';
+import { v4 as UuIdv4 } from 'uuid';
+import axios from 'axios';
+import Authentication from './authentication.js';
+import ImpulseGenerator from '../impulsegenerator.js';
+import { WebApi } from '../constants.js';
 
-class XBOXWEBAPI extends EventEmitter {
+class XboxWebApi extends EventEmitter {
     constructor(config) {
         super();
         this.xboxLiveId = config.xboxLiveId;
@@ -98,7 +86,7 @@ class XBOXWEBAPI extends EventEmitter {
 
     async consoleStatus() {
         try {
-            const url = `${CONSTANTS.WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
+            const url = `${WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
             const getConsoleStatusData = await this.axiosInstance(url);
             const debug = this.debugLog ? this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
 
@@ -108,9 +96,9 @@ class XBOXWEBAPI extends EventEmitter {
             const name = consoleStatusData.name;
             const locale = consoleStatusData.locale;
             const region = consoleStatusData.region;
-            const consoleType = CONSTANTS.WebApi.Console.Name[consoleStatusData.consoleType];
-            const powerState = (CONSTANTS.WebApi.Console.PowerState[consoleStatusData.powerState] === 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
-            const playbackState = (CONSTANTS.WebApi.Console.PlaybackState[consoleStatusData.playbackState] === 1); // 0 - Stopped, 1 - Playng, 2 - Paused
+            const consoleType = WebApi.Console.Name[consoleStatusData.consoleType];
+            const powerState = (WebApi.Console.PowerState[consoleStatusData.powerState] === 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+            const playbackState = (WebApi.Console.PlaybackState[consoleStatusData.playbackState] === 1); // 0 - Stopped, 1 - Playng, 2 - Paused
             const loginState = consoleStatusData.loginState;
             const focusAppAumid = consoleStatusData.focusAppAumid;
             const isTvConfigured = (consoleStatusData.isTvConfigured === true);
@@ -133,7 +121,7 @@ class XBOXWEBAPI extends EventEmitter {
 
     async consolesList() {
         try {
-            const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
+            const url = `${WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
             const getConsolesListData = await this.axiosInstance(url);
             const debug = this.debugLog ? this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
 
@@ -164,7 +152,7 @@ class XBOXWEBAPI extends EventEmitter {
                 const locale = console.locale;
                 const region = console.region;
                 const consoleType = console.consoleType;
-                const powerState = CONSTANTS.WebApi.Console.PowerState[console.powerState]; // 0 - Off, 1 - On, 2 - ConnectedStandby, 3 - SystemUpdate
+                const powerState = WebApi.Console.PowerState[console.powerState]; // 0 - Off, 1 - On, 2 - ConnectedStandby, 3 - SystemUpdate
                 const digitalAssistantRemoteControlEnabled = console.digitalAssistantRemoteControlEnabled;
                 const remoteManagementEnabled = console.remoteManagementEnabled;
                 const consoleStreamingEnabled = console.consoleStreamingEnabled;
@@ -213,7 +201,7 @@ class XBOXWEBAPI extends EventEmitter {
 
     async installedApps() {
         try {
-            const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
+            const url = `${WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
             const getInstalledAppsData = await this.axiosInstance(url);
             const debug = this.debugLog ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
 
@@ -265,7 +253,7 @@ class XBOXWEBAPI extends EventEmitter {
 
     async storageDevices() {
         try {
-            const url = `${CONSTANTS.WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
+            const url = `${WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
             const getStorageDevicesData = await this.axiosInstance(url);
             const debug = this.debugLog ? this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
 
@@ -429,7 +417,7 @@ class XBOXWEBAPI extends EventEmitter {
             const headers = {
                 headers: this.headers
             }
-            const response = await axios.post(`${CONSTANTS.WebApi.Url.Xccs}/commands`, postParams, headers);
+            const response = await axios.post(`${WebApi.Url.Xccs}/commands`, postParams, headers);
             const debug1 = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
 
             return true;
@@ -438,4 +426,4 @@ class XBOXWEBAPI extends EventEmitter {
         };
     }
 }
-module.exports = XBOXWEBAPI;
+export default XboxWebApi;

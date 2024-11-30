@@ -1,8 +1,8 @@
 'use strict';
-const QueryString = require('querystring')
-const axios = require('axios');
+import QueryString from 'querystring';
+import axios from 'axios';
 
-class CATALOG {
+class Catalog {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -63,4 +63,4 @@ class CATALOG {
     }
 
 }
-module.exports = CATALOG;
+export default Catalog;

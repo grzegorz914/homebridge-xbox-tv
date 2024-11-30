@@ -1,8 +1,8 @@
 "use strict";
-const Packets = require('./packets.js');
-const Structure = require('./structure');
+import Packets from './packets.js';
+import Structure from './structure.js';
 
-class SIMPLE {
+class Simple {
     constructor(type) {
         //type
         this.type = type;
@@ -178,4 +178,4 @@ class SIMPLE {
         return packet;
     }
 };
-module.exports = SIMPLE;
+export default Simple;

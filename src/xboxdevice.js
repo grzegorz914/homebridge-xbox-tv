@@ -1,12 +1,12 @@
 "use strict";
-const fs = require('fs');
-const fsPromises = fs.promises;
-const EventEmitter = require('events');
-const RestFul = require('./restful.js');
-const Mqtt = require('./mqtt.js');
-const XboxWebApi = require('./webApi/xboxwebapi.js');
-const XboxLocalApi = require('./localApi/xboxlocalapi.js');
-const CONSTANTS = require('./constants.json');
+import { promises } from 'fs';
+const fsPromises = promises;
+import EventEmitter from 'events';
+import RestFul from './restful.js';
+import Mqtt from './mqtt.js';
+import XboxWebApi from './webApi/xboxwebapi.js';
+import XboxLocalApi from './localApi/xboxlocalapi.js';
+import { DefaultInputs, LocalApi } from './constants.js';
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
@@ -68,7 +68,7 @@ class XboxDevice extends EventEmitter {
         this.buttonsServices = [];
 
         //add configured inputs to the default inputs and chack duplicated inputs
-        const tempInputs = [...CONSTANTS.DefaultInputs, ...this.inputs];
+        const tempInputs = [...DefaultInputs, ...this.inputs];
         const inputsArr = [];
         for (const input of tempInputs) {
             const inputName = input.name ?? false;
@@ -1134,11 +1134,11 @@ class XboxDevice extends EventEmitter {
 
                     //get button mode
                     let mode;
-                    if (buttonCommand in CONSTANTS.LocalApi.Channels.System.Media.Commands) {
+                    if (buttonCommand in LocalApi.Channels.System.Media.Commands) {
                         mode = 0;
-                    } else if (buttonCommand in CONSTANTS.LocalApi.Channels.System.Input.Commands) {
+                    } else if (buttonCommand in LocalApi.Channels.System.Input.Commands) {
                         mode = 1;
-                    } else if (buttonCommand in CONSTANTS.LocalApi.Channels.System.TvRemote.Commands) {
+                    } else if (buttonCommand in LocalApi.Channels.System.TvRemote.Commands) {
                         mode = 2;
                     } else if (buttonCommand === 'recordGameDvr') {
                         mode = 3;
@@ -1214,4 +1214,4 @@ class XboxDevice extends EventEmitter {
         };
     }
 };
-module.exports = XboxDevice;
+export default XboxDevice;

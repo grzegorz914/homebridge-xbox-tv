@@ -1,11 +1,12 @@
 "use strict";
-const JsRsaSign = require('jsrsasign');
-const Crypto = require('crypto');
-const EOL = require('os').EOL;
-const EC = require('elliptic').ec;
+import JsRsaSign from 'jsrsasign';
+import Crypto from 'crypto';
+import { EOL } from 'os';
+import Elliptic from 'elliptic';
+const EC = Elliptic.ec;
 const IV = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
 
-class SGCRYPTO {
+class SgCrypto {
     constructor() {
         this.key = false;
         this.iv = false;
@@ -114,4 +115,4 @@ class SGCRYPTO {
         return payload;
     };
 }
-module.exports = SGCRYPTO;
+export default SgCrypto;

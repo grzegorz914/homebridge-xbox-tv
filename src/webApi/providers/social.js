@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class SOCIAL {
+class Social {
     constructor(authorizationHeaders) {
         const headers = authorizationHeaders;
 
@@ -25,4 +25,4 @@ class SOCIAL {
     }
 
 }
-module.exports = SOCIAL;
+export default Social;

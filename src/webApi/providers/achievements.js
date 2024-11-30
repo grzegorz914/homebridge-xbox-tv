@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class ACHIVEMENTS {
+class Archivements {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -65,4 +65,4 @@ class ACHIVEMENTS {
     }
 
 }
-module.exports = ACHIVEMENTS;
+export default Archivements;

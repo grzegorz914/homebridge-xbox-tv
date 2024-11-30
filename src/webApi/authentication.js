@@ -1,13 +1,13 @@
 'use strict';
-const QueryString = require('querystring');
-const fs = require('fs');
-const fsPromises = fs.promises;
-const axios = require('axios');
-const CONSTANTS = require('../constants.json');
+import { promises } from 'fs';
+const fsPromises = promises;
+import QueryString from 'querystring';
+import axios from 'axios';
+import { WebApi } from '../constants.js';
 
 class Authentication {
     constructor(config) {
-        this.webApiClientId = config.webApiClientId || CONSTANTS.WebApi.ClientId;
+        this.webApiClientId = config.webApiClientId || WebApi.ClientId;
         this.webApiClientSecret = config.webApiClientSecret;
         this.tokensFile = config.tokensFile;
         this.tokens = {
@@ -89,14 +89,14 @@ class Authentication {
             const payload = {
                 "client_id": this.webApiClientId,
                 "grant_type": "refresh_token",
-                "scope": CONSTANTS.WebApi.Scopes,
+                "scope": WebApi.Scopes,
                 "refresh_token": token,
             }
             const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
 
             const postData = QueryString.stringify(payload);
             const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            const response = await axios.post(CONSTANTS.WebApi.Url.RefreshToken, postData, headers);
+            const response = await axios.post(WebApi.Url.RefreshToken, postData, headers);
             const refreshToken = response.data;
             refreshToken.issued = new Date().toISOString();
             this.tokens.oauth = refreshToken;
@@ -120,7 +120,7 @@ class Authentication {
 
             const postData = JSON.stringify(payload);
             const headers = { 'Content-Type': 'application/json' };
-            const response = await axios.post(CONSTANTS.WebApi.Url.UserToken, postData, { headers });
+            const response = await axios.post(WebApi.Url.UserToken, postData, { headers });
             const userToken = response.data;
             this.tokens.user = userToken;
             this.tokens.xsts = {};
@@ -143,7 +143,7 @@ class Authentication {
 
             const postData = JSON.stringify(payload);
             const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-            const response = await axios.post(CONSTANTS.WebApi.Url.XstsToken, postData, headers);
+            const response = await axios.post(WebApi.Url.XstsToken, postData, headers);
             const xstsToken = response.data;
             this.tokens.xsts = xstsToken;
             return true;
@@ -157,15 +157,15 @@ class Authentication {
             const payload = {
                 "client_id": this.webApiClientId,
                 "grant_type": 'authorization_code',
-                "scope": CONSTANTS.WebApi.Scopes,
+                "scope": WebApi.Scopes,
                 "code": webApiToken,
-                "redirect_uri": CONSTANTS.WebApi.Url.Redirect
+                "redirect_uri": WebApi.Url.Redirect
             }
             const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
 
             const postData = QueryString.stringify(payload);
             const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            const response = await axios.post(CONSTANTS.WebApi.Url.AccessToken, postData, headers);
+            const response = await axios.post(WebApi.Url.AccessToken, postData, headers);
             const accessToken = response.data;
             accessToken.issued = new Date().toISOString();
             this.tokens.oauth = accessToken;
@@ -204,11 +204,11 @@ class Authentication {
                 "client_id": this.webApiClientId,
                 "response_type": 'code',
                 "approval_prompt": 'auto',
-                "scope": CONSTANTS.WebApi.Scopes,
-                "redirect_uri": CONSTANTS.WebApi.Url.Redirect
+                "scope": WebApi.Scopes,
+                "redirect_uri": WebApi.Url.Redirect
             }
             const params = QueryString.stringify(payload);
-            const oauth2URI = `${CONSTANTS.WebApi.Url.oauth2}?${params}`;
+            const oauth2URI = `${WebApi.Url.oauth2}?${params}`;
             return oauth2URI;
         } catch (error) {
             throw new Error(`Authorization URL error: ${error.message || error}`);
@@ -235,4 +235,4 @@ class Authentication {
         };
     }
 }
-module.exports = Authentication;
+export default Authentication;

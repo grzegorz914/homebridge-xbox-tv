@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class MESSAGES {
+class Messages {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -39,4 +39,4 @@ class MESSAGES {
     }
 
 }
-module.exports = MESSAGES;
+export default Messages;

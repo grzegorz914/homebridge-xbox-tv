@@ -1,7 +1,7 @@
 "use strict";
-const CONSTANTS = require('../constants.json');
+import { LocalApi } from '../constants.js';
 
-class PACKETS {
+class Packets {
     constructor(structure) {
         this.structure = structure;
         const types = {
@@ -294,10 +294,10 @@ class PACKETS {
                 titleId: types.uInt32('0'),
                 aumId: types.sgString(),
                 assetId: types.sgString(),
-                mediaType: types.mapper(CONSTANTS.LocalApi.Media.Types, types.uInt16('0')),
-                soundLevel: types.mapper(CONSTANTS.LocalApi.Media.SoundLevel, types.uInt16('0')),
+                mediaType: types.mapper(LocalApi.Media.Types, types.uInt16('0')),
+                soundLevel: types.mapper(LocalApi.Media.SoundLevel, types.uInt16('0')),
                 enabledCommands: types.uInt32('0'),
-                playbackStatus: types.mapper(CONSTANTS.LocalApi.Media.PlaybackState, types.uInt16('0')),
+                playbackStatus: types.mapper(LocalApi.Media.PlaybackState, types.uInt16('0')),
                 rate: types.uInt32('0'),
                 position: types.uInt64(8, ''),
                 mediaStart: types.uInt64(8, ''),
@@ -326,4 +326,4 @@ class PACKETS {
         return packets;
     };
 };
-module.exports = PACKETS;
+export default Packets;

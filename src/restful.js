@@ -1,6 +1,6 @@
 "use strict";
-const express = require('express');
-const EventEmitter = require('events');
+import express, { json } from 'express';
+import EventEmitter from 'events';
 
 class RestFul extends EventEmitter {
     constructor(config) {
@@ -24,7 +24,7 @@ class RestFul extends EventEmitter {
         try {
             const restFul = express();
             restFul.set('json spaces', 2);
-            restFul.use(express.json());
+            restFul.use(json());
             restFul.get('/info', (req, res) => { res.json(this.restFulData.info) });
             restFul.get('/state', (req, res) => { res.json(this.restFulData.state) });
             restFul.get('/consoleslist', (req, res) => { res.json(this.restFulData.consoleslist) });
@@ -86,4 +86,4 @@ class RestFul extends EventEmitter {
         const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data, null, 2)}`) : false;
     };
 };
-module.exports = RestFul;
+export default RestFul;

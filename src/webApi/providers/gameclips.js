@@ -1,8 +1,8 @@
 'use strict';
-const QueryString = require('querystring')
-const axios = require('axios');
+import QueryString from 'querystring';
+import axios from 'axios';
 
-class GAMECLIP {
+class GameClip {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -62,4 +62,4 @@ class GAMECLIP {
     }
 
 }
-module.exports = GAMECLIP;
+export default GameClip;

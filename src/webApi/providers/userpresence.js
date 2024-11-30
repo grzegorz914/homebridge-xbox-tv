@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class USERPRESENCE {
+class UserPresence {
     constructor(authorizationHeaders) {
         const headers = authorizationHeaders;
         headers['x-xbl-contract-version'] = '3';
@@ -26,4 +26,4 @@ class USERPRESENCE {
     }
 
 }
-module.exports = USERPRESENCE;
+export default UserPresence;

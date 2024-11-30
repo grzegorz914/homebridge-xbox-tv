@@ -1,5 +1,5 @@
 "use strict";
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
 class ImpulseGenerator extends EventEmitter {
     constructor() {
@@ -47,4 +47,4 @@ class ImpulseGenerator extends EventEmitter {
         return this.timersState;
     }
 }
-module.exports = ImpulseGenerator;
+export default ImpulseGenerator;

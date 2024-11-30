@@ -1,23 +1,24 @@
 'use strict';
-const path = require('path');
-const fs = require('fs');
-const XboxDevice = require('./src/xboxdevice.js');
-const ImpulseGenerator = require('./src/impulsegenerator.js');
-const CONSTANTS = require('./src/constants.json');
+import fs from 'fs';
+import { join } from 'path';
+import { mkdirSync } from 'fs';
+import XboxDevice from './src/xboxdevice.js';
+import ImpulseGenerator from './src/impulsegenerator.js';
+import { PluginName, PlatformName } from './src/constants.js';
 
 class XboxPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log.warn(`No configuration found for ${PLUGIN_NAME}`);
+			log.warn(`No configuration found for ${PluginName}`);
 			return;
 		}
 		this.accessories = [];
 
 		//create directory if it doesn't exist
-		const prefDir = path.join(api.user.storagePath(), 'xboxTv');
+		const prefDir = join(api.user.storagePath(), 'xboxTv');
 		try {
-			fs.mkdirSync(prefDir, { recursive: true });
+			mkdirSync(prefDir, { recursive: true });
 		} catch (error) {
 			log.error(`Prepare directory error: ${error.message ?? error}`);
 			return;
@@ -81,7 +82,7 @@ class XboxPlatform {
 				try {
 					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile);
 					xboxDevice.on('publishAccessory', (accessory) => {
-						api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
+						api.publishExternalAccessories(PluginName, [accessory]);
 						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
@@ -130,6 +131,6 @@ class XboxPlatform {
 	}
 };
 
-module.exports = (api) => {
-	api.registerPlatform(CONSTANTS.PluginName, CONSTANTS.PlatformName, XboxPlatform, true);
+export default (api) => {
+	api.registerPlatform(PluginName, PlatformName, XboxPlatform, true);
 };

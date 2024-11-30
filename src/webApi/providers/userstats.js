@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class USERSTATS {
+class UserStats {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -28,4 +28,4 @@ class USERSTATS {
     }
 
 }
-module.exports = USERSTATS;
+export default UserStats;

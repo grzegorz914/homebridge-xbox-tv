@@ -1,6 +1,6 @@
 "use strict";
 
-class STRUCTURE {
+class Structure {
     constructor(packet) {
         packet = packet === undefined ? Buffer.from('') : packet;
         this.packet = packet;
@@ -139,4 +139,4 @@ class STRUCTURE {
         this.packet = Buffer.concat([this.packet, data]);
     };
 };
-module.exports = STRUCTURE;
+export default Structure;

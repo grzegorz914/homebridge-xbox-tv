@@ -1,7 +1,7 @@
 "use strict";
 
-const { HomebridgePluginUiServer, RequestError } = require('@homebridge/plugin-ui-utils');
-const Authentication = require('../src/webApi/authentication.js')
+import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
+import Authentication from '../src/webApi/authentication.js';
 
 class PluginUiServer extends HomebridgePluginUiServer {
   constructor() {

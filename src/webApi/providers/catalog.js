@@ -1,8 +1,8 @@
 'use strict';
-const QueryString = require('querystring');
-const axios = require('axios');
+import QueryString from 'querystring';
+import axios from 'axios';
 
-class CATALOG {
+class Catalog {
     constructor(authorizationHeaders) {
         const headers = authorizationHeaders;
         headers = { 'MS-CV': '0' };
@@ -79,4 +79,4 @@ class CATALOG {
     }
 
 }
-module.exports = CATALOG;
+export default Catalog;

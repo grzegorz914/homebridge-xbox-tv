@@ -1,7 +1,7 @@
 'use strict';
-const axios = require('axios');
+import axios from 'axios';
 
-class TITLEHUB {
+class TitleHub {
     constructor(tokens, authorizationHeaders) {
         this.tokens = tokens;
         const headers = authorizationHeaders;
@@ -52,4 +52,4 @@ class TITLEHUB {
     }
 
 }
-module.exports = TITLEHUB;
+export default TitleHub;

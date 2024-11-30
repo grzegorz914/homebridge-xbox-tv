@@ -1,10 +1,10 @@
 "use strict";
-const HexToBin = require('hex-to-binary');
-const Packets = require('./packets.js');
-const Structure = require('./structure');
-const CONSTANTS = require('../constants.json');
+import HexToBin from 'hex-to-binary';
+import Packets from './packets.js';
+import Structure from './structure.js';
+import { LocalApi } from '../constants.js';
 
-class MESSAGE {
+class Message {
     constructor(type) {
         //type
         this.type = type;
@@ -149,7 +149,7 @@ class MESSAGE {
         header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(structure.toBuffer().length);
         header.writeUInt32(sequenceNumber);
-        header.writeUInt32(CONSTANTS.LocalApi.ParticipantId.Target);
+        header.writeUInt32(LocalApi.ParticipantId.Target);
         header.writeUInt32(sourceParticipantId);
         header.writeBytes(this.setFlag(this.type));
         const addChannelId = channelId ? header.writeBytes(Buffer.from(channelId)) : header.writeBytes(Buffer.from(this.channelId));
@@ -213,4 +213,4 @@ class MESSAGE {
         return packet;
     };
 };
-module.exports = MESSAGE;
+export default Message;

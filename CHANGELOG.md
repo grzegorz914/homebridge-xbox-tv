@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
 - After update to v3.0.0 RESTFull and MQTT config settings need to be updated
 
+## [3.2.0] - (30.11.2024)
+
+## Changes
+
+- move from commonJS to esm module
+- moved constants.json to constants.js
+- cleanup
+
 ## [3.1.12] - (27.09.2024)
 
 ## Changes
