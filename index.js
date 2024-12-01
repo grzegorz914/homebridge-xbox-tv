@@ -1,7 +1,6 @@
 'use strict';
-import fs from 'fs';
 import { join } from 'path';
-import { mkdirSync } from 'fs';
+import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import XboxDevice from './src/xboxdevice.js';
 import ImpulseGenerator from './src/impulsegenerator.js';
 import { PluginName, PlatformName } from './src/constants.js';
@@ -69,8 +68,8 @@ class XboxPlatform {
 					];
 
 					files.forEach((file) => {
-						if (!fs.existsSync(file)) {
-							fs.writeFileSync(file, '');
+						if (!existsSync(file)) {
+							writeFileSync(file, '');
 						}
 					});
 				} catch (error) {
