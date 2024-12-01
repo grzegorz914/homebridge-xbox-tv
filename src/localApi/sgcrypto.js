@@ -1,4 +1,3 @@
-"use strict";
 import JsRsaSign from 'jsrsasign';
 import Crypto from 'crypto';
 import { EOL } from 'os';

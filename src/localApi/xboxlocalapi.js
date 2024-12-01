@@ -1,6 +1,4 @@
-"use strict";
-import { promises } from 'fs';
-const fsPromises = promises;
+import { promises as fsPromises } from 'fs';
 import Dgram from 'dgram';
 import Net from 'net';
 import { parse as UuIdParse, v4 as UuIdv4 } from 'uuid';

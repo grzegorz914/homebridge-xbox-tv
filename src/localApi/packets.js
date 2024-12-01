@@ -1,4 +1,3 @@
-"use strict";
 import { LocalApi } from '../constants.js';
 
 class Packets {

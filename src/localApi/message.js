@@ -1,4 +1,3 @@
-"use strict";
 import HexToBin from 'hex-to-binary';
 import Packets from './packets.js';
 import Structure from './structure.js';

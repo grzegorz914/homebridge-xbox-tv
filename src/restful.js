@@ -1,4 +1,3 @@
-"use strict";
 import express, { json } from 'express';
 import EventEmitter from 'events';
 

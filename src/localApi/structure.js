@@ -1,5 +1,3 @@
-"use strict";
-
 class Structure {
     constructor(packet) {
         packet = packet === undefined ? Buffer.from('') : packet;

@@ -1,4 +1,3 @@
-"use strict";
 import asyncMqtt from 'async-mqtt';
 const { connectAsync } = asyncMqtt;
 import EventEmitter from 'events';

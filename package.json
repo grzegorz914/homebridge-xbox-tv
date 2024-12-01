@@ -1,7 +1,7 @@
 {
   "displayName": "Xbox TV",
   "name": "homebridge-xbox-tv",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Homebridge plugin to control Xbox game consoles.",
   "license": "MIT",
   "author": "grzegorz914",
@@ -17,7 +17,9 @@
     "url": "https://github.com/grzegorz914/homebridge-xbox-tv/issues"
   },
   "type": "module",
-  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
   "files": [
     "src",
     "homebridge-ui",

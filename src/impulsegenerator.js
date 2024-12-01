@@ -1,4 +1,3 @@
-"use strict";
 import EventEmitter from 'events';
 
 class ImpulseGenerator extends EventEmitter {

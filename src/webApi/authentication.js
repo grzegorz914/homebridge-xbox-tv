@@ -1,6 +1,4 @@
-'use strict';
-import { promises } from 'fs';
-const fsPromises = promises;
+import { promises as fsPromises } from 'fs';
 import QueryString from 'querystring';
 import axios from 'axios';
 import { WebApi } from '../constants.js';

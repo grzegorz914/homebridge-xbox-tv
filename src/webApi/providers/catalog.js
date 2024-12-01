@@ -1,4 +1,3 @@
-'use strict';
 import QueryString from 'querystring';
 import axios from 'axios';
 

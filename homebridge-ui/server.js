@@ -1,5 +1,3 @@
-"use strict";
-
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import Authentication from '../src/webApi/authentication.js';
 

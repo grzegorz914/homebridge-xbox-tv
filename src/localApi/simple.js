@@ -1,4 +1,3 @@
-"use strict";
 import Packets from './packets.js';
 import Structure from './structure.js';
 
