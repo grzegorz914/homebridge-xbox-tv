@@ -1,7 +1,7 @@
 {
   "displayName": "Xbox TV",
   "name": "homebridge-xbox-tv",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Homebridge plugin to control Xbox game consoles.",
   "license": "MIT",
   "author": "grzegorz914",
@@ -42,8 +42,8 @@
     "jsrsasign": "^11.1.0",
     "uuid": "^11.0.3",
     "ping": "^0.4.4",
-    "express": "^4.21.1",
-    "axios": "^1.7.8"
+    "express": "^4.21.2",
+    "axios": "^1.7.9"
   },
   "keywords": [
     "homebridge",
