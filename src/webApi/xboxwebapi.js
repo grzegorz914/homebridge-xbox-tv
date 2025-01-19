@@ -13,7 +13,7 @@ class XboxWebApi extends EventEmitter {
         this.webApiClientId = config.webApiClientId;
         this.webApiClientSecret = config.webApiClientSecret;
         this.inputsFile = config.inputsFile;
-        this.debugLog = config.debugLog;
+        this.enableDebugMode = config.enableDebugMode;
 
         //variables
         this.authorized = false;
@@ -40,7 +40,7 @@ class XboxWebApi extends EventEmitter {
     async checkAuthorization() {
         try {
             const data = await this.authentication.checkAuthorization();
-            const debug = this.debugLog ? this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
             const headers = {
                 'Authorization': data.headers,
                 'Accept-Language': 'en-US',
@@ -70,7 +70,7 @@ class XboxWebApi extends EventEmitter {
     async xboxLiveData() {
         try {
             const rmEnabled = await this.consoleStatus();
-            const debug1 = !rmEnabled ? this.emit('message', `Remote management not enabled, please check your console settings.`) : false;
+            const debug1 = !rmEnabled ? this.emit('info', `Remote management not enabled, please check your console settings.`) : false;
             //await this.consolesList();
             await this.installedApps();
             //await this.storageDevices();
@@ -86,7 +86,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
             const getConsoleStatusData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
 
             //get console status
             const consoleStatusData = getConsoleStatusData.data;
@@ -121,7 +121,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
             const getConsolesListData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
 
             //get consoles list
             this.consolesId = [];
@@ -201,7 +201,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
             const getInstalledAppsData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
 
             //get installed apps
             const appsArray = [];
@@ -253,7 +253,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
             const getStorageDevicesData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
 
             //get console storages
             this.storageDeviceId = [];
@@ -296,7 +296,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
             const getUserProfileData = await this.axiosInstance(url);
-            const debug = this.debugLog ? this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
+            const debug = this.enableDebugMode ? this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
 
             //get user profiles
             this.userProfileId = [];
@@ -339,7 +339,7 @@ class XboxWebApi extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error.message || error}`);
@@ -407,7 +407,7 @@ class XboxWebApi extends EventEmitter {
             "parameters": params,
             "linkedXboxId": this.xboxLiveId
         }
-        const debug = this.debugLog ? this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}.`) : false;
+        const debug = this.enableDebugMode ? this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}.`) : false;
 
         try {
             const stringifyPostParam = JSON.stringify(postParams);
@@ -416,7 +416,7 @@ class XboxWebApi extends EventEmitter {
                 headers: this.headers
             }
             const response = await axios.post(`${WebApi.Url.Xccs}/commands`, postParams, headers);
-            const debug1 = this.debugLog ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
+            const debug1 = this.enableDebugMode ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
 
             return true;
         } catch (error) {

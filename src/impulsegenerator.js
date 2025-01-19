@@ -8,7 +8,8 @@ class ImpulseGenerator extends EventEmitter {
 
     async start(timers) {
         if (this.timersState) {
-            await this.stop();
+            this.state(true);
+            return true;
         }
 
         this.timers = [];
@@ -22,28 +23,27 @@ class ImpulseGenerator extends EventEmitter {
         };
 
         //update state
-        this.timersState = true;
-        this.state();
-
+        this.state(true);
         return true;
     }
 
     async stop() {
-        if (this.timersState) {
-            this.timers.forEach(timer => clearInterval(timer));
+        if (!this.timersState) {
+            this.state(false);
+            return true;
         }
 
         //update state
+        this.timers.forEach(timer => clearInterval(timer));
         this.timers = [];
-        this.timersState = false;
-        this.state();
-
-        return true;
+        this.state(false);
+        return true
     }
 
-    state() {
-        this.emit('state', this.timersState);
-        return this.timersState;
+    state(state) {
+        this.timersState = state;
+        this.emit('state', state);
     }
 }
 export default ImpulseGenerator;
+

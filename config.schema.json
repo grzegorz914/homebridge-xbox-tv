@@ -696,25 +696,41 @@
 							],
 							"required": false
 						},
-						"enableDebugMode": {
-							"title": "Debug",
+						"disableLogDeviceInfo": {
+							"title": "Disable Log Device Info",
 							"type": "boolean",
 							"default": false,
-							"description": "This enable debug mode.",
+							"description": "This disable logging device info by every connections device to the network.",
 							"required": false
 						},
 						"disableLogInfo": {
 							"title": "Disable Log Info",
 							"type": "boolean",
 							"default": false,
-							"description": "This disable logging values and states on every it change.",
 							"required": false
 						},
-						"disableLogDeviceInfo": {
-							"title": "Disable Log Device Info",
+						"disableLogSuccess": {
+							"title": "Disable Log Success",
 							"type": "boolean",
 							"default": false,
-							"description": "This disable log device info by every connections device to the network.",
+							"required": false
+						},
+						"disableLogWarn": {
+							"title": "Disable Log Warn",
+							"type": "boolean",
+							"default": false,
+							"required": false
+						},
+						"disableLogError": {
+							"title": "Disable Log Error",
+							"type": "boolean",
+							"default": false,
+							"required": false
+						},
+						"enableDebugMode": {
+							"title": "Enable Log Debug",
+							"type": "boolean",
+							"default": false,
 							"required": false
 						},
 						"restFul": {
@@ -983,11 +999,14 @@
 								},
 								{
 									"key": "devices[]",
-									"title": "System",
+									"title": "Log",
 									"items": [
-										"devices[].enableDebugMode",
+										"devices[].disableLogDeviceInfo",
 										"devices[].disableLogInfo",
-										"devices[].disableLogDeviceInfo"
+										"devices[].disableLogSuccess",
+										"devices[].disableLogWarn",
+										"devices[].disableLogError",
+										"devices[].enableDebugMode"
 									]
 								},
 								{

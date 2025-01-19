@@ -106,9 +106,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `volumeControlName` | Here set Your own volume control name or leave empty. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`), not working yet. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `disableLogSuccess` | If enabled, disable logging device success. |
+| `disableLogWarn` | If enabled, disable logging device warnings. |
+| `disableLogError` | If enabled, disable logging device error. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `restFul` | This is RSTful server. |
 | `enable` | If enabled, RESTful server will start automatically and respond to any path request. |
 | `port` | Here set the listening `Port` for RESTful server. |
