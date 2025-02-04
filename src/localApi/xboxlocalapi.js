@@ -441,12 +441,12 @@ class XboxLocalApi extends EventEmitter {
                                     connectRequest.set('publicKey', data.publicKey);
                                     connectRequest.set('iv', data.iv);
 
-                                    const token = await this.readData(this.tokensFile);
-                                    const parseTokenData = JSON.parse(token);
-                                    const tokenData = parseTokenData.xsts.Token.length > 0 ? parseTokenData : false;
+                                    const response = await this.readData(this.tokensFile);
+                                    const parseTokenData = JSON.parse(response);
+                                    const tokenData = parseTokenData?.xsts?.Token?.trim() || null;
                                     if (tokenData) {
-                                        connectRequest.set('userHash', tokenData.xsts.DisplayClaims.xui[0].uhs, true);
-                                        connectRequest.set('jwt', tokenData.xsts.Token, true);
+                                        connectRequest.set('userHash', parseTokenData.xsts.DisplayClaims?.xui?.[0]?.uhs || '', true);
+                                        connectRequest.set('jwt', parseTokenData.xsts.Token, true);
                                         this.isAuthorized = true;
                                     }
                                     const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}.`) : false;
