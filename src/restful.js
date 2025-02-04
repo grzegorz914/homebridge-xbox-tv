@@ -24,6 +24,8 @@ class RestFul extends EventEmitter {
             const restFul = express();
             restFul.set('json spaces', 2);
             restFul.use(json());
+
+            // GET Routes
             restFul.get('/info', (req, res) => { res.json(this.restFulData.info) });
             restFul.get('/state', (req, res) => { res.json(this.restFulData.state) });
             restFul.get('/consoleslist', (req, res) => { res.json(this.restFulData.consoleslist) });
@@ -32,24 +34,30 @@ class RestFul extends EventEmitter {
             restFul.get('/storages', (req, res) => { res.json(this.restFulData.storages) });
             restFul.get('/status', (req, res) => { res.json(this.restFulData.status) });
 
-            //post data
+            // POST Route
             restFul.post('/', (req, res) => {
                 try {
                     const obj = req.body;
-                    const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul post data: ${JSON.stringify(obj, null, 2)}`) : false;
+                    if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
+                        this.emit('warn', `RESTFul Invalid JSON payload`);
+                        return res.status(400).json({ error: 'RESTFul Invalid JSON payload' });
+                    }
                     const key = Object.keys(obj)[0];
-                    const value = Object.values(obj)[0];
+                    const value = obj[key];
                     this.emit('set', key, value);
-                    res.send('OK');
+
+                    const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul post data: ${JSON.stringify(obj, null, 2)}`) : false;
+                    res.json({ success: true, received: obj });
                 } catch (error) {
-                    this.emit('warn', `RESTFul Parse object error: ${error}`);
-                };
+                    this.emit('warn', `RESTFul Parse error: ${error}`);
+                    res.status(500).json({ error: 'RESTFul Internal Server Error' });
+                }
             });
 
+            // Start server
             restFul.listen(this.restFulPort, () => {
-                this.emit('connected', `RESTful started on port: ${this.restFulPort}`)
+                this.emit('connected', `RESTful started on port: ${this.restFulPort}`);
             });
-
         } catch (error) {
             this.emit('warn', `RESTful Connect error: ${error}`)
         }
