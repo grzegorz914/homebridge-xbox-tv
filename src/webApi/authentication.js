@@ -77,7 +77,7 @@ class Authentication {
                 }
                 break;
             default:
-                throw new Error(`Unknow refresh token type: ${type}.`);
+                throw new Error(`Unknow refresh token type: ${type}`);
                 break;
         }
     }
@@ -100,7 +100,7 @@ class Authentication {
             this.tokens.oauth = refreshToken;
             return true;
         } catch (error) {
-            throw new Error(`Refresh token error: ${error.message || error}`);
+            throw new Error(`Refresh token error: ${error}`);
         };
     }
 
@@ -124,7 +124,7 @@ class Authentication {
             this.tokens.xsts = {};
             return true;
         } catch (error) {
-            throw new Error(`User token error: ${error.message || error}`);
+            throw new Error(`User token error: ${error}`);
         };
     }
 
@@ -146,7 +146,7 @@ class Authentication {
             this.tokens.xsts = xstsToken;
             return true;
         } catch (error) {
-            throw new Error(`Xsts token error: ${error.message || error}`);
+            throw new Error(`Xsts token error: ${error}`);
         };
     }
 
@@ -170,7 +170,7 @@ class Authentication {
             await this.saveData(this.tokensFile, this.tokens);
             return true;
         } catch (error) {
-            throw new Error(`Access token error: ${error.message || error}`);
+            throw new Error(`Access token error: ${error}`);
         };
     }
 
@@ -209,7 +209,7 @@ class Authentication {
             const oauth2URI = `${WebApi.Url.oauth2}?${params}`;
             return oauth2URI;
         } catch (error) {
-            throw new Error(`Authorization URL error: ${error.message || error}`);
+            throw new Error(`Authorization URL error: ${error}`);
         };
     }
 
@@ -219,7 +219,7 @@ class Authentication {
             const tokens = data.length > 0 ? JSON.parse(data) : false;
             return tokens;
         } catch (error) {
-            throw new Error(`Read data error: ${error.message || error}`);
+            throw new Error(`Read data error: ${error}`);
         };
     }
 
@@ -229,7 +229,7 @@ class Authentication {
             await fsPromises.writeFile(path, data);
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error.message || error}`);
+            throw new Error(`Save data error: ${error}`);
         };
     }
 }

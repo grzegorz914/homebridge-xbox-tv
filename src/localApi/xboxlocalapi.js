@@ -52,7 +52,7 @@ class XboxLocalApi extends EventEmitter {
                 if (this.isConnected) {
                     const debug = this.enableDebugMode ? this.emit('debug', `Socket send heartbeat`) : false;
                     const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
-                    const debug1 = this.enableDebugMode && elapse >= 12 ? this.emit('debug', `Last message was: ${elapse} sec ago.`) : false;
+                    const debug1 = this.enableDebugMode && elapse >= 12 ? this.emit('debug', `Last message was: ${elapse} sec ago`) : false;
                     const disconnect = elapse >= 12 ? await this.disconnect() : false;
                 };
             } catch (error) {
@@ -110,7 +110,7 @@ class XboxLocalApi extends EventEmitter {
     }
 
     async channelOpen(channelRequestId, service) {
-        const debug = this.enableDebugMode ? this.emit('debug', `Received channel Id: ${channelRequestId}, request open.`) : false;
+        const debug = this.enableDebugMode ? this.emit('debug', `Received channel Id: ${channelRequestId}, request open`) : false;
         this.channelRequestId = channelRequestId;
 
         try {
@@ -131,6 +131,7 @@ class XboxLocalApi extends EventEmitter {
     async powerOn() {
         if (this.isConnected) {
             this.emit('warn', 'Console already On.');
+            return;
         };
 
         const info = this.disableLogInfo ? false : this.emit('info', 'Send power On.');
@@ -158,6 +159,7 @@ class XboxLocalApi extends EventEmitter {
     async powerOff() {
         if (!this.isConnected) {
             this.emit('warn', 'Console already Off.');
+            return;
         };
 
         const info = this.disableLogInfo ? false : this.emit('info', 'Send power Off.');
@@ -180,6 +182,7 @@ class XboxLocalApi extends EventEmitter {
     async recordGameDvr() {
         if (!this.isConnected || !this.isAuthorized) {
             this.emit('warn', `Send record game ignored, connection state: ${this.isConnected}, authorization state: ${this.isAuthorized}`);
+            return;
         };
 
         const info = this.disableLogInfo ? false : this.emit('info', 'Send record game.');
@@ -198,7 +201,8 @@ class XboxLocalApi extends EventEmitter {
 
     async sendButtonPress(channelName, command) {
         if (!this.isConnected) {
-            this.emit('waarn', `Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}.`);
+            this.emit('waarn', `Send command ignored, connection state: ${this.isConnected ? 'Not Connected' : 'Connected'}`);
+            return;
         };
 
         const channelRequestId = LocalApi.Channels.System[channelName].Id
@@ -206,11 +210,11 @@ class XboxLocalApi extends EventEmitter {
         const channelOpen = this.channels[requestId].open;
 
         if (channelCommunicationId === -1 || !channelOpen) {
-            this.emit('warn', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it.`);
+            this.emit('warn', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it`);
         };
 
         command = LocalApi.Channels.System[channelName][command];
-        const debug = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, name:  ${channelName} opened, send command; ${command}.`) : false;
+        const debug = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, name:  ${channelName} opened, send command; ${command}`) : false;
 
         switch (channelRequestId) {
             case 0:
@@ -317,7 +321,7 @@ class XboxLocalApi extends EventEmitter {
                     throw new Error(error);
                 }
 
-                const debug = this.enableDebugMode ? this.emit('debug', `Socket send: ${type}, ${bytes}B.`) : false;
+                const debug = this.enableDebugMode ? this.emit('debug', `Socket send: ${type}, ${bytes}B`) : false;
                 return true;
             });
         } catch (error) {
@@ -378,7 +382,7 @@ class XboxLocalApi extends EventEmitter {
                 const debug4 = this.enableDebugMode ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
 
                 if (messageType === 'message' && packet.targetParticipantId !== this.sourceParticipantId) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet.`) : false;
+                    const debug = this.enableDebugMode ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet`) : false;
                     return;
                 };
 
@@ -449,7 +453,7 @@ class XboxLocalApi extends EventEmitter {
                                         connectRequest.set('jwt', parseTokenData.xsts.Token, true);
                                         this.isAuthorized = true;
                                     }
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}.`) : false;
+                                    const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`) : false;
 
                                     const message = connectRequest.pack(this.crypto);
                                     await this.sendSocketMessage(message, 'connectRequest');
@@ -483,8 +487,8 @@ class XboxLocalApi extends EventEmitter {
                         }
                         this.isConnected = true;
                         this.sourceParticipantId = sourceParticipantId;
-                        const debug1 = this.enableDebugMode ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}.`) : false;
-                        const debug2 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}.`) : false;
+                        const debug1 = this.enableDebugMode ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}`) : false;
+                        const debug2 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}`) : false;
 
                         try {
                             const localJoin = new MessagePacket('localJoin');
@@ -532,7 +536,7 @@ class XboxLocalApi extends EventEmitter {
 
                         if (this.emitDevInfo) {
                             //connect to deice success
-                            this.emit('success', `Connect Success.`)
+                            this.emit('success', `Connect Success`)
 
                             const majorVersion = packet.payloadProtected.majorVersion;
                             const minorVersion = packet.payloadProtected.minorVersion;
@@ -605,17 +609,17 @@ class XboxLocalApi extends EventEmitter {
                             open: channelState
                         }
                         const pushChannel = channelCommunicationId !== -1 ? this.channels.push(channel) : false;
-                        const debug3 = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}.`) : false;
+                        const debug3 = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}`) : false;
                         break;
                     case 'pairedIdentityStateChanged':
                         const pairingState1 = packet.payloadProtected.pairingState || 0;
-                        const debug4 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}.`) : false;
+                        const debug4 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`) : false;
                         break;
                 };
             }).on('listening', async () => {
                 //socket.setBroadcast(true);
                 const address = socket.address();
-                const debug = this.enableDebugMode ? this.emit('debug', `Server start listening: ${address.address}:${address.port}.`) : false;
+                const debug = this.enableDebugMode ? this.emit('debug', `Server start listening: ${address.address}:${address.port}`) : false;
                 this.socket = socket;
                 this.emitDevInfo = true;
 

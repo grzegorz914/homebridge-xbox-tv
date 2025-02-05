@@ -21,7 +21,7 @@ class Mqtt extends EventEmitter {
 
                 //subscribe
                 await this.mqttClient.subscribe(subscribeTopic);
-                this.emit('subscribed', `MQTT Subscribe topic: ${subscribeTopic}.`);
+                this.emit('subscribed', `MQTT Subscribe topic: ${subscribeTopic}`);
 
                 //subscribed message
                 this.mqttClient.on('message', (topic, message) => {

@@ -97,7 +97,7 @@ class XboxDevice extends EventEmitter {
                 sensor.state = false;
                 this.sensorsInputsConfigured.push(sensor);
             } else {
-                const log = sensorInputDisplayType === 0 ? false : this.emit('info', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
+                const log = sensorInputDisplayType === 0 ? false : this.emit('info', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}`);
             };
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
@@ -116,7 +116,7 @@ class XboxDevice extends EventEmitter {
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Reference: ${buttonReference ? buttonReference : 'Missing'}.`);
+                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Reference: ${buttonReference ? buttonReference : 'Missing'}`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
@@ -129,7 +129,7 @@ class XboxDevice extends EventEmitter {
             const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error.message || error}`);
+            throw new Error(`Save data error: ${error}`);
         };
     }
 
@@ -139,7 +139,7 @@ class XboxDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;
         } catch (error) {
-            throw new Error(`Read data error: ${error.message || error}`);
+            throw new Error(`Read data error: ${error}`);
         };
     }
 
@@ -203,7 +203,7 @@ class XboxDevice extends EventEmitter {
             };
             return set;
         } catch (error) {
-            throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error.message || error}`);
+            throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error}`);
         };
     }
 
@@ -308,7 +308,7 @@ class XboxDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            throw new Error(`Display order error: ${error.message || error}`);
+            throw new Error(`Display order error: ${error}`);
         };
     }
 
@@ -721,7 +721,7 @@ class XboxDevice extends EventEmitter {
                             input.name = value;
                             this.savedInputsNames[inputReference] = value;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}.`);
+                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}`);
 
                             //sort inputs
                             const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
@@ -954,7 +954,7 @@ class XboxDevice extends EventEmitter {
                                                 const send5 = this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
                                                 break;
                                             case 'Not set': case 'Web api disabled':
-                                                this.emit('info', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}.`);
+                                                this.emit('info', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}`);
                                                 break;
                                             default:
                                                 const send6 = this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
@@ -973,7 +973,7 @@ class XboxDevice extends EventEmitter {
             }
 
             //sort inputs list
-            const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
+            await this.displayOrder();
 
             return accessory;
         } catch (error) {
@@ -1037,13 +1037,13 @@ class XboxDevice extends EventEmitter {
                         });
 
                     //check authorization
-                    await this.xboxWebApi.checkAuthorization();
+                    const checkAuthorization = await this.xboxWebApi.checkAuthorization();
 
                     //start impulse generator
                     const timers = [{ name: 'checkAuthorization', sampling: 900000 }];
-                    await this.xboxWebApi.impulseGenerator.start(timers);
+                    const startImpulseGenerator = checkAuthorization ? await this.xboxWebApi.impulseGenerator.start(timers) : false;
                 } catch (error) {
-                    this.emit('error', error);
+                    this.emit('error', `Start web api error: ${error}`);
                 };
             };
 
@@ -1166,11 +1166,11 @@ class XboxDevice extends EventEmitter {
                         this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][mediaState]}`);
                     };
                 })
-                .on('success', (message) => {
-                    this.emit('success', message);
+                .on('success', (success) => {
+                    this.emit('success', success);
                 })
-                .on('info', (message) => {
-                    this.emit('info', message);
+                .on('info', (info) => {
+                    this.emit('info', info);
                 })
                 .on('debug', (debug) => {
                     this.emit('debug', debug);
@@ -1181,8 +1181,8 @@ class XboxDevice extends EventEmitter {
                 .on('error', (error) => {
                     this.emit('error', error);
                 })
-                .on('disconnected', (message) => {
-                    this.emit('info', message);
+                .on('disconnected', (info) => {
+                    this.emit('info', info);
                 })
                 .on('restFul', (path, data) => {
                     const restFul = this.restFulConnected ? this.restFul1.update(path, data) : false;
@@ -1215,7 +1215,7 @@ class XboxDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Start error: ${error.message || error}`);
+            throw new Error(`Start error: ${error}`);
         };
     }
 };

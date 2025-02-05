@@ -17,6 +17,7 @@ class XboxWebApi extends EventEmitter {
 
         //variables
         this.authorized = false;
+        this.rmEnabled = false;
 
         const authConfig = {
             webApiClientId: config.webApiClientId,
@@ -25,15 +26,16 @@ class XboxWebApi extends EventEmitter {
         }
         this.authentication = new Authentication(authConfig);
 
+        //create impulse generator
         this.impulseGenerator = new ImpulseGenerator();
         this.impulseGenerator.on('checkAuthorization', async () => {
             try {
-                await this.checkAuthorization(this.contextKey);
+                await this.checkAuthorization();
             } catch (error) {
                 this.emit('error', error);
             };
         }).on('state', (state) => {
-            const emitState = state ? this.emit('success', `Web Api monitoring started.`) : this.emit('warn', `Web Api monitoring stopped.`);
+            const emitState = state ? this.emit('success', `Web Api monitoring started`) : this.emit('warn', `Web Api monitoring stopped`);
         });
     }
 
@@ -54,33 +56,36 @@ class XboxWebApi extends EventEmitter {
             this.tokens = data.tokens;
             this.authorized = true;
 
-            //create axios instance
-            this.axiosInstance = axios.create({
-                method: 'GET',
-                headers: headers
-            });
-            await this.xboxLiveData();
+            if (!this.authorized) {
+                this.emit('warn', `not authorized`);
+                return false;
+            };
+
+            //check xbox live data
+            try {
+                //create axios instance
+                this.axiosInstance = axios.create({
+                    method: 'GET',
+                    headers: headers
+                });
+
+                const rmEnabled = await this.consoleStatus();
+                const debug1 = rmEnabled ? false : this.emit('warn', `Remote management not enabled, please check your console settings`);
+                this.rmEnabled = rmEnabled;
+
+                //await this.consolesList();
+                await this.installedApps();
+                //await this.storageDevices();
+                //await this.userProfile();
+            } catch (error) {
+                this.emit('error', `Check xbox live data error: ${error}`);
+            };
 
             return true;
         } catch (error) {
-            throw new Error(`Check authorization error: ${error.message || error}`);
+            throw new Error(`Check authorization error: ${error}`);
         };
     }
-
-    async xboxLiveData() {
-        try {
-            const rmEnabled = await this.consoleStatus();
-            const debug1 = !rmEnabled ? this.emit('info', `Remote management not enabled, please check your console settings.`) : false;
-            //await this.consolesList();
-            await this.installedApps();
-            //await this.storageDevices();
-            //await this.userProfile();
-
-            return true;
-        } catch (error) {
-            throw new Error(`Xbox live data error: ${error.message || error}`);
-        };
-    };
 
     async consoleStatus() {
         try {
@@ -113,7 +118,7 @@ class XboxWebApi extends EventEmitter {
 
             return remoteManagementEnabled;
         } catch (error) {
-            throw new Error(`Status error: ${error.message || error}`);
+            throw new Error(`Status error: ${error}`);
         };
     }
 
@@ -193,7 +198,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Consoles list error: ${error.message || error}`);
+            throw new Error(`Consoles list error: ${error}`);
         };
     }
 
@@ -245,7 +250,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Installed apps error: ${error.message || error}`);
+            throw new Error(`Installed apps error: ${error}`);
         };
     }
 
@@ -288,7 +293,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`storage devices error: ${error.message || error}`);
+            throw new Error(`storage devices error: ${error}`);
         };
     }
 
@@ -331,7 +336,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`User profile error: ${error.message || error}`);
+            throw new Error(`User profile error: ${error}`);
         };
     }
 
@@ -342,14 +347,14 @@ class XboxWebApi extends EventEmitter {
             const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error.message || error}`);
+            throw new Error(`Save data error: ${error}`);
         };
     };
 
     async next() {
         try {
             await this.send('Media', 'Next');
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
@@ -358,7 +363,7 @@ class XboxWebApi extends EventEmitter {
     async previous() {
         try {
             await this.send('Media', 'Previous');
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
@@ -367,7 +372,7 @@ class XboxWebApi extends EventEmitter {
     async pause() {
         try {
             await this.send('Media', 'Pause');
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
@@ -376,7 +381,7 @@ class XboxWebApi extends EventEmitter {
     async play() {
         try {
             await this.send('Media', 'Play');
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
@@ -385,15 +390,16 @@ class XboxWebApi extends EventEmitter {
     async goBack() {
         try {
             await this.send('Shell', 'GoBack');
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
     }
 
     async send(commandType, command, payload) {
-        if (!this.authorized) {
-            throw new Error('not authorized.');
+        if (!this.authorized || !this.rmEnabled) {
+            this.emit('warn', `not authorized or remote management not enabled`);
+            return;
         };
 
         const sessionid = UuIdv4();
@@ -407,7 +413,7 @@ class XboxWebApi extends EventEmitter {
             "parameters": params,
             "linkedXboxId": this.xboxLiveId
         }
-        const debug = this.enableDebugMode ? this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}.`) : false;
+        const debug = this.enableDebugMode ? this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}`) : false;
 
         try {
             const stringifyPostParam = JSON.stringify(postParams);
