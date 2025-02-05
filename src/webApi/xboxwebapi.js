@@ -43,26 +43,29 @@ class XboxWebApi extends EventEmitter {
         try {
             const data = await this.authentication.checkAuthorization();
             const debug = this.enableDebugMode ? this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
-            const headers = {
-                'Authorization': data.headers,
-                'Accept-Language': 'en-US',
-                'x-xbl-contract-version': '4',
-                'x-xbl-client-name': 'XboxApp',
-                'x-xbl-client-type': 'UWA',
-                'x-xbl-client-version': '39.39.22001.0',
-                'skillplatform': 'RemoteManagement'
-            }
-            this.headers = headers;
-            this.tokens = data.tokens;
-            this.authorized = true;
 
-            if (!this.authorized) {
+            const authorized = data.tokens?.xsts?.Token?.trim() || false;
+            if (!authorized) {
                 this.emit('warn', `not authorized`);
                 return false;
             };
+            this.tokens = data.tokens;
+            this.authorized = true;
 
             //check xbox live data
             try {
+                //headers
+                const headers = {
+                    'Authorization': data.headers,
+                    'Accept-Language': 'en-US',
+                    'x-xbl-contract-version': '4',
+                    'x-xbl-client-name': 'XboxApp',
+                    'x-xbl-client-type': 'UWA',
+                    'x-xbl-client-version': '39.39.22001.0',
+                    'skillplatform': 'RemoteManagement'
+                }
+                this.headers = headers;
+
                 //create axios instance
                 this.axiosInstance = axios.create({
                     method: 'GET',
