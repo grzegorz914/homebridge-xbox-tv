@@ -62,7 +62,8 @@ class XboxWebApi extends EventEmitter {
                     'x-xbl-client-name': 'XboxApp',
                     'x-xbl-client-type': 'UWA',
                     'x-xbl-client-version': '39.39.22001.0',
-                    'skillplatform': 'RemoteManagement'
+                    'skillplatform': 'RemoteManagement',
+                    'Content-Type': 'application/json'
                 }
                 this.headers = headers;
 
