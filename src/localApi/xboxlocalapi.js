@@ -149,9 +149,8 @@ class XboxLocalApi extends EventEmitter {
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 return true;
             }
-            this.emit('disconnected', 'Power On failed, please try again.');
+            this.emit('info', 'Power On failed, please try again.');
         } catch (error) {
-            this.emit('disconnected', 'Power On error, please try again.');
             throw new Error(error);
         };
     };
@@ -298,7 +297,7 @@ class XboxLocalApi extends EventEmitter {
             this.mediaRequestId = 0;
             await new Promise(resolve => setTimeout(resolve, 3000));
             this.emit('stateChanged', false, 0, true, 0, -1, -1);
-            this.emit('disconnected', 'Disconnected.');
+            this.emit('info', 'Disconnected.');
             return true;
         } catch (error) {
             throw new Error(error);

@@ -16,7 +16,7 @@ class XboxWebApi extends EventEmitter {
         this.enableDebugMode = config.enableDebugMode;
 
         //variables
-        this.authorized = false;
+        this.consoleAuthorized = false;
         this.rmEnabled = false;
 
         const authConfig = {
@@ -50,7 +50,7 @@ class XboxWebApi extends EventEmitter {
                 return false;
             };
             this.tokens = data.tokens;
-            this.authorized = true;
+            this.consoleAuthorized = true;
 
             //check xbox live data
             try {
@@ -401,7 +401,7 @@ class XboxWebApi extends EventEmitter {
     }
 
     async send(commandType, command, payload) {
-        if (!this.authorized || !this.rmEnabled) {
+        if (!this.consoleAuthorized || !this.rmEnabled) {
             this.emit('warn', `not authorized or remote management not enabled`);
             return;
         };
