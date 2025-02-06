@@ -104,11 +104,11 @@ class XboxWebApi extends EventEmitter {
             const locale = consoleStatusData.locale;
             const region = consoleStatusData.region;
             const consoleType = WebApi.Console.Name[consoleStatusData.consoleType];
-            const powerState = (WebApi.Console.PowerState[consoleStatusData.powerState] === 1); // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
-            const playbackState = (WebApi.Console.PlaybackState[consoleStatusData.playbackState] === 1); // 0 - Stopped, 1 - Playng, 2 - Paused
+            const powerState = WebApi.Console.PowerState[consoleStatusData.powerState] === 1; // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
+            const playbackState = WebApi.Console.PlaybackState[consoleStatusData.playbackState] === 1; // 0 - Stopped, 1 - Playng, 2 - Paused
             const loginState = consoleStatusData.loginState;
             const focusAppAumid = consoleStatusData.focusAppAumid;
-            const isTvConfigured = (consoleStatusData.isTvConfigured === true);
+            const isTvConfigured = consoleStatusData.isTvConfigured === true;
             const digitalAssistantRemoteControlEnabled = consoleStatusData.digitalAssistantRemoteControlEnabled;
             const consoleStreamingEnabled = consoleStatusData.consoleStreamingEnabled;
             const remoteManagementEnabled = consoleStatusData.remoteManagementEnabled;
