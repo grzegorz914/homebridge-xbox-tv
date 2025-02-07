@@ -32,6 +32,7 @@ class XboxDevice extends EventEmitter {
         this.filterApps = device.filterApps || false;
         this.filterSystemApps = device.filterSystemApps || false;
         this.filterDlc = device.filterDlc || false;
+        this.inputsDisplayOrder = device.inputsDisplayOrder || 0;
         this.inputs = device.inputs || [];
         this.buttons = device.buttons || [];
         this.sensorPower = device.sensorPower || false;
