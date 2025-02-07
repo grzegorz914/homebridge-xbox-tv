@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changes
 
-- fix display inputs order
+- fix inputs display order
 
 ## [3.3.7] - (06.02.2025)
 
