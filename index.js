@@ -113,6 +113,9 @@ class XboxPlatform {
 						try {
 							const startDone = await xboxDevice.start();
 							const stopImpulseGenerator = startDone ? await impulseGenerator.stop() : false;
+
+							//start xbox device impulse generator 
+							const startImpulseGenerator = startDone ? await xboxDevice.startImpulseGenerator() : false;
 						} catch (error) {
 							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						};

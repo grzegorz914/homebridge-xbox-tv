@@ -59,7 +59,7 @@ class XboxLocalApi extends EventEmitter {
                 this.emit('error', `Impulse generatotr error: ${error}, trying again`);
             };
         }).on('state', (state) => {
-            const emit = state ? this.emit('success', `Heartbeat started`) : this.emit('warn', `Heartbeat stopped`);
+            const emit = state ? this.emit('success', `Local Api heartbeat started`) : this.emit('warn', `Local Api heartbeat stopped`);
         });
     };
 

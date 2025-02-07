@@ -25,8 +25,6 @@ class XboxDevice extends EventEmitter {
         this.xboxLiveId = device.xboxLiveId;
         this.webApiControl = device.webApiControl || false;
         this.webApiPowerOnOff = this.webApiControl ? device.webApiPowerOnOff : false;
-        this.webApiRcControl = this.webApiControl ? device.webApiRcControl : false;
-        this.webApiVolumeControl = this.webApiControl ? device.webApiVolumeControl : false;
         this.getInputsFromDevice = this.webApiControl ? device.getInputsFromDevice : false;
         this.filterGames = device.filterGames || false;
         this.filterApps = device.filterApps || false;
@@ -41,18 +39,17 @@ class XboxDevice extends EventEmitter {
         this.sensorInputs = device.sensorInputs || [];
         this.webApiClientId = device.webApiClientId;
         this.webApiClientSecret = device.webApiClientSecret;
-        this.enableDebugMode = device.enableDebugMode || false;
-        this.disableLogInfo = device.disableLogInfo || false;
         this.infoButtonCommand = device.infoButtonCommand || 'nexus';
         this.volumeControl = device.volumeControl || false;
         this.volumeControlNamePrefix = device.volumeControlNamePrefix || false;
         this.volumeControlName = device.volumeControlName || 'Volume';
+        this.enableDebugMode = device.enableDebugMode || false;
+        this.disableLogInfo = device.disableLogInfo || false;
         this.authTokenFile = authTokenFile;
         this.devInfoFile = devInfoFile;
         this.inputsFile = inputsFile;
         this.inputsNamesFile = inputsNamesFile;
         this.inputsTargetVisibilityFile = inputsTargetVisibilityFile;
-        this.startPrepareAccessory = true;
 
         //external integrations
         this.restFul = device.restFul ?? {};
@@ -60,10 +57,6 @@ class XboxDevice extends EventEmitter {
         this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
 
-        //accessory services
-        this.allServices = [];
-        this.sensorsInputsServices = [];
-        this.buttonsServices = [];
 
         //add configured inputs to the default inputs and chack duplicated inputs
         const tempInputs = [...DefaultInputs, ...this.inputs];
@@ -76,17 +69,7 @@ class XboxDevice extends EventEmitter {
         }
         this.inputs = inputsArr;
 
-        this.inputsConfigured = [];
-        this.inputIdentifier = 1;
-
-        //state variable
-        this.power = false;
-        this.volume = 0;
-        this.mute = true;
-        this.mediaState = 0;
-        this.reference = '';
-
-        //sensors variable
+        //sensors
         this.sensorsInputsConfigured = [];
         for (const sensor of this.sensorInputs) {
             const sensorInputName = sensor.name ?? false;
@@ -102,10 +85,8 @@ class XboxDevice extends EventEmitter {
             };
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
-        this.sensorScreenSaverState = false;
-        this.sensorInputState = false;
 
-        //buttons variable
+        //buttons
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
             const buttonName = button.name ?? false;
@@ -121,6 +102,22 @@ class XboxDevice extends EventEmitter {
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
+
+        //variable
+        this.allServices = [];
+        this.sensorsInputsServices = [];
+        this.buttonsServices = [];
+        this.inputsConfigured = [];
+        this.inputIdentifier = 1;
+        this.startPrepareAccessory = true;
+        this.power = false;
+        this.volume = 0;
+        this.mute = true;
+        this.mediaState = 0;
+        this.reference = '';
+        this.sensorScreenSaverState = false;
+        this.sensorInputState = false;
+        this.consoleAuthorized = false;
     }
 
     async saveData(path, data) {
@@ -165,7 +162,7 @@ class XboxDevice extends EventEmitter {
             let set = false
             switch (key) {
                 case 'Power':
-                    switch (this.webApiControl && this.webApiPowerOnOff) {
+                    switch (this.consoleAuthorized && this.webApiPowerOnOff) {
                         case true:
                             switch (value) {
                                 case true: //off
@@ -189,30 +186,30 @@ class XboxDevice extends EventEmitter {
                     break;
                 case 'App':
                     const payload = [{ 'oneStoreProductId': value }];
-                    set = !this.webApiControl ? false : await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
+                    set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
                     break;
                 case 'Volume':
                     switch (value) {
                         case 'up': //Up
-                            set = !this.webApiControl ? false : await this.xboxWebApi.send('Volume', 'Up');
+                            set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Volume', 'Up');
                             break;
                         case 'down': //Down
-                            set = !this.webApiControl ? false : await this.xboxWebApi.send('Volume', 'Down');
+                            set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Volume', 'Down');
                             break;
                     }
                     break;
                 case 'Mute':
                     switch (value) {
                         case true: //Mute
-                            set = !this.webApiControl ? false : await this.xboxWebApi.send('Audio', 'Mute');
+                            set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Audio', 'Mute');
                             break;
                         case false: //Unmute;
-                            set = !this.webApiControl ? false : await this.xboxWebApi.send('Audio', 'Unmute');
+                            set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Audio', 'Unmute');
                             break;
                     }
                     break;
                 case 'RcControl':
-                    set = !this.webApiControl ? false : await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': value }]);
+                    set = !this.consoleAuthorized ? false : await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': value }]);
                     break;
                 default:
                     this.emit('warn', `${integration}, received key: ${key}, value: ${value}`);
@@ -357,17 +354,30 @@ class XboxDevice extends EventEmitter {
         }
     }
 
+    async startImpulseGenerator() {
+        try {
+            //start web api impulse generator
+            const startImpulseGenerator = this.consoleAuthorized ? await this.xboxWebApi.impulseGenerator.start([{ name: 'checkAuthorization', sampling: 900000 }]) : false;
+
+            //start local api impulse generator 
+            await this.xboxLocalApi.impulseGenerator.start([{ name: 'heartBeat', sampling: 10000 }]);
+            return true;
+        } catch (error) {
+            throw new Error(`Impulse generator start error: ${error}`);
+        };
+    }
+
     //Prepare accessory
     async prepareAccessory() {
         try {
-            //prepare accessory
+            //Accessory
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
             const accessoryName = this.name;
             const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
             const accessoryCategory = Categories.TV_SET_TOP_BOX;
             const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
-            //Pinformation service
+            //Prepare information service
             this.informationService = accessory.getService(Service.AccessoryInformation)
                 .setCharacteristic(Characteristic.Manufacturer, this.savedInfo.manufacturer ?? 'Microsoft')
                 .setCharacteristic(Characteristic.Model, this.savedInfo.modelName ?? 'Xbox')
@@ -393,7 +403,7 @@ class XboxDevice extends EventEmitter {
                     }
 
                     try {
-                        switch (this.webApiControl && this.webApiPowerOnOff) {
+                        switch (this.consoleAuthorized && this.webApiPowerOnOff) {
                             case true:
                                 switch (this.power) {
                                     case true: //off
@@ -428,8 +438,8 @@ class XboxDevice extends EventEmitter {
                     return inputIdentifier;
                 })
                 .onSet(async (activeIdentifier) => {
-                    if (!this.webApiControl) {
-                        this.emit('warn', `web api control not enabled`);
+                    if (!this.consoleAuthorized) {
+                        this.emit('warn', `not authorized`);
                         return;
                     }
 
@@ -572,8 +582,8 @@ class XboxDevice extends EventEmitter {
 
             this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
                 .onSet(async (powerModeSelection) => {
-                    if (!this.webApiControl) {
-                        this.emit('warn', `web api control not enabled`);
+                    if (!this.consoleAuthorized) {
+                        this.emit('warn', `not authorized`);
                         return;
                     }
 
@@ -612,8 +622,8 @@ class XboxDevice extends EventEmitter {
 
             this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
                 .onSet(async (volumeSelector) => {
-                    if (!this.webApiControl) {
-                        this.emit('warn', `web api control not enabled`);
+                    if (!this.consoleAuthorized) {
+                        this.emit('warn', `not authorized`);
                         return;
                     }
 
@@ -647,13 +657,13 @@ class XboxDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    if (!this.webApiControl) {
-                        this.emit('warn', `web api control not enabled`);
+                    if (!this.consoleAuthorized) {
+                        this.emit('warn', `not authorized`);
                         return;
                     }
 
                     try {
-                        switch (volumeSelector) {
+                        switch (state) {
                             case 0: //Mute
                                 await this.xboxWebApi.send('Audio', 'Mute');
                                 break;
@@ -885,7 +895,7 @@ class XboxDevice extends EventEmitter {
                     sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                     sensorInputService.getCharacteristic(characteristicType)
                         .onGet(async () => {
-                            const state = sensorInput.state
+                            const state = sensorInput.state;
                             return state;
                         });
                     this.sensorsInputsServices.push(sensorInputService);
@@ -955,24 +965,24 @@ class XboxDevice extends EventEmitter {
                                         const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
                                         break;
                                     case 4:
-                                        const send2 = this.webApiControl && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
+                                        const send2 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
                                         break;
                                     case 5:
                                         switch (buttonOneStoreProductId) {
                                             case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                                const send3 = this.webApiControl && this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
+                                                const send3 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
                                                 break;
                                             case 'Television':
-                                                const send4 = this.webApiControl && this.power && state ? await this.xboxWebApi.send('TV', 'ShowGuide') : false;
+                                                const send4 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('TV', 'ShowGuide') : false;
                                                 break;
                                             case 'XboxGuide':
-                                                const send5 = this.webApiControl && this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
+                                                const send5 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
                                                 break;
                                             case 'Not set': case 'Web api disabled':
                                                 this.emit('info', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}`);
                                                 break;
                                             default:
-                                                const send6 = this.webApiControl && this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
+                                                const send6 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
                                                 break;
                                         }
                                         break;
@@ -1045,11 +1055,8 @@ class XboxDevice extends EventEmitter {
                         });
 
                     //check authorization
-                    const checkAuthorization = await this.xboxWebApi.checkAuthorization();
-
-                    //start impulse generator
-                    const timers = [{ name: 'checkAuthorization', sampling: 900000 }];
-                    const startImpulseGenerator = checkAuthorization ? await this.xboxWebApi.impulseGenerator.start(timers) : false;
+                    const consoleAuthorized = await this.xboxWebApi.checkAuthorization();
+                    this.consoleAuthorized = consoleAuthorized;
                 } catch (error) {
                     this.emit('error', `Start web api error: ${error}`);
                 };
@@ -1209,9 +1216,6 @@ class XboxDevice extends EventEmitter {
                 const accessory = await this.prepareAccessory();
                 this.emit('publishAccessory', accessory);
                 this.startPrepareAccessory = false;
-
-                //start impulse generator 
-                await this.xboxLocalApi.impulseGenerator.start([{ name: 'heartBeat', sampling: 10000 }]);
             }
 
             return true;
