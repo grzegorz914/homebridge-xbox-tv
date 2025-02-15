@@ -139,5 +139,5 @@ class XboxPlatform {
 };
 
 export default (api) => {
-	api.registerPlatform(PluginName, PlatformName, XboxPlatform, true);
+	api.registerPlatform(PluginName, PlatformName, XboxPlatform);
 };
