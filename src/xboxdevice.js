@@ -429,6 +429,7 @@ class XboxDevice extends EventEmitter {
                         await new Promise(resolve => setTimeout(resolve, 3000));
                     } catch (error) {
                         this.emit('warn', `set Power, error: ${error}`);
+                        this.televisionService.updateCharacteristic(Characteristic.Active, !state)
                     };
                 });
 
@@ -1073,19 +1074,13 @@ class XboxDevice extends EventEmitter {
             });
 
             this.xboxLocalApi.on('deviceInfo', (firmwareRevision, locale) => {
-                this.emit('devInfo', `-------- ${this.name} --------'`);
+                this.emit('devInfo', `-------- ${this.name} --------`);
                 this.emit('devInfo', `Manufacturer: Microsoft`);
                 this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
                 this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
                 this.emit('devInfo', `Firmware: ${firmwareRevision}`);
                 this.emit('devInfo', `Locale: ${locale}`);
                 this.emit('devInfo', `----------------------------------`);
-
-                if (this.informationService) {
-                    this.informationService
-                        .setCharacteristic(Characteristic.Manufacturer, 'Microsoft')
-                        .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-                };
             })
                 .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
                     const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;

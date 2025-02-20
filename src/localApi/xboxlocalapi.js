@@ -65,9 +65,9 @@ class XboxLocalApi extends EventEmitter {
 
 
     async reconnect() {
-        await new Promise(resolve => setTimeout(resolve, 5000));
         try {
             await this.connect();
+            return true;
         } catch (error) {
             throw new Error(`Reconnect error: ${error.message || error}`);
         }
@@ -337,8 +337,9 @@ class XboxLocalApi extends EventEmitter {
                 socket.close();
             }).on('close', async () => {
                 const debug = this.enableDebugMode ? this.emit('debug', 'Socket closed.') : false;
-                this.isConnected = false;
                 try {
+                    this.isConnected = false;
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                     await this.reconnect();
                 } catch (error) {
                     this.emit('error', error)
@@ -348,7 +349,8 @@ class XboxLocalApi extends EventEmitter {
                 this.heartBeatStartTime = Date.now();
 
                 //get message type in hex
-                const messageTypeHex = message.slice(0, 2).toString('hex');
+                const copiedSlice = Uint8Array.prototype.slice.call(message, 0, 2);
+                const messageTypeHex = Buffer.from(copiedSlice).toString('hex');
                 const debug1 = this.enableDebugMode ? this.emit('debug', `Received message type hex: ${messageTypeHex}`) : false;
 
                 //check message type exist in types
@@ -387,7 +389,7 @@ class XboxLocalApi extends EventEmitter {
 
                 switch (type) {
                     case 'json':
-                        // Object to hold fragments 
+                        // Object to hold fragments
                         const fragments = {};
                         const jsonMessage = JSON.parse(packet.payloadProtected.json);
                         const datagramId = jsonMessage.datagramId;
@@ -396,34 +398,43 @@ class XboxLocalApi extends EventEmitter {
                         if (datagramId) {
                             const debug = this.enableDebugMode ? this.emit('debug', `JSON message datagram Id: ${datagramId}`) : false;
 
-                            let partials = {};
+                            // Initialize fragment store if not present
                             if (!fragments[datagramId]) {
                                 fragments[datagramId] = {
+                                    partials: {},
+
                                     getValue() {
-                                        const buffers = Object.values(partials).map(partial => Buffer.from(partial, 'base64'));
+                                        const buffers = Object.keys(this.partials)
+                                            .sort((a, b) => a - b) // Ensure correct ordering
+                                            .map(offset => Buffer.from(this.partials[offset], 'base64'));
+
                                         return Buffer.concat(buffers);
                                     },
+
                                     isValid() {
                                         try {
-                                            JSON.parse(this.getValue());
+                                            JSON.parse(this.getValue().toString()); // Ensure valid JSON
                                             return true;
                                         } catch (error) {
-                                            this.emit('error', `Valid fragments error: ${error}`);
+                                            this.emit('error', `Invalid fragments: ${error.message}`);
                                             return false;
                                         }
                                     }
                                 };
                             }
 
-                            partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-                            if (fragments[datagramId].isValid()) {
-                                packet.payloadProtected.json = fragments[datagramId].getValue();
-                                const debug = this.enableDebugMode ? this.emit('debug', `JSON fragments: ${fragments}`) : false;
+                            // Store fragment
+                            fragments[datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
 
-                                // Delete
+                            // If all fragments are valid, reconstruct and replace the original JSON
+                            if (fragments[datagramId].isValid()) {
+                                packet.payloadProtected.json = fragments[datagramId].getValue().toString();
+                                const debug = this.enableDebugMode ? this.emit('debug', `Reassembled JSON: ${packet.payloadProtected.json}`) : false;
+
+                                // Delete after reconstruction
                                 delete fragments[datagramId];
                             }
-                        };
+                        }
                         break;
                     case 'discoveryResponse':
                         const deviceType = packet.clientType;
