@@ -429,7 +429,6 @@ class XboxDevice extends EventEmitter {
                         await new Promise(resolve => setTimeout(resolve, 3000));
                     } catch (error) {
                         this.emit('warn', `set Power, error: ${error}`);
-                        this.televisionService.updateCharacteristic(Characteristic.Active, !state)
                     };
                 });
 
