@@ -85,8 +85,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `inputs.oneStoreProductId` | Required to switch apps. |
 | `inputs.contentType` | Here select from available content types. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.command` | Here select button control mode or command, `Reboot` and `Switch App/Game`- only possible if `webApiControl` enabled. |
-| `buttons.oneStoreProductId` | Here set *Input oneStoreProductId*, only possible if `webApiControl` enabled. |
+| `buttons.mode` | Here select button mode, `0 - Media Control`, `1 - Game Pad Control`, `2 - TV Remote Control`, `3 - Console Control`, `4 - Game/App Control`. |
+| `buttons.mediaCommand` | Here select media control command. |
+| `buttons.gamePadCommand` | Here select game pad control command. |
+| `buttons.tvRemoteCommand` | Here select tv remote control command. |
+| `buttons.consoleControlCommand` | Here select console control command. |
+| `buttons.gameAppControlCommand` | Here set `oneStoreProductId`, only possible if `webApiControl` enabled. |
 | `buttons.displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`. |
 | `buttons.namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
 | `sensorPower`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |

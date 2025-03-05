@@ -90,15 +90,15 @@ class XboxDevice extends EventEmitter {
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
             const buttonName = button.name ?? false;
-            const buttonCommand = button.command ?? false;
-            const buttonReference = buttonCommand === 'switchAppGame' ? button.oneStoreProductId : false;
+            const buttonMode = button.mode ?? -1;
+            const buttonReferenceCommand = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][buttonMode] ?? false;
             const buttonDisplayType = button.displayType ?? 0;
-            if (buttonName && buttonCommand && buttonDisplayType > 0) {
+            if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
                 button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, Command: ${buttonCommand ? buttonCommand : 'Missing'}, Reference: ${buttonReference ? buttonReference : 'Missing'}`);
+                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
@@ -918,27 +918,10 @@ class XboxDevice extends EventEmitter {
                     const buttonName = button.name;
 
                     //get button command
-                    const buttonCommand = button.command;
+                    const buttonMode = button.mode;
 
-                    //get button mode
-                    let mode;
-                    if (buttonCommand in LocalApi.Channels.System.Media.Commands) {
-                        mode = 0;
-                    } else if (buttonCommand in LocalApi.Channels.System.Input.Commands) {
-                        mode = 1;
-                    } else if (buttonCommand in LocalApi.Channels.System.TvRemote.Commands) {
-                        mode = 2;
-                    } else if (buttonCommand === 'recordGameDvr') {
-                        mode = 3;
-                    } else if (buttonCommand === 'reboot') {
-                        mode = 4;
-                    } else if (buttonCommand === 'switchAppGame') {
-                        mode = 5;
-                    };
-                    const buttonMode = mode;
-
-                    //get button inputOneStoreProductId
-                    const buttonOneStoreProductId = button.oneStoreProductId;
+                    //get button command
+                    const buttonCommand = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][buttonMode];
 
                     //get button name prefix
                     const namePrefix = button.namePrefix ?? false;
@@ -962,13 +945,17 @@ class XboxDevice extends EventEmitter {
                                         const send = state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
                                         break;
                                     case 3:
-                                        const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
+                                        switch (buttonCommand) {
+                                            case 'reboot':
+                                                const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
+                                                break;
+                                            case 'recordGameDvr':
+                                                const send2 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
+                                                break;
+                                        }
                                         break;
                                     case 4:
-                                        const send2 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
-                                        break;
-                                    case 5:
-                                        switch (buttonOneStoreProductId) {
+                                        switch (buttonCommand) {
                                             case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
                                                 const send3 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'GoHome') : false;
                                                 break;
@@ -978,11 +965,8 @@ class XboxDevice extends EventEmitter {
                                             case 'XboxGuide':
                                                 const send5 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'ShowGuideTab', [{ 'tabName': 'Guide' }]) : false;
                                                 break;
-                                            case 'Not set': case 'Web api disabled':
-                                                this.emit('info', `trying to launch App/Game with one store product id: ${buttonOneStoreProductId}`);
-                                                break;
                                             default:
-                                                const send6 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonOneStoreProductId }]) : false;
+                                                const send6 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', [{ 'oneStoreProductId': buttonCommand }]) : false;
                                                 break;
                                         }
                                         break;

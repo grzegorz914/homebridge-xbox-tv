@@ -208,166 +208,223 @@
 										"description": "Here set Your own name.",
 										"required": false
 									},
-									"command": {
-										"title": "Command / Mode",
+									"mode": {
+										"title": "Mode",
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 4,
+										"default": 0,
+										"description": "Here select the function mode.",
+										"oneOf": [
+											{
+												"title": "Media Control",
+												"enum": [
+													0
+												]
+											},
+											{
+												"title": "Game Pad Control",
+												"enum": [
+													1
+												]
+											},
+											{
+												"title": "TV Remote Control",
+												"enum": [
+													2
+												]
+											},
+											{
+												"title": "Console Control",
+												"enum": [
+													3
+												]
+											},
+											{
+												"title": "Game/App Control",
+												"enum": [
+													4
+												]
+											}
+										],
+										"required": true
+									},
+									"mediaCommand": {
+										"title": "Media Command",
 										"type": "string",
 										"oneOf": [
 											{
-												"title": "Media Play",
+												"title": "Play",
 												"enum": [
 													"play"
 												]
 											},
 											{
-												"title": "Media Pause",
+												"title": "Pause",
 												"enum": [
 													"pause"
 												]
 											},
 											{
-												"title": "Media Play/Pause",
+												"title": "Play/Pause",
 												"enum": [
 													"playPause"
 												]
 											},
 											{
-												"title": "Media Stop",
+												"title": "Stop",
 												"enum": [
 													"stop"
 												]
 											},
 											{
-												"title": "Media Record",
+												"title": "Record",
 												"enum": [
 													"record"
 												]
 											},
 											{
-												"title": "Media Next Track",
+												"title": "Next Track",
 												"enum": [
 													"nextTrack"
 												]
 											},
 											{
-												"title": "Media Previous Track",
+												"title": "Previous Track",
 												"enum": [
 													"prevTrack"
 												]
 											},
 											{
-												"title": "Media Fast Forward",
+												"title": "Fast Forward",
 												"enum": [
 													"fastForward"
 												]
 											},
 											{
-												"title": "Media Rewind",
+												"title": "Rewind",
 												"enum": [
 													"rewind"
 												]
 											},
 											{
-												"title": "Media Channel Up",
+												"title": "Channel Up",
 												"enum": [
 													"channelUp"
 												]
 											},
 											{
-												"title": "Media Channel Down",
+												"title": "Channel Down",
 												"enum": [
 													"channelDown"
 												]
 											},
 											{
-												"title": "Media Back",
+												"title": "Back",
 												"enum": [
 													"back"
 												]
 											},
 											{
-												"title": "Media View",
+												"title": "View",
 												"enum": [
 													"view"
 												]
 											},
 											{
-												"title": "Media Menu",
+												"title": "Menu",
 												"enum": [
 													"menu"
 												]
 											},
 											{
-												"title": "Media Seek",
+												"title": "Seek",
 												"enum": [
 													"seek"
 												]
-											},
+											}
+										],
+										"description": "Here select the media command.",
+										"required": false
+									},
+									"gamePadCommand": {
+										"title": "Game Pad Command",
+										"type": "string",
+										"oneOf": [
 											{
-												"title": "Game Pad Nexus",
+												"title": "Nexus",
 												"enum": [
 													"nexus"
 												]
 											},
 											{
-												"title": "Game Pad View",
+												"title": "View",
 												"enum": [
 													"view"
 												]
 											},
 											{
-												"title": "Game Pad Menu",
+												"title": "Menu",
 												"enum": [
 													"menu"
 												]
 											},
 											{
-												"title": "Game Pad A",
+												"title": "A",
 												"enum": [
 													"a"
 												]
 											},
 											{
-												"title": "Game Pad B",
+												"title": "B",
 												"enum": [
 													"b"
 												]
 											},
 											{
-												"title": "Game Pad X",
+												"title": "X",
 												"enum": [
 													"x"
 												]
 											},
 											{
-												"title": "Game Pad Y",
+												"title": "Y",
 												"enum": [
 													"y"
 												]
 											},
 											{
-												"title": "Game Pad Up",
+												"title": "Up",
 												"enum": [
 													"up"
 												]
 											},
 											{
-												"title": "Game Pad Down",
+												"title": "Down",
 												"enum": [
 													"down"
 												]
 											},
 											{
-												"title": "Game Pad Left",
+												"title": "Left",
 												"enum": [
 													"left"
 												]
 											},
 											{
-												"title": "Game Pad Right",
+												"title": "Right",
 												"enum": [
 													"right"
 												]
-											},
+											}
+										],
+										"description": "Here select the controler command.",
+										"required": false
+									},
+									"tvRemoteCommand": {
+										"title": "TV Remote Command",
+										"type": "string",
+										"oneOf": [
 											{
 												"title": "Volume Up",
 												"enum": [
@@ -385,13 +442,15 @@
 												"enum": [
 													"volMute"
 												]
-											},
-											{
-												"title": "Record Game DVR",
-												"enum": [
-													"recordGameDvr"
-												]
-											},
+											}
+										],
+										"description": "Here select the tv remote command.",
+										"required": false
+									},
+									"consoleControlCommand": {
+										"title": "Console Control Command",
+										"type": "string",
+										"oneOf": [
 											{
 												"title": "Reboot",
 												"enum": [
@@ -399,16 +458,16 @@
 												]
 											},
 											{
-												"title": "Switch App/Game",
+												"title": "Record Game DVR",
 												"enum": [
-													"switchAppGame"
+													"recordGameDvr"
 												]
 											}
 										],
-										"description": "Here select the command or mode of button.",
+										"description": "Here select the console control command.",
 										"required": false
 									},
-									"oneStoreProductId": {
+									"gameAppControlCommand": {
 										"title": "Product Id",
 										"type": "string",
 										"placeholder": "oneStoreProductId",
@@ -915,11 +974,74 @@
 							"title": "{{ value.name || 'button' }}",
 							"items": [
 								"devices[].buttons[].name",
-								"devices[].buttons[].command",
-								"devices[].buttons[].oneStoreProductId",
+								"devices[].buttons[].mode",
+								"devices[].buttons[].mediaCommand",
 								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
-							]
+							],
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 0;"
+							}
+						},
+						{
+							"key": "devices[].buttons",
+							"type": "tabarray",
+							"title": "{{ value.name || 'button' }}",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].mode",
+								"devices[].buttons[].gamePadCommand",
+								"devices[].buttons[].displayType",
+								"devices[].buttons[].namePrefix"
+							],
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 1;"
+							}
+						},
+						{
+							"key": "devices[].buttons",
+							"type": "tabarray",
+							"title": "{{ value.name || 'button' }}",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].mode",
+								"devices[].buttons[].tvRemoteCommand",
+								"devices[].buttons[].displayType",
+								"devices[].buttons[].namePrefix"
+							],
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 2;"
+							}
+						},
+						{
+							"key": "devices[].buttons",
+							"type": "tabarray",
+							"title": "{{ value.name || 'button' }}",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].mode",
+								"devices[].buttons[].consoleControlCommand",
+								"devices[].buttons[].displayType",
+								"devices[].buttons[].namePrefix"
+							],
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 3;"
+							}
+						},
+						{
+							"key": "devices[].buttons",
+							"type": "tabarray",
+							"title": "{{ value.name || 'button' }}",
+							"items": [
+								"devices[].buttons[].name",
+								"devices[].buttons[].mode",
+								"devices[].buttons[].gameAppControlCommand",
+								"devices[].buttons[].displayType",
+								"devices[].buttons[].namePrefix"
+							],
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 4;"
+							}
 						}
 					]
 				},

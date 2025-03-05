@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
 - After update to v3.0.0 RESTFull and MQTT config settings need to be updated
+- After update to v3.4.0 all buttons in config need to be updated
+
+## [3.4.0] - (05.03.2025)
+
+## Changes
+
+- after update to this version all buttons in config need to be updated
+- refactor code of buttons
+- bump dependencies
+- config schema updated
+- cleanup
 
 ## [3.3.11] - (20.02.2025)
 
