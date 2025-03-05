@@ -942,15 +942,15 @@ class XboxDevice extends EventEmitter {
                             try {
                                 switch (buttonMode) {
                                     case 0: case 1: case 2:
-                                        const send = state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
+                                        const send = this.consoleAuthorized && state ? await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': buttonCommand }]) : false;
                                         break;
                                     case 3:
                                         switch (buttonCommand) {
                                             case 'reboot':
-                                                const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
+                                                const send = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
                                                 break;
                                             case 'recordGameDvr':
-                                                const send2 = this.consoleAuthorized && this.power && state ? await this.xboxWebApi.send('Power', 'Reboot') : false;
+                                                const send1 = this.power && state ? await this.xboxLocalApi.recordGameDvr() : false;
                                                 break;
                                         }
                                         break;
