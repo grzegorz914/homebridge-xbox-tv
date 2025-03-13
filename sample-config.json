@@ -22,6 +22,7 @@
 					"name": "Xbox One",
 					"host": "192.168.1.6",
 					"xboxLiveId": "FD0000000000",
+					"disableAccessory": false,
 					"getInputsFromDevice": false,
 					"filterGames": false,
 					"filterApps": false,

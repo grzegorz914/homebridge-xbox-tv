@@ -24,9 +24,16 @@ class XboxPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				const deviceName = device.name ?? false;
-				const host = device.host ?? false;
-				const xboxLiveId = device.xboxLiveId ?? false;
+
+				//check accessory is enabled
+				const disableAccessory = device.disableAccessory || false;
+				if (disableAccessory) {
+					continue;
+				}
+
+				const deviceName = device.name;
+				const host = device.host;
+				const xboxLiveId = device.xboxLiveId;
 
 				if (!deviceName || !host || !xboxLiveId) {
 					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, Host: ${host ? 'OK' : host}, Xbox Live ID: ${xboxLiveId ? 'OK' : xboxLiveId}, wrong or missing.`);

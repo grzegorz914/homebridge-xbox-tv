@@ -74,6 +74,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
+| `disableAccessory` | If enabled, the accessory will be disabled. |
 | `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
 | `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
