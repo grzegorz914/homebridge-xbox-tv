@@ -100,7 +100,7 @@
     //watch for changes to the config button
     document.getElementById('configButton').addEventListener('click', async () => {
       const showHideSettings = this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
-      const setRemoveAtribute = this.configButtonState ? document.getElementById(`configButton`).setAttribute("class", "btn btn-primary") : document.getElementById(`configButton`).setAttribute("class", "btn btn-secondary");
+      const setRemoveAtribute = this.configButtonState ? document.getElementById(`configButton`).setAttribute("class", "btn btn-secondary") : document.getElementById(`configButton`).setAttribute("class", "btn btn-primary");
       this.configButtonState = !this.configButtonState;
     });
 
