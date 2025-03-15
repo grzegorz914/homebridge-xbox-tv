@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v3.0.0 RESTFull and MQTT config settings need to be updated
 - After update to v3.4.0 all buttons in config need to be updated
 
+## [3.5.1] - (15.03.2025)
+
+## Changes
+
+- fix [#224](https://github.com/grzegorz914/homebridge-xbox-tv/issues/224)
+- cleanup
+
 ## [3.5.0] - (13.03.2025)
 
 ## Changes

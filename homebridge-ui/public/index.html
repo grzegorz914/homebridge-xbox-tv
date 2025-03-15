@@ -1,34 +1,45 @@
-<div style="text-align: center;">
-  </divstyle>
-  <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
-</div><br>
+<div class="container mt-4">
+  <div class="text-center">
+    <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
+  </div>
 
-<div id="authorizationManager" style="display: none;" class="card card-body">
-  <form id="configForm">
-    <div class="text-center">
-      <label id="deviceName" style="font-size: 23px">Xbox</label><br>
-      <label id="info" style="text-align: center; font-size: 17px;"></label><br>
-      <label id="info1" style="text-align: center; font-size: 15px;"></label><br>
-    </div>
-    <div class="form-group">
-      <label for="deviceHost">Host</label>
-      <input id="deviceHost" type="text" class="form-control"><br>
-      <label for="deviceLiveId">Xbox Live ID</label>
-      <input id="deviceLiveId" type="password" class="form-control"><br>
-      <label for="deviceToken">Web Api Token</label>
-      <input id="deviceToken" type="password" class="form-control"><br>
-      <label for="deviceWebApiControl">Web Api Control</label>
-      <input id="deviceWebApiControl" type="checkbox" class="form-control">
-    </div>
-    <div class="text-center">
-      <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start authorization</button>
-      <button id="clearTokenButton" type="button" class="btn btn-primary">Clear Web Api Token</button>
-      <button id="configButton" type="button" class="btn btn-primary"><i class="fas fa-gear"></i></button>
-    </div>
-  </form>
-</div>
+  <div id="authorizationManager" class="card card-body mt-3">
+    <form id="configForm">
+      <div class="text-center">
+        <label id="deviceName" class="fw-bold" style="font-size: 23px;">Xbox</label><br>
+        <label id="info" class="d-block" style="font-size: 17px;"></label>
+        <label id="info1" class="d-block" style="font-size: 15px;"></label>
+      </div>
 
-<div id="consoleButton"></div>
+      <div class="mb-3">
+        <label for="deviceHost" class="form-label">Host</label>
+        <input id="deviceHost" type="text" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="deviceLiveId" class="form-label">Xbox Live ID</label>
+        <input id="deviceLiveId" type="password" class="form-control" autocomplete="off" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="deviceToken" class="form-label">Web API Token</label>
+        <input id="deviceToken" type="password" class="form-control" autocomplete="off" required>
+      </div>
+
+      <div class="form-check mb-3">
+        <input id="deviceWebApiControl" type="checkbox" class="form-check-input">
+        <label for="deviceWebApiControl" class="form-check-label">Web API Control</label>
+      </div>
+
+      <div class="text-center">
+        <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start Authorization</button>
+        <button id="clearTokenButton" type="button" class="btn btn-secondary">Clear Web API Token</button>
+        <button id="configButton" type="button" class="btn btn-secondary"><i class="fas fa-gear"></i></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="consoleButton"></div>
 </div>
 
 <script>
@@ -42,6 +53,7 @@
       homebridge.showSchemaForm();
       return;
     }
+    this.configButtonState = false;
 
     //get devices count
     const devicesCount = pluginConfig[0].devices.length;
@@ -59,7 +71,7 @@
       //get actuall value on console select
       document.getElementById(`button${i}`).addEventListener('click', async () => {
         for (let j = 0; j < devicesCount; j++) {
-          const setRemoveAtribute = j === i ? document.getElementById(`button${j}`).setAttribute("class", "btn btn-secondary") : document.getElementById(`button${j}`).setAttribute("class", "btn btn-primary");
+          const setRemoveAtribute = j === i ? document.getElementById(`button${j}`).setAttribute("class", "btn btn-primary") : document.getElementById(`button${j}`).setAttribute("class", "btn btn-secondary");
         }
 
         document.getElementById('deviceName').innerHTML = pluginConfig[0].devices[i].name || '';
@@ -83,10 +95,12 @@
 
     //load authorizationManager form
     document.getElementById('authorizationManager').style.display = 'block';
+    document.getElementById(`configButton`).setAttribute("class", "btn btn-secondary");
 
     //watch for changes to the config button
     document.getElementById('configButton').addEventListener('click', async () => {
       const showHideSettings = this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
+      const setRemoveAtribute = this.configButtonState ? document.getElementById(`configButton`).setAttribute("class", "btn btn-primary") : document.getElementById(`configButton`).setAttribute("class", "btn btn-secondary");
       this.configButtonState = !this.configButtonState;
     });
 
