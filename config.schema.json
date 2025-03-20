@@ -169,6 +169,7 @@
 									"contentType": {
 										"title": "Content Type",
 										"type": "string",
+										"default": "Game",
 										"description": "Here select source input type.",
 										"oneOf": [
 											{
@@ -199,8 +200,7 @@
 										"required": false
 									}
 								}
-							},
-							"required": false
+							}
 						},
 						"buttons": {
 							"type": "array",
@@ -259,6 +259,7 @@
 									"mediaCommand": {
 										"title": "Media Command",
 										"type": "string",
+										"default": "play",
 										"oneOf": [
 											{
 												"title": "Play",
@@ -357,6 +358,7 @@
 									"gamePadCommand": {
 										"title": "Game Pad Command",
 										"type": "string",
+										"default": "nexus",
 										"oneOf": [
 											{
 												"title": "Nexus",
@@ -431,6 +433,7 @@
 									"tvRemoteCommand": {
 										"title": "TV Remote Command",
 										"type": "string",
+										"default": "volUp",
 										"oneOf": [
 											{
 												"title": "Volume Up",
@@ -457,6 +460,7 @@
 									"consoleControlCommand": {
 										"title": "Console Control Command",
 										"type": "string",
+										"default": "reboot",
 										"oneOf": [
 											{
 												"title": "Reboot",
@@ -518,8 +522,7 @@
 										"required": false
 									}
 								}
-							},
-							"required": false
+							}
 						},
 						"sensorPower": {
 							"title": "Power",
@@ -603,8 +606,7 @@
 										"required": false
 									}
 								}
-							},
-							"required": false
+							}
 						},
 						"webApiPowerOnOff": {
 							"title": "Power Control",
