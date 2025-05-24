@@ -112,7 +112,7 @@ class XboxDevice extends EventEmitter {
         this.startPrepareAccessory = true;
         this.power = false;
         this.volume = 0;
-        this.mute = true;
+        this.mute = false;
         this.mediaState = 0;
         this.reference = '';
         this.sensorScreenSaverState = false;
