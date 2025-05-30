@@ -109,7 +109,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `webApiClientSecret` | Here set your Client Secret from Azure AD or leave empty if you do not have own account. |
 | `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `volumeControlName` | Here set Your own volume control name or leave empty. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`), not working yet. |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - Speaker`), not working yet. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |

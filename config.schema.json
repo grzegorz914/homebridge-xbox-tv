@@ -42,7 +42,7 @@
 							"default": false,
 							"description": "Here You can disable this accessory.",
 							"required": false
-						  },
+						},
 						"webApiControl": {
 							"title": "Web Api",
 							"type": "boolean",
@@ -721,27 +721,13 @@
 							"description": "Here select the function of info button in RC.",
 							"required": false
 						},
-						"volumeControlNamePrefix": {
-							"title": "Volume Control Name Prefix",
-							"type": "boolean",
-							"default": false,
-							"description": "Here enable/disable the accessory name as a prefix for volume control name.",
-							"required": false
-						},
-						"volumeControlName": {
-							"title": "Volume Control Name",
-							"type": "string",
-							"placeholder": "Name",
-							"description": "Here set Your own volume control name or leave empty.",
-							"required": false
-						},
 						"volumeControl": {
 							"title": "Volume Control",
 							"type": "integer",
 							"minimum": 0,
-							"maximum": 2,
+							"maximum": 3,
 							"default": 0,
-							"description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
+							"description": "Here select what a volume control mode You want to use.",
 							"oneOf": [
 								{
 									"title": "None/Disabled",
@@ -760,9 +746,35 @@
 									"enum": [
 										2
 									]
+								},
+								{
+									"title": "Speaker",
+									"enum": [
+										3
+									]
 								}
 							],
 							"required": false
+						},
+						"volumeControlName": {
+							"title": "Volume Control Name",
+							"type": "string",
+							"placeholder": "Name",
+							"description": "Here set Your own volume control name or leave empty.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
+							}
+						},
+						"volumeControlNamePrefix": {
+							"title": "Volume Control Name Prefix",
+							"type": "boolean",
+							"default": false,
+							"description": "Here enable/disable the accessory name as a prefix for volume control name.",
+							"required": false,
+							"condition": {
+								"functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
+							}
 						},
 						"disableLogDeviceInfo": {
 							"title": "Disable Log Device Info",
@@ -1077,9 +1089,9 @@
 									"key": "devices[]",
 									"title": "Volume",
 									"items": [
-										"devices[].volumeControlNamePrefix",
+										"devices[].volumeControl",
 										"devices[].volumeControlName",
-										"devices[].volumeControl"
+										"devices[].volumeControlNamePrefix"
 									]
 								},
 								{

@@ -12,7 +12,7 @@ class Authentication {
             oauth: {},
             user: {},
             xsts: {}
-        };
+        }
     }
 
     async refreshTokens(type) {
@@ -30,7 +30,6 @@ class Authentication {
                             } catch (error) {
                                 throw new Error(error);
                             };
-                            break;
                         case false:
                             try {
                                 await this.refreshTokens('xsts');
@@ -38,7 +37,6 @@ class Authentication {
                             } catch (error) {
                                 throw new Error(error);
                             };
-                            break;
                     }
                 } else {
                     try {
@@ -47,9 +45,8 @@ class Authentication {
                         return true;
                     } catch (error) {
                         throw new Error(error);
-                    };
+                    }
                 }
-                break;
             case 'xsts':
                 if (this.tokens.xsts.Token) {
                     const tokenExpired = new Date() > new Date(this.tokens.xsts.NotAfter).getTime();
@@ -62,10 +59,8 @@ class Authentication {
                             } catch (error) {
                                 throw new Error(error);
                             };
-                            break;
                         case false:
                             return true;
-                            break;
                     }
                 } else {
                     try {
@@ -73,12 +68,10 @@ class Authentication {
                         return true;
                     } catch (error) {
                         throw new Error(error);
-                    };
+                    }
                 }
-                break;
             default:
                 throw new Error(`Unknow refresh token type: ${type}`);
-                break;
         }
     }
 
@@ -101,7 +94,7 @@ class Authentication {
             return true;
         } catch (error) {
             throw new Error(`Refresh token error: ${error}`);
-        };
+        }
     }
 
     async getUserToken(accessToken) {
@@ -113,7 +106,7 @@ class Authentication {
                     "AuthMethod": 'RPS',
                     "SiteName": 'user.auth.xboxlive.com',
                     "RpsTicket": `d=${accessToken}`
-                },
+                }
             }
 
             const postData = JSON.stringify(payload);
@@ -125,7 +118,7 @@ class Authentication {
             return true;
         } catch (error) {
             throw new Error(`User token error: ${error}`);
-        };
+        }
     }
 
     async getXstsToken(userToken) {
@@ -136,7 +129,7 @@ class Authentication {
                 "Properties": {
                     "UserTokens": [userToken],
                     "SandboxId": 'RETAIL',
-                },
+                }
             }
 
             const postData = JSON.stringify(payload);
@@ -147,7 +140,7 @@ class Authentication {
             return true;
         } catch (error) {
             throw new Error(`Xsts token error: ${error}`);
-        };
+        }
     }
 
     async accessToken(webApiToken) {
@@ -171,7 +164,7 @@ class Authentication {
             return true;
         } catch (error) {
             throw new Error(`Access token error: ${error}`);
-        };
+        }
     }
 
     async checkAuthorization() {
@@ -190,7 +183,7 @@ class Authentication {
                 }
             } catch (error) {
                 throw new Error(error);
-            };
+            }
         } else {
             throw new Error(`Authorization not possible, check plugin settings - Client Id: ${this.webApiClientId}`);
         }
@@ -210,7 +203,7 @@ class Authentication {
             return oauth2URI;
         } catch (error) {
             throw new Error(`Authorization URL error: ${error}`);
-        };
+        }
     }
 
     async readData(path) {
@@ -220,7 +213,7 @@ class Authentication {
             return tokens;
         } catch (error) {
             throw new Error(`Read data error: ${error}`);
-        };
+        }
     }
 
     async saveData(path, data) {
@@ -230,7 +223,7 @@ class Authentication {
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
-        };
+        }
     }
 }
 export default Authentication;

@@ -24,7 +24,7 @@ class ImpulseGenerator extends EventEmitter {
                 this.emit(timer.name);
             }, timer.sampling);
             this.timers.push(newTimer);
-        };
+        }
 
         return true;
     }

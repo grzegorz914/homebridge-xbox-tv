@@ -33,7 +33,7 @@ class XboxWebApi extends EventEmitter {
                 await this.checkAuthorization();
             } catch (error) {
                 this.emit('error', error);
-            };
+            }
         }).on('state', (state) => {
             const emitState = state ? this.emit('success', `Web Api monitoring started`) : this.emit('warn', `Web Api monitoring stopped`);
         });
@@ -48,7 +48,7 @@ class XboxWebApi extends EventEmitter {
             if (!authorized) {
                 this.emit('warn', `not authorized`);
                 return false;
-            };
+            }
             this.tokens = data.tokens;
             this.consoleAuthorized = true;
 
@@ -64,7 +64,7 @@ class XboxWebApi extends EventEmitter {
                     'x-xbl-client-version': '39.39.22001.0',
                     'skillplatform': 'RemoteManagement',
                     'Content-Type': 'application/json'
-                }
+                };
                 this.headers = headers;
 
                 //create axios instance
@@ -83,12 +83,12 @@ class XboxWebApi extends EventEmitter {
                 //await this.userProfile();
             } catch (error) {
                 this.emit('error', `Check xbox live data error: ${error}`);
-            };
+            }
 
             return true;
         } catch (error) {
             throw new Error(`Check authorization error: ${error}`);
-        };
+        }
     }
 
     async consoleStatus() {
@@ -123,7 +123,7 @@ class XboxWebApi extends EventEmitter {
             return remoteManagementEnabled;
         } catch (error) {
             throw new Error(`Status error: ${error}`);
-        };
+        }
     }
 
     async consolesList() {
@@ -203,7 +203,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Consoles list error: ${error}`);
-        };
+        }
     }
 
     async installedApps() {
@@ -240,10 +240,10 @@ class XboxWebApi extends EventEmitter {
                     'isGame': isGame,
                     'name': name,
                     'contentType': contentType
-                };
+                }
                 const duplicatedInput = appsArray.some(input => input.reference === aumid);
                 const push = name && aumid && !duplicatedInput ? appsArray.push(inputsObj) : false;
-            };
+            }
 
             //save inputs
             await this.saveData(this.inputsFile, appsArray);
@@ -255,7 +255,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Installed apps error: ${error}`);
-        };
+        }
     }
 
     async storageDevices() {
@@ -298,7 +298,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`storage devices error: ${error}`);
-        };
+        }
     }
 
     async userProfile() {
@@ -331,8 +331,8 @@ class XboxWebApi extends EventEmitter {
 
                     this.userProfileSettingsId.push(id);
                     this.userProfileSettingsValue.push(value);
-                };
-            };
+                }
+            }
 
             //emit restFul and mqtt
             this.emit('restFul', 'profile', profileUsers);
@@ -341,7 +341,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`User profile error: ${error}`);
-        };
+        }
     }
 
     async saveData(path, data) {
@@ -352,7 +352,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
-        };
+        }
     };
 
     async next() {
@@ -361,7 +361,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(error);
-        };
+        }
     }
 
     async previous() {
@@ -370,7 +370,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(error);
-        };
+        }
     }
 
     async pause() {
@@ -379,7 +379,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(error);
-        };
+        }
     }
 
     async play() {
@@ -388,7 +388,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(error);
-        };
+        }
     }
 
     async goBack() {
@@ -397,14 +397,14 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(error);
-        };
+        }
     }
 
     async send(commandType, command, payload) {
         if (!this.consoleAuthorized || !this.rmEnabled) {
             this.emit('warn', `not authorized or remote management not enabled`);
             return;
-        };
+        }
 
         const sessionid = UuIdv4();
         const params = payload ?? [];
@@ -431,7 +431,7 @@ class XboxWebApi extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`send command type: ${commandType}, command: ${command}, params: ${params}, error: ${error}`);
-        };
+        }
     }
 }
 export default XboxWebApi;

@@ -15,9 +15,9 @@ class RestFul extends EventEmitter {
             apps: 'This data is not available in your system.',
             storages: 'This data is not available in your system.',
             status: 'This data is not available in your system.'
-        };
+        }
         this.connect();
-    };
+    }
 
     connect() {
         try {
@@ -89,8 +89,8 @@ class RestFul extends EventEmitter {
             default:
                 this.emit('warn', `RESTFul update unknown path: ${path}, data: ${data}`)
                 break;
-        };
+        }
         const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data, null, 2)}`) : false;
-    };
-};
+    }
+}
 export default RestFul;
