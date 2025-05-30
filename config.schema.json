@@ -754,7 +754,7 @@
 									]
 								}
 							],
-							"required": false
+							"required": true
 						},
 						"volumeControlName": {
 							"title": "Volume Control Name",
