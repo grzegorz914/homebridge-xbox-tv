@@ -16,75 +16,72 @@ class PluginUiServer extends HomebridgePluginUiServer {
   };
 
   async clearToken(payload) {
-    const host = payload.host;
-    const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
+    const hostKey = payload.host.replace(/\./g, '');
+    const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${hostKey}`;
 
     const authConfig = {
       webApiClientId: payload.webApiClientId,
       webApiClientSecret: payload.webApiClientSecret,
-      tokensFile: tokensFile
-    }
+      tokensFile
+    };
+
     const authentication = new Authentication(authConfig);
 
     try {
-      const tokens = {
-        oauth: {},
-        user: {},
-        xsts: {}
-      };
-      await authentication.saveData(tokensFile, tokens);
+      const emptyTokens = { oauth: {}, user: {}, xsts: {} };
+      await authentication.saveData(tokensFile, emptyTokens);
       return true;
     } catch (error) {
-      throw new Error(`Clear token error: ${error.message ?? error}.`);
-    };
-  };
+      throw new Error(`Clear token error: ${error?.message ?? error}`);
+    }
+  }
 
   async startAuthorization(payload) {
-    const host = payload.host;
-    const webApiToken = payload.webApiToken;
-    const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${host.split('.').join('')}`;
+    const hostKey = payload.host.replace(/\./g, '');
+    const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${hostKey}`;
 
     const authConfig = {
       webApiClientId: payload.webApiClientId,
       webApiClientSecret: payload.webApiClientSecret,
-      tokensFile: tokensFile
-    }
+      tokensFile
+    };
+
     const authentication = new Authentication(authConfig);
-    let data = {};
+    const webApiToken = payload.webApiToken;
 
     try {
+      // Case: Console already authorized
+      await authentication.checkAuthorization();
+      return {
+        info: 'Console authorized and activated. To start a new process, please clear the Web API Token first.',
+        status: 0  // Authorized
+      };
+    } catch {
+      if (webApiToken) {
+        try {
+          await authentication.accessToken(webApiToken);
+          return {
+            info: 'Activation successful! Now restart the plugin and have fun!',
+            status: 2  // Token activated
+          };
+        } catch (error) {
+          throw new Error(`Activation console error: ${error?.message ?? error}`);
+        }
+      }
+
+      // No token, generate auth URL
       try {
-        await authentication.checkAuthorization();
-        data = {
-          info: 'Console authorized and activated. To start new process please clear Web API Token first.',
-          status: 0
+        const oauth2URI = await authentication.generateAuthorizationUrl();
+        return {
+          info: oauth2URI,
+          status: 1  // Needs user authorization
         };
       } catch (error) {
-        if (webApiToken) {
-          try {
-            await authentication.accessToken(webApiToken);
-            data = {
-              info: 'Activation console successfull, now restart plugin and have fun!!!',
-              status: 2
-            };
-          } catch (error) {
-            throw new Error(`Activation console error: ${error.message ?? error}.`);
-          };
-        } else {
-          const oauth2URI = await authentication.generateAuthorizationUrl();
-          data = {
-            info: oauth2URI,
-            status: 1
-          };
-        };
-      };
-
-      return data;
-    } catch (error) {
-      throw new Error(`Authorization manager error: ${error.message ?? error}.`);
-    };
-  };
-};
+        throw new Error(`Failed to generate authorization URL: ${error?.message ?? error}`);
+      }
+    }
+  }
+}
 
 (() => {
   return new PluginUiServer();
