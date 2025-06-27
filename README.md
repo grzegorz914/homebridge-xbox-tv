@@ -149,6 +149,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 ### RESTFul Integration
 
 * POST data as a JSON Object `{Power: true}`, content type must be `application/json`
+* Path `status` response all available paths.
 
 | Method | URL | Path | Response | Type |
 | --- | --- | --- | --- | --- |

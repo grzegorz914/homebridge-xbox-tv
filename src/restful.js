@@ -1,6 +1,8 @@
 import express, { json } from 'express';
 import EventEmitter from 'events';
 
+const DEFAULT_MESSAGE = 'This data is not available at this time.';
+
 class RestFul extends EventEmitter {
     constructor(config) {
         super();
@@ -8,45 +10,57 @@ class RestFul extends EventEmitter {
         this.restFulDebug = config.debug;
 
         this.restFulData = {
-            info: 'This data is not available in your system.',
-            state: 'This data is not available in your system.',
-            consoleslist: 'This data is not available in your system.',
-            profile: 'This data is not available in your system.',
-            apps: 'This data is not available in your system.',
-            storages: 'This data is not available in your system.',
-            status: 'This data is not available in your system.'
+            info: DEFAULT_MESSAGE,
+            state: DEFAULT_MESSAGE,
+            consoleslist: DEFAULT_MESSAGE,
+            profile: DEFAULT_MESSAGE,
+            apps: DEFAULT_MESSAGE,
+            storages: DEFAULT_MESSAGE,
+            status: DEFAULT_MESSAGE
         }
         this.connect();
     }
 
     connect() {
         try {
-            const restFul = express();
-            restFul.set('json spaces', 2);
-            restFul.use(json());
+            const app = express();
+            app.set('json spaces', 2);
+            app.use(json());
 
-            // GET Routes
-            restFul.get('/info', (req, res) => { res.json(this.restFulData.info) });
-            restFul.get('/state', (req, res) => { res.json(this.restFulData.state) });
-            restFul.get('/consoleslist', (req, res) => { res.json(this.restFulData.consoleslist) });
-            restFul.get('/profile', (req, res) => { res.json(this.restFulData.profile) });
-            restFul.get('/apps', (req, res) => { res.json(this.restFulData.apps) });
-            restFul.get('/storages', (req, res) => { res.json(this.restFulData.storages) });
-            restFul.get('/status', (req, res) => { res.json(this.restFulData.status) });
+            // Register GET routes for all keys
+            for (const key of Object.keys(this.restFulData)) {
+                app.get(`/${key}`, (req, res) => {
+                    res.json(this.restFulData[key]);
+                });
+            }
 
-            // POST Route
-            restFul.post('/', (req, res) => {
+            // Health check route
+            app.get('/status', (req, res) => {
+                res.json({
+                    status: 'online',
+                    uptime: process.uptime(),
+                    available_paths: Object.keys(this.restFulData).map(k => `/${k}`)
+                });
+            });
+
+            // POST route to update values
+            app.post('/', (req, res) => {
                 try {
                     const obj = req.body;
                     if (!obj || typeof obj !== 'object' || Object.keys(obj).length === 0) {
-                        this.emit('warn', `RESTFul Invalid JSON payload`);
+                        this.emit('warn', 'RESTFul Invalid JSON payload');
                         return res.status(400).json({ error: 'RESTFul Invalid JSON payload' });
                     }
+
                     const key = Object.keys(obj)[0];
                     const value = obj[key];
                     this.emit('set', key, value);
+                    this.update(key, value);
 
-                    const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul post data: ${JSON.stringify(obj, null, 2)}`) : false;
+                    if (this.restFulDebug) {
+                        this.emit('debug', `RESTFul post data: ${JSON.stringify(obj, null, 2)}`);
+                    }
+
                     res.json({ success: true, received: obj });
                 } catch (error) {
                     this.emit('warn', `RESTFul Parse error: ${error}`);
@@ -54,43 +68,26 @@ class RestFul extends EventEmitter {
                 }
             });
 
-            // Start server
-            restFul.listen(this.restFulPort, () => {
+            // Start the server
+            app.listen(this.restFulPort, () => {
                 this.emit('connected', `RESTful started on port: ${this.restFulPort}`);
             });
         } catch (error) {
-            this.emit('warn', `RESTful Connect error: ${error}`)
+            this.emit('warn', `RESTful Connect error: ${error}`);
         }
-    };
+    }
 
     update(path, data) {
-        switch (path) {
-            case 'info':
-                this.restFulData.info = data;
-                break;
-            case 'state':
-                this.restFulData.state = data;
-                break;
-            case 'consoleslist':
-                this.restFulData.consoleslist = data;
-                break;
-            case 'profile':
-                this.restFulData.profile = data;
-                break;
-            case 'apps':
-                this.restFulData.apps = data;
-                break;
-            case 'storages':
-                this.restFulData.storages = data;
-                break;
-            case 'status':
-                this.restFulData.status = data;
-                break;
-            default:
-                this.emit('warn', `RESTFul update unknown path: ${path}, data: ${data}`)
-                break;
+        if (this.restFulData.hasOwnProperty(path)) {
+            this.restFulData[path] = data;
+        } else {
+            this.emit('warn', `Unknown RESTFul update path: ${path}, data: ${JSON.stringify(data)}`);
+            return;
         }
-        const emitDebug = this.restFulDebug ? this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data, null, 2)}`) : false;
+
+        if (this.restFulDebug) {
+            this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data)}`);
+        }
     }
 }
 export default RestFul;
