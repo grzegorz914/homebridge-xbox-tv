@@ -26,14 +26,20 @@ class XboxWebApi extends EventEmitter {
         }
         this.authentication = new Authentication(authConfig);
 
-        //create impulse generator
+        //impulse generator
+        this.call = false;
         this.impulseGenerator = new ImpulseGenerator();
         this.impulseGenerator.on('checkAuthorization', async () => {
+            if (this.call) return;
+
             try {
+                this.call = true;
                 await this.checkAuthorization();
+                this.call = false;
             } catch (error) {
-                this.emit('error', error);
-            }
+                this.call = false;
+                this.emit('error', `Inpulse generator error: ${error}`);
+            };
         }).on('state', (state) => {
             const emitState = state ? this.emit('success', `Web Api monitoring started`) : this.emit('warn', `Web Api monitoring stopped`);
         });
