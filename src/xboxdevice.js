@@ -437,47 +437,51 @@ class XboxDevice extends EventEmitter {
                 })
                 .onSet(async (activeIdentifier) => {
                     try {
-                        const input = this.inputsConfigured.find(input => input.identifier === activeIdentifier);
-                        const inputOneStoreProductId = input.oneStoreProductId;
-                        const inputReference = input.reference;
-                        const inputName = input.name;
+                        const input = this.inputsConfigured.find(i => i.identifier === activeIdentifier);
+                        if (!input) {
+                            this.emit('warn', `Input with identifier ${activeIdentifier} not found`);
+                            return;
+                        }
+
+                        const { oneStoreProductId: oneStoreProductId, name: name, reference: reference } = input;
+
+                        if (!this.power) {
+                            for (let attempt = 0; attempt < 10; attempt++) {
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                if (this.power && this.inputIdentifier !== activeIdentifier) {
+                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                    break;
+                                }
+                            }
+                            return;
+                        }
 
                         let channelName;
                         let command;
                         let payload;
-                        switch (this.power) {
-                            case false:
-                                for (let attempt = 0; attempt < 10; attempt++) {
-                                    await new Promise(resolve => setTimeout(resolve, 2000));
-                                    const setInput = this.power && this.inputIdentifier !== activeIdentifier ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
-                                }
+                        switch (oneStoreProductId) {
+                            case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+                                channelName = 'Shell';
+                                command = 'GoHome';
                                 break;
-                            case true:
-                                switch (inputOneStoreProductId) {
-                                    case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                        channelName = 'Shell';
-                                        command = 'GoHome';
-                                        break;
-                                    case 'Television':
-                                        channelName = 'TV';
-                                        command = 'ShowGuide';
-                                        break;
-                                    case 'XboxGuide':
-                                        channelName = 'Shell';
-                                        command = 'ShowGuideTab';
-                                        payload = [{ 'tabName': 'Guide' }];
-                                        break;
-                                    default:
-                                        channelName = 'Shell';
-                                        command = 'ActivateApplicationWithOneStoreProductId';
-                                        payload = [{ 'oneStoreProductId': inputOneStoreProductId }];
-                                        break;
-                                }
-
-                                await this.xboxWebApi.send(channelName, command, payload);
-                                const logInfo = this.disableLogInfo ? false : this.emit('info', `set Input: ${inputName}, Reference: ${inputReference}, Product Id: ${inputOneStoreProductId}`);
+                            case 'Television':
+                                channelName = 'TV';
+                                command = 'ShowGuide';
+                                break;
+                            case 'XboxGuide':
+                                channelName = 'Shell';
+                                command = 'ShowGuideTab';
+                                payload = [{ 'tabName': 'Guide' }];
+                                break;
+                            default:
+                                channelName = 'Shell';
+                                command = 'ActivateApplicationWithOneStoreProductId';
+                                payload = [{ 'oneStoreProductId': oneStoreProductId }];
                                 break;
                         }
+
+                        await this.xboxWebApi.send(channelName, command, payload);
+                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
                     } catch (error) {
                         this.emit('warn', `set Input error: ${JSON.stringify(error, null, 2)}`);
                     }
@@ -1084,6 +1088,13 @@ class XboxDevice extends EventEmitter {
                     const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
 
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+                    this.mediaState = mediaState;
+
                     //update characteristics
                     if (this.televisionService) {
                         this.televisionService
@@ -1161,13 +1172,6 @@ class XboxDevice extends EventEmitter {
                                 .updateCharacteristic(Characteristic.On, state);
                         }
                     }
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
-                    this.mediaState = mediaState;
 
                     if (!this.disableLogInfo) {
                         const name = input ? input.name : reference;
