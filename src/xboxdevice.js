@@ -758,7 +758,8 @@ class XboxDevice extends EventEmitter {
 
             //filter unnecessary inputs
             const filteredInputsArr = [];
-            for (const input of this.savedInputs) {
+            const savedInputs = this.getInputsFromDevice ? [...DefaultInputs, ...this.savedInputs] : this.inputs;
+            for (const input of savedInputs) {
                 const contentType = input.contentType;
                 const filterGames = this.filterGames ? (contentType === 'Game') : false;
                 const filterApps = this.filterApps ? (contentType === 'App') : false;
@@ -1030,19 +1031,18 @@ class XboxDevice extends EventEmitter {
                     tokensFile: this.authTokenFile,
                     inputsFile: this.inputsFile,
                     enableDebugMode: this.enableDebugMode
-                });
-
-                this.xboxWebApi.on('consoleStatus', (consoleType) => {
-                    if (this.informationService) {
-                        this.informationService
-                            .setCharacteristic(Characteristic.Model, consoleType)
-                    }
-
-                    //this.serialNumber = id;
-                    this.modelName = consoleType;
-                    //this.power = powerState;
-                    //this.mediaState = playbackState;
                 })
+                    .on('consoleStatus', (consoleType) => {
+                        if (this.informationService) {
+                            this.informationService
+                                .setCharacteristic(Characteristic.Model, consoleType)
+                        }
+
+                        //this.serialNumber = id;
+                        this.modelName = consoleType;
+                        //this.power = powerState;
+                        //this.mediaState = playbackState;
+                    })
                     .on('success', (success) => {
                         this.emit('success', success);
                     })
@@ -1077,19 +1077,19 @@ class XboxDevice extends EventEmitter {
                 xboxLiveId: this.xboxLiveId,
                 tokensFile: this.authTokenFile,
                 devInfoFile: this.devInfoFile,
+                inputsFile: this.inputsFile,
                 disableLogInfo: this.disableLogInfo,
                 enableDebugMode: this.enableDebugMode
-            });
-
-            this.xboxLocalApi.on('deviceInfo', (firmwareRevision, locale) => {
-                this.emit('devInfo', `-------- ${this.name} --------`);
-                this.emit('devInfo', `Manufacturer: Microsoft`);
-                this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
-                this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
-                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                this.emit('devInfo', `Locale: ${locale}`);
-                this.emit('devInfo', `----------------------------------`);
             })
+                .on('deviceInfo', (firmwareRevision, locale) => {
+                    this.emit('devInfo', `-------- ${this.name} --------`);
+                    this.emit('devInfo', `Manufacturer: Microsoft`);
+                    this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
+                    this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
+                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                    this.emit('devInfo', `Locale: ${locale}`);
+                    this.emit('devInfo', `----------------------------------`);
+                })
                 .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
                     const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
