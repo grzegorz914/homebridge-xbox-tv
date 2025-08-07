@@ -90,11 +90,11 @@ class XboxPlatform {
 
 				//xbox device
 				try {
-					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile);
-					xboxDevice.on('publishAccessory', (accessory) => {
-						api.publishExternalAccessories(PluginName, [accessory]);
-						const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
-					})
+					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
+						.on('publishAccessory', (accessory) => {
+							api.publishExternalAccessories(PluginName, [accessory]);
+							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+						})
 						.on('devInfo', (devInfo) => {
 							const emitLog = disableLogDeviceInfo ? false : log.info(devInfo);
 						})
