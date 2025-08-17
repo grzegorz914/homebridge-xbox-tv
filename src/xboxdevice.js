@@ -297,22 +297,22 @@ class XboxDevice extends EventEmitter {
             //read dev info from file
             const savedInfo = await this.readData(this.devInfoFile);
             this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
+            if (this.enableDebugMode) this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
             //read inputs file
             const savedInputs = await this.readData(this.inputsFile);
             this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
-            const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
+            if (this.enableDebugMode) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
             //read inputs names from file
             const savedInputsNames = await this.readData(this.inputsNamesFile);
             this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
-            const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
+            if (this.enableDebugMode) this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
 
             //read inputs visibility from file
             const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
             this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
-            const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
+            if (this.enableDebugMode) this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
             return true;
         } catch (error) {
@@ -455,9 +455,7 @@ class XboxDevice extends EventEmitter {
                             this.savedInputsNames[inputReference] = value;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
 
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input: ${inputService.name}, Reference: ${inputReference}`);
-                            }
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${inputService.name}, Reference: ${inputReference}`);
 
                             // keep in sync
                             const index = this.inputsServices.findIndex(s => s.reference === inputReference);
@@ -477,9 +475,7 @@ class XboxDevice extends EventEmitter {
                             this.savedInputsTargetVisibility[inputReference] = state;
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
 
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input: ${inputService.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-                            }
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${inputService.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
                         } catch (error) {
                             this.emit('warn', `Save Target Visibility error: ${error}`);
                         }
@@ -504,7 +500,7 @@ class XboxDevice extends EventEmitter {
     async prepareAccessory() {
         try {
             //Accessory
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
+            if (this.enableDebugMode) this.emit('debug', `Prepare accessory`);
             const accessoryName = this.name;
             const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
             const accessoryCategory = Categories.TV_SET_TOP_BOX;
@@ -521,7 +517,7 @@ class XboxDevice extends EventEmitter {
             this.allServices.push(this.informationService);
 
             //Prepare television service
-            const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
+            if (this.enableDebugMode) this.emit('debug', `Prepare television service`);
             this.televisionService = accessory.addService(Service.Television, `${accessoryName} Television`, 'Television');
             this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
             this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
@@ -559,7 +555,7 @@ class XboxDevice extends EventEmitter {
                                 }
                         }
 
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
+                        if (!this.disableLogInfo) this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
                         await new Promise(resolve => setTimeout(resolve, 3000));
                     } catch (error) {
                         this.emit('warn', `set Power, error: ${error}`);
@@ -624,7 +620,7 @@ class XboxDevice extends EventEmitter {
                         }
 
                         await this.xboxWebApi.send(channelName, command, payload);
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
+                        if (!this.disableLogInfo) this.emit('info', `set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
                     } catch (error) {
                         this.emit('warn', `set Input error: ${JSON.stringify(error, null, 2)}`);
                     }
@@ -692,7 +688,7 @@ class XboxDevice extends EventEmitter {
                         }
 
                         await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `Remote Key: ${command}`);
+                        if (!this.disableLogInfo) this.emit('info', `Remote Key: ${command}`);
                     } catch (error) {
                         this.emit('warn', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
                     }
@@ -716,7 +712,7 @@ class XboxDevice extends EventEmitter {
                     try {
                         const newMediaState = value;
                         const setMediaState = this.power ? false : false;
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        if (!this.disableLogInfo) this.emit('info', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
                         this.emit('warn', `set Target Media error: ${error}`);
                     }
@@ -733,7 +729,7 @@ class XboxDevice extends EventEmitter {
                                 await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': 'b' }]);
                                 break;
                         };
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
+                        if (!this.disableLogInfo) this.emit('info', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
                         this.emit('warn', `set Power Mode Selection error: ${error}`);
                     }
@@ -772,7 +768,7 @@ class XboxDevice extends EventEmitter {
                                     await this.xboxWebApi.send('Volume', 'Down');
                                     break;
                             }
-                            const logInfo = this.disableLogInfo ? false : this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                            if (!this.disableLogInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                         } catch (error) {
                             this.emit('warn', `set Volume Selector error: ${error}`);
                         }
@@ -784,7 +780,7 @@ class XboxDevice extends EventEmitter {
                         return volume;
                     })
                     .onSet(async (volume) => {
-                        const logInfo = this.disableLogInfo ? false : this.emit('info', `set Volume: ${volume}`);
+                        if (!this.disableLogInfo) this.emit('info', `set Volume: ${volume}`);
                     });
 
                 this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -802,7 +798,7 @@ class XboxDevice extends EventEmitter {
                                     await this.xboxWebApi.send('Audio', 'Unmute');
                                     break;
                             }
-                            const logInfo = this.disableLogInfo ? false : this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                            if (!this.disableLogInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('warn', `set Mute error: ${error}`);
                         }
@@ -891,7 +887,7 @@ class XboxDevice extends EventEmitter {
             }
 
             //prepare inputs service
-            const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
+            if (this.enableDebugMode) this.emit('debug', `Prepare inputs service`);
 
             //check possible inputs count (max 85)
             this.inputsServices = [];
@@ -902,7 +898,7 @@ class XboxDevice extends EventEmitter {
 
             //prepare sensor service
             if (this.sensorPower) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare power sensor service`);
                 this.sensorPowerService = accessory.addService(Service.ContactSensor, `${accessoryName} Power Sensor`, `Power Sensor`);
                 this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                 this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
@@ -915,7 +911,7 @@ class XboxDevice extends EventEmitter {
             }
 
             if (this.sensorInput) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare input sensor service`);
                 this.sensorInputService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
                 this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                 this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
@@ -928,7 +924,7 @@ class XboxDevice extends EventEmitter {
             }
 
             if (this.sensorScreenSaver) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare screen saver sensor service`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare screen saver sensor service`);
                 this.sensorScreenSaverService = accessory.addService(Service.ContactSensor, `${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
                 this.sensorScreenSaverService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                 this.sensorScreenSaverService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Screen Saver Sensor`);
@@ -944,7 +940,7 @@ class XboxDevice extends EventEmitter {
             const possibleSensorInputsCount = 99 - this.allServices.length;
             const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
             if (maxSensorInputsCount > 0) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare inputs sensors services`);
                 for (let i = 0; i < maxSensorInputsCount; i++) {
                     //get sensor
                     const sensorInput = this.sensorsInputsConfigured[i];
@@ -980,7 +976,7 @@ class XboxDevice extends EventEmitter {
             const possibleButtonsCount = 99 - this.allServices.length;
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare buttons services`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare buttons services`);
                 for (let i = 0; i < maxButtonsCount; i++) {
                     //get button
                     const button = this.buttonsConfigured[i];
