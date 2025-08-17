@@ -107,7 +107,6 @@ class XboxDevice extends EventEmitter {
         this.allServices = [];
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
-        this.inputsConfigured = [];
         this.inputIdentifier = 1;
         this.startPrepareAccessory = true;
         this.power = false;
@@ -293,34 +292,6 @@ class XboxDevice extends EventEmitter {
         }
     }
 
-    async displayOrder() {
-        try {
-            switch (this.inputsDisplayOrder) {
-                case 1:
-                    this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 2:
-                    this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
-                    break;
-                case 3:
-                    this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
-                    break;
-                case 4:
-                    this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
-                    break;
-                default:
-                    return;
-            }
-            const debug = this.enableDebugMode ? this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`) : false;
-
-            const displayOrder = this.inputsConfigured.map(input => input.identifier);
-            this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
-            return;
-        } catch (error) {
-            throw new Error(`Display order error: ${error}`);
-        }
-    }
-
     async prepareDataForAccessory() {
         try {
             //read dev info from file
@@ -362,6 +333,173 @@ class XboxDevice extends EventEmitter {
         }
     }
 
+    async displayOrder() {
+        try {
+            const sortStrategies = {
+                1: (a, b) => a.name.localeCompare(b.name),      // A → Z
+                2: (a, b) => b.name.localeCompare(a.name),      // Z → A
+                3: (a, b) => a.reference.localeCompare(b.reference),
+                4: (a, b) => b.reference.localeCompare(a.reference),
+            };
+
+            const sortFn = sortStrategies[this.inputsDisplayOrder];
+            if (!sortFn) return;
+
+            // Sort inputs in memory
+            this.inputsServices.sort(sortFn);
+
+            // Reassign identifiers (start at 1)
+            this.inputsServices.forEach((svc, index) => {
+                const newIdentifier = index + 1;
+                svc.identifier = newIdentifier;
+
+                if (svc.testCharacteristic(Characteristic.Identifier)) {
+                    svc.updateCharacteristic(Characteristic.Identifier, newIdentifier);
+                }
+            });
+
+            // Debug dump
+            if (this.enableDebugMode) {
+                const orderDump = this.inputsServices.map(svc => ({ name: svc.name, reference: svc.reference, identifier: svc.identifier, }));
+                this.emit('debug', `Inputs display order:\n${JSON.stringify(orderDump, null, 2)}`);
+            }
+
+            // Update DisplayOrder characteristic (base64 encoded)
+            const displayOrder = this.inputsServices.map(svc => svc.identifier);
+            const encodedOrder = Encode(1, displayOrder).toString('base64');
+            this.televisionService.updateCharacteristic(Characteristic.DisplayOrder, encodedOrder);
+        } catch (error) {
+            throw new Error(`Display order error: ${error}`);
+        }
+    }
+
+    async addRemoveOrUpdateInput(input, remove = false) {
+        try {
+            // Safety: no services
+            if (!this.inputsServices) return;
+
+            // Filter unnecessary inputs (only when adding, not removing)
+            if (!remove) {
+                const contentType = input.contentType;
+                const filterGames = this.filterGames && contentType === 'Game';
+                const filterApps = this.filterApps && contentType === 'App';
+                const filterSystemApps = this.filterSystemApps && contentType === 'systemApp';
+                const filterDlc = this.filterDlc && contentType === 'Dlc';
+
+                if (filterGames || filterApps || filterSystemApps || filterDlc || this.inputsServices.length >= 85) {
+                    return;
+                }
+            }
+
+            // Input reference
+            const inputReference = input.reference;
+
+            // --- REMOVE ---
+            if (remove) {
+                const svc = this.inputsServices.find(s => s.reference === inputReference);
+                if (svc) {
+                    if (this.enableDebugMode) this.emit('debug', `Removing input: ${input.name} (${inputReference})`);
+                    this.accessory.removeService(svc);
+                    this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
+                    await this.displayOrder();
+                    return true;
+                }
+                if (this.enableDebugMode) this.emit('debug', `Remove failed (not found): ${input.name} (${inputReference})`);
+                return false;
+            }
+
+            // --- ADD OR UPDATE ---
+            let inputService = this.inputsServices.find(s => s.reference === inputReference);
+
+            const savedName = this.savedInputsNames[inputReference] ?? input.name;
+            const sanitizedName = await this.sanitizeString(savedName);
+            const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+
+            if (inputService) {
+                // === UPDATE EXISTING ===
+                inputService.name = sanitizedName;
+                inputService.visibility = inputVisibility;
+
+                inputService
+                    .updateCharacteristic(Characteristic.Name, sanitizedName)
+                    .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName)
+                    .updateCharacteristic(Characteristic.TargetVisibilityState, inputVisibility)
+                    .updateCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility);
+
+                if (this.enableDebugMode) this.emit('debug', `Updated input: ${input.name} (${inputReference})`);
+            } else {
+                // === CREATE NEW ===
+                const identifier = this.inputsServices.length + 1;
+                inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${identifier}`);
+
+                // Custom props
+                inputService.identifier = identifier;
+                inputService.reference = inputReference;
+                inputService.name = sanitizedName;
+                inputService.visibility = inputVisibility;
+
+                inputService
+                    .setCharacteristic(Characteristic.Identifier, identifier)
+                    .setCharacteristic(Characteristic.Name, sanitizedName)
+                    .setCharacteristic(Characteristic.ConfiguredName, sanitizedName)
+                    .setCharacteristic(Characteristic.IsConfigured, 1)
+                    .setCharacteristic(Characteristic.InputSourceType, 0) // 0=HDMI-like Input, 1=Tuner/Channel
+                    .setCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility)
+                    .setCharacteristic(Characteristic.TargetVisibilityState, inputVisibility);
+
+                // --- ConfiguredName rename persistence ---
+                inputService.getCharacteristic(Characteristic.ConfiguredName)
+                    .onSet(async (value) => {
+                        try {
+                            inputService.name = value;
+                            this.savedInputsNames[inputReference] = value;
+                            await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+
+                            if (this.enableDebugMode) {
+                                this.emit('debug', `Saved Input: ${inputService.name}, Reference: ${inputReference}`);
+                            }
+
+                            // keep in sync
+                            const index = this.inputsServices.findIndex(s => s.reference === inputReference);
+                            if (index !== -1) this.inputsServices[index].name = value;
+
+                            await this.displayOrder();
+                        } catch (error) {
+                            this.emit('warn', `Save Input Name error: ${error}`);
+                        }
+                    });
+
+                // --- TargetVisibility persistence ---
+                inputService.getCharacteristic(Characteristic.TargetVisibilityState)
+                    .onSet(async (state) => {
+                        try {
+                            inputService.visibility = state;
+                            this.savedInputsTargetVisibility[inputReference] = state;
+                            await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+
+                            if (this.enableDebugMode) {
+                                this.emit('debug', `Saved Input: ${inputService.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
+                            }
+                        } catch (error) {
+                            this.emit('warn', `Save Target Visibility error: ${error}`);
+                        }
+                    });
+
+                this.inputsServices.push(inputService);
+                this.televisionService.addLinkedService(inputService);
+                this.allServices.push(inputService);
+
+                if (this.enableDebugMode) this.emit('debug', `Added new input: ${input.name} (${inputReference})`);
+            }
+
+            // Normalize identifiers and order
+            await this.displayOrder();
+            return true;
+        } catch (error) {
+            throw new Error(`Add/Update input error: ${error}`);
+        }
+    }
+
     //Prepare accessory
     async prepareAccessory() {
         try {
@@ -371,6 +509,7 @@ class XboxDevice extends EventEmitter {
             const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
             const accessoryCategory = Categories.TV_SET_TOP_BOX;
             const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
+            this.accessory = accessory;
 
             //Prepare information service
             this.informationService = accessory.getService(Service.AccessoryInformation)
@@ -434,7 +573,7 @@ class XboxDevice extends EventEmitter {
                 })
                 .onSet(async (activeIdentifier) => {
                     try {
-                        const input = this.inputsConfigured.find(i => i.identifier === activeIdentifier);
+                        const input = this.inputsServices.find(i => i.identifier === activeIdentifier);
                         if (!input) {
                             this.emit('warn', `Input with identifier ${activeIdentifier} not found`);
                             return;
@@ -754,91 +893,11 @@ class XboxDevice extends EventEmitter {
             //prepare inputs service
             const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
 
-            //filter unnecessary inputs
-            const filteredInputsArr = [];
-            const savedInputs = this.getInputsFromDevice ? [...DefaultInputs, ...this.savedInputs] : this.inputs;
-            for (const input of savedInputs) {
-                const contentType = input.contentType;
-                const filterGames = this.filterGames ? (contentType === 'Game') : false;
-                const filterApps = this.filterApps ? (contentType === 'App') : false;
-                const filterSystemApps = this.filterSystemApps ? (contentType === 'systemApp') : false;
-                const filterDlc = this.filterDlc ? (contentType === 'Dlc') : false;
-                const push = this.getInputsFromDevice ? ((!filterGames && !filterApps && !filterSystemApps && !filterDlc) ? filteredInputsArr.push(input) : false) : filteredInputsArr.push(input);
-            }
-
             //check possible inputs count (max 85)
-            const inputs = filteredInputsArr;
-            const inputsCount = inputs.length;
-            const possibleInputsCount = 85 - this.allServices.length;
-            const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
-            for (let i = 0; i < maxInputsCount; i++) {
-                const input = inputs[i];
-                if (!input) continue;
-
-                const inputIdentifier = i + 1;
-                const inputReference = input.reference;
-
-                // Load or fallback to default name
-                const savedName = this.savedInputsNames[inputReference] ?? input.name;
-                input.name = savedName; // Sanitization will be handled later
-
-                // Load visibility state
-                input.visibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-
-                // Add identifier
-                input.identifier = inputIdentifier;
-
-                // Sanitize and create service
-                const sanitizedName = await this.sanitizeString(input.name);
-                const inputService = accessory.addService(Service.InputSource, sanitizedName, `Input ${inputIdentifier}`);
-
-                inputService
-                    .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                    .setCharacteristic(Characteristic.Name, sanitizedName)
-                    .setCharacteristic(Characteristic.ConfiguredName, sanitizedName)
-                    .setCharacteristic(Characteristic.IsConfigured, 1)
-                    .setCharacteristic(Characteristic.InputSourceType, 0)
-                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
-                    .setCharacteristic(Characteristic.TargetVisibilityState, input.visibility);
-
-                inputService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onSet(async (value) => {
-                        try {
-                            input.name = value;
-                            this.savedInputsNames[inputReference] = value;
-                            await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}`);
-                            }
-
-                            const index = this.inputsConfigured.findIndex(i => i.reference === inputReference);
-                            if (index !== -1) this.inputsConfigured[index].name = value;
-
-                            await this.displayOrder();
-                        } catch (error) {
-                            this.emit('warn', `Save Input Name error: ${error}`);
-                        }
-                    });
-
-                inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                    .onSet(async (state) => {
-                        try {
-                            input.visibility = state;
-                            this.savedInputsTargetVisibility[inputReference] = state;
-                            await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-                            }
-                        } catch (error) {
-                            this.emit('warn', `Save Target Visibility error: ${error}`);
-                        }
-                    });
-
-                this.inputsConfigured.push(input);
-                this.televisionService.addLinkedService(inputService);
-                this.allServices.push(inputService);
+            this.inputsServices = [];
+            const inputs = this.getInputsFromDevice ? [...DefaultInputs, ...this.savedInputs] : this.inputs;
+            for (const input of inputs) {
+                await this.addRemoveOrUpdateInput(input, false);
             }
 
             //prepare sensor service
@@ -916,7 +975,6 @@ class XboxDevice extends EventEmitter {
                     accessory.addService(sensorInputService);
                 }
             }
-
 
             //Prepare buttons services
             const possibleButtonsCount = 99 - this.allServices.length;
@@ -999,9 +1057,6 @@ class XboxDevice extends EventEmitter {
                 }
             }
 
-            //sort inputs list
-            await this.displayOrder();
-
             return accessory;
         } catch (error) {
             throw new Error(error)
@@ -1022,15 +1077,15 @@ class XboxDevice extends EventEmitter {
                     enableDebugMode: this.enableDebugMode
                 })
                     .on('consoleStatus', (consoleType) => {
-                        if (this.informationService) {
-                            this.informationService
-                                .setCharacteristic(Characteristic.Model, consoleType)
-                        }
+                        this.informationService?.updateCharacteristic(Characteristic.Model, consoleType)
 
                         //this.serialNumber = id;
                         this.modelName = consoleType;
                         //this.power = powerState;
                         //this.mediaState = playbackState;
+                    })
+                    .on('addRemoveOrUpdateInput', async (input, remove) => {
+                        await this.addRemoveOrUpdateInput(input, remove);
                     })
                     .on('success', (success) => {
                         this.emit('success', success);
@@ -1070,17 +1125,21 @@ class XboxDevice extends EventEmitter {
                 disableLogInfo: this.disableLogInfo,
                 enableDebugMode: this.enableDebugMode
             })
-                .on('deviceInfo', (firmwareRevision, locale) => {
+                .on('deviceInfo', (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
-                    this.emit('devInfo', `Manufacturer: Microsoft`);
-                    this.emit('devInfo', `Model: ${this.modelName ?? 'Xbox'}`);
+                    this.emit('devInfo', `Manufacturer:  ${info.manufacturer}`);
+                    this.emit('devInfo', `Model: ${this.modelName}`);
                     this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
-                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                    this.emit('devInfo', `Locale: ${locale}`);
+                    this.emit('devInfo', `Firmware: ${info.firmwareRevision}`);
+                    this.emit('devInfo', `Locale: ${info.locale}`);
                     this.emit('devInfo', `----------------------------------`);
+
+                    this.informationService?.updateCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision)
                 })
                 .on('stateChanged', (power, volume, mute, mediaState, titleId, reference) => {
-                    const input = this.inputsConfigured.find(input => input.reference === reference || input.titleId === titleId) ?? false;
+                    if (!this.inputsServices) return;
+
+                    const input = this.inputsServices.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
 
                     this.inputIdentifier = inputIdentifier;

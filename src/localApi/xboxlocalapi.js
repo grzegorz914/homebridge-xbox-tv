@@ -554,7 +554,7 @@ class XboxLocalApi extends EventEmitter {
                             const locale = packet.payloadProtected.locale;
                             const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
 
-                            const obj = {
+                            const info = {
                                 manufacturer: 'Microsoft',
                                 modelName: 'Xbox',
                                 serialNumber: this.xboxLiveId,
@@ -563,10 +563,10 @@ class XboxLocalApi extends EventEmitter {
                             };
 
                             //save device info to the file
-                            await this.saveData(this.devInfoFile, obj)
+                            await this.saveData(this.devInfoFile, info)
 
                             //emit device info
-                            this.emit('deviceInfo', firmwareRevision, locale);
+                            this.emit('deviceInfo', info);
                             this.emitDevInfo = false;
                         };
 

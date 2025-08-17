@@ -222,6 +222,8 @@ class XboxWebApi extends EventEmitter {
             const appsArray = [];
             const apps = getInstalledAppsData.data.result;
             for (const app of apps) {
+                if (!app?.name || !app?.aumid) continue;
+
                 const oneStoreProductId = app.oneStoreProductId;
                 const titleId = app.titleId;
                 const aumid = app.aumid;
@@ -239,7 +241,7 @@ class XboxWebApi extends EventEmitter {
                 const updateTime = app.updateTime;
                 const parentId = app.parentId;
 
-                const inputsObj = {
+                const input = {
                     'oneStoreProductId': oneStoreProductId,
                     'titleId': titleId,
                     'reference': aumid,
@@ -247,8 +249,8 @@ class XboxWebApi extends EventEmitter {
                     'name': name,
                     'contentType': contentType
                 }
-                const duplicatedInput = appsArray.some(input => input.reference === aumid);
-                const push = name && aumid && !duplicatedInput ? appsArray.push(inputsObj) : false;
+                appsArray.push(input);
+                this.emit('addRemoveOrUpdateInput', input, false);
             }
 
             //save inputs
