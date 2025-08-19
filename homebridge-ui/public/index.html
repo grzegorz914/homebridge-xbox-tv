@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xbox Homebridge Configuration</title>
+  <title>Xbox Authorization Manager</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 </head>
@@ -34,9 +34,14 @@
           <input id="deviceLiveId" type="password" class="form-control" autocomplete="off" required>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3 position-relative">
           <label for="deviceToken" class="form-label">Web API Token</label>
-          <input id="deviceToken" type="password" class="form-control" autocomplete="off" required>
+          <div class="input-group">
+            <input id="deviceToken" type="password" class="form-control" autocomplete="new-password" required>
+            <button type="button" id="toggleToken" class="btn btn-outline-secondary">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
         </div>
 
         <div class="form-check mb-3">
@@ -52,7 +57,7 @@
       </form>
     </div>
 
-    <div id="consoleButton"></div>
+    <div id="consoleButton" class="text-center mt-3"></div>
   </div>
 
   <script>
@@ -90,8 +95,9 @@
         $('deviceWebApiControl').checked = device.webApiControl || false;
 
         const tokenLength = device.webApiToken?.length || 0;
-        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start authorization" : "Check state";
+        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
         $('deviceWebApiControl').disabled = tokenLength <= 10;
+
         if (tokenLength <= 10) {
           $('deviceWebApiControl').checked = false;
           device.webApiControl = false;
@@ -103,9 +109,9 @@
         const button = document.createElement("button");
         button.type = "button";
         button.id = `button${i}`;
-        button.className = "btn btn-primary";
+        button.className = "btn btn-secondary m-1";
         button.style.textTransform = "none";
-        button.innerText = device.name;
+        button.innerText = device.name || `Device ${i + 1}`;
 
         $("consoleButton").appendChild(button);
 
@@ -132,6 +138,20 @@
         this.configButtonState = !this.configButtonState;
       });
 
+      // Token toggle
+      $("toggleToken").addEventListener("click", () => {
+        const tokenInput = $("deviceToken");
+        const icon = document.querySelector('#toggleToken i');
+
+        if (tokenInput.type === 'password') {
+          tokenInput.type = 'text';
+          icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+          tokenInput.type = 'password';
+          icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+      });
+
       // Update config on form input
       $("configForm").addEventListener("input", async () => {
         const currentDevice = devices[this.deviceIndex];
@@ -142,7 +162,8 @@
         currentDevice.webApiControl = $('deviceWebApiControl').checked;
 
         const tokenLength = currentDevice.webApiToken?.length || 0;
-        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start authorization" : "Check state";
+        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+
         if (tokenLength <= 10) {
           $('startAuthorizationButton').removeAttribute('disabled');
         }
@@ -187,6 +208,7 @@
       // Start authorization logic
       $("startAuthorizationButton").addEventListener("click", async () => {
         homebridge.showSpinner();
+        $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
         $("info").textContent = "Starting authorization...";
         $("info").style.color = "yellow";
 
@@ -204,11 +226,11 @@
             case 0: // Authorized
               $("info").textContent = info;
               $("info").style.color = "green";
-              $("startAuthorizationButton").innerText = "Check state";
+              $("startAuthorizationButton").innerText = "Check State";
               $("deviceWebApiControl").disabled = false;
               break;
             case 1: // Needs user interaction
-              $("startAuthorizationButton").innerText = "Activate console";
+              $("startAuthorizationButton").innerText = "Activate Console";
               $("deviceWebApiControl").checked = false;
               $("deviceWebApiControl").disabled = true;
               device.webApiControl = false;
@@ -230,7 +252,7 @@
             case 2: // Successfully authorized
               $("info").textContent = info;
               $("info").style.color = "green";
-              $("startAuthorizationButton").innerText = "Check state";
+              $("startAuthorizationButton").innerText = "Check State";
               $("deviceWebApiControl").disabled = false;
               $("deviceWebApiControl").checked = true;
               device.webApiControl = true;
@@ -245,9 +267,13 @@
           $("info1").textContent = `Error: ${error}`;
           $("info1").style.color = "red";
         } finally {
+          $("startAuthorizationButton").removeAttribute("disabled"); // odblokowanie przycisku
           homebridge.hideSpinner();
         }
       });
 
     })();
   </script>
+</body>
+
+</html>
