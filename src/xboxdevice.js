@@ -104,7 +104,6 @@ class XboxDevice extends EventEmitter {
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
         //variable
-        this.allServices = [];
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
         this.inputIdentifier = 1;
@@ -483,7 +482,6 @@ class XboxDevice extends EventEmitter {
 
                 this.inputsServices.push(inputService);
                 this.televisionService.addLinkedService(inputService);
-                this.allServices.push(inputService);
 
                 if (this.enableDebugMode) this.emit('debug', `Added new input: ${input.name} (${inputReference})`);
             }
@@ -514,7 +512,6 @@ class XboxDevice extends EventEmitter {
                 .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? this.xboxLiveId)
                 .setCharacteristic(Characteristic.FirmwareRevision, this.savedInfo.firmwareRevision ?? 'Firmware Revision')
                 .setCharacteristic(Characteristic.ConfiguredName, accessoryName);
-            this.allServices.push(this.informationService);
 
             //Prepare television service
             if (this.enableDebugMode) this.emit('debug', `Prepare television service`);
@@ -734,7 +731,6 @@ class XboxDevice extends EventEmitter {
                         this.emit('warn', `set Power Mode Selection error: ${error}`);
                     }
                 });
-            this.allServices.push(this.televisionService);
 
             //Prepare volume service
             if (this.volumeControl > 0) {
@@ -803,7 +799,6 @@ class XboxDevice extends EventEmitter {
                             this.emit('warn', `set Mute error: ${error}`);
                         }
                     });
-                this.allServices.push(this.volumeServiceTvSpeaker);
 
                 //legacy control
                 switch (this.volumeControl) {
@@ -828,7 +823,6 @@ class XboxDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
-                        this.allServices.push(this.volumeServiceLightbulb);
                         break;
                     case 2: //fan
                         const debug1 = this.enableDebugMode ? this.emit('debug', `Prepare volume service fan`) : false;
@@ -851,7 +845,6 @@ class XboxDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
-                        this.allServices.push(this.volumeServiceFan);
                         break;
                     case 3: // speaker
                         const debug2 = this.enableDebugMode ? this.emit('debug', `Prepare volume service speaker`) : false;
@@ -881,7 +874,6 @@ class XboxDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
                             });
-                        this.allServices.push(this.volumeServiceSpeaker);
                         break;
                 }
             }
@@ -907,7 +899,6 @@ class XboxDevice extends EventEmitter {
                         const state = this.power;
                         return state;
                     });
-                this.allServices.push(this.sensorPowerService);
             }
 
             if (this.sensorInput) {
@@ -920,7 +911,6 @@ class XboxDevice extends EventEmitter {
                         const state = this.power ? this.sensorInputState : false;
                         return state;
                     });
-                this.allServices.push(this.sensorInputService);
             }
 
             if (this.sensorScreenSaver) {
@@ -933,11 +923,10 @@ class XboxDevice extends EventEmitter {
                         const state = this.power ? this.sensorScreenSaverState : false;
                         return state;
                     });
-                this.allServices.push(this.sensorScreenSaverService);
             }
 
             //prepare sonsor service
-            const possibleSensorInputsCount = 99 - this.allServices.length;
+            const possibleSensorInputsCount = 99 - this.accessory.services.length.length;
             const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
             if (maxSensorInputsCount > 0) {
                 if (this.enableDebugMode) this.emit('debug', `Prepare inputs sensors services`);
@@ -967,13 +956,12 @@ class XboxDevice extends EventEmitter {
                             return state;
                         });
                     this.sensorsInputsServices.push(sensorInputService);
-                    this.allServices.push(sensorInputService);
                     accessory.addService(sensorInputService);
                 }
             }
 
             //Prepare buttons services
-            const possibleButtonsCount = 99 - this.allServices.length;
+            const possibleButtonsCount = 99 - this.accessory.services.length.length;
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
                 if (this.enableDebugMode) this.emit('debug', `Prepare buttons services`);
@@ -1048,7 +1036,6 @@ class XboxDevice extends EventEmitter {
                             }
                         });
                     this.buttonsServices.push(buttonService);
-                    this.allServices.push(buttonService);
                     accessory.addService(buttonService);
                 }
             }
