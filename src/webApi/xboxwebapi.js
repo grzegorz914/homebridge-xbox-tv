@@ -250,11 +250,13 @@ class XboxWebApi extends EventEmitter {
                     'contentType': contentType
                 }
                 appsArray.push(input);
-                this.emit('addRemoveOrUpdateInput', input, false);
             }
 
             //save inputs
             await this.saveData(this.inputsFile, appsArray);
+
+            //emit apps
+            this.emit('addRemoveOrUpdateInput', appsArray, false);
 
             //emit restFul and mqtt
             this.emit('restFul', 'apps', apps);
