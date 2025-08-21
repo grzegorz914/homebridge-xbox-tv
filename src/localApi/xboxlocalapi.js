@@ -331,322 +331,322 @@ class XboxLocalApi extends EventEmitter {
     //connect
     async connect() {
         try {
-            const socket = Dgram.createSocket(this.udpType);
-            socket.on('error', (error) => {
-                this.emit('error', `Socket error: ${error}`);
-                socket.close();
-            }).on('close', async () => {
-                const debug = this.enableDebugMode ? this.emit('debug', 'Socket closed.') : false;
-                try {
-                    this.isConnected = false;
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                    await this.reconnect();
-                } catch (error) {
-                    this.emit('error', error)
-                };
-            }).on('message', async (message, remote) => {
-                const debug = this.enableDebugMode ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
-                this.heartBeatStartTime = Date.now();
+            const socket = Dgram.createSocket(this.udpType)
+                .on('error', (error) => {
+                    this.emit('error', `Socket error: ${error}`);
+                    socket.close();
+                }).on('close', async () => {
+                    const debug = this.enableDebugMode ? this.emit('debug', 'Socket closed.') : false;
+                    try {
+                        this.isConnected = false;
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                        await this.reconnect();
+                    } catch (error) {
+                        this.emit('error', error)
+                    };
+                }).on('message', async (message, remote) => {
+                    const debug = this.enableDebugMode ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
+                    this.heartBeatStartTime = Date.now();
 
-                //get message type in hex
-                const copiedSlice = Uint8Array.prototype.slice.call(message, 0, 2);
-                const messageTypeHex = Buffer.from(copiedSlice).toString('hex');
-                const debug1 = this.enableDebugMode ? this.emit('debug', `Received message type hex: ${messageTypeHex}`) : false;
+                    //get message type in hex
+                    const copiedSlice = Uint8Array.prototype.slice.call(message, 0, 2);
+                    const messageTypeHex = Buffer.from(copiedSlice).toString('hex');
+                    const debug1 = this.enableDebugMode ? this.emit('debug', `Received message type hex: ${messageTypeHex}`) : false;
 
-                //check message type exist in types
-                const keysTypes = Object.keys(LocalApi.Messages.Types);
-                const keysTypesExist = keysTypes.includes(messageTypeHex);
+                    //check message type exist in types
+                    const keysTypes = Object.keys(LocalApi.Messages.Types);
+                    const keysTypesExist = keysTypes.includes(messageTypeHex);
 
-                if (!keysTypesExist) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Received unknown message type: ${messageTypeHex}`) : false;
-                    return;
-                };
+                    if (!keysTypesExist) {
+                        const debug = this.enableDebugMode ? this.emit('debug', `Received unknown message type: ${messageTypeHex}`) : false;
+                        return;
+                    };
 
-                //get message type and request
-                const messageType = LocalApi.Messages.Types[messageTypeHex];
-                const messageRequest = LocalApi.Messages.Requests[messageTypeHex];
-                const debug2 = this.enableDebugMode ? this.emit('debug', `Received message type: ${messageType}, request: ${messageRequest}`) : false;
+                    //get message type and request
+                    const messageType = LocalApi.Messages.Types[messageTypeHex];
+                    const messageRequest = LocalApi.Messages.Requests[messageTypeHex];
+                    const debug2 = this.enableDebugMode ? this.emit('debug', `Received message type: ${messageType}, request: ${messageRequest}`) : false;
 
-                let packeStructure;
-                switch (messageType) {
-                    case 'simple':
-                        packeStructure = new SimplePacket(messageRequest);
-                        break;
-                    case 'message':
-                        packeStructure = new MessagePacket(messageRequest);
-                        break;
-                };
+                    let packeStructure;
+                    switch (messageType) {
+                        case 'simple':
+                            packeStructure = new SimplePacket(messageRequest);
+                            break;
+                        case 'message':
+                            packeStructure = new MessagePacket(messageRequest);
+                            break;
+                    };
 
-                let packet = packeStructure.unpack(this.crypto, message);
-                const type = packet.type;
-                const debug3 = this.enableDebugMode ? this.emit('debug', `Received type: ${type}`) : false;
-                const debug4 = this.enableDebugMode ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
+                    let packet = packeStructure.unpack(this.crypto, message);
+                    const type = packet.type;
+                    const debug3 = this.enableDebugMode ? this.emit('debug', `Received type: ${type}`) : false;
+                    const debug4 = this.enableDebugMode ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
 
-                if (messageType === 'message' && packet.targetParticipantId !== this.sourceParticipantId) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet`) : false;
-                    return;
-                };
+                    if (messageType === 'message' && packet.targetParticipantId !== this.sourceParticipantId) {
+                        const debug = this.enableDebugMode ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet`) : false;
+                        return;
+                    };
 
-                switch (type) {
-                    case 'json':
-                        // Object to hold fragments
-                        const fragments = {};
-                        const jsonMessage = JSON.parse(packet.payloadProtected.json);
-                        const datagramId = jsonMessage.datagramId;
+                    switch (type) {
+                        case 'json':
+                            // Object to hold fragments
+                            const fragments = {};
+                            const jsonMessage = JSON.parse(packet.payloadProtected.json);
+                            const datagramId = jsonMessage.datagramId;
 
-                        // Check if JSON is fragmented
-                        if (datagramId) {
-                            const debug = this.enableDebugMode ? this.emit('debug', `JSON message datagram Id: ${datagramId}`) : false;
+                            // Check if JSON is fragmented
+                            if (datagramId) {
+                                const debug = this.enableDebugMode ? this.emit('debug', `JSON message datagram Id: ${datagramId}`) : false;
 
-                            // Initialize fragment store if not present
-                            if (!fragments[datagramId]) {
-                                fragments[datagramId] = {
-                                    partials: {},
+                                // Initialize fragment store if not present
+                                if (!fragments[datagramId]) {
+                                    fragments[datagramId] = {
+                                        partials: {},
 
-                                    getValue() {
-                                        const buffers = Object.keys(this.partials)
-                                            .sort((a, b) => a - b) // Ensure correct ordering
-                                            .map(offset => Buffer.from(this.partials[offset], 'base64'));
+                                        getValue() {
+                                            const buffers = Object.keys(this.partials)
+                                                .sort((a, b) => a - b) // Ensure correct ordering
+                                                .map(offset => Buffer.from(this.partials[offset], 'base64'));
 
-                                        return Buffer.concat(buffers);
-                                    },
+                                            return Buffer.concat(buffers);
+                                        },
 
-                                    isValid() {
-                                        try {
-                                            JSON.parse(this.getValue().toString()); // Ensure valid JSON
-                                            return true;
-                                        } catch (error) {
-                                            this.emit('error', `Invalid fragments: ${error.message}`);
-                                            return false;
+                                        isValid() {
+                                            try {
+                                                JSON.parse(this.getValue().toString()); // Ensure valid JSON
+                                                return true;
+                                            } catch (error) {
+                                                this.emit('error', `Invalid fragments: ${error.message}`);
+                                                return false;
+                                            }
                                         }
-                                    }
-                                };
+                                    };
+                                }
+
+                                // Store fragment
+                                fragments[datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
+
+                                // If all fragments are valid, reconstruct and replace the original JSON
+                                if (fragments[datagramId].isValid()) {
+                                    packet.payloadProtected.json = fragments[datagramId].getValue().toString();
+                                    const debug = this.enableDebugMode ? this.emit('debug', `Reassembled JSON: ${packet.payloadProtected.json}`) : false;
+
+                                    // Delete after reconstruction
+                                    delete fragments[datagramId];
+                                }
                             }
+                            break;
+                        case 'discoveryResponse':
+                            const deviceType = packet.clientType;
+                            const deviceName = packet.name;
+                            const certificate = packet.certificate;
+                            const debug = this.enableDebugMode ? this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType]}, name: ${deviceName}`) : false;
 
-                            // Store fragment
-                            fragments[datagramId].partials[jsonMessage.fragmentOffset] = jsonMessage.fragmentData;
-
-                            // If all fragments are valid, reconstruct and replace the original JSON
-                            if (fragments[datagramId].isValid()) {
-                                packet.payloadProtected.json = fragments[datagramId].getValue().toString();
-                                const debug = this.enableDebugMode ? this.emit('debug', `Reassembled JSON: ${packet.payloadProtected.json}`) : false;
-
-                                // Delete after reconstruction
-                                delete fragments[datagramId];
-                            }
-                        }
-                        break;
-                    case 'discoveryResponse':
-                        const deviceType = packet.clientType;
-                        const deviceName = packet.name;
-                        const certificate = packet.certificate;
-                        const debug = this.enableDebugMode ? this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType]}, name: ${deviceName}`) : false;
-
-                        try {
-                            // Sign public key
-                            const data = await this.crypto.getPublicKey(certificate);
-                            const debug = this.enableDebugMode ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
-
-                            // Connect request
-                            if (!this.isConnected) {
-                                try {
-                                    const connectRequest = new SimplePacket('connectRequest');
-                                    connectRequest.set('uuid', Buffer.from(UuIdParse(UuIdv4())));
-                                    connectRequest.set('publicKey', data.publicKey);
-                                    connectRequest.set('iv', data.iv);
-
-                                    const response = await this.readData(this.tokensFile);
-                                    const parseTokenData = JSON.parse(response);
-                                    const tokenData = parseTokenData?.xsts?.Token?.trim() || null;
-                                    if (tokenData) {
-                                        connectRequest.set('userHash', parseTokenData.xsts.DisplayClaims?.xui?.[0]?.uhs || '', true);
-                                        connectRequest.set('jwt', parseTokenData.xsts.Token, true);
-                                        this.isAuthorized = true;
-                                    }
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`) : false;
-
-                                    const message = connectRequest.pack(this.crypto);
-                                    await this.sendSocketMessage(message, 'connectRequest');
-                                } catch (error) {
-                                    this.emit('error', `Send connect request error: ${error}`)
-                                };
-                            };
-                        } catch (error) {
-                            this.emit('error', `Sign certificate error: ${error}`)
-                        };
-                        break;
-                    case 'connectResponse':
-                        const connectionResult = packet.payloadProtected.connectResult;
-                        const pairingState = packet.payloadProtected.pairingState;
-                        const sourceParticipantId = packet.payloadProtected.participantId;
-                        if (connectionResult !== 0) {
-                            const errorTable = {
-                                0: 'Success.',
-                                1: 'Pending login. Reconnect to complete.',
-                                2: 'Unknown.',
-                                3: 'Anonymous connections disabled.',
-                                4: 'Device limit exceeded.',
-                                5: 'Remote connect is disabled on the console.',
-                                6: 'User authentication failed.',
-                                7: 'User Sign-In failed.',
-                                8: 'User Sign-In timeout.',
-                                9: 'User Sign-In required.'
-                            };
-                            this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
-                            return;
-                        }
-                        this.isConnected = true;
-                        this.sourceParticipantId = sourceParticipantId;
-                        const debug1 = this.enableDebugMode ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}`) : false;
-                        const debug2 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}`) : false;
-
-                        try {
-                            const localJoin = new MessagePacket('localJoin');
-                            const sequenceNumber = await this.getSequenceNumber();
-                            const localJointMessage = localJoin.pack(this.crypto, sequenceNumber, sourceParticipantId);
-                            await this.sendSocketMessage(localJointMessage, 'localJoin');
-
-                            // Open channels
                             try {
-                                const channelNames = ['Input', 'TvRemote', 'Media'];
-                                for (const channelName of channelNames) {
-                                    const channelRequestId = LocalApi.Channels.System[channelName].Id
-                                    const service = LocalApi.Channels.System[channelName].Uuid
-                                    //await this.channelOpen(channelRequestId, service);
+                                // Sign public key
+                                const data = await this.crypto.getPublicKey(certificate);
+                                const debug = this.enableDebugMode ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
+
+                                // Connect request
+                                if (!this.isConnected) {
+                                    try {
+                                        const connectRequest = new SimplePacket('connectRequest');
+                                        connectRequest.set('uuid', Buffer.from(UuIdParse(UuIdv4())));
+                                        connectRequest.set('publicKey', data.publicKey);
+                                        connectRequest.set('iv', data.iv);
+
+                                        const response = await this.readData(this.tokensFile);
+                                        const parseTokenData = JSON.parse(response);
+                                        const tokenData = parseTokenData?.xsts?.Token?.trim() || null;
+                                        if (tokenData) {
+                                            connectRequest.set('userHash', parseTokenData.xsts.DisplayClaims?.xui?.[0]?.uhs || '', true);
+                                            connectRequest.set('jwt', parseTokenData.xsts.Token, true);
+                                            this.isAuthorized = true;
+                                        }
+                                        const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`) : false;
+
+                                        const message = connectRequest.pack(this.crypto);
+                                        await this.sendSocketMessage(message, 'connectRequest');
+                                    } catch (error) {
+                                        this.emit('error', `Send connect request error: ${error}`)
+                                    };
                                 };
                             } catch (error) {
-                                this.emit('error', `Channel open error: ${error}`)
+                                this.emit('error', `Sign certificate error: ${error}`)
                             };
-                        } catch (error) {
-                            this.emit('error', `Send local join error: ${error}`)
-                        };
-                        break;
-                    case 'acknowledge':
-                        const needAck = packet.flags.needAck;
-                        if (!needAck) {
+                            break;
+                        case 'connectResponse':
+                            const connectionResult = packet.payloadProtected.connectResult;
+                            const pairingState = packet.payloadProtected.pairingState;
+                            const sourceParticipantId = packet.payloadProtected.participantId;
+                            if (connectionResult !== 0) {
+                                const errorTable = {
+                                    0: 'Success.',
+                                    1: 'Pending login. Reconnect to complete.',
+                                    2: 'Unknown.',
+                                    3: 'Anonymous connections disabled.',
+                                    4: 'Device limit exceeded.',
+                                    5: 'Remote connect is disabled on the console.',
+                                    6: 'User authentication failed.',
+                                    7: 'User Sign-In failed.',
+                                    8: 'User Sign-In timeout.',
+                                    9: 'User Sign-In required.'
+                                };
+                                this.emit('error', `Connect error: ${errorTable[connectionResult]}`);
+                                return;
+                            }
+                            this.isConnected = true;
+                            this.sourceParticipantId = sourceParticipantId;
+                            const debug1 = this.enableDebugMode ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}`) : false;
+                            const debug2 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}`) : false;
+
+                            try {
+                                const localJoin = new MessagePacket('localJoin');
+                                const sequenceNumber = await this.getSequenceNumber();
+                                const localJointMessage = localJoin.pack(this.crypto, sequenceNumber, sourceParticipantId);
+                                await this.sendSocketMessage(localJointMessage, 'localJoin');
+
+                                // Open channels
+                                try {
+                                    const channelNames = ['Input', 'TvRemote', 'Media'];
+                                    for (const channelName of channelNames) {
+                                        const channelRequestId = LocalApi.Channels.System[channelName].Id
+                                        const service = LocalApi.Channels.System[channelName].Uuid
+                                        //await this.channelOpen(channelRequestId, service);
+                                    };
+                                } catch (error) {
+                                    this.emit('error', `Channel open error: ${error}`)
+                                };
+                            } catch (error) {
+                                this.emit('error', `Send local join error: ${error}`)
+                            };
+                            break;
+                        case 'acknowledge':
+                            const needAck = packet.flags.needAck;
+                            if (!needAck) {
+                                return;
+                            };
+
+                            try {
+                                const sequenceNumber = packet.sequenceNumber;
+                                const acknowledge = new MessagePacket('acknowledge');
+                                acknowledge.set('lowWatermark', sequenceNumber);
+                                acknowledge.packet.processedList.value.push({ id: sequenceNumber });
+                                const sequenceNumber1 = await this.getSequenceNumber();
+                                const message = acknowledge.pack(this.crypto, sequenceNumber1, this.sourceParticipantId);
+                                await this.sendSocketMessage(message, 'acknowledge');
+                            } catch (error) {
+                                this.emit('error', `Send acknowledge error: ${error}`)
+                            };
+                            break;
+                        case 'consoleStatus':
+                            if (!packet.payloadProtected) {
+                                return;
+                            };
+
+                            if (this.emitDevInfo) {
+                                //connect to deice success
+                                this.emit('success', `Connect Success`)
+
+                                const majorVersion = packet.payloadProtected.majorVersion;
+                                const minorVersion = packet.payloadProtected.minorVersion;
+                                const buildNumber = packet.payloadProtected.buildNumber;
+                                const locale = packet.payloadProtected.locale;
+                                const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
+
+                                const info = {
+                                    manufacturer: 'Microsoft',
+                                    modelName: 'Xbox',
+                                    serialNumber: this.xboxLiveId,
+                                    firmwareRevision: firmwareRevision,
+                                    locale: locale
+                                };
+
+                                //save device info to the file
+                                await this.saveData(this.devInfoFile, info)
+
+                                //emit device info
+                                this.emit('deviceInfo', info);
+                                this.emitDevInfo = false;
+                            };
+
+                            const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
+                            if (appsCount > 0) {
+                                const power = true;
+                                const volume = 0;
+                                const mute = power ? power : true;
+                                const mediaState = 2;
+                                const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[0].titleId : packet.payloadProtected.activeTitles[0].titleId;
+                                const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[0].aumId : packet.payloadProtected.activeTitles[0].aumId;
+
+                                this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
+                                const debug = this.enableDebugMode ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
+
+                                //emit restFul and mqtt
+                                const obj = {
+                                    'power': power,
+                                    'titleId': titleId,
+                                    'app': reference,
+                                    'volume': volume,
+                                    'mute': mute,
+                                    'mediaState': mediaState,
+                                };
+                                this.emit('restFul', 'state', obj);
+                                this.emit('mqtt', 'State', obj);
+                            };
+
+                            //acknowledge
+                            try {
+                                const acknowledge = packet.flags.needAck ? await this.acknowledge(packet.sequenceNumber) : false;
+                            } catch (error) {
+                                this.emit('error', `Acknowledge error: ${error}`)
+                            };
+                            break;
+                        case 'mediaState':
+
+                            break;
+                        case 'mediaCommandResult':
+
+                            break;
+                        case 'channelStartResponse':
+                            const requestIdMatch = this.channelRequestId === packet.payloadProtected.channelRequestId;
+                            const channelState = requestIdMatch ? packet.payloadProtected.result === 0 : false;
+                            const debug5 = this.enableDebugMode ? this.emit('debug', `channelState: ${channelState}`) : false;
+                            const channelCommunicationId = channelState && packet.payloadProtected.channelTargetId ? packet.payloadProtected.channelTargetId : -1;
+                            const debug6 = this.enableDebugMode ? this.emit('debug', `channelCommunicationId: ${packet.payloadProtected.channelTargetId}`) : false;
+                            const channel = {
+                                id: channelCommunicationId,
+                                open: channelState
+                            }
+                            const pushChannel = channelCommunicationId !== -1 ? this.channels.push(channel) : false;
+                            const debug3 = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}`) : false;
+                            break;
+                        case 'pairedIdentityStateChanged':
+                            const pairingState1 = packet.payloadProtected.pairingState || 0;
+                            const debug4 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`) : false;
+                            break;
+                    };
+                }).on('listening', async () => {
+                    //socket.setBroadcast(true);
+                    const address = socket.address();
+                    const debug = this.enableDebugMode ? this.emit('debug', `Server start listening: ${address.address}:${address.port}`) : false;
+                    this.socket = socket;
+                    this.emitDevInfo = true;
+
+                    if (!this.isConnected) {
+                        const debug = this.enableDebugMode ? this.emit('debug', `Plugin send heartbeat to console`) : false;
+                        const state = await Ping.promise.probe(this.host, { timeout: 3 });
+
+                        if (!state.alive || this.isConnected) {
                             return;
-                        };
-
-                        try {
-                            const sequenceNumber = packet.sequenceNumber;
-                            const acknowledge = new MessagePacket('acknowledge');
-                            acknowledge.set('lowWatermark', sequenceNumber);
-                            acknowledge.packet.processedList.value.push({ id: sequenceNumber });
-                            const sequenceNumber1 = await this.getSequenceNumber();
-                            const message = acknowledge.pack(this.crypto, sequenceNumber1, this.sourceParticipantId);
-                            await this.sendSocketMessage(message, 'acknowledge');
-                        } catch (error) {
-                            this.emit('error', `Send acknowledge error: ${error}`)
-                        };
-                        break;
-                    case 'consoleStatus':
-                        if (!packet.payloadProtected) {
-                            return;
-                        };
-
-                        if (this.emitDevInfo) {
-                            //connect to deice success
-                            this.emit('success', `Connect Success`)
-
-                            const majorVersion = packet.payloadProtected.majorVersion;
-                            const minorVersion = packet.payloadProtected.minorVersion;
-                            const buildNumber = packet.payloadProtected.buildNumber;
-                            const locale = packet.payloadProtected.locale;
-                            const firmwareRevision = `${majorVersion}.${minorVersion}.${buildNumber}`;
-
-                            const info = {
-                                manufacturer: 'Microsoft',
-                                modelName: 'Xbox',
-                                serialNumber: this.xboxLiveId,
-                                firmwareRevision: firmwareRevision,
-                                locale: locale
-                            };
-
-                            //save device info to the file
-                            await this.saveData(this.devInfoFile, info)
-
-                            //emit device info
-                            this.emit('deviceInfo', info);
-                            this.emitDevInfo = false;
-                        };
-
-                        const appsCount = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles.length : 0;
-                        if (appsCount > 0) {
-                            const power = true;
-                            const volume = 0;
-                            const mute = power ? power : true;
-                            const mediaState = 2;
-                            const titleId = appsCount === 2 ? packet.payloadProtected.activeTitles[0].titleId : packet.payloadProtected.activeTitles[0].titleId;
-                            const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[0].aumId : packet.payloadProtected.activeTitles[0].aumId;
-
-                            this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
-                            const debug = this.enableDebugMode ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
-
-                            //emit restFul and mqtt
-                            const obj = {
-                                'power': power,
-                                'titleId': titleId,
-                                'app': reference,
-                                'volume': volume,
-                                'mute': mute,
-                                'mediaState': mediaState,
-                            };
-                            this.emit('restFul', 'state', obj);
-                            this.emit('mqtt', 'State', obj);
-                        };
-
-                        //acknowledge
-                        try {
-                            const acknowledge = packet.flags.needAck ? await this.acknowledge(packet.sequenceNumber) : false;
-                        } catch (error) {
-                            this.emit('error', `Acknowledge error: ${error}`)
-                        };
-                        break;
-                    case 'mediaState':
-
-                        break;
-                    case 'mediaCommandResult':
-
-                        break;
-                    case 'channelStartResponse':
-                        const requestIdMatch = this.channelRequestId === packet.payloadProtected.channelRequestId;
-                        const channelState = requestIdMatch ? packet.payloadProtected.result === 0 : false;
-                        const debug5 = this.enableDebugMode ? this.emit('debug', `channelState: ${channelState}`) : false;
-                        const channelCommunicationId = channelState && packet.payloadProtected.channelTargetId ? packet.payloadProtected.channelTargetId : -1;
-                        const debug6 = this.enableDebugMode ? this.emit('debug', `channelCommunicationId: ${packet.payloadProtected.channelTargetId}`) : false;
-                        const channel = {
-                            id: channelCommunicationId,
-                            open: channelState
                         }
-                        const pushChannel = channelCommunicationId !== -1 ? this.channels.push(channel) : false;
-                        const debug3 = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}`) : false;
-                        break;
-                    case 'pairedIdentityStateChanged':
-                        const pairingState1 = packet.payloadProtected.pairingState || 0;
-                        const debug4 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`) : false;
-                        break;
-                };
-            }).on('listening', async () => {
-                //socket.setBroadcast(true);
-                const address = socket.address();
-                const debug = this.enableDebugMode ? this.emit('debug', `Server start listening: ${address.address}:${address.port}`) : false;
-                this.socket = socket;
-                this.emitDevInfo = true;
 
-                if (!this.isConnected) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Plugin send heartbeat to console`) : false;
-                    const state = await Ping.promise.probe(this.host, { timeout: 3 });
-
-                    if (!state.alive || this.isConnected) {
-                        return;
+                        const debug1 = this.enableDebugMode ? this.emit('debug', `Plugin received heartbeat from console`) : false
+                        const discoveryRequest = new SimplePacket('discoveryRequest');
+                        const message = discoveryRequest.pack(this.crypto);
+                        await this.sendSocketMessage(message, 'discoveryRequest');
                     }
-
-                    const debug1 = this.enableDebugMode ? this.emit('debug', `Plugin received heartbeat from console`) : false
-                    const discoveryRequest = new SimplePacket('discoveryRequest');
-                    const message = discoveryRequest.pack(this.crypto);
-                    await this.sendSocketMessage(message, 'discoveryRequest');
-                }
-            }).bind();
+                }).bind();
 
             await new Promise(resolve => setTimeout(resolve, 1500));
             return true;

@@ -367,15 +367,16 @@ class XboxDevice extends EventEmitter {
             if (!this.inputsServices) return;
 
             for (const input of inputs) {
+                if (this.inputsServices.length >= 85 && !remove) continue;
+
+                // --- FILTER APPS ---
+                const inputReference = input.reference;
                 const contentType = input.contentType;
                 const filterGames = this.filterGames && contentType === 'Game';
                 const filterApps = this.filterApps && contentType === 'App';
                 const filterSystemApps = this.filterSystemApps && contentType === 'systemApp';
                 const filterDlc = this.filterDlc && contentType === 'Dlc';
-
-                if ((this.inputsServices.length >= 85 && !remove) || filterGames || filterApps || filterSystemApps || filterDlc) continue;
-
-                const inputReference = input.reference;
+                if (filterGames || filterApps || filterSystemApps || filterDlc) continue;
 
                 // --- REMOVE ---
                 if (remove) {
@@ -394,23 +395,22 @@ class XboxDevice extends EventEmitter {
                 // --- ADD OR UPDATE ---
                 let inputService = this.inputsServices.find(s => s.reference === inputReference);
 
-                const savedName = this.savedInputsNames[inputReference] ?? input.name;
+                const inputName = input.name;
+                const savedName = this.savedInputsNames[inputReference] ?? inputName;
                 const sanitizedName = await this.sanitizeString(savedName);
                 const inputMode = input.mode ?? 0;
                 const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
                 if (inputService) {
+                    if (inputService.name === inputName) return;
+
                     // === UPDATE EXISTING ===
                     inputService.name = sanitizedName;
-                    inputService.visibility = inputVisibility;
-
                     inputService
                         .updateCharacteristic(Characteristic.Name, sanitizedName)
                         .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName)
-                        .updateCharacteristic(Characteristic.TargetVisibilityState, inputVisibility)
-                        .updateCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility);
 
-                    if (this.enableDebugMode) this.emit('debug', `Updated input: ${input.name} (${inputReference})`);
+                    if (this.enableDebugMode) this.emit('debug', `Updated input: ${inputName} (${inputReference})`);
                 } else {
                     // === CREATE NEW ===
                     const identifier = this.inputsServices.length + 1;
@@ -420,7 +420,7 @@ class XboxDevice extends EventEmitter {
                     Object.assign(inputService, {
                         identifier,
                         reference: inputReference,
-                        name: sanitizedName,
+                        name: inputName,
                         mode: inputMode,
                         visibility: inputVisibility,
                     });
@@ -470,7 +470,7 @@ class XboxDevice extends EventEmitter {
                     this.inputsServices.push(inputService);
                     this.televisionService.addLinkedService(inputService);
 
-                    if (this.enableDebugMode) this.emit('debug', `Added new input: ${input.name} (${inputReference})`);
+                    if (this.enableDebugMode) this.emit('debug', `Added new input: ${inputName} (${inputReference})`);
                 }
             }
 

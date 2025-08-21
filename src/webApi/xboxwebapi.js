@@ -219,7 +219,7 @@ class XboxWebApi extends EventEmitter {
             const debug = this.enableDebugMode ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
 
             //get installed apps
-            const appsArray = [];
+            const inputs = [];
             const apps = getInstalledAppsData.data.result;
             for (const app of apps) {
                 if (!app?.name || !app?.aumid) continue;
@@ -249,14 +249,14 @@ class XboxWebApi extends EventEmitter {
                     'name': name,
                     'contentType': contentType
                 }
-                appsArray.push(input);
+                inputs.push(input);
             }
 
             //save inputs
-            await this.saveData(this.inputsFile, appsArray);
+            await this.saveData(this.inputsFile, inputs);
 
             //emit apps
-            this.emit('addRemoveOrUpdateInput', appsArray, false);
+            this.emit('addRemoveOrUpdateInput', inputs, false);
 
             //emit restFul and mqtt
             this.emit('restFul', 'apps', apps);

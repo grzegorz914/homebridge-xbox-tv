@@ -9,271 +9,265 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 </head>
 
-<body>
-
-  <div class="container mt-4">
-    <div class="text-center">
-      <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
-    </div>
-
-    <div id="authorizationManager" class="card card-body mt-3">
-      <form id="configForm">
-        <div class="text-center">
-          <label id="deviceName" class="fw-bold" style="font-size: 23px;">Xbox</label><br>
-          <label id="info" class="d-block" style="font-size: 17px;"></label>
-          <label id="info1" class="d-block" style="font-size: 15px;"></label>
-        </div>
-
-        <div class="mb-3">
-          <label for="deviceHost" class="form-label">Host</label>
-          <input id="deviceHost" type="text" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-          <label for="deviceLiveId" class="form-label">Xbox Live ID</label>
-          <input id="deviceLiveId" type="password" class="form-control" autocomplete="off" required>
-        </div>
-
-        <div class="mb-3 position-relative">
-          <label for="deviceToken" class="form-label">Web API Token</label>
-          <div class="input-group">
-            <input id="deviceToken" type="password" class="form-control" autocomplete="new-password" required>
-            <button type="button" id="toggleToken" class="btn btn-outline-secondary">
-              <i class="fas fa-eye"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-check mb-3">
-          <input id="deviceWebApiControl" type="checkbox" class="form-check-input">
-          <label for="deviceWebApiControl" class="form-check-label">Web API Control</label>
-        </div>
-
-        <div class="text-center">
-          <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start Authorization</button>
-          <button id="clearTokenButton" type="button" class="btn btn-secondary">Clear Web API Token</button>
-          <button id="configButton" type="button" class="btn btn-secondary"><i class="fas fa-gear"></i></button>
-        </div>
-      </form>
-    </div>
-
-    <div id="consoleButton" class="text-center mt-3"></div>
+<div class="container mt-4">
+  <div class="text-center">
+    <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
   </div>
 
-  <script>
-    (async () => {
-      const pluginConfig = await homebridge.getPluginConfig();
+  <div id="authorizationManager" class="card card-body mt-3">
+    <form id="configForm">
+      <div class="text-center">
+        <label id="deviceName" class="fw-bold" style="font-size: 23px;">Xbox</label><br>
+        <label id="info" class="d-block" style="font-size: 17px;"></label>
+        <label id="info1" class="d-block" style="font-size: 15px;"></label>
+      </div>
 
-      if (!pluginConfig.length) {
-        pluginConfig.push({});
-        await homebridge.updatePluginConfig(pluginConfig);
-        homebridge.showSchemaForm();
-        return;
+      <div class="mb-3">
+        <label for="deviceHost" class="form-label">Host</label>
+        <input id="deviceHost" type="text" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="deviceLiveId" class="form-label">Xbox Live ID</label>
+        <input id="deviceLiveId" type="password" class="form-control" autocomplete="off" required>
+      </div>
+
+      <div class="mb-3 position-relative">
+        <label for="deviceToken" class="form-label">Web API Token</label>
+        <div class="input-group">
+          <input id="deviceToken" type="password" class="form-control" autocomplete="new-password" required>
+          <button type="button" id="toggleToken" class="btn btn-outline-secondary">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-check mb-3">
+        <input id="deviceWebApiControl" type="checkbox" class="form-check-input">
+        <label for="deviceWebApiControl" class="form-check-label">Web API Control</label>
+      </div>
+
+      <div class="text-center">
+        <button id="startAuthorizationButton" type="button" class="btn btn-primary">Start Authorization</button>
+        <button id="clearTokenButton" type="button" class="btn btn-secondary">Clear Web API Token</button>
+        <button id="configButton" type="button" class="btn btn-secondary"><i class="fas fa-gear"></i></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="consoleButton" class="text-center mt-3"></div>
+</div>
+
+<script>
+  (async () => {
+    const pluginConfig = await homebridge.getPluginConfig();
+
+    if (!pluginConfig.length) {
+      pluginConfig.push({});
+      await homebridge.updatePluginConfig(pluginConfig);
+      homebridge.showSchemaForm();
+      return;
+    }
+
+    this.configButtonState = false;
+    this.deviceIndex = 0;
+    const devices = pluginConfig[0].devices || [];
+    const devicesCount = devices.length;
+
+    // Helper to get DOM elements
+    const $ = id => document.getElementById(id);
+
+    // Helper to set button classes
+    const setButtonClass = (activeIndex) => {
+      for (let j = 0; j < devicesCount; j++) {
+        $(`button${j}`).className = j === activeIndex ? "btn btn-primary" : "btn btn-secondary";
+      }
+    };
+
+    // Helper to update the device form
+    const updateDeviceForm = (device) => {
+      $('deviceName').innerHTML = device.name || '';
+      $('deviceHost').value = device.host || '';
+      $('deviceLiveId').value = device.xboxLiveId || '';
+      $('deviceToken').value = device.webApiToken || '';
+      $('deviceWebApiControl').checked = device.webApiControl || false;
+
+      const tokenLength = device.webApiToken?.length || 0;
+      $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+      $('deviceWebApiControl').disabled = tokenLength <= 10;
+
+      if (tokenLength <= 10) {
+        $('deviceWebApiControl').checked = false;
+        device.webApiControl = false;
+      }
+    };
+
+    // Create buttons for each device
+    devices.forEach((device, i) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.id = `button${i}`;
+      button.className = "btn btn-secondary m-1";
+      button.style.textTransform = "none";
+      button.innerText = device.name || `Device ${i + 1}`;
+
+      $("consoleButton").appendChild(button);
+
+      button.addEventListener("click", async () => {
+        setButtonClass(i);
+        updateDeviceForm(devices[i]);
+        this.deviceIndex = i;
+      });
+
+      // Auto-select the first device
+      if (i === devicesCount - 1) {
+        $("button0").click();
+      }
+    });
+
+    // Show the authorization form
+    $("authorizationManager").style.display = "block";
+
+    // Config button toggle
+    $("configButton").addEventListener("click", () => {
+      this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
+      $("configButton").className = this.configButtonState ? "btn btn-secondary" : "btn btn-primary";
+      this.configButtonState = !this.configButtonState;
+    });
+
+    // Token toggle
+    $("toggleToken").addEventListener("click", () => {
+      const tokenInput = $("deviceToken");
+      const icon = document.querySelector('#toggleToken i');
+
+      if (tokenInput.type === 'password') {
+        tokenInput.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        tokenInput.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+
+    // Update config on form input
+    $("configForm").addEventListener("input", async () => {
+      const currentDevice = devices[this.deviceIndex];
+
+      currentDevice.host = $('deviceHost').value;
+      currentDevice.xboxLiveId = $('deviceLiveId').value;
+      currentDevice.webApiToken = $('deviceToken').value;
+      currentDevice.webApiControl = $('deviceWebApiControl').checked;
+
+      const tokenLength = currentDevice.webApiToken?.length || 0;
+      $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+
+      if (tokenLength <= 10) {
+        $('startAuthorizationButton').removeAttribute('disabled');
       }
 
-      this.configButtonState = false;
-      this.deviceIndex = 0;
-      const devices = pluginConfig[0].devices || [];
-      const devicesCount = devices.length;
+      await homebridge.updatePluginConfig(pluginConfig);
+      await homebridge.savePluginConfig(pluginConfig);
+    });
 
-      // Helper to get DOM elements
-      const $ = id => document.getElementById(id);
+    // Clear token button logic
+    $("clearTokenButton").addEventListener("click", async () => {
+      homebridge.showSpinner();
+      $("info").textContent = "Start clearing token...";
+      $("info").style.color = "yellow";
 
-      // Helper to set button classes
-      const setButtonClass = (activeIndex) => {
-        for (let j = 0; j < devicesCount; j++) {
-          $(`button${j}`).className = j === activeIndex ? "btn btn-primary" : "btn btn-secondary";
-        }
-      };
+      try {
+        const host = devices[this.deviceIndex].host;
+        await homebridge.request('/clearToken', { host });
 
-      // Helper to update the device form
-      const updateDeviceForm = (device) => {
-        $('deviceName').innerHTML = device.name || '';
-        $('deviceHost').value = device.host || '';
-        $('deviceLiveId').value = device.xboxLiveId || '';
-        $('deviceToken').value = device.webApiToken || '';
-        $('deviceWebApiControl').checked = device.webApiControl || false;
-
-        const tokenLength = device.webApiToken?.length || 0;
-        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
-        $('deviceWebApiControl').disabled = tokenLength <= 10;
-
-        if (tokenLength <= 10) {
-          $('deviceWebApiControl').checked = false;
-          device.webApiControl = false;
-        }
-      };
-
-      // Create buttons for each device
-      devices.forEach((device, i) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.id = `button${i}`;
-        button.className = "btn btn-secondary m-1";
-        button.style.textTransform = "none";
-        button.innerText = device.name || `Device ${i + 1}`;
-
-        $("consoleButton").appendChild(button);
-
-        button.addEventListener("click", async () => {
-          setButtonClass(i);
-          updateDeviceForm(devices[i]);
-          this.deviceIndex = i;
-          await homebridge.updatePluginConfig(pluginConfig);
+        Object.assign(devices[this.deviceIndex], {
+          webApiToken: '',
+          webApiControl: false
         });
 
-        // Auto-select the first device
-        if (i === devicesCount - 1) {
-          $("button0").click();
-        }
-      });
+        updateDeviceForm(devices[this.deviceIndex]);
 
-      // Show the authorization form
-      $("authorizationManager").style.display = "block";
-
-      // Config button toggle
-      $("configButton").addEventListener("click", () => {
-        this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
-        $("configButton").className = this.configButtonState ? "btn btn-secondary" : "btn btn-primary";
-        this.configButtonState = !this.configButtonState;
-      });
-
-      // Token toggle
-      $("toggleToken").addEventListener("click", () => {
-        const tokenInput = $("deviceToken");
-        const icon = document.querySelector('#toggleToken i');
-
-        if (tokenInput.type === 'password') {
-          tokenInput.type = 'text';
-          icon.classList.replace('fa-eye', 'fa-eye-slash');
-        } else {
-          tokenInput.type = 'password';
-          icon.classList.replace('fa-eye-slash', 'fa-eye');
-        }
-      });
-
-      // Update config on form input
-      $("configForm").addEventListener("input", async () => {
-        const currentDevice = devices[this.deviceIndex];
-
-        currentDevice.host = $('deviceHost').value;
-        currentDevice.xboxLiveId = $('deviceLiveId').value;
-        currentDevice.webApiToken = $('deviceToken').value;
-        currentDevice.webApiControl = $('deviceWebApiControl').checked;
-
-        const tokenLength = currentDevice.webApiToken?.length || 0;
-        $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
-
-        if (tokenLength <= 10) {
-          $('startAuthorizationButton').removeAttribute('disabled');
-        }
+        $("info").textContent = "Web API token cleared, now you can start a new authorization process.";
+        $("info").style.color = "green";
+        $("startAuthorizationButton").removeAttribute("disabled");
 
         await homebridge.updatePluginConfig(pluginConfig);
         await homebridge.savePluginConfig(pluginConfig);
-      });
-
-      // Clear token button logic
-      $("clearTokenButton").addEventListener("click", async () => {
-        homebridge.showSpinner();
-        $("info").textContent = "Start clearing token...";
+      } catch (error) {
+        $("info").textContent = "Clear Web API token error.";
         $("info").style.color = "yellow";
+        $("info1").textContent = `Error: ${error}`;
+        $("info1").style.color = "red";
+      } finally {
+        homebridge.hideSpinner();
+      }
+    });
 
-        try {
-          const host = devices[this.deviceIndex].host;
-          await homebridge.request('/clearToken', { host });
+    // Start authorization logic
+    $("startAuthorizationButton").addEventListener("click", async () => {
+      homebridge.showSpinner();
+      $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
+      $("info").textContent = "Starting authorization...";
+      $("info").style.color = "yellow";
 
-          Object.assign(devices[this.deviceIndex], {
-            webApiToken: '',
-            webApiControl: false
-          });
+      try {
+        const device = devices[this.deviceIndex];
+        const { host, webApiClientId, webApiClientSecret, webApiToken } = device;
 
-          updateDeviceForm(devices[this.deviceIndex]);
+        const response = await homebridge.request('/startAuthorization', {
+          host, webApiClientId, webApiClientSecret, webApiToken
+        });
 
-          $("info").textContent = "Web API token cleared, now you can start a new authorization process.";
-          $("info").style.color = "green";
-          $("startAuthorizationButton").removeAttribute("disabled");
+        const { info, status } = response;
 
-          await homebridge.updatePluginConfig(pluginConfig);
-          await homebridge.savePluginConfig(pluginConfig);
-        } catch (error) {
-          $("info").textContent = "Clear Web API token error.";
-          $("info").style.color = "yellow";
-          $("info1").textContent = `Error: ${error}`;
-          $("info1").style.color = "red";
-        } finally {
-          homebridge.hideSpinner();
+        switch (status) {
+          case 0: // Authorized
+            $("info").textContent = info;
+            $("info").style.color = "green";
+            $("startAuthorizationButton").innerText = "Check State";
+            $("deviceWebApiControl").disabled = false;
+            break;
+          case 1: // Needs user interaction
+            $("startAuthorizationButton").innerText = "Activate Console";
+            $("deviceWebApiControl").checked = false;
+            $("deviceWebApiControl").disabled = true;
+            device.webApiControl = false;
+
+            let timeLeft = 10;
+            const timerId = setInterval(() => {
+              if (timeLeft <= 0) {
+                open(info);
+                clearInterval(timerId);
+                $("info").innerText = "Now paste the *code* into *Web API Token* and press *Activate Console*.";
+                $("info").style.color = "yellow";
+              } else {
+                $("info").innerText = `After ${timeLeft} sec, sign in to Xbox Live and authorize. Then copy the code after ?code= and return here.`;
+                $("info").style.color = "yellow";
+                timeLeft--;
+              }
+            }, 1000);
+            break;
+          case 2: // Successfully authorized
+            $("info").textContent = info;
+            $("info").style.color = "green";
+            $("startAuthorizationButton").innerText = "Check State";
+            $("deviceWebApiControl").disabled = false;
+            $("deviceWebApiControl").checked = true;
+            device.webApiControl = true;
+
+            await homebridge.updatePluginConfig(pluginConfig);
+            await homebridge.savePluginConfig(pluginConfig);
+            break;
         }
-      });
-
-      // Start authorization logic
-      $("startAuthorizationButton").addEventListener("click", async () => {
-        homebridge.showSpinner();
-        $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
-        $("info").textContent = "Starting authorization...";
+      } catch (error) {
+        $("info").textContent = "Check your credential data and try again.";
         $("info").style.color = "yellow";
+        $("info1").textContent = `Error: ${error}`;
+        $("info1").style.color = "red";
+      } finally {
+        $("startAuthorizationButton").removeAttribute("disabled"); // odblokowanie przycisku
+        homebridge.hideSpinner();
+      }
+    });
 
-        try {
-          const device = devices[this.deviceIndex];
-          const { host, webApiClientId, webApiClientSecret, webApiToken } = device;
-
-          const response = await homebridge.request('/startAuthorization', {
-            host, webApiClientId, webApiClientSecret, webApiToken
-          });
-
-          const { info, status } = response;
-
-          switch (status) {
-            case 0: // Authorized
-              $("info").textContent = info;
-              $("info").style.color = "green";
-              $("startAuthorizationButton").innerText = "Check State";
-              $("deviceWebApiControl").disabled = false;
-              break;
-            case 1: // Needs user interaction
-              $("startAuthorizationButton").innerText = "Activate Console";
-              $("deviceWebApiControl").checked = false;
-              $("deviceWebApiControl").disabled = true;
-              device.webApiControl = false;
-
-              let timeLeft = 10;
-              const timerId = setInterval(() => {
-                if (timeLeft <= 0) {
-                  open(info);
-                  clearInterval(timerId);
-                  $("info").innerText = "Now paste the *code* into *Web API Token* and press *Activate Console*.";
-                  $("info").style.color = "yellow";
-                } else {
-                  $("info").innerText = `After ${timeLeft} sec, sign in to Xbox Live and authorize. Then copy the code after ?code= and return here.`;
-                  $("info").style.color = "yellow";
-                  timeLeft--;
-                }
-              }, 1000);
-              break;
-            case 2: // Successfully authorized
-              $("info").textContent = info;
-              $("info").style.color = "green";
-              $("startAuthorizationButton").innerText = "Check State";
-              $("deviceWebApiControl").disabled = false;
-              $("deviceWebApiControl").checked = true;
-              device.webApiControl = true;
-
-              await homebridge.updatePluginConfig(pluginConfig);
-              await homebridge.savePluginConfig(pluginConfig);
-              break;
-          }
-        } catch (error) {
-          $("info").textContent = "Check your credential data and try again.";
-          $("info").style.color = "yellow";
-          $("info1").textContent = `Error: ${error}`;
-          $("info1").style.color = "red";
-        } finally {
-          $("startAuthorizationButton").removeAttribute("disabled"); // odblokowanie przycisku
-          homebridge.hideSpinner();
-        }
-      });
-
-    })();
-  </script>
-</body>
-
-</html>
+  })();
+</script>
