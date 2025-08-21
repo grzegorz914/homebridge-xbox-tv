@@ -242,21 +242,22 @@ class XboxWebApi extends EventEmitter {
                 const parentId = app.parentId;
 
                 const input = {
-                    'oneStoreProductId': oneStoreProductId,
-                    'titleId': titleId,
-                    'reference': aumid,
-                    'isGame': isGame,
-                    'name': name,
-                    'contentType': contentType
+                    oneStoreProductId: oneStoreProductId,
+                    titleId: titleId,
+                    reference: aumid,
+                    isGame: isGame,
+                    name: name,
+                    contentType: contentType,
+                    mode: 0
                 }
                 inputs.push(input);
+
+                //emit app
+                this.emit('addRemoveOrUpdateInput', input, false);
             }
 
             //save inputs
             await this.saveData(this.inputsFile, inputs);
-
-            //emit apps
-            this.emit('addRemoveOrUpdateInput', inputs, false);
 
             //emit restFul and mqtt
             this.emit('restFul', 'apps', apps);
