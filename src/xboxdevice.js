@@ -107,7 +107,6 @@ class XboxDevice extends EventEmitter {
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
         this.inputIdentifier = 1;
-        this.startPrepareAccessory = true;
         this.power = false;
         this.volume = 0;
         this.mute = false;
@@ -1075,10 +1074,10 @@ class XboxDevice extends EventEmitter {
                         this.emit('error', error);
                     })
                     .on('restFul', (path, data) => {
-                        const restFul = this.restFulConnected ? this.restFul1.update(path, data) : false;
+                        if (this.restFulConnected) this.restFul1.update(path, data);
                     })
                     .on('mqtt', (topic, message) => {
-                        const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
+                        if (this.mqttConnected) this.mqtt1.emit('publish', topic, message);
                     });
 
                 //check authorization
@@ -1228,10 +1227,10 @@ class XboxDevice extends EventEmitter {
                     this.emit('error', error);
                 })
                 .on('restFul', (path, data) => {
-                    const restFul = this.restFulConnected ? this.restFul1.update(path, data) : false;
+                    if (this.restFulConnected) this.restFul1.update(path, data);
                 })
                 .on('mqtt', (topic, message) => {
-                    const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
+                    if (this.mqttConnected) this.mqtt1.emit('publish', topic, message);
                 });
 
             //connect to local api
@@ -1241,19 +1240,14 @@ class XboxDevice extends EventEmitter {
             }
 
             //start external integrations
-            const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;
+            if (this.restFul.enable || this.mqtt.enable) await this.externalIntegrations();
 
             //prepare data for accessory
             await this.prepareDataForAccessory();
 
             //prepare accessory
-            if (this.startPrepareAccessory) {
-                const accessory = await this.prepareAccessory();
-                this.emit('publishAccessory', accessory);
-                this.startPrepareAccessory = false;
-            }
-
-            return true;
+            const accessory = await this.prepareAccessory();
+            return accessory;
         } catch (error) {
             throw new Error(`Start error: ${error}`);
         }

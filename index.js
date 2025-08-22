@@ -47,7 +47,8 @@ class XboxPlatform {
 				const disableLogSuccess = device.disableLogSuccess || false;
 				const disableLogWarn = device.disableLogWarn || false;
 				const disableLogError = device.disableLogError || false;
-				const debug = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, did finish launching.`);
+				if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
+
 				const config = {
 					...device,
 					xboxLiveId: 'removed',
@@ -58,7 +59,7 @@ class XboxPlatform {
 						passwd: 'removed'
 					}
 				}
-				const debug1 = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
+				if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
 
 				//check files exists, if not then create it
 				const postFix = host.split('.').join('');
@@ -84,58 +85,58 @@ class XboxPlatform {
 						}
 					});
 				} catch (error) {
-					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
+					if (!disableLogError) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
 					return;
 				}
 
 				//xbox device
 				try {
 					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
-						.on('publishAccessory', (accessory) => {
-							api.publishExternalAccessories(PluginName, [accessory]);
-							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
-						})
 						.on('devInfo', (devInfo) => {
-							const emitLog = disableLogDeviceInfo ? false : log.info(devInfo);
+							if (!disableLogDeviceInfo) log.info(devInfo);
 						})
 						.on('success', (success) => {
-							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, ${success}.`);
+							if (!disableLogSuccess) log.success(`Device: ${host} ${deviceName}, ${success}.`);
 						})
 						.on('info', (info) => {
-							const emitLog = disableLogInfo ? false : log.info(`Device: ${host} ${deviceName}, ${info}.`);
+							if (!disableLogInfo) log.info(`Device: ${host} ${deviceName}, ${info}.`);
 						})
 						.on('debug', (debug) => {
-							const emitLog = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
+							if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
 						})
 						.on('warn', (warn) => {
-							const emitLog = disableLogWarn ? false : log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
+							if (!disableLogWarn) log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
 						})
 						.on('error', (error) => {
-							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}.`);
+							if (!disableLogError) log.error(`Device: ${host} ${deviceName}, ${error}.`);
 						});
 
 					//create impulse generator
 					const impulseGenerator = new ImpulseGenerator();
 					impulseGenerator.on('start', async () => {
 						try {
-							const startDone = await xboxDevice.start();
-							const stopImpulseGenerator = startDone ? await impulseGenerator.stop() : false;
+							const accessory = await xboxDevice.start();
+							if (accessory) {
+								api.publishExternalAccessories(PluginName, [accessory]);
+								if (!disableLogSuccess) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 
-							//start xbox device impulse generator 
-							const startImpulseGenerator = startDone ? await xboxDevice.startImpulseGenerator() : false;
+								await impulseGenerator.stop();
+								await xboxDevice.startImpulseGenerator();
+							}
 						} catch (error) {
-							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							if (!disableLogError) log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						}
 					}).on('state', (state) => {
-						const emitLog = !enableDebugMode ? false : state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
+						if (enableDebugMode) state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
 					});
 
 					//start impulse generator
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
+					if (!disableLogError) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
 				}
-				await new Promise(resolve => setTimeout(resolve, 500));
+				
+				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
 	}
