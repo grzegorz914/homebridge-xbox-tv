@@ -42,11 +42,14 @@ class XboxPlatform {
 
 				//log config
 				const enableDebugMode = device.enableDebugMode || false;
-				const disableLogDeviceInfo = device.disableLogDeviceInfo || false;
-				const disableLogInfo = device.disableLogInfo || false;
-				const disableLogSuccess = device.disableLogSuccess || false;
-				const disableLogWarn = device.disableLogWarn || false;
-				const disableLogError = device.disableLogError || false;
+				const logLevel = {
+					debug: enableDebugMode,
+					info: !device.disableLogInfo,
+					success: !device.disableLogSuccess,
+					warn: !device.disableLogWarn,
+					error: !device.disableLogError,
+					devInfo: !device.disableLogDeviceInfo,
+				};
 				if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
 
 				const config = {
@@ -85,31 +88,19 @@ class XboxPlatform {
 						}
 					});
 				} catch (error) {
-					if (!disableLogError) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
+					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
 					return;
 				}
 
 				//xbox device
 				try {
 					const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
-						.on('devInfo', (devInfo) => {
-							if (!disableLogDeviceInfo) log.info(devInfo);
-						})
-						.on('success', (success) => {
-							if (!disableLogSuccess) log.success(`Device: ${host} ${deviceName}, ${success}.`);
-						})
-						.on('info', (info) => {
-							if (!disableLogInfo) log.info(`Device: ${host} ${deviceName}, ${info}.`);
-						})
-						.on('debug', (debug) => {
-							if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
-						})
-						.on('warn', (warn) => {
-							if (!disableLogWarn) log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
-						})
-						.on('error', (error) => {
-							if (!disableLogError) log.error(`Device: ${host} ${deviceName}, ${error}.`);
-						});
+						.on('devInfo', (info) => logLevel.devInfo && log.info(info))
+						.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${deviceName}, ${msg}`))
+						.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${deviceName}, ${msg}`))
+						.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${deviceName}, debug: ${msg}`))
+						.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${deviceName}, ${msg}`))
+						.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${deviceName}, ${msg}`));
 
 					//create impulse generator
 					const impulseGenerator = new ImpulseGenerator();
@@ -118,24 +109,24 @@ class XboxPlatform {
 							const accessory = await xboxDevice.start();
 							if (accessory) {
 								api.publishExternalAccessories(PluginName, [accessory]);
-								if (!disableLogSuccess) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+								if (logLevel.success) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 
 								await impulseGenerator.stop();
 								await xboxDevice.startImpulseGenerator();
 							}
 						} catch (error) {
-							if (!disableLogError) log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							if (logLevel.error) log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						}
 					}).on('state', (state) => {
-						if (enableDebugMode) state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
+						if (logLevel.debug) state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
 					});
 
 					//start impulse generator
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					if (!disableLogError) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
+					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
 				}
-				
+
 				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
