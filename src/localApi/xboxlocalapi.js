@@ -30,36 +30,37 @@ class XboxLocalApi extends EventEmitter {
         this.channels = [];
         this.channelRequestId = 0;
         this.mediaRequestId = 0;
+        this.fragments = {};
 
         //create impulse generator
         this.impulseGenerator = new ImpulseGenerator();
         this.impulseGenerator.on('heartBeat', async () => {
             try {
                 if (!this.isConnected) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Plugin send heartbeat to console`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Plugin send heartbeat to console`);
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
 
                     if (!state.alive || this.isConnected) {
                         return;
                     }
 
-                    const debug1 = this.enableDebugMode ? this.emit('debug', `Plugin received heartbeat from console`) : false
+                    if (this.enableDebugMode) this.emit('debug', `Plugin received heartbeat from console`)
                     const discoveryRequest = new SimplePacket('discoveryRequest');
                     const message = discoveryRequest.pack(this.crypto);
                     await this.sendSocketMessage(message, 'discoveryRequest');
                 }
 
                 if (this.isConnected) {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Socket send heartbeat`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Socket send heartbeat`);
                     const elapse = (Date.now() - this.heartBeatStartTime) / 1000;
-                    const debug1 = this.enableDebugMode && elapse >= 12 ? this.emit('debug', `Last message was: ${elapse} sec ago`) : false;
-                    const disconnect = elapse >= 12 ? await this.disconnect() : false;
+                    if (this.enableDebugMode && elapse >= 12) this.emit('debug', `Last message was: ${elapse} sec ago`);
+                    if (elapse >= 12) await this.disconnect();
                 };
             } catch (error) {
-                this.emit('error', `Impulse generatotr error: ${error}, trying again`);
+                this.emit('error', `Local Api generatotr error: ${error}, trying again`);
             };
         }).on('state', (state) => {
-            const emit = state ? this.emit('success', `Local Api heartbeat started`) : this.emit('warn', `Local Api heartbeat stopped`);
+            this.emit('success', `Local Api monitoring ${state ? 'started' : 'stopped'}`);
         });
     };
 
@@ -86,7 +87,7 @@ class XboxLocalApi extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error.message || error}`);
@@ -110,7 +111,7 @@ class XboxLocalApi extends EventEmitter {
     }
 
     async channelOpen(channelRequestId, service) {
-        const debug = this.enableDebugMode ? this.emit('debug', `Received channel Id: ${channelRequestId}, request open`) : false;
+        if (this.enableDebugMode) this.emit('debug', `Received channel Id: ${channelRequestId}, request open`);
         this.channelRequestId = channelRequestId;
 
         try {
@@ -205,15 +206,15 @@ class XboxLocalApi extends EventEmitter {
         };
 
         const channelRequestId = LocalApi.Channels.System[channelName].Id
-        const channelCommunicationId = this.channels[requestId].id;
-        const channelOpen = this.channels[requestId].open;
+        const channelCommunicationId = this.channels[channelRequestId]?.id ?? -1;
+        const channelOpen = this.channels[channelRequestId]?.open ?? false;
 
         if (channelCommunicationId === -1 || !channelOpen) {
             this.emit('warn', `Channel Id: ${channelCommunicationId}, state: ${channelOpen ? 'Open' : 'Closed'}, trying to open it`);
         };
 
         command = LocalApi.Channels.System[channelName][command];
-        const debug = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, name:  ${channelName} opened, send command; ${command}`) : false;
+        if (this.enableDebugMode) this.emit('debug', `Channel communication Id: ${channelCommunicationId}, name:  ${channelName} opened, send command; ${command}`);
 
         switch (channelRequestId) {
             case 0:
@@ -279,7 +280,7 @@ class XboxLocalApi extends EventEmitter {
     };
 
     async disconnect() {
-        const debug = this.enableDebugMode ? this.emit('debug', 'Disconnecting...') : false;
+        if (this.enableDebugMode) this.emit('debug', 'Disconnecting...');
 
         try {
             const disconnect = new MessagePacket('disconnect');
@@ -306,7 +307,7 @@ class XboxLocalApi extends EventEmitter {
 
     async getSequenceNumber() {
         this.sequenceNumber++;
-        const debug = this.enableDebugMode ? this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`) : false;
+        if (this.enableDebugMode) this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`);
         return this.sequenceNumber;
     };
 
@@ -320,7 +321,7 @@ class XboxLocalApi extends EventEmitter {
                     throw new Error(error);
                 }
 
-                const debug = this.enableDebugMode ? this.emit('debug', `Socket send: ${type}, ${bytes}B`) : false;
+                if (this.enableDebugMode) this.emit('debug', `Socket send: ${type}, ${bytes}B`);
                 return true;
             });
         } catch (error) {
@@ -336,7 +337,7 @@ class XboxLocalApi extends EventEmitter {
                     this.emit('error', `Socket error: ${error}`);
                     socket.close();
                 }).on('close', async () => {
-                    const debug = this.enableDebugMode ? this.emit('debug', 'Socket closed.') : false;
+                    if (this.enableDebugMode) this.emit('debug', 'Socket closed.');
                     try {
                         this.isConnected = false;
                         await new Promise(resolve => setTimeout(resolve, 5000));
@@ -345,27 +346,27 @@ class XboxLocalApi extends EventEmitter {
                         this.emit('error', error)
                     };
                 }).on('message', async (message, remote) => {
-                    const debug = this.enableDebugMode ? this.emit('debug', `Received message from: ${remote.address}:${remote.port}`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Received message from: ${remote.address}:${remote.port}`);
                     this.heartBeatStartTime = Date.now();
 
                     //get message type in hex
                     const copiedSlice = Uint8Array.prototype.slice.call(message, 0, 2);
                     const messageTypeHex = Buffer.from(copiedSlice).toString('hex');
-                    const debug1 = this.enableDebugMode ? this.emit('debug', `Received message type hex: ${messageTypeHex}`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Received message type hex: ${messageTypeHex}`);
 
                     //check message type exist in types
                     const keysTypes = Object.keys(LocalApi.Messages.Types);
                     const keysTypesExist = keysTypes.includes(messageTypeHex);
 
                     if (!keysTypesExist) {
-                        const debug = this.enableDebugMode ? this.emit('debug', `Received unknown message type: ${messageTypeHex}`) : false;
+                        if (this.enableDebugMode) this.emit('debug', `Received unknown message type: ${messageTypeHex}`);
                         return;
                     };
 
                     //get message type and request
                     const messageType = LocalApi.Messages.Types[messageTypeHex];
                     const messageRequest = LocalApi.Messages.Requests[messageTypeHex];
-                    const debug2 = this.enableDebugMode ? this.emit('debug', `Received message type: ${messageType}, request: ${messageRequest}`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Received message type: ${messageType}, request: ${messageRequest}`);
 
                     let packeStructure;
                     switch (messageType) {
@@ -379,24 +380,24 @@ class XboxLocalApi extends EventEmitter {
 
                     let packet = packeStructure.unpack(this.crypto, message);
                     const type = packet.type;
-                    const debug3 = this.enableDebugMode ? this.emit('debug', `Received type: ${type}`) : false;
-                    const debug4 = this.enableDebugMode ? this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Received type: ${type}`);
+                    if (this.enableDebugMode) this.emit('debug', `Received packet: ${JSON.stringify(packet, null, 2)}`);
 
                     if (messageType === 'message' && packet.targetParticipantId !== this.sourceParticipantId) {
-                        const debug = this.enableDebugMode ? this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet`) : false;
+                        if (this.enableDebugMode) this.emit('debug', `Participant Id: ${packet.targetParticipantId} !== ${this.sourceParticipantId}. Ignoring packet`);
                         return;
                     };
 
                     switch (type) {
                         case 'json':
                             // Object to hold fragments
-                            const fragments = {};
+                            const fragments = this.fragments;
                             const jsonMessage = JSON.parse(packet.payloadProtected.json);
                             const datagramId = jsonMessage.datagramId;
 
                             // Check if JSON is fragmented
                             if (datagramId) {
-                                const debug = this.enableDebugMode ? this.emit('debug', `JSON message datagram Id: ${datagramId}`) : false;
+                                if (this.enableDebugMode) this.emit('debug', `JSON message datagram Id: ${datagramId}`);
 
                                 // Initialize fragment store if not present
                                 if (!fragments[datagramId]) {
@@ -429,7 +430,7 @@ class XboxLocalApi extends EventEmitter {
                                 // If all fragments are valid, reconstruct and replace the original JSON
                                 if (fragments[datagramId].isValid()) {
                                     packet.payloadProtected.json = fragments[datagramId].getValue().toString();
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Reassembled JSON: ${packet.payloadProtected.json}`) : false;
+                                    if (this.enableDebugMode) this.emit('debug', `Reassembled JSON: ${packet.payloadProtected.json}`);
 
                                     // Delete after reconstruction
                                     delete fragments[datagramId];
@@ -440,12 +441,12 @@ class XboxLocalApi extends EventEmitter {
                             const deviceType = packet.clientType;
                             const deviceName = packet.name;
                             const certificate = packet.certificate;
-                            const debug = this.enableDebugMode ? this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType]}, name: ${deviceName}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType]}, name: ${deviceName}`);
 
                             try {
                                 // Sign public key
                                 const data = await this.crypto.getPublicKey(certificate);
-                                const debug = this.enableDebugMode ? this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`) : false;
+                                if (this.enableDebugMode) this.emit('debug', `Signed public key: ${data.publicKey}, iv: ${data.iv}`);
 
                                 // Connect request
                                 if (!this.isConnected) {
@@ -463,7 +464,7 @@ class XboxLocalApi extends EventEmitter {
                                             connectRequest.set('jwt', parseTokenData.xsts.Token, true);
                                             this.isAuthorized = true;
                                         }
-                                        const debug = this.enableDebugMode ? this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`) : false;
+                                        if (this.enableDebugMode) this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`);
 
                                         const message = connectRequest.pack(this.crypto);
                                         await this.sendSocketMessage(message, 'connectRequest');
@@ -497,8 +498,8 @@ class XboxLocalApi extends EventEmitter {
                             }
                             this.isConnected = true;
                             this.sourceParticipantId = sourceParticipantId;
-                            const debug1 = this.enableDebugMode ? this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}`) : false;
-                            const debug2 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `Client connect state: ${this.isConnected ? 'Connected' : 'Not Connected'}`);
+                            if (this.enableDebugMode) this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
 
                             try {
                                 const localJoin = new MessagePacket('localJoin');
@@ -580,7 +581,7 @@ class XboxLocalApi extends EventEmitter {
                                 const reference = appsCount === 2 ? packet.payloadProtected.activeTitles[0].aumId : packet.payloadProtected.activeTitles[0].aumId;
 
                                 this.emit('stateChanged', power, volume, mute, mediaState, titleId, reference);
-                                const debug = this.enableDebugMode ? this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`) : false;
+                                if (this.enableDebugMode) this.emit('debug', `Status changed, app Id: ${titleId}, reference: ${reference}`);
 
                                 //emit restFul and mqtt
                                 const obj = {
@@ -597,7 +598,7 @@ class XboxLocalApi extends EventEmitter {
 
                             //acknowledge
                             try {
-                                const acknowledge = packet.flags.needAck ? await this.acknowledge(packet.sequenceNumber) : false;
+                                if (packet.flags.needAck) await this.acknowledge(packet.sequenceNumber);
                             } catch (error) {
                                 this.emit('error', `Acknowledge error: ${error}`)
                             };
@@ -611,37 +612,37 @@ class XboxLocalApi extends EventEmitter {
                         case 'channelStartResponse':
                             const requestIdMatch = this.channelRequestId === packet.payloadProtected.channelRequestId;
                             const channelState = requestIdMatch ? packet.payloadProtected.result === 0 : false;
-                            const debug5 = this.enableDebugMode ? this.emit('debug', `channelState: ${channelState}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `channelState: ${channelState}`);
                             const channelCommunicationId = channelState && packet.payloadProtected.channelTargetId ? packet.payloadProtected.channelTargetId : -1;
-                            const debug6 = this.enableDebugMode ? this.emit('debug', `channelCommunicationId: ${packet.payloadProtected.channelTargetId}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `channelCommunicationId: ${packet.payloadProtected.channelTargetId}`);
                             const channel = {
                                 id: channelCommunicationId,
                                 open: channelState
                             }
                             const pushChannel = channelCommunicationId !== -1 ? this.channels.push(channel) : false;
-                            const debug3 = this.enableDebugMode ? this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `Channel communication Id: ${channelCommunicationId}, state: ${channelState ? 'Open' : 'Closed'}`);
                             break;
                         case 'pairedIdentityStateChanged':
                             const pairingState1 = packet.payloadProtected.pairingState || 0;
-                            const debug4 = this.enableDebugMode ? this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`) : false;
+                            if (this.enableDebugMode) this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`);
                             break;
                     };
                 }).on('listening', async () => {
                     //socket.setBroadcast(true);
                     const address = socket.address();
-                    const debug = this.enableDebugMode ? this.emit('debug', `Server start listening: ${address.address}:${address.port}`) : false;
+                    if (this.enableDebugMode) this.emit('debug', `Server start listening: ${address.address}:${address.port}`);
                     this.socket = socket;
                     this.emitDevInfo = true;
 
                     if (!this.isConnected) {
-                        const debug = this.enableDebugMode ? this.emit('debug', `Plugin send heartbeat to console`) : false;
+                        if (this.enableDebugMode) this.emit('debug', `Plugin send heartbeat to console`);
                         const state = await Ping.promise.probe(this.host, { timeout: 3 });
 
                         if (!state.alive || this.isConnected) {
                             return;
                         }
 
-                        const debug1 = this.enableDebugMode ? this.emit('debug', `Plugin received heartbeat from console`) : false
+                        if (this.enableDebugMode) this.emit('debug', `Plugin received heartbeat from console`);
                         const discoveryRequest = new SimplePacket('discoveryRequest');
                         const message = discoveryRequest.pack(this.crypto);
                         await this.sendSocketMessage(message, 'discoveryRequest');

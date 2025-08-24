@@ -85,9 +85,7 @@ class RestFul extends EventEmitter {
             return;
         }
 
-        if (this.restFulDebug) {
-            this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data)}`);
-        }
+        if (this.restFulDebug) this.emit('debug', `RESTFul update path: ${path}, data: ${JSON.stringify(data)}`);
     }
 }
 export default RestFul;

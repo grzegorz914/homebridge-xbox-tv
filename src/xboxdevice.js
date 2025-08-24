@@ -4,7 +4,7 @@ import RestFul from './restful.js';
 import Mqtt from './mqtt.js';
 import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
-import { DefaultInputs, LocalApi } from './constants.js';
+import { DefaultInputs, LocalApi, DiacriticsMap } from './constants.js';
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
@@ -139,22 +139,22 @@ class XboxDevice extends EventEmitter {
     async sanitizeString(str) {
         if (!str) return '';
 
-        // Normalize & transliterate (usuń akcenty/ogonkowe litery)
-        str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        // Replace diacritics using map
+        str = str.replace(/[^\u0000-\u007E]/g, ch => DiacriticsMap[ch] || ch);
 
-        // Replace dot/colon/semicolon inside words with a space
-        str = str.replace(/(\w)[.:;]+(\w)/g, '$1 $2');
+        // Replace separators between words with space
+        str = str.replace(/(\w)[.:;+\-\/]+(\w)/g, '$1 $2');
 
-        // Replace certain separators (+, -, /) with a space
-        str = str.replace(/[+\-\/]/g, ' ');
+        // Replace remaining standalone separators with space
+        str = str.replace(/[.:;+\-\/]/g, ' ');
 
         // Remove remaining invalid characters (keep letters, digits, space, apostrophe)
         str = str.replace(/[^A-Za-z0-9 ']/g, ' ');
 
-        // Collapse multiple spaces into one
+        // Collapse multiple spaces
         str = str.replace(/\s+/g, ' ');
 
-        // Trim leading/trailing spaces
+        // Trim
         return str.trim();
     }
 
@@ -242,15 +242,9 @@ class XboxDevice extends EventEmitter {
                             this.emit('warn', `RESTFul set error: ${error}`);
                         }
                     })
-                    .on('debug', (debug) => {
-                        this.emit('debug', debug);
-                    })
-                    .on('warn', (warn) => {
-                        this.emit('warn', warn);
-                    })
-                    .on('error', (error) => {
-                        this.emit('error', error);
-                    });
+                    .on('debug', (debug) => this.emit('debug', debug))
+                    .on('warn', (warn) => this.emit('warn', warn))
+                    .on('error', (error) => this.emit('error', error));
             }
 
             //mqtt client
@@ -279,15 +273,9 @@ class XboxDevice extends EventEmitter {
                             this.emit('warn', `MQTT set error: ${error}`);
                         }
                     })
-                    .on('debug', (debug) => {
-                        this.emit('debug', debug);
-                    })
-                    .on('warn', (warn) => {
-                        this.emit('warn', warn);
-                    })
-                    .on('error', (error) => {
-                        this.emit('error', error);
-                    });
+                    .on('debug', (debug) => this.emit('debug', debug))
+                    .on('warn', (warn) => this.emit('warn', warn))
+                    .on('error', (error) => this.emit('error', error));
             };
 
             return true;
@@ -327,7 +315,7 @@ class XboxDevice extends EventEmitter {
     async startImpulseGenerator() {
         try {
             //start web api impulse generator
-            const startImpulseGenerator = this.consoleAuthorized ? await this.xboxWebApi.impulseGenerator.start([{ name: 'checkAuthorization', sampling: 900000 }]) : false;
+            if (this.consoleAuthorized) await this.xboxWebApi.impulseGenerator.start([{ name: 'checkAuthorization', sampling: 900000 }]);
 
             //start local api impulse generator 
             await this.xboxLocalApi.impulseGenerator.start([{ name: 'heartBeat', sampling: 10000 }]);
@@ -403,6 +391,8 @@ class XboxDevice extends EventEmitter {
             const savedName = this.savedInputsNames[inputReference] ?? input.name;
             const sanitizedName = await this.sanitizeString(savedName);
             const inputMode = input.mode ?? 0;
+            const inputTitleId = input.titleId;
+            const inputOneStoreProductId = input.oneStoreProductId;
             const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
             if (inputService) {
@@ -427,6 +417,8 @@ class XboxDevice extends EventEmitter {
                 inputService.reference = inputReference;
                 inputService.name = sanitizedName;
                 inputService.mode = inputMode;
+                inputService.titleId = inputTitleId;
+                inputService.oneStoreProductId = inputOneStoreProductId;
                 inputService.visibility = inputVisibility;
 
                 inputService
@@ -442,13 +434,11 @@ class XboxDevice extends EventEmitter {
                 inputService.getCharacteristic(Characteristic.ConfiguredName)
                     .onSet(async (value) => {
                         try {
-                            const newName = await this.sanitizeString(value);
-                            this.savedInputsNames[inputReference] = newName;
+                            value = await this.sanitizeString(value);
+                            inputService.name = value;
+                            this.savedInputsNames[inputReference] = value;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
                             if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
-
-                            // Update service name to sanitized version
-                            inputService.name = newName;
                             await this.displayOrder();
                         } catch (error) {
                             this.emit('warn', `Save Input Name error: ${error}`);
@@ -459,12 +449,10 @@ class XboxDevice extends EventEmitter {
                 inputService.getCharacteristic(Characteristic.TargetVisibilityState)
                     .onSet(async (state) => {
                         try {
+                            inputService.visibility = state;
                             this.savedInputsTargetVisibility[inputReference] = state;
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                             if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-
-                            // Update service visibility to match target state
-                            inputService.visibility = state;
                         } catch (error) {
                             this.emit('warn', `Save Target Visibility error: ${error}`);
                         }

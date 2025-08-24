@@ -38,17 +38,17 @@ class XboxWebApi extends EventEmitter {
                 this.call = false;
             } catch (error) {
                 this.call = false;
-                this.emit('error', `Inpulse generator error: ${error}`);
+                this.emit('error', `Web Api generator error: ${error}`);
             };
         }).on('state', (state) => {
-            const emitState = state ? this.emit('success', `Web Api monitoring started`) : this.emit('warn', `Web Api monitoring stopped`);
+            this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
         });
     }
 
     async checkAuthorization() {
         try {
             const data = await this.authentication.checkAuthorization();
-            const debug = this.enableDebugMode ? this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`);
 
             const authorized = data.tokens?.xsts?.Token?.trim() || false;
             if (!authorized) {
@@ -101,7 +101,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
             const getConsoleStatusData = await this.axiosInstance(url);
-            const debug = this.enableDebugMode ? this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`);
 
             //get console status
             const consoleStatusData = getConsoleStatusData.data;
@@ -136,7 +136,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
             const getConsolesListData = await this.axiosInstance(url);
-            const debug = this.enableDebugMode ? this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`);
 
             //get consoles list
             this.consolesId = [];
@@ -216,7 +216,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
             const getInstalledAppsData = await this.axiosInstance(url);
-            const debug = this.enableDebugMode ? this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`);
 
             //get installed apps
             const inputs = [];
@@ -273,7 +273,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `${WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
             const getStorageDevicesData = await this.axiosInstance(url);
-            const debug = this.enableDebugMode ? this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`);
 
             //get console storages
             this.storageDeviceId = [];
@@ -316,7 +316,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
             const getUserProfileData = await this.axiosInstance(url);
-            const debug = this.enableDebugMode ? this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`) : false
+            if (this.enableDebugMode) this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`);
 
             //get user profiles
             this.userProfileId = [];
@@ -359,7 +359,7 @@ class XboxWebApi extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
@@ -428,7 +428,7 @@ class XboxWebApi extends EventEmitter {
             "parameters": params,
             "linkedXboxId": this.xboxLiveId
         }
-        const debug = this.enableDebugMode ? this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}`) : false;
+        if (this.enableDebugMode) this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}`);
 
         try {
             const stringifyPostParam = JSON.stringify(postParams);
@@ -437,7 +437,7 @@ class XboxWebApi extends EventEmitter {
                 headers: this.headers
             }
             const response = await axios.post(`${WebApi.Url.Xccs}/commands`, postParams, headers);
-            const debug1 = this.enableDebugMode ? this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`);
 
             return true;
         } catch (error) {

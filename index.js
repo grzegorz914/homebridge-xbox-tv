@@ -41,16 +41,15 @@ class XboxPlatform {
 				}
 
 				//log config
-				const enableDebugMode = device.enableDebugMode || false;
 				const logLevel = {
-					debug: enableDebugMode,
+					debug: device.enableDebugMode,
 					info: !device.disableLogInfo,
 					success: !device.disableLogSuccess,
 					warn: !device.disableLogWarn,
 					error: !device.disableLogError,
 					devInfo: !device.disableLogDeviceInfo,
 				};
-				if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
+				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
 
 				const config = {
 					...device,
@@ -62,7 +61,7 @@ class XboxPlatform {
 						passwd: 'removed'
 					}
 				}
-				if (enableDebugMode) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
+				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
 
 				//check files exists, if not then create it
 				const postFix = host.split('.').join('');
