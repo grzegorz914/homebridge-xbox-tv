@@ -12,6 +12,7 @@ class RestFul extends EventEmitter {
         this.restFulData = {
             info: DEFAULT_MESSAGE,
             state: DEFAULT_MESSAGE,
+            operation: DEFAULT_MESSAGE,
             consoleslist: DEFAULT_MESSAGE,
             profile: DEFAULT_MESSAGE,
             apps: DEFAULT_MESSAGE,

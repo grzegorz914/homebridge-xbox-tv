@@ -15,7 +15,7 @@ class XboxWebApi extends EventEmitter {
         this.inputsFile = config.inputsFile;
         this.enableDebugMode = config.enableDebugMode;
 
-        //variables
+        // Variables
         this.consoleAuthorized = false;
         this.rmEnabled = false;
 
@@ -26,42 +26,42 @@ class XboxWebApi extends EventEmitter {
         }
         this.authentication = new Authentication(authConfig);
 
-        //impulse generator
+        // Impulse generator
         this.call = false;
-        this.impulseGenerator = new ImpulseGenerator();
-        this.impulseGenerator.on('checkAuthorization', async () => {
-            if (this.call) return;
-
-            try {
-                this.call = true;
-                await this.checkAuthorization();
-                this.call = false;
-            } catch (error) {
-                this.call = false;
-                this.emit('error', `Web Api generator error: ${error}`);
-            };
-        }).on('state', (state) => {
-            this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
-        });
+        this.impulseGenerator = new ImpulseGenerator()
+            .on('checkAuthorization', async () => {
+                if (this.call) return;
+                try {
+                    this.call = true;
+                    await this.checkAuthorization();
+                } catch (error) {
+                    this.emit('error', `Web Api generator error: ${error}`);
+                } finally {
+                    this.call = false;
+                }
+            }).on('state', (state) => {
+                this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
+            });
     }
 
     async checkAuthorization() {
         try {
             const data = await this.authentication.checkAuthorization();
-            if (this.enableDebugMode) this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}, tokens: ${JSON.stringify(data.tokens, null, 2)}`);
+            if (this.enableDebugMode) this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}`);
 
             const authorized = data.tokens?.xsts?.Token?.trim() || false;
             if (!authorized) {
-                this.emit('warn', `not authorized`);
+                this.emit('warn', `Not authorized`);
                 return false;
             }
             this.tokens = data.tokens;
             this.consoleAuthorized = true;
 
-            //check xbox live data
-            try {
-                //headers
-                const headers = {
+            // Axios instance with global timeout and retry
+            this.axiosInstance = axios.create({
+                baseURL: WebApi.Url.Xccs,
+                timeout: 5000,
+                headers: {
                     'Authorization': data.headers,
                     'Accept-Language': 'en-US',
                     'x-xbl-contract-version': '4',
@@ -70,141 +70,65 @@ class XboxWebApi extends EventEmitter {
                     'x-xbl-client-version': '39.39.22001.0',
                     'skillplatform': 'RemoteManagement',
                     'Content-Type': 'application/json'
-                };
-                this.headers = headers;
+                }
+            });
 
-                //create axios instance
-                this.axiosInstance = axios.create({
-                    method: 'GET',
-                    headers: headers
-                });
+            this.axiosInstance.interceptors.response.use(null, async (error) => {
+                const config = error.config;
+                if (!config || !config.retryCount) config.retryCount = 0;
+                if (config.retryCount < 2 && (error.code === 'ECONNABORTED' || error.response?.status === 429)) {
+                    config.retryCount += 1;
+                    if (this.enableDebugMode) this.emit('debug', `Retry ${config.retryCount} for ${config.url}`);
+                    await new Promise(res => setTimeout(res, 1000));
+                    return this.axiosInstance(config);
+                }
+                return Promise.reject(error);
+            });
 
-                const rmEnabled = await this.consoleStatus();
-                const debug1 = rmEnabled ? false : this.emit('warn', `Remote management not enabled, please check your console settings`);
-                this.rmEnabled = rmEnabled;
-
-                //await this.consolesList();
-                await this.installedApps();
-                //await this.storageDevices();
-                //await this.userProfile();
-            } catch (error) {
-                this.emit('error', `Check xbox live data error: ${error}`);
-            }
-
+            // Check console data
+            await this.consolesList();
+            await this.consoleStatus();
+            await this.installedApps();
+            
             return true;
         } catch (error) {
             throw new Error(`Check authorization error: ${error}`);
         }
     }
 
-    async consoleStatus() {
-        try {
-            const url = `${WebApi.Url.Xccs}/consoles/${this.xboxLiveId}`;
-            const getConsoleStatusData = await this.axiosInstance(url);
-            if (this.enableDebugMode) this.emit('debug', `Console status data: ${JSON.stringify(getConsoleStatusData.data, null, 2)}`);
-
-            //get console status
-            const consoleStatusData = getConsoleStatusData.data;
-            const id = consoleStatusData.id;
-            const name = consoleStatusData.name;
-            const locale = consoleStatusData.locale;
-            const region = consoleStatusData.region;
-            const consoleType = WebApi.Console.Name[consoleStatusData.consoleType];
-            const powerState = WebApi.Console.PowerState[consoleStatusData.powerState] === 1; // 0 - Off, 1 - On, 2 - InStandby, 3 - SystemUpdate
-            const playbackState = WebApi.Console.PlaybackState[consoleStatusData.playbackState] === 1; // 0 - Stopped, 1 - Playng, 2 - Paused
-            const loginState = consoleStatusData.loginState;
-            const focusAppAumid = consoleStatusData.focusAppAumid;
-            const isTvConfigured = consoleStatusData.isTvConfigured === true;
-            const digitalAssistantRemoteControlEnabled = consoleStatusData.digitalAssistantRemoteControlEnabled;
-            const consoleStreamingEnabled = consoleStatusData.consoleStreamingEnabled;
-            const remoteManagementEnabled = consoleStatusData.remoteManagementEnabled;
-
-            //emit console type
-            this.emit('consoleStatus', consoleType);
-
-            //emit restFul and mqtt
-            this.emit('restFul', 'status', consoleStatusData);
-            this.emit('mqtt', 'status', consoleStatusData);
-
-            return remoteManagementEnabled;
-        } catch (error) {
-            throw new Error(`Status error: ${error}`);
-        }
-    }
-
     async consolesList() {
         try {
-            const url = `${WebApi.Url.Xccs}/lists/devices?queryCurrentDevice=false&includeStorageDevices=true`;
-            const getConsolesListData = await this.axiosInstance(url);
-            if (this.enableDebugMode) this.emit('debug', `Consoles list data: ${getConsolesListData.data.result[0]}, ${getConsolesListData.data.result[0].storageDevices[0]}`);
+            const { data } = await this.axiosInstance.get('/lists/devices?queryCurrentDevice=false&includeStorageDevices=true');
+            if (this.enableDebugMode) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
-            //get consoles list
-            this.consolesId = [];
-            this.consolesName = [];
-            this.consolesLocale = [];
-            this.consolesRegion = [];
-            this.consolesConsoleType = [];
-            this.consolesPowerState = [];
-            this.consolesDigitalAssistantRemoteControlEnabled = [];
-            this.consolesConsoleStreamingEnabled = [];
-            this.consolesRemoteManagementEnabled = [];
-            this.consolesWirelessWarning = [];
-            this.consolesOutOfHomeWarning = [];
+            const console = data.result.find(c => c.id === this.xboxLiveId);
+            const obj = {
+                id: console.id,
+                name: console.name,
+                locale: console.locale,
+                region: console.region,
+                consoleType: WebApi.Console.Name[console.consoleType],
+                powerState: WebApi.Console.PowerState[console.powerState],
+                digitalAssistantRemoteControlEnabled: !!console.digitalAssistantRemoteControlEnabled,
+                remoteManagementEnabled: !!console.remoteManagementEnabled,
+                consoleStreamingEnabled: !!console.consoleStreamingEnabled,
+                wirelessWarning: !!console.wirelessWarning,
+                outOfHomeWarning: !!console.outOfHomeWarning,
+                storageDevices: console.storageDevices.map(s => ({
+                    id: s.storageDeviceId,
+                    name: s.storageDeviceName,
+                    isDefault: s.isDefault,
+                    freeSpaceBytes: s.freeSpaceBytes,
+                    totalSpaceBytes: s.totalSpaceBytes,
+                    isGen9Compatible: s.isGen9Compatible
+                }))
+            };
 
-            this.consolesStorageDeviceId = [];
-            this.consolesStorageDeviceName = [];
-            this.consolesIsDefault = [];
-            this.consolesFreeSpaceBytes = [];
-            this.consolesTotalSpaceBytes = [];
-            this.consolesIsGen9Compatible = [];
+            if (!obj.remoteManagementEnabled) this.emit('warn', 'Remote management not enabled on console');
+            this.rmEnabled = obj.remoteManagementEnabled;
 
-            const consolesList = getConsolesListData.data.result;
-            for (const console of consolesList) {
-                const id = console.id;
-                const name = console.name;
-                const locale = console.locale;
-                const region = console.region;
-                const consoleType = console.consoleType;
-                const powerState = WebApi.Console.PowerState[console.powerState]; // 0 - Off, 1 - On, 2 - ConnectedStandby, 3 - SystemUpdate
-                const digitalAssistantRemoteControlEnabled = console.digitalAssistantRemoteControlEnabled;
-                const remoteManagementEnabled = console.remoteManagementEnabled;
-                const consoleStreamingEnabled = console.consoleStreamingEnabled;
-                const wirelessWarning = console.wirelessWarning;
-                const outOfHomeWarning = console.outOfHomeWarning;
-
-                this.consolesId.push(id);
-                this.consolesName.push(name);
-                this.consolesLocale.push(locale);
-                this.consolesRegion.push(region);
-                this.consolesConsoleType.push(consoleType);
-                this.consolesPowerState.push(powerState);
-                this.consolesDigitalAssistantRemoteControlEnabled.push(digitalAssistantRemoteControlEnabled);
-                this.consolesRemoteManagementEnabled.push(remoteManagementEnabled);
-                this.consolesConsoleStreamingEnabled.push(consoleStreamingEnabled);
-                this.consolesWirelessWarning.push(wirelessWarning);
-                this.consolesOutOfHomeWarning.push(outOfHomeWarning);
-
-                const consolesStorageDevices = console.storageDevices;
-                for (const consoleStorageDevice of consolesStorageDevices) {
-                    const storageDeviceId = consoleStorageDevice.storageDeviceId;
-                    const storageDeviceName = consoleStorageDevice.storageDeviceName;
-                    const isDefault = (consoleStorageDevice.isDefault === true);
-                    const freeSpaceBytes = consoleStorageDevice.freeSpaceBytes;
-                    const totalSpaceBytes = consoleStorageDevice.totalSpaceBytes;
-                    const isGen9Compatible = consoleStorageDevice.isGen9Compatible;
-
-                    this.consolesStorageDeviceId.push(storageDeviceId);
-                    this.consolesStorageDeviceName.push(storageDeviceName);
-                    this.consolesIsDefault.push(isDefault);
-                    this.consolesFreeSpaceBytes.push(freeSpaceBytes);
-                    this.consolesTotalSpaceBytes.push(totalSpaceBytes);
-                    this.consolesIsGen9Compatible.push(isGen9Compatible);
-                }
-            }
-
-            //emit restFul and mqtt
-            this.emit('restFul', 'consoleslist', consolesList);
-            this.emit('mqtt', 'Consoles List', consolesList);
+            this.emit('restFul', 'consoleslist', data);
+            this.emit('mqtt', 'Consoles List', data);
 
             return true;
         } catch (error) {
@@ -212,146 +136,70 @@ class XboxWebApi extends EventEmitter {
         }
     }
 
+    async consoleStatus() {
+        try {
+            const url = `/consoles/${this.xboxLiveId}`;
+            const { data } = await this.axiosInstance.get(url);
+            if (this.enableDebugMode) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
+
+            // Emit single console object
+            const status = {
+                id: data.id,
+                name: data.name,
+                locale: data.locale,
+                region: data.region,
+                consoleType: WebApi.Console.Name[data.consoleType],
+                powerState: WebApi.Console.PowerState[data.powerState],
+                playbackState: data.playbackState,
+                loginState: data.loginState,
+                focusAppAumid: data.focusAppAumid,
+                isTvConfigured: !!data.isTvConfigured,
+                digitalAssistantRemoteControlEnabled: !!data.digitalAssistantRemoteControlEnabled,
+                remoteManagementEnabled: !!data.remoteManagementEnabled,
+                consoleStreamingEnabled: !!data.consoleStreamingEnabled,
+            };
+
+            // Emit console type
+            this.emit('consoleStatus', status);
+
+            this.emit('restFul', 'status', data);
+            this.emit('mqtt', 'Status', data);
+
+            return true;
+        } catch (error) {
+            throw new Error(`Console status error: ${error}`);
+        }
+    }
+
     async installedApps() {
         try {
-            const url = `${WebApi.Url.Xccs}/lists/installedApps?deviceId=${this.xboxLiveId}`;
-            const getInstalledAppsData = await this.axiosInstance(url);
-            if (this.enableDebugMode) this.emit('debug', `Get installed apps data: ${JSON.stringify(getInstalledAppsData.data.result, null, 2)}`);
+            const url = `/lists/installedApps?deviceId=${this.xboxLiveId}`;
+            const { data } = await this.axiosInstance.get(url);
+            if (this.enableDebugMode) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
 
-            //get installed apps
-            const inputs = [];
-            const apps = getInstalledAppsData.data.result;
-            for (const app of apps) {
-                if (!app?.name || !app?.aumid) continue;
+            // Filter and map
+            const apps = data.result.filter(a => a.name && a.aumid).map(a => ({
+                name: a.name,
+                oneStoreProductId: a.oneStoreProductId,
+                reference: a.aumid,
+                titleId: a.titleId,
+                isGame: a.isGame,
+                contentType: a.contentType,
+                mode: 0,
+            }));
 
-                const oneStoreProductId = app.oneStoreProductId;
-                const titleId = app.titleId;
-                const aumid = app.aumid;
-                const lastActiveTime = app.lastActiveTime;
-                const isGame = app.isGame;
-                const name = app.name;
-                const contentType = app.contentType;
-                const instanceId = app.instanceId;
-                const storageDeviceId = app.storageDeviceId;
-                const uniqueId = app.uniqueId;
-                const legacyProductId = app.legacyProductId;
-                const version = app.version;
-                const sizeInBytes = app.sizeInBytes;
-                const installTime = app.installTime;
-                const updateTime = app.updateTime;
-                const parentId = app.parentId;
+            // Save inputs
+            await this.saveData(this.inputsFile, apps);
 
-                const input = {
-                    oneStoreProductId: oneStoreProductId,
-                    titleId: titleId,
-                    reference: aumid,
-                    isGame: isGame,
-                    name: name,
-                    contentType: contentType,
-                    mode: 0
-                }
-                inputs.push(input);
+            // Emit inputs
+            this.emit('addRemoveOrUpdateInput', apps, false);
 
-                //emit app
-                this.emit('addRemoveOrUpdateInput', input, false);
-            }
-
-            //save inputs
-            await this.saveData(this.inputsFile, inputs);
-
-            //emit restFul and mqtt
-            this.emit('restFul', 'apps', apps);
-            this.emit('mqtt', 'Apps', apps);
+            this.emit('restFul', 'apps', data);
+            this.emit('mqtt', 'Apps', data);
 
             return true;
         } catch (error) {
             throw new Error(`Installed apps error: ${error}`);
-        }
-    }
-
-    async storageDevices() {
-        try {
-            const url = `${WebApi.Url.Xccs}/lists/storageDevices?deviceId=${this.xboxLiveId}`;
-            const getStorageDevicesData = await this.axiosInstance(url);
-            if (this.enableDebugMode) this.emit('debug', `Get storage devices data: ${JSON.stringify(getStorageDevicesData.data, null, 2)}`);
-
-            //get console storages
-            this.storageDeviceId = [];
-            this.storageDeviceName = [];
-            this.isDefault = [];
-            this.freeSpaceBytes = [];
-            this.totalSpaceBytes = [];
-            this.isGen9Compatible = [];
-
-            const storageDevices = getStorageDevicesData.data.result;
-            const deviceId = getStorageDevicesData.data.deviceId;
-            const agentUserId = getStorageDevicesData.data.agentUserId;
-            for (const storageDevice of storageDevices) {
-                const storageDeviceId = storageDevice.storageDeviceId;
-                const storageDeviceName = storageDevice.storageDeviceName;
-                const isDefault = storageDevice.isDefault;
-                const freeSpaceBytes = storageDevice.freeSpaceBytes;
-                const totalSpaceBytes = storageDevice.totalSpaceBytes;
-                const isGen9Compatible = storageDevice.isGen9Compatible;
-
-                this.storageDeviceId.push(storageDeviceId);
-                this.storageDeviceName.push(storageDeviceName);
-                this.isDefault.push(isDefault);
-                this.freeSpaceBytes.push(freeSpaceBytes);
-                this.totalSpaceBytes.push(totalSpaceBytes);
-                this.isGen9Compatible.push(isGen9Compatible);
-            };
-
-            //emit restFul and mqtt
-            this.emit('restFul', 'storages', storageDevices);
-            this.emit('mqtt', 'Storages', storageDevices);
-
-            return true;
-        } catch (error) {
-            throw new Error(`storage devices error: ${error}`);
-        }
-    }
-
-    async userProfile() {
-        try {
-            const url = `https://profile.xboxlive.com/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/profile/settings?settings=GameDisplayName,GameDisplayPicRaw,Gamerscore,Gamertag`;
-            const getUserProfileData = await this.axiosInstance(url);
-            if (this.enableDebugMode) this.emit('debug', `Get user profile data: ${JSON.stringify(getUserProfileData.data.profileUsers[0], null, 2)}, ${JSON.stringify(getUserProfileData.data.profileUsers[0].settings[0], null, 2)}`);
-
-            //get user profiles
-            this.userProfileId = [];
-            this.userProfileHostId = [];
-            this.userProfileIsSponsoredUser = [];
-            this.userProfileSettingsId = [];
-            this.userProfileSettingsValue = [];
-
-            const profileUsers = getUserProfileData.data.profileUsers;
-            for (const userProfile of profileUsers) {
-                const id = userProfile.id;
-                const hostId = userProfile.hostId;
-                const isSponsoredUser = userProfile.isSponsoredUser;
-
-                this.userProfileId.push(id);
-                this.userProfileHostId.push(hostId);
-                this.userProfileIsSponsoredUser.push(isSponsoredUser);
-
-                const profileUsersSettings = userProfile.settings;
-                for (const userProfileSettings of profileUsersSettings) {
-                    const id = userProfileSettings.id;
-                    const value = userProfileSettings.value;
-
-                    this.userProfileSettingsId.push(id);
-                    this.userProfileSettingsValue.push(value);
-                }
-            }
-
-            //emit restFul and mqtt
-            this.emit('restFul', 'profile', profileUsers);
-            this.emit('mqtt', 'Profile', profileUsers);
-
-            return true;
-        } catch (error) {
-            throw new Error(`User profile error: ${error}`);
         }
     }
 
@@ -364,85 +212,41 @@ class XboxWebApi extends EventEmitter {
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
         }
-    };
-
-    async next() {
-        try {
-            await this.send('Media', 'Next');
-            return true;
-        } catch (error) {
-            throw new Error(error);
-        }
     }
 
-    async previous() {
-        try {
-            await this.send('Media', 'Previous');
-            return true;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
-
-    async pause() {
-        try {
-            await this.send('Media', 'Pause');
-            return true;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
-
-    async play() {
-        try {
-            await this.send('Media', 'Play');
-            return true;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
-
-    async goBack() {
-        try {
-            await this.send('Shell', 'GoBack');
-            return true;
-        } catch (error) {
-            throw new Error(error);
-        }
-    }
-
-    async send(commandType, command, payload) {
+    async send(commandType, command, payload, retries = 2) {
         if (!this.consoleAuthorized || !this.rmEnabled) {
-            this.emit('warn', `not authorized or remote management not enabled`);
+            this.emit('warn', `Not authorized or remote management not enabled`);
             return;
         }
 
-        const sessionid = UuIdv4();
-        const params = payload ?? [];
         const postParams = {
-            "destination": 'Xbox',
-            "type": commandType,
-            "command": command,
-            "sessionId": sessionid,
-            "sourceId": 'com.microsoft.smartglass',
-            "parameters": params,
-            "linkedXboxId": this.xboxLiveId
-        }
-        if (this.enableDebugMode) this.emit('debug', `send, type: ${commandType}, command: ${command}, params: ${params}`);
+            destination: 'Xbox',
+            type: commandType,
+            command,
+            sessionId: UuIdv4(),
+            sourceId: 'com.microsoft.smartglass',
+            parameters: payload ?? [],
+            linkedXboxId: this.xboxLiveId
+        };
 
         try {
-            const stringifyPostParam = JSON.stringify(postParams);
-            this.headers['Content-Length'] = stringifyPostParam.length;
-            const headers = {
-                headers: this.headers
-            }
-            const response = await axios.post(`${WebApi.Url.Xccs}/commands`, postParams, headers);
-            if (this.enableDebugMode) this.emit('debug', `send command, result: ${JSON.stringify(response.data, null, 2)}`);
-
+            const response = await this.axiosInstance.post('/commands', postParams);
+            if (this.enableDebugMode) this.emit('debug', `Command ${command} result: ${JSON.stringify(response.data)}`);
             return true;
         } catch (error) {
-            throw new Error(`send command type: ${commandType}, command: ${command}, params: ${params}, error: ${error}`);
+            if (retries > 0) return this.send(commandType, command, payload, retries - 1);
+            throw new Error(`send ${commandType}:${command} failed: ${error.message}`);
         }
     }
+
+    // Media / shell helpers
+    async next() { return this.send('Media', 'Next'); }
+    async previous() { return this.send('Media', 'Previous'); }
+    async pause() { return this.send('Media', 'Pause'); }
+    async play() { return this.send('Media', 'Play'); }
+    async goBack() { return this.send('Shell', 'GoBack'); }
 }
+
 export default XboxWebApi;
+

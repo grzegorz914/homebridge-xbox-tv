@@ -608,36 +608,6 @@
 								}
 							}
 						},
-						"webApiPowerOnOff": {
-							"title": "Power Control",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable power control over Web Api.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
-						},
-						"webApiRcControl": {
-							"title": "Remote Control",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable game pad control over Web Api.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
-						},
-						"webApiVolumeControl": {
-							"title": "Volume Control",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable volume/mute control over Web Api.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
-						},
 						"webApiToken": {
 							"title": "Web Api Token",
 							"type": "string",
@@ -1135,7 +1105,6 @@
 									"title": "Web Api",
 									"items": [
 										"devices[].webApiControl",
-										"devices[].webApiPowerOnOff",
 										{
 											"key": "devices[].webApiToken",
 											"type": "password"

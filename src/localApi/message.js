@@ -5,16 +5,11 @@ import { LocalApi } from '../constants.js';
 
 class Message {
     constructor(type) {
-        //type
         this.type = type;
-
-        //packet
         this.packets = new Packets();
         this.packet = this.packets[type];
-
-        //channelId
         this.channelId = '\x00\x00\x00\x00\x00\x00\x00\x00';
-    };
+    }
 
     getMsgType(type) {
         const messageTypes = {
@@ -58,9 +53,9 @@ class Message {
             0xF2E: "systemTouch",
             0xF34: "systemTextAck",
             0xF35: "systemTextDone"
-        }
+        };
         return messageTypes[type];
-    };
+    }
 
     readFlags(flags) {
         const binaryFlag = HexToBin(flags.toString('hex'));
@@ -68,15 +63,8 @@ class Message {
         const needAck = binaryFlag.slice(2, 3) === '1';
         const isFragment = binaryFlag.slice(3, 4) === '1';
         const type = this.getMsgType(parseInt(binaryFlag.slice(4, 16), 2));
-
-        const packet = {
-            version,
-            needAck,
-            isFragment,
-            type
-        };
-        return packet;
-    };
+        return { version, needAck, isFragment, type };
+    }
 
     setFlag(type) {
         const messageFlags = {
@@ -122,66 +110,59 @@ class Message {
             0xF35: "systemTextDone"
         };
         return messageFlags[type];
-    };
+    }
 
     set(key, value, subkey = false) {
-        switch (subkey) {
-            case false:
-                this.packet[key].value = value;
-                break;
-            default:
-                this.packet[subkey][key].value = value;
-                break;
-        };
-    };
+        if (subkey === false) {
+            this.packet[key].value = value;
+        } else {
+            this.packet[subkey][key].value = value;
+        }
+    }
 
-
+    // Automatyczne ustawienie target/source i obsługa paddingu
     pack(crypto, sequenceNumber, sourceParticipantId, channelId = false) {
         const structure = new Structure();
-        let packet;
-
         for (const name in this.packet) {
             this.packet[name].pack(structure);
+        }
+
+        // Padding PKCS7
+        if (structure.toBuffer().length % 16 > 0) {
+            const padStart = structure.toBuffer().length % 16;
+            const padTotal = 16 - padStart;
+            for (let i = padStart + 1; i <= 16; i++) {
+                structure.writeUInt8(padTotal);
+            }
         }
 
         const header = new Structure();
         header.writeBytes(Buffer.from('d00d', 'hex'));
         header.writeUInt16(structure.toBuffer().length);
         header.writeUInt32(sequenceNumber);
-        header.writeUInt32(LocalApi.ParticipantId.Target);
-        header.writeUInt32(sourceParticipantId);
+        header.writeUInt32(LocalApi.ParticipantId.Target); // Cel wiadomości
+        header.writeUInt32(sourceParticipantId); // Źródło
         header.writeBytes(this.setFlag(this.type));
-        const addChannelId = channelId ? header.writeBytes(Buffer.from(channelId)) : header.writeBytes(Buffer.from(this.channelId));
+        header.writeBytes(Buffer.from(channelId || this.channelId));
 
-        if (structure.toBuffer().length % 16 > 0) {
-            const padStart = structure.toBuffer().length % 16;
-            const padTotal = 16 - padStart;
-            for (let paddingNum = padStart + 1; paddingNum <= 16; paddingNum++) {
-                structure.writeUInt8(padTotal);
-            }
-        }
+        const payloadEncrypted = crypto.encrypt(
+            structure.toBuffer(),
+            crypto.getKey(),
+            crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv())
+        );
 
-        const payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
-        packet = Buffer.concat([
-            header.toBuffer(),
-            payloadEncrypted
-        ]);
-
+        let packet = Buffer.concat([header.toBuffer(), payloadEncrypted]);
         const payloadProtected = crypto.sign(packet);
-        packet = Buffer.concat([
-            packet,
-            Buffer.from(payloadProtected)
-        ]);
+        return Buffer.concat([packet, Buffer.from(payloadProtected)]);
+    }
 
-        return packet;
-    };
-
+    // Obsługa JSON fragmentów i decryption
     unpack(crypto = undefined, data = false) {
         const structure = new Structure(data);
         const type = structure.readBytes(2).toString('hex');
 
         let packet = {
-            type: type,
+            type,
             payloadLength: structure.readUInt16(),
             sequenceNumber: structure.readUInt32(),
             targetParticipantId: structure.readUInt32(),
@@ -190,26 +171,33 @@ class Message {
             channelId: structure.readBytes(8),
             payloadProtected: structure.readBytes()
         };
+
         packet.type = packet.flags.type;
-        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
         packet.signature = packet.payloadProtected.slice(-32);
+        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
         this.channelId = packet.channelId;
 
-        // Lets decrypt the data when the payload is encrypted
-        const payloadProtectedExist = packet.payloadProtected !== undefined;
-        if (payloadProtectedExist) {
-            let payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
-            packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
-            packet['payloadProtected'] = {};
+        if (packet.payloadProtected.length > 0 && crypto) {
+            const payloadDecrypted = crypto.decrypt(
+                packet.payloadProtected,
+                crypto.encrypt(data.slice(0, 16), crypto.getIv())
+            );
 
-            const packetProtected = this.packets[packet.type];
-            const structurePayloadDecrypted = new Structure(payloadDecrypted);
-            for (const name in packetProtected) {
-                packet.payloadProtected[name] = packetProtected[name].unpack(structurePayloadDecrypted);
-            };
-        };
+            packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
+            packet.payload = {};
+
+            // Obsługa pakietów JSON i fragmentów
+            const packetDef = this.packets[packet.type];
+            if (packetDef) {
+                const structPayload = new Structure(payloadDecrypted);
+                for (const name in packetDef) {
+                    packet.payload[name] = packetDef[name].unpack(structPayload);
+                }
+            }
+        }
 
         return packet;
-    };
-};
+    }
+}
+
 export default Message;

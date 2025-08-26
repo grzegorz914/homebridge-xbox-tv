@@ -103,7 +103,6 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
 | `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
 | `webApiControl` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
-| `webApiPowerOnOff` | This enable `Power` control over Web Api. |
 | `webApiToken` | Required if `webApiControl` enabled, use Authorization Manager to get it. |
 | `webApiClientId` | Here set your own Client Id from Azure AD or leave empty if you do not have own account. |
 | `webApiClientSecret` | Here set your Client Secret from Azure AD or leave empty if you do not have own account. |

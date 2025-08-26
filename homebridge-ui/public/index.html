@@ -9,12 +9,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 </head>
 
-<div class="container mt-4">
+<div class="container mt-3">
   <div class="text-center">
     <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
   </div>
 
-  <div id="authorizationManager" class="card card-body mt-3">
+  <div id="authorizationManager" class="card card-body mt-2">
     <form id="configForm">
       <div class="text-center">
         <label id="deviceName" class="fw-bold" style="font-size: 23px;">Xbox</label><br>
@@ -22,17 +22,22 @@
         <label id="info1" class="d-block" style="font-size: 15px;"></label>
       </div>
 
-      <div class="mb-3">
+      <div class="mb-2">
         <label for="deviceHost" class="form-label">Host</label>
         <input id="deviceHost" type="text" class="form-control" required>
       </div>
 
-      <div class="mb-3">
+      <div class="mb-2 position-relative">
         <label for="deviceLiveId" class="form-label">Xbox Live ID</label>
-        <input id="deviceLiveId" type="password" class="form-control" autocomplete="off" required>
+        <div class="input-group">
+          <input id="deviceLiveId" type="password" class="form-control" autocomplete="new-password" required>
+          <button type="button" id="toggleLiveId" class="btn btn-outline-secondary">
+            <i class="fas fa-eye"></i>
+          </button>
+        </div>
       </div>
 
-      <div class="mb-3 position-relative">
+      <div class="mb-2 position-relative">
         <label for="deviceToken" class="form-label">Web API Token</label>
         <div class="input-group">
           <input id="deviceToken" type="password" class="form-control" autocomplete="new-password" required>
@@ -42,7 +47,7 @@
         </div>
       </div>
 
-      <div class="form-check mb-3">
+      <div class="form-check mb-2">
         <input id="deviceWebApiControl" type="checkbox" class="form-check-input">
         <label for="deviceWebApiControl" class="form-check-label">Web API Control</label>
       </div>
@@ -53,9 +58,8 @@
         <button id="configButton" type="button" class="btn btn-secondary"><i class="fas fa-gear"></i></button>
       </div>
     </form>
+    <div id="consoleButton" class="text-center mt-2"></div>
   </div>
-
-  <div id="consoleButton" class="text-center mt-3"></div>
 </div>
 
 <script>
@@ -107,7 +111,7 @@
       const button = document.createElement("button");
       button.type = "button";
       button.id = `button${i}`;
-      button.className = "btn btn-secondary m-1";
+      button.className = "btn btn-secondary mt-2";
       button.style.textTransform = "none";
       button.innerText = device.name || `Device ${i + 1}`;
 
@@ -133,6 +137,20 @@
       this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
       $("configButton").className = this.configButtonState ? "btn btn-secondary" : "btn btn-primary";
       this.configButtonState = !this.configButtonState;
+    });
+
+    // Token toggle
+    $("toggleLiveId").addEventListener("click", () => {
+      const liveIdInput = $("deviceLiveId");
+      const icon = document.querySelector('#toggleLiveId i');
+
+      if (liveIdInput.type === 'password') {
+        liveIdInput.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        liveIdInput.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
     });
 
     // Token toggle
