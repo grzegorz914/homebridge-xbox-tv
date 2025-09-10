@@ -15,63 +15,23 @@ class Authentication {
         }
     }
 
-    async refreshTokens(type) {
-        switch (type) {
-            case 'user':
-                if (this.tokens.user.Token) {
-                    const tokenExpired = new Date() > new Date(this.tokens.user.NotAfter).getTime();
-                    switch (tokenExpired) {
-                        case true:
-                            try {
-                                await this.refreshToken(this.tokens.oauth.refresh_token);
-                                await this.getUserToken(this.tokens.oauth.access_token);
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
-                        case false:
-                            try {
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
-                    }
-                } else {
-                    try {
-                        await this.getUserToken(this.tokens.oauth.access_token);
-                        await this.refreshTokens('xsts');
-                        return true;
-                    } catch (error) {
-                        throw new Error(error);
-                    }
-                }
-            case 'xsts':
-                if (this.tokens.xsts.Token) {
-                    const tokenExpired = new Date() > new Date(this.tokens.xsts.NotAfter).getTime();
-                    switch (tokenExpired) {
-                        case true:
-                            try {
-                                await this.getXstsToken(this.tokens.user.Token);
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
-                        case false:
-                            return true;
-                    }
-                } else {
-                    try {
-                        await this.getXstsToken(this.tokens.user.Token);
-                        return true;
-                    } catch (error) {
-                        throw new Error(error);
-                    }
-                }
-            default:
-                throw new Error(`Unknow refresh token type: ${type}`);
+    async readData(path) {
+        try {
+            const data = await fsPromises.readFile(path);
+            const tokens = data.length > 0 ? JSON.parse(data) : false;
+            return tokens;
+        } catch (error) {
+            throw new Error(`Read data error: ${error}`);
+        }
+    }
+
+    async saveData(path, data) {
+        try {
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            return true;
+        } catch (error) {
+            throw new Error(`Save data error: ${error}`);
         }
     }
 
@@ -167,6 +127,66 @@ class Authentication {
         }
     }
 
+    async refreshTokens(type) {
+        switch (type) {
+            case 'user':
+                if (this.tokens.user.Token) {
+                    const tokenExpired = new Date() > new Date(this.tokens.user.NotAfter).getTime();
+                    switch (tokenExpired) {
+                        case true:
+                            try {
+                                await this.refreshToken(this.tokens.oauth.refresh_token);
+                                await this.getUserToken(this.tokens.oauth.access_token);
+                                await this.refreshTokens('xsts');
+                                return true;
+                            } catch (error) {
+                                throw new Error(error);
+                            };
+                        case false:
+                            try {
+                                await this.refreshTokens('xsts');
+                                return true;
+                            } catch (error) {
+                                throw new Error(error);
+                            };
+                    }
+                } else {
+                    try {
+                        await this.getUserToken(this.tokens.oauth.access_token);
+                        await this.refreshTokens('xsts');
+                        return true;
+                    } catch (error) {
+                        throw new Error(error);
+                    }
+                }
+            case 'xsts':
+                if (this.tokens.xsts.Token) {
+                    const tokenExpired = new Date() > new Date(this.tokens.xsts.NotAfter).getTime();
+                    switch (tokenExpired) {
+                        case true:
+                            try {
+                                await this.getXstsToken(this.tokens.user.Token);
+                                await this.refreshTokens('xsts');
+                                return true;
+                            } catch (error) {
+                                throw new Error(error);
+                            };
+                        case false:
+                            return true;
+                    }
+                } else {
+                    try {
+                        await this.getXstsToken(this.tokens.user.Token);
+                        return true;
+                    } catch (error) {
+                        throw new Error(error);
+                    }
+                }
+            default:
+                throw new Error(`Unknow refresh token type: ${type}`);
+        }
+    }
+
     async checkAuthorization() {
         if (this.webApiClientId) {
             try {
@@ -203,26 +223,6 @@ class Authentication {
             return oauth2URI;
         } catch (error) {
             throw new Error(`Authorization URL error: ${error}`);
-        }
-    }
-
-    async readData(path) {
-        try {
-            const data = await fsPromises.readFile(path);
-            const tokens = data.length > 0 ? JSON.parse(data) : false;
-            return tokens;
-        } catch (error) {
-            throw new Error(`Read data error: ${error}`);
-        }
-    }
-
-    async saveData(path, data) {
-        try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
         }
     }
 }

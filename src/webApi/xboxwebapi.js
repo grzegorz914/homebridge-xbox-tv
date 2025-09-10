@@ -12,6 +12,9 @@ class XboxWebApi extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.webApiClientId = config.webApiClientId;
         this.webApiClientSecret = config.webApiClientSecret;
+        this.defaultInputs = config.defaultInputs;
+        this.inputs = config.inputs;
+        this.getInputsFromDevice = config.getInputsFromDevice;
         this.inputsFile = config.inputsFile;
         this.enableDebugMode = config.enableDebugMode;
 
@@ -39,9 +42,21 @@ class XboxWebApi extends EventEmitter {
                 } finally {
                     this.call = false;
                 }
-            }).on('state', (state) => {
+            })
+            .on('state', (state) => {
                 this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
             });
+    }
+
+    async saveData(path, data) {
+        try {
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
+            return true;
+        } catch (error) {
+            throw new Error(`Save data error: ${error}`);
+        }
     }
 
     async checkAuthorization() {
@@ -89,7 +104,8 @@ class XboxWebApi extends EventEmitter {
             await this.consolesList();
             await this.consoleStatus();
             await this.installedApps();
-            
+            //await this.mediaState();
+
             return true;
         } catch (error) {
             throw new Error(`Check authorization error: ${error}`);
@@ -187,12 +203,13 @@ class XboxWebApi extends EventEmitter {
                 contentType: a.contentType,
                 mode: 0,
             }));
+            const inputs = this.getInputsFromDevice ? [...this.defaultInputs, ...apps] : this.inputs;
 
             // Save inputs
-            await this.saveData(this.inputsFile, apps);
+            await this.saveData(this.inputsFile, inputs);
 
             // Emit inputs
-            this.emit('addRemoveOrUpdateInput', apps, false);
+            this.emit('installedApps', inputs, false);
 
             this.emit('restFul', 'apps', data);
             this.emit('mqtt', 'Apps', data);
@@ -203,18 +220,38 @@ class XboxWebApi extends EventEmitter {
         }
     }
 
-    async saveData(path, data) {
+    async mediaState() {
         try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
+            const url = `/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.xboxLiveId}/media`;
+            const { data } = await this.axiosInstance.get(url);
+            if (this.enableDebugMode) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
+
+            // Emit single console object
+            const state = {
+                state: data.state, // Playing | Paused | Stopped
+                title: data.title,
+                artist: data.artist,
+                album: data.album,
+                position: data.position, //ms
+                duration: data.duration, //ms
+                canSeek: !!data.canSeek, // bool
+                volume: data.volume, // 0.5
+                muted: !!data.muted, // bool
+            };
+
+            // Emit console type
+            this.emit('mediaState', state);
+
+            this.emit('restFul', 'mediastate', data);
+            this.emit('mqtt', 'Media State', data);
+
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error}`);
+            throw new Error(`Media state error: ${error}`);
         }
     }
 
-    async send(commandType, command, payload, retries = 2) {
+    async send(commandType, command, payload) {
         if (!this.consoleAuthorized || !this.rmEnabled) {
             this.emit('warn', `Not authorized or remote management not enabled`);
             return;
@@ -235,8 +272,10 @@ class XboxWebApi extends EventEmitter {
             if (this.enableDebugMode) this.emit('debug', `Command ${command} result: ${JSON.stringify(response.data)}`);
             return true;
         } catch (error) {
-            if (retries > 0) return this.send(commandType, command, payload, retries - 1);
-            throw new Error(`send ${commandType}:${command} failed: ${error.message}`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (command === 'WakeUp') this.emit('stateChanged', false);
+            if (command === 'TurnOff') this.emit('stateChanged', true);
+            throw new Error(`Failed to send command: type=${commandType}, command=${command}, error=${error.message}`);
         }
     }
 

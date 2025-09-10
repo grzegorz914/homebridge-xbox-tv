@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v3.0.0 RESTFull and MQTT config settings need to be updated
 - After update to v3.4.0 all buttons in config need to be updated
 
+## [3.8.0] - (10.09.2025)
+
+## Changes
+
+- stability and performance improvement
+- added dynamic firmware info update if changed
+- bump dependencies
+- cleanup
+
 ## [3.7.0] - (17.08.2025)
 
 ## Changes

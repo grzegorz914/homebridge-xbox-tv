@@ -117,11 +117,17 @@ export const WebApi = {
             "SystemUpdate": 3,
             "Unknown": 4
         },
-        "PlaybackState": {
+        "PlaybackState": {//0 - STOP, 1 - PLAY, 2 - PAUSE
             "Stopped": 0,
             "Playing": 1,
             "Paused": 2,
             "Unknown": 3
+        },
+        "PlaybackStateHomeKit": { //0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
+            "Stopped": 2,
+            "Playing": 0,
+            "Paused": 1,
+            "Unknown": 4
         }
     }
 };
@@ -130,6 +136,7 @@ export const LocalApi = {
     "ParticipantId": {
         "Target": 0
     },
+    "ClientId" : "e8ff5828-5cce-4f90-89a4-117d127e3838",
     "Console": {
         "Name": {
             "1": "Xbox One",

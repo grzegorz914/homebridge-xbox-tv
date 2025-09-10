@@ -1,6 +1,6 @@
 class Structure {
     constructor(packet) {
-        this.packet = packet ?? Buffer.alloc(0);
+        this.packet = packet ? packet : Buffer.alloc(0);
         this.totalLength = this.packet.length;
         this.offset = 0;
     }

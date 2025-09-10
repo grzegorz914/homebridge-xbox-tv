@@ -82,28 +82,20 @@ class Simple {
             case 'discoveryResponse':
                 packet = this.pack1(PACKET_TYPES.DISCOVERY_RESPONSE, structure.toBuffer(), Buffer.from([0, VERSION.V2]));
                 break;
-            case 'connectRequest': {
-                packet = this.pack1(
-                    PACKET_TYPES.CONNECT_REQUEST,
-                    structure.toBuffer(),
-                    Buffer.from('0002', 'hex'),
-                    payloadProtectedLength,
-                    payloadProtectedLengthReal
-                );
+            case 'connectRequest':
+                packet = this.pack1(PACKET_TYPES.CONNECT_REQUEST, structure.toBuffer(), Buffer.from('0002', 'hex'), payloadProtectedLength, payloadProtectedLengthReal);
                 const payloadProtected = crypto.sign(packet);
                 packet = Buffer.concat([packet, Buffer.from(payloadProtected)]);
                 break;
-            }
-            case 'connectResponse':
-                packet = this.pack1(PACKET_TYPES.CONNECT_RESPONSE, structure.toBuffer(), Buffer.from([0, VERSION.V2]));
-                break;
-            case 'connectRequestProtected': {
+            case 'connectRequestProtected':
                 Simple.applyPKCS7Padding(structure);
                 let payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getIv());
                 payloadEncrypted = new Structure(payloadEncrypted);
                 packet = payloadEncrypted.toBuffer();
                 break;
-            }
+            case 'connectResponse':
+                packet = this.pack1(PACKET_TYPES.CONNECT_RESPONSE, structure.toBuffer(), Buffer.from([0, VERSION.V2]));
+                break;
             default:
                 packet = structure.toBuffer();
         }

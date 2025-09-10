@@ -13,7 +13,7 @@ class Message {
 
     getMsgType(type) {
         const messageTypes = {
-            0x1: "acknowledge",
+            0x1: "heartBeat",
             0x2: "group",
             0x3: "localJoin",
             0x5: "stopActivity",
@@ -60,15 +60,15 @@ class Message {
     readFlags(flags) {
         const binaryFlag = HexToBin(flags.toString('hex'));
         const version = parseInt(binaryFlag.slice(0, 2), 2);
-        const needAck = binaryFlag.slice(2, 3) === '1';
+        const needHeartBeat = binaryFlag.slice(2, 3) === '1';
         const isFragment = binaryFlag.slice(3, 4) === '1';
         const type = this.getMsgType(parseInt(binaryFlag.slice(4, 16), 2));
-        return { version, needAck, isFragment, type };
+        return { version, needHeartBeat, isFragment, type };
     }
 
     setFlag(type) {
         const messageFlags = {
-            acknowledge: Buffer.from('8001', 'hex'),
+            heartBeat: Buffer.from('8001', 'hex'),
             0x2: "group",
             localJoin: Buffer.from('2003', 'hex'),
             0x5: "stopActivity",
@@ -178,20 +178,15 @@ class Message {
         this.channelId = packet.channelId;
 
         if (packet.payloadProtected.length > 0 && crypto) {
-            const payloadDecrypted = crypto.decrypt(
-                packet.payloadProtected,
-                crypto.encrypt(data.slice(0, 16), crypto.getIv())
-            );
-
+            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
             packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
-            packet.payload = {};
+            packet.payloadProtected = {};
 
-            // Obsługa pakietów JSON i fragmentów
             const packetDef = this.packets[packet.type];
             if (packetDef) {
                 const structPayload = new Structure(payloadDecrypted);
                 for (const name in packetDef) {
-                    packet.payload[name] = packetDef[name].unpack(structPayload);
+                    packet.payloadProtected[name] = packetDef[name].unpack(structPayload);
                 }
             }
         }
