@@ -64,9 +64,9 @@ class XboxDevice extends EventEmitter {
         for (const input of this.inputs) {
             const inputName = input.name;
             const inputReference = input.reference;
-            const push = inputName && inputReference ? inputsArr.push(input) : false;
+            if (inputName && inputReference) inputsArr.push(input);
         }
-        this.inputs = [...DefaultInputs, ...inputsArr];
+        this.inputs = this.getInputsFromDevice ? DefaultInputs : [...DefaultInputs, ...inputsArr];
 
         //sensors
         this.sensorsInputsConfigured = [];
@@ -238,7 +238,7 @@ class XboxDevice extends EventEmitter {
             if (this.enableDebugMode) this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
             //read inputs file
-            const savedInputs = this.getInputsFromDevice ? await this.functions.readData(this.inputsFile) : this.inputs;
+            const savedInputs = await this.functions.readData(this.inputsFile);
             this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : [];
             if (this.enableDebugMode) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
@@ -936,6 +936,9 @@ class XboxDevice extends EventEmitter {
     //start
     async start() {
         try {
+            // Save inputs
+            await this.functions.saveData(this.inputsFile, this.inputs);
+
             // Web api client
             if (this.webApiControl) {
                 try {
@@ -944,7 +947,6 @@ class XboxDevice extends EventEmitter {
                         webApiClientId: this.webApiClientId,
                         webApiClientSecret: this.webApiClientSecret,
                         inputs: this.inputs,
-                        defaultInputs: DefaultInputs,
                         tokensFile: this.authTokenFile,
                         inputsFile: this.inputsFile,
                         getInputsFromDevice: this.getInputsFromDevice,

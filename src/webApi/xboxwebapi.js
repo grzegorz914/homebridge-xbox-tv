@@ -13,7 +13,6 @@ class XboxWebApi extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.webApiClientId = config.webApiClientId;
         this.webApiClientSecret = config.webApiClientSecret;
-        this.defaultInputs = config.defaultInputs;
         this.inputs = config.inputs;
         this.getInputsFromDevice = config.getInputsFromDevice;
         this.inputsFile = config.inputsFile;
@@ -194,16 +193,18 @@ class XboxWebApi extends EventEmitter {
                 contentType: a.contentType,
                 mode: 0,
             }));
-            const inputs = this.getInputsFromDevice ? [...this.defaultInputs, ...apps] : this.inputs;
+
+            this.emit('restFul', 'apps', data);
+            this.emit('mqtt', 'Apps', data);
+
+            if (!this.getInputsFromDevice) return true;
+            const inputs = [...this.inputs, ...apps];
 
             // Save inputs
             await this.functions.saveData(this.inputsFile, inputs);
 
             // Emit inputs
             this.emit('installedApps', inputs, false);
-
-            this.emit('restFul', 'apps', data);
-            this.emit('mqtt', 'Apps', data);
 
             return true;
         } catch (error) {

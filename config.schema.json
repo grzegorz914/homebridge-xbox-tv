@@ -169,6 +169,7 @@
 									"contentType": {
 										"title": "Content Type",
 										"type": "string",
+										"default": "Game",
 										"description": "Here select source input type.",
 										"oneOf": [
 											{
@@ -196,7 +197,7 @@
 												]
 											}
 										],
-										"required": false
+										"required": true
 									}
 								}
 							}
@@ -942,6 +943,7 @@
 							"title": "{{ value.name || 'input' }}",
 							"items": [
 								"devices[].inputs[].name",
+								"devices[].inputs[].titleId",
 								"devices[].inputs[].reference",
 								"devices[].inputs[].oneStoreProductId",
 								"devices[].inputs[].contentType"

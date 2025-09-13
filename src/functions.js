@@ -11,7 +11,6 @@ class Functions {
         try {
             data = !stringify ? data : JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data, 'utf8');
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error.message || error}`);
