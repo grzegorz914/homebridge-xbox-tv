@@ -37,7 +37,7 @@ class XboxPlatform {
 
 				if (!deviceName || !host || !xboxLiveId) {
 					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, Host: ${host ? 'OK' : host}, Xbox Live ID: ${xboxLiveId ? 'OK' : xboxLiveId}, wrong or missing.`);
-					return;
+					continue;
 				}
 
 				//log config
@@ -51,7 +51,7 @@ class XboxPlatform {
 				};
 				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
 
-				const config = {
+				const safeConfig = {
 					...device,
 					xboxLiveId: 'removed',
 					webApiToken: 'removed',
@@ -60,8 +60,8 @@ class XboxPlatform {
 						...device.mqtt,
 						passwd: 'removed'
 					}
-				}
-				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
+				};
+				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(safeConfig, null, 2)}.`);
 
 				//check files exists, if not then create it
 				const postFix = host.split('.').join('');
@@ -87,8 +87,8 @@ class XboxPlatform {
 						}
 					});
 				} catch (error) {
-					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
-					return;
+					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error.message ?? error}`);
+					continue;
 				}
 
 				//xbox device
@@ -114,19 +114,17 @@ class XboxPlatform {
 								await xboxDevice.startImpulseGenerator();
 							}
 						} catch (error) {
-							if (logLevel.error) log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							if (logLevel.error) log.error(`Device: ${host} ${deviceName}, ${error.message ?? error}, trying again.`);
 						}
 					}).on('state', (state) => {
-						if (logLevel.debug) state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
+						if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Start impulse generator ${state ? 'started' : 'stopped'}`);
 					});
 
 					//start impulse generator
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
+					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error.message ?? error}`);
 				}
-
-				await new Promise(resolve => setTimeout(resolve, 300));
 			}
 		});
 	}
@@ -138,4 +136,5 @@ class XboxPlatform {
 
 export default (api) => {
 	api.registerPlatform(PluginName, PlatformName, XboxPlatform);
-}
+};
+

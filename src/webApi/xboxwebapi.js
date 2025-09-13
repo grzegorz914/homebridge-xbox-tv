@@ -4,6 +4,7 @@ import { v4 as UuIdv4 } from 'uuid';
 import axios from 'axios';
 import Authentication from './authentication.js';
 import ImpulseGenerator from '../impulsegenerator.js';
+import Functions from '../functions.js';
 import { WebApi } from '../constants.js';
 
 class XboxWebApi extends EventEmitter {
@@ -21,6 +22,7 @@ class XboxWebApi extends EventEmitter {
         // Variables
         this.consoleAuthorized = false;
         this.rmEnabled = false;
+        this.functions = new Functions();
 
         const authConfig = {
             webApiClientId: config.webApiClientId,
@@ -46,17 +48,6 @@ class XboxWebApi extends EventEmitter {
             .on('state', (state) => {
                 this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
             });
-    }
-
-    async saveData(path, data) {
-        try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
-        }
     }
 
     async checkAuthorization() {
@@ -206,7 +197,7 @@ class XboxWebApi extends EventEmitter {
             const inputs = this.getInputsFromDevice ? [...this.defaultInputs, ...apps] : this.inputs;
 
             // Save inputs
-            await this.saveData(this.inputsFile, inputs);
+            await this.functions.saveData(this.inputsFile, inputs);
 
             // Emit inputs
             this.emit('installedApps', inputs, false);

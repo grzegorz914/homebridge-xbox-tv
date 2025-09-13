@@ -169,7 +169,6 @@
 									"contentType": {
 										"title": "Content Type",
 										"type": "string",
-										"default": "Game",
 										"description": "Here select source input type.",
 										"oneOf": [
 											{

@@ -4,6 +4,7 @@ import RestFul from './restful.js';
 import Mqtt from './mqtt.js';
 import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
+import Functions from './functions.js';
 import { DefaultInputs, LocalApi, DiacriticsMap, WebApi } from './constants.js';
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
@@ -55,17 +56,17 @@ class XboxDevice extends EventEmitter {
         this.restFulConnected = false;
         this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
+        this.functions = new Functions();
 
 
         //add configured inputs to the default inputs and chack duplicated inputs
-        const tempInputs = [...DefaultInputs, ...this.inputs];
         const inputsArr = [];
-        for (const input of tempInputs) {
-            const inputName = input.name ?? false;
-            const inputReference = input.reference ?? false;
+        for (const input of this.inputs) {
+            const inputName = input.name;
+            const inputReference = input.reference;
             const push = inputName && inputReference ? inputsArr.push(input) : false;
         }
-        this.inputs = inputsArr;
+        this.inputs = [...DefaultInputs, ...inputsArr];
 
         //sensors
         this.sensorsInputsConfigured = [];
@@ -114,47 +115,6 @@ class XboxDevice extends EventEmitter {
         this.sensorScreenSaverState = false;
         this.sensorInputState = false;
         this.consoleAuthorized = false;
-    }
-
-    async saveData(path, data) {
-        try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
-        }
-    }
-
-    async readData(path) {
-        try {
-            const data = await fsPromises.readFile(path);
-            return data;
-        } catch (error) {
-            throw new Error(`Read data error: ${error}`);
-        }
-    }
-
-    async sanitizeString(str) {
-        if (!str) return '';
-
-        // Replace diacritics using map
-        str = str.replace(/[^\u0000-\u007E]/g, ch => DiacriticsMap[ch] || ch);
-
-        // Replace separators between words with space
-        str = str.replace(/(\w)[.:;+\-\/]+(\w)/g, '$1 $2');
-
-        // Replace remaining standalone separators with space
-        str = str.replace(/[.:;+\-\/]/g, ' ');
-
-        // Remove remaining invalid characters (keep letters, digits, space, apostrophe)
-        str = str.replace(/[^A-Za-z0-9 ']/g, ' ');
-
-        // Collapse multiple spaces
-        str = str.replace(/\s+/g, ' ');
-
-        // Trim
-        return str.trim();
     }
 
     async setOverExternalIntegration(integration, key, value) {
@@ -273,22 +233,22 @@ class XboxDevice extends EventEmitter {
     async prepareDataForAccessory() {
         try {
             //read dev info from file
-            const savedInfo = await this.readData(this.devInfoFile);
+            const savedInfo = await this.functions.readData(this.devInfoFile);
             this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
             if (this.enableDebugMode) this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
             //read inputs file
-            const savedInputs = this.getInputsFromDevice ? await this.readData(this.inputsFile) : this.inputs;
+            const savedInputs = this.getInputsFromDevice ? await this.functions.readData(this.inputsFile) : this.inputs;
             this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : [];
             if (this.enableDebugMode) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
             //read inputs names from file
-            const savedInputsNames = await this.readData(this.inputsNamesFile);
+            const savedInputsNames = await this.functions.readData(this.inputsNamesFile);
             this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
             if (this.enableDebugMode) this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
 
             //read inputs visibility from file
-            const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+            const savedInputsTargetVisibility = await this.functions.readData(this.inputsTargetVisibilityFile);
             this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
             if (this.enableDebugMode) this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
@@ -358,7 +318,7 @@ class XboxDevice extends EventEmitter {
 
                 const inputReference = input.reference;
                 const savedName = this.savedInputsNames[inputReference] ?? input.name;
-                const sanitizedName = await this.sanitizeString(savedName);
+                const sanitizedName = await this.functions.sanitizeString(savedName);
                 const inputMode = input.mode ?? 0;
                 const inputTitleId = input.titleId;
                 const inputOneStoreProductId = input.oneStoreProductId;
@@ -409,10 +369,10 @@ class XboxDevice extends EventEmitter {
                     inputService.getCharacteristic(Characteristic.ConfiguredName)
                         .onSet(async (value) => {
                             try {
-                                value = await this.sanitizeString(value);
+                                value = await this.functions.sanitizeString(value);
                                 inputService.name = value;
                                 this.savedInputsNames[inputReference] = value;
-                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                                await this.functions.saveData(this.inputsNamesFile, this.savedInputsNames);
                                 if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
                                 await this.displayOrder();
                             } catch (error) {
@@ -426,7 +386,7 @@ class XboxDevice extends EventEmitter {
                             try {
                                 inputService.visibility = state;
                                 this.savedInputsTargetVisibility[inputReference] = state;
-                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                                await this.functions.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                                 if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
                             } catch (error) {
                                 this.emit('warn', `Save Target Visibility error: ${error}`);
@@ -1058,7 +1018,7 @@ class XboxDevice extends EventEmitter {
                     };
 
                     // Save device info
-                    await this.saveData(this.devInfoFile, obj);
+                    await this.functions.saveData(this.devInfoFile, obj);
 
                     this.informationService
                         ?.setCharacteristic(Characteristic.Model, this.modelName)

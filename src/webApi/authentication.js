@@ -2,6 +2,7 @@ import { promises as fsPromises } from 'fs';
 import QueryString from 'querystring';
 import axios from 'axios';
 import { WebApi } from '../constants.js';
+import Functions from '../functions.js';
 
 class Authentication {
     constructor(config) {
@@ -13,26 +14,8 @@ class Authentication {
             user: {},
             xsts: {}
         }
-    }
 
-    async readData(path) {
-        try {
-            const data = await fsPromises.readFile(path);
-            const tokens = data.length > 0 ? JSON.parse(data) : false;
-            return tokens;
-        } catch (error) {
-            throw new Error(`Read data error: ${error}`);
-        }
-    }
-
-    async saveData(path, data) {
-        try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
-        }
+        this.functions = new Functions();
     }
 
     async refreshToken(token) {
@@ -43,7 +26,10 @@ class Authentication {
                 "scope": WebApi.Scopes,
                 "refresh_token": token,
             }
-            const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
+
+            if (this.webApiClientSecret) {
+                payload.client_secret = this.webApiClientSecret;
+            }
 
             const postData = QueryString.stringify(payload);
             const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -112,7 +98,10 @@ class Authentication {
                 "code": webApiToken,
                 "redirect_uri": WebApi.Url.Redirect
             }
-            const addClientSecret = this.webApiClientSecret ? payload.client_secret = this.webApiClientSecret : false;
+
+            if (this.webApiClientSecret) {
+                payload.client_secret = this.webApiClientSecret;
+            }
 
             const postData = QueryString.stringify(payload);
             const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -120,7 +109,7 @@ class Authentication {
             const accessToken = response.data;
             accessToken.issued = new Date().toISOString();
             this.tokens.oauth = accessToken;
-            await this.saveData(this.tokensFile, this.tokens);
+            await this.functions.saveData(this.tokensFile, this.tokens);
             return true;
         } catch (error) {
             throw new Error(`Access token error: ${error}`);
@@ -190,13 +179,14 @@ class Authentication {
     async checkAuthorization() {
         if (this.webApiClientId) {
             try {
-                const tokens = await this.readData(this.tokensFile);
+                const data = await this.functions.readData(this.tokensFile);
+                const tokens = data.length > 0 ? JSON.parse(data) : false;
                 this.tokens = !tokens ? this.tokens : tokens;
                 const refreshToken = this.tokens.oauth.refresh_token ?? false;
 
                 if (refreshToken) {
                     await this.refreshTokens('user');
-                    await this.saveData(this.tokensFile, this.tokens);
+                    await this.functions.saveData(this.tokensFile, this.tokens);
                     return { headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens };
                 } else {
                     throw new Error('No oauth token found. Use authorization manager first.')

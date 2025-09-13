@@ -9,6 +9,7 @@ import MessagePacket from './message.js';
 import SGCrypto from './sgcrypto.js';
 import { LocalApi } from '../constants.js';
 import ImpulseGenerator from '../impulsegenerator.js';
+import Functions from '../functions.js';
 
 class XboxLocalApi extends EventEmitter {
     constructor(config) {
@@ -37,6 +38,7 @@ class XboxLocalApi extends EventEmitter {
         this.interval = null;
         this.sequenceNumber = 0;
         this.sourceParticipantId = 0;
+        this.functions = new Functions();
 
         //create impulse generator
         this.impulseGenerator = new ImpulseGenerator()
@@ -70,26 +72,6 @@ class XboxLocalApi extends EventEmitter {
         this.power = false;
         this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute);
         return true;
-    };
-
-    async readData(path) {
-        try {
-            const data = await fsPromises.readFile(path, 'utf8');
-            return data;
-        } catch (error) {
-            throw new Error(`Read data error: ${error.message || error}`);
-        }
-    }
-
-    async saveData(path, data, stringify = true) {
-        try {
-            data = !stringify ? data : JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data, 'utf8');
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error.message || error}`);
-        };
     };
 
     async getSequenceNumber() {
@@ -385,7 +367,7 @@ class XboxLocalApi extends EventEmitter {
                         connectRequest.set('iv', data.iv);
 
                         try {
-                            const response = await this.readData(this.tokensFile);
+                            const response = await this.functions.readData(this.tokensFile);
                             const parsed = JSON.parse(response);
                             const token = parsed?.xsts?.Token || null;
                             const userHash = parsed.xsts.DisplayClaims?.xui?.[0]?.uhs;
