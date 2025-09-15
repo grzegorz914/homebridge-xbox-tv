@@ -74,7 +74,7 @@ class Simple {
 
         switch (this.type) {
             case 'powerOn':
-                packet = this.pack1(PACKET_TYPES.POWER_ON, structure.toBuffer(), Buffer.from([0, VERSION.V0]));
+                packet = this.pack1(PACKET_TYPES.POWER_ON, structure.toBuffer(), '');
                 break;
             case 'discoveryRequest':
                 packet = this.pack1(PACKET_TYPES.DISCOVERY_REQUEST, structure.toBuffer(), Buffer.from('0000', 'hex'));
@@ -128,6 +128,7 @@ class Simple {
         const type = typeHex === 'dd02' ? 'powerOn' : this.type;
 
         let packet = {
+            typeHex,
             type,
             payloadLength: structure.readUInt16(),
             version: structure.readUInt16(),

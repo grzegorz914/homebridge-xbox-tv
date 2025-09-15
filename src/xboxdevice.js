@@ -444,6 +444,7 @@ class XboxDevice extends EventEmitter {
 
                     try {
                         await this.xboxWebApi.send('Power', this.power ? 'TurnOff' : 'WakeUp');
+                        //await this.xboxLocalApi.setPower(this.power ? 'Off' : 'On');
                         if (!this.disableLogInfo) this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
                         await new Promise(resolve => setTimeout(resolve, 1500));
                     } catch (error) {
@@ -1116,10 +1117,8 @@ class XboxDevice extends EventEmitter {
                 });
 
             // Connect to local api
-            const connect = await this.xboxLocalApi.connect(false);
-            if (!connect) {
-                return false;
-            }
+            const connect = await this.xboxLocalApi.connect();
+            if (!connect) return false;
 
             // Start external integrations
             if (this.restFul.enable || this.mqtt.enable) await this.externalIntegrations();
