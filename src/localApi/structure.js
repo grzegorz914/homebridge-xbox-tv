@@ -27,7 +27,7 @@ class Structure {
 
     readSGString() {
         const stringLength = this.readUInt16();
-        const stringBuffer = this.packet.slice(this.offset, this.offset + stringLength);
+        const stringBuffer = this.packet.subarray(this.offset, this.offset + stringLength);
         this.offset += stringLength + 1; // skip null terminator
         return stringBuffer.toString('utf8');
     }
@@ -41,10 +41,10 @@ class Structure {
     readBytes(length = false) {
         let rawData;
         if (length === false) {
-            rawData = this.packet.slice(this.offset);
+            rawData = this.packet.subarray(this.offset);
             this.offset = this.totalLength;
         } else {
-            rawData = this.packet.slice(this.offset, this.offset + length);
+            rawData = this.packet.subarray(this.offset, this.offset + length);
             this.offset += length;
         }
         return rawData;

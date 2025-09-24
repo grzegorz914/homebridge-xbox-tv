@@ -40,164 +40,198 @@
 							"title": "Disable Accessory",
 							"type": "boolean",
 							"default": false,
-							"description": "Here You can disable this accessory.",
-							"required": false
+							"description": "Here You can disable this accessory."
 						},
-						"webApiControl": {
+						"webApi": {
 							"title": "Web Api",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable console control over Web Api.",
-							"required": false
-						},
-						"getInputsFromDevice": {
-							"title": "Load Inputs From Device",
-							"type": "boolean",
-							"default": false,
-							"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
-						},
-						"filterGames": {
-							"title": "Hide Games",
-							"type": "boolean",
-							"default": false,
-							"description": "If enabled, Games will not be displayed on the list of inputs.",
-							"required": false
-						},
-						"filterApps": {
-							"title": "Hide Apps",
-							"type": "boolean",
-							"default": false,
-							"description": "If enabled, Apps will not be displayed on the list of inputs.",
-							"required": false
-						},
-						"filterSystemApps": {
-							"title": "Hide System Apps",
-							"type": "boolean",
-							"default": false,
-							"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs.",
-							"required": false
-						},
-						"filterDlc": {
-							"title": "Hide DLC",
-							"type": "boolean",
-							"default": false,
-							"description": "If enabled, DLC will not be displayed on the list of inputs.",
-							"required": false
-						},
-						"inputsDisplayOrder": {
-							"title": "Inputs Display Order",
-							"type": "integer",
-							"minimum": 0,
-							"maximum": 4,
-							"default": 0,
-							"description": "Here select display order of the inputs list.",
-							"oneOf": [
-								{
-									"title": "None",
-									"enum": [
-										0
-									]
+							"type": "object",
+							"properties": {
+								"enable": {
+									"title": "Enable",
+									"type": "boolean",
+									"default": false,
+									"description": "This enable console control over Web Api."
 								},
-								{
-									"title": "Ascending by Name",
-									"enum": [
-										1
-									]
+								"token": {
+									"title": "Token",
+									"type": "string",
+									"placeholder": "Web Api Token",
+									"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
+									"format": "password",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
+									}
 								},
-								{
-									"title": "Descending by Name",
-									"enum": [
-										2
-									]
+								"clientId": {
+									"title": "Client Id",
+									"type": "string",
+									"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
+									"description": "Here set your own Client Id from Azure AD or leave empty if you do not have own account.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
+									}
 								},
-								{
-									"title": "Ascending by Reference",
-									"enum": [
-										3
-									]
-								},
-								{
-									"title": "Descending by Reference",
-									"enum": [
-										4
-									]
+								"clientSecret": {
+									"title": "Client Secret",
+									"type": "string",
+									"placeholder": "Client Secret",
+									"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
+									"format": "password",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
+									}
 								}
-							],
-							"required": true
+							}
 						},
 						"inputs": {
-							"type": "array",
-							"items": {
-								"title": "Input",
-								"type": "object",
-								"properties": {
-									"name": {
-										"title": "Name",
-										"type": "string",
-										"placeholder": "Input name",
-										"description": "Here set Your own name.",
-										"required": false
-									},
-									"titleId": {
-										"title": "Title Id",
-										"type": "string",
-										"placeholder": "Input Title Id",
-										"description": "Here set title Id. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
-									},
-									"reference": {
-										"title": "Reference",
-										"type": "string",
-										"placeholder": "Input reference",
-										"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"required": false
-									},
-									"oneStoreProductId": {
-										"title": "Product Id",
-										"type": "string",
-										"placeholder": "oneStoreProductId",
-										"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
+							"title": "Inputs",
+							"type": "object",
+							"properties": {
+								"getFromDevice": {
+									"title": "Load Inputs From Device",
+									"type": "boolean",
+									"default": false,
+									"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
+									}
+								},
+								"filterGames": {
+									"title": "Hide Games",
+									"type": "boolean",
+									"default": false,
+									"description": "If enabled, Games will not be displayed on the list of inputs."
+								},
+								"filterApps": {
+									"title": "Hide Apps",
+									"type": "boolean",
+									"default": false,
+									"description": "If enabled, Apps will not be displayed on the list of inputs."
+								},
+								"filterSystemApps": {
+									"title": "Hide System Apps",
+									"type": "boolean",
+									"default": false,
+									"description": "If enabled, System Apps (Accessory, TV, Network Troubleshooter, Xbox Guide) will not be displayed on the list of inputs."
+								},
+								"filterDlc": {
+									"title": "Hide DLC",
+									"type": "boolean",
+									"default": false,
+									"description": "If enabled, DLC will not be displayed on the list of inputs."
+								},
+								"displayOrder": {
+									"title": "Display Order",
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 4,
+									"default": 0,
+									"description": "Here select display order of the inputs list.",
+									"oneOf": [
+										{
+											"title": "None",
+											"enum": [
+												0
+											]
 										},
-										"required": false
-									},
-									"contentType": {
-										"title": "Content Type",
-										"type": "string",
-										"default": "Game",
-										"description": "Here select source input type.",
-										"oneOf": [
-											{
-												"title": "Game",
-												"enum": [
-													"Game"
-												]
+										{
+											"title": "Ascending by Name",
+											"enum": [
+												1
+											]
+										},
+										{
+											"title": "Descending by Name",
+											"enum": [
+												2
+											]
+										},
+										{
+											"title": "Ascending by Reference",
+											"enum": [
+												3
+											]
+										},
+										{
+											"title": "Descending by Reference",
+											"enum": [
+												4
+											]
+										}
+									],
+									"required": true
+								},
+								"data": {
+									"title": "Inputs",
+									"type": "array",
+									"items": {
+										"title": "Input",
+										"type": "object",
+										"properties": {
+											"name": {
+												"title": "Name",
+												"type": "string",
+												"placeholder": "Input name",
+												"description": "Here set Your own name."
 											},
-											{
-												"title": "Application",
-												"enum": [
-													"App"
-												]
+											"titleId": {
+												"title": "Title Id",
+												"type": "string",
+												"placeholder": "Input Title Id",
+												"description": "Here set title Id. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file."
 											},
-											{
-												"title": "System Appliction",
-												"enum": [
-													"System App"
-												]
+											"reference": {
+												"title": "Reference",
+												"type": "string",
+												"placeholder": "Input reference",
+												"description": "Here set reference. If web api is enable all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file."
 											},
-											{
-												"title": "Dlc",
-												"enum": [
-													"Dlc"
-												]
+											"oneStoreProductId": {
+												"title": "Product Id",
+												"type": "string",
+												"placeholder": "oneStoreProductId",
+												"description": "Here set the *oneStoreProductId*. If web api enable, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
+												"condition": {
+													"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
+												}
+											},
+											"contentType": {
+												"title": "Content Type",
+												"type": "string",
+												"default": "Game",
+												"description": "Here select source input type.",
+												"oneOf": [
+													{
+														"title": "Game",
+														"enum": [
+															"Game"
+														]
+													},
+													{
+														"title": "Application",
+														"enum": [
+															"App"
+														]
+													},
+													{
+														"title": "System Appliction",
+														"enum": [
+															"System App"
+														]
+													},
+													{
+														"title": "Dlc",
+														"enum": [
+															"Dlc"
+														]
+													}
+												],
+												"required": true
 											}
-										],
-										"required": true
+										}
+									},
+									"condition": {
+										"functionBody": "return model.devices && model.devices[arrayIndices].inputs.getFromDevice === false || model.devices[arrayIndices].webApi.enable === false;"
 									}
 								}
 							}
@@ -208,12 +242,43 @@
 								"title": "Button",
 								"type": "object",
 								"properties": {
+									"displayType": {
+										"title": "Display Type",
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 2,
+										"default": 0,
+										"oneOf": [
+											{
+												"title": "None/Disabled",
+												"enum": [
+													0
+												]
+											},
+											{
+												"title": "Outlet",
+												"enum": [
+													1
+												]
+											},
+											{
+												"title": "Switch",
+												"enum": [
+													2
+												]
+											}
+										],
+										"description": "Here select display type in HomeKit app.",
+										"required": true
+									},
 									"name": {
 										"title": "Name",
 										"type": "string",
 										"placeholder": "Button name",
 										"description": "Here set Your own name.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"mode": {
 										"title": "Mode",
@@ -254,7 +319,10 @@
 												]
 											}
 										],
-										"required": true
+										"required": true,
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"mediaCommand": {
 										"title": "Media Command",
@@ -353,7 +421,9 @@
 											}
 										],
 										"description": "Here select the media command.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"gamePadCommand": {
 										"title": "Game Pad Command",
@@ -428,7 +498,9 @@
 											}
 										],
 										"description": "Here select the controler command.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"tvRemoteCommand": {
 										"title": "TV Remote Command",
@@ -455,7 +527,9 @@
 											}
 										],
 										"description": "Here select the tv remote command.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"consoleControlCommand": {
 										"title": "Console Control Command",
@@ -476,7 +550,9 @@
 											}
 										],
 										"description": "Here select the console control command.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"gameAppControlCommand": {
 										"title": "Product Id",
@@ -484,161 +560,210 @@
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api enabled, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-										},
-										"required": false
-									},
-									"displayType": {
-										"title": "Display Type",
-										"type": "integer",
-										"default": 0,
-										"oneOf": [
-											{
-												"title": "None/Disabled",
-												"enum": [
-													0
-												]
-											},
-											{
-												"title": "Outlet",
-												"enum": [
-													1
-												]
-											},
-											{
-												"title": "Switch",
-												"enum": [
-													2
-												]
-											}
-										],
-										"description": "Here select display type in HomeKit app.",
-										"required": true
+											"functionBody": "return model.devices[arrayIndices].webApi.enable === true && model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
 										"description": "Here enable/disable the accessory name as a prefix for button name.",
-										"required": false
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+										}
 									}
 								}
 							}
 						},
-						"sensorPower": {
-							"title": "Power",
-							"type": "boolean",
-							"default": false,
-							"description": "This expose Power as a Motion Sensor.",
-							"required": false
-						},
-						"sensorInput": {
-							"title": "Input",
-							"type": "boolean",
-							"default": false,
-							"description": "This expose Input as a Motion Sensor.",
-							"required": false
-						},
-						"sensorScreenSaver": {
-							"title": "Screen Saver",
-							"type": "boolean",
-							"default": false,
-							"description": "This expose Screen Saver as a Motion Sensor.",
-							"required": false
-						},
-						"sensorInputs": {
-							"type": "array",
-							"items": {
-								"title": "Inputs",
-								"type": "object",
-								"description": "Here create Input/App Sensors based on reference, sensor will active if switch to it.",
-								"properties": {
-									"name": {
-										"title": "Name",
-										"type": "string",
-										"placeholder": "Name",
-										"description": "Here set Your own name.",
-										"required": false
-									},
-									"reference": {
-										"title": "Reference",
-										"type": "string",
-										"placeholder": "Input/App reference",
-										"description": "Here set the Input/App reference.",
-										"required": false
-									},
-									"displayType": {
-										"title": "Type",
-										"type": "integer",
-										"default": 0,
-										"oneOf": [
-											{
-												"title": "None/Disabled",
-												"enum": [
-													0
-												]
+						"sensors": {
+							"title": "Log",
+							"type": "object",
+							"properties": {
+								"power": {
+									"title": "Power",
+									"type": "boolean",
+									"default": false,
+									"description": "This expose Power as a Motion Sensor."
+								},
+								"screenSaver": {
+									"title": "Screen Saver",
+									"type": "boolean",
+									"default": false,
+									"description": "This expose Screen Saver as a Motion Sensor."
+								},
+								"input": {
+									"title": "Input",
+									"type": "boolean",
+									"default": false,
+									"description": "This expose Input as a Motion Sensor."
+								},
+								"inputs": {
+									"type": "array",
+									"items": {
+										"title": "Input",
+										"type": "object",
+										"description": "Here create Input/App Sensors based on reference, sensor will active if switch to it.",
+										"properties": {
+											"displayType": {
+												"title": "Display Type",
+												"type": "integer",
+												"minimum": 0,
+												"maximum": 3,
+												"default": 0,
+												"oneOf": [
+													{
+														"title": "None/Disabled",
+														"enum": [
+															0
+														]
+													},
+													{
+														"title": "Motion Sensor",
+														"enum": [
+															1
+														]
+													},
+													{
+														"title": "Occupancy Sensor",
+														"enum": [
+															2
+														]
+													},
+													{
+														"title": "Contact Sensor",
+														"enum": [
+															3
+														]
+													}
+												],
+												"description": "Here select sensor type to be exposed in HomeKit app.",
+												"required": true
 											},
-											{
-												"title": "Motion Sensor",
-												"enum": [
-													1
-												]
+											"name": {
+												"title": "Name",
+												"type": "string",
+												"placeholder": "Name",
+												"description": "Here set Your own name.",
+												"condition": {
+													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
+												}
 											},
-											{
-												"title": "Occupancy Sensor",
-												"enum": [
-													2
-												]
+											"reference": {
+												"title": "Reference",
+												"type": "string",
+												"placeholder": "Input/App reference",
+												"description": "Here set the Input/App reference.",
+												"condition": {
+													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
+												}
 											},
-											{
-												"title": "Contact Sensor",
-												"enum": [
-													3
-												]
+											"namePrefix": {
+												"title": "Prefix",
+												"type": "boolean",
+												"description": "Here enable/disable the accessory name as a prefix for sensor name.",
+												"condition": {
+													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
+												}
 											}
-										],
-										"description": "Here select sensor type to be exposed in HomeKit app.",
-										"required": true
-									},
-									"namePrefix": {
-										"title": "Prefix",
-										"type": "boolean",
-										"description": "Here enable/disable the accessory name as a prefix for sensor name.",
-										"required": false
+										}
 									}
 								}
 							}
 						},
-						"webApiToken": {
-							"title": "Web Api Token",
-							"type": "string",
-							"placeholder": "Web Api Token",
-							"description": "Here put the reponse Token (value after ?code=) from the authorization URL.",
-							"format": "password",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
+						"volume": {
+							"title": "Volume Control",
+							"type": "object",
+							"properties": {
+								"displayType": {
+									"title": "Display Type",
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 3,
+									"default": 0,
+									"description": "Here select what a extra volume/mute control type You want to use.",
+									"oneOf": [
+										{
+											"title": "None/Disabled",
+											"enum": [
+												0
+											]
+										},
+										{
+											"title": "Lightbulb",
+											"enum": [
+												1
+											]
+										},
+										{
+											"title": "Fan",
+											"enum": [
+												2
+											]
+										},
+										{
+											"title": "Speaker",
+											"enum": [
+												3
+											]
+										}
+									],
+									"required": true
+								},
+								"name": {
+									"title": "Name",
+									"type": "string",
+									"placeholder": "Volume Control Name",
+									"description": "Here set Your own volume control name or leave empty.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
+									}
+								},
+								"namePrefix": {
+									"title": "Volume Control Name Prefix",
+									"type": "boolean",
+									"default": false,
+									"description": "Here enable/disable the accessory name as a prefix for volume control name.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
+									}
+								}
+							}
 						},
-						"webApiClientId": {
-							"title": "Client Id",
-							"type": "string",
-							"placeholder": "a34ac209-edab-4b08-91e7-a4558d8da1bd",
-							"description": "Here set your own Client Id from Azure AD or leave empty if you do not have own account.",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
-						},
-						"webApiClientSecret": {
-							"title": "Client Secret",
-							"type": "string",
-							"placeholder": "Client Secret",
-							"description": "Here set your Client Secret from Azure AD or leave empty if you do not have own account.",
-							"format": "password",
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].webApiControl === true;"
-							},
-							"required": false
+						"log": {
+							"title": "Log",
+							"type": "object",
+							"properties": {
+								"deviceInfo": {
+									"title": "Device Info",
+									"type": "boolean",
+									"default": true,
+									"description": "This enable logging device info by every connections device to the network."
+								},
+								"success": {
+									"title": "Log Success",
+									"type": "boolean",
+									"default": true
+								},
+								"info": {
+									"title": "Log Info",
+									"type": "boolean",
+									"default": false
+								},
+								"warn": {
+									"title": "Log Warn",
+									"type": "boolean",
+									"default": true
+								},
+								"error": {
+									"title": "Log Error",
+									"type": "boolean",
+									"default": true
+								},
+								"debug": {
+									"title": "Log Debug",
+									"type": "boolean",
+									"default": false
+								}
+							}
 						},
 						"infoButtonCommand": {
 							"title": "Info Button",
@@ -688,100 +813,7 @@
 									]
 								}
 							],
-							"description": "Here select the function of info button in RC.",
-							"required": false
-						},
-						"volumeControl": {
-							"title": "Volume Control",
-							"type": "integer",
-							"minimum": 0,
-							"maximum": 3,
-							"default": 0,
-							"description": "Here select what a volume control mode You want to use.",
-							"oneOf": [
-								{
-									"title": "None/Disabled",
-									"enum": [
-										0
-									]
-								},
-								{
-									"title": "Slider",
-									"enum": [
-										1
-									]
-								},
-								{
-									"title": "Fan",
-									"enum": [
-										2
-									]
-								},
-								{
-									"title": "Speaker",
-									"enum": [
-										3
-									]
-								}
-							],
-							"required": true
-						},
-						"volumeControlName": {
-							"title": "Volume Control Name",
-							"type": "string",
-							"placeholder": "Name",
-							"description": "Here set Your own volume control name or leave empty.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
-							}
-						},
-						"volumeControlNamePrefix": {
-							"title": "Volume Control Name Prefix",
-							"type": "boolean",
-							"default": false,
-							"description": "Here enable/disable the accessory name as a prefix for volume control name.",
-							"required": false,
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
-							}
-						},
-						"disableLogDeviceInfo": {
-							"title": "Disable Log Device Info",
-							"type": "boolean",
-							"default": false,
-							"description": "This disable logging device info by every connections device to the network.",
-							"required": false
-						},
-						"disableLogInfo": {
-							"title": "Disable Log Info",
-							"type": "boolean",
-							"default": false,
-							"required": false
-						},
-						"disableLogSuccess": {
-							"title": "Disable Log Success",
-							"type": "boolean",
-							"default": false,
-							"required": false
-						},
-						"disableLogWarn": {
-							"title": "Disable Log Warn",
-							"type": "boolean",
-							"default": false,
-							"required": false
-						},
-						"disableLogError": {
-							"title": "Disable Log Error",
-							"type": "boolean",
-							"default": false,
-							"required": false
-						},
-						"enableDebugMode": {
-							"title": "Enable Log Debug",
-							"type": "boolean",
-							"default": false,
-							"required": false
+							"description": "Here select the function of info button in RC."
 						},
 						"restFul": {
 							"title": "RESTFul",
@@ -793,16 +825,6 @@
 									"default": false,
 									"description": "This enable RESTful server."
 								},
-								"debug": {
-									"title": "Debug",
-									"type": "boolean",
-									"default": false,
-									"description": "This enable debug mode for RESTFul.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].restFul.enable === true;"
-									},
-									"required": false
-								},
 								"port": {
 									"title": "Port",
 									"type": "integer",
@@ -810,8 +832,16 @@
 									"description": "Here set the listening Port for RESTful server.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].restFul.enable === true;"
-									},
-									"required": false
+									}
+								},
+								"debug": {
+									"title": "Debug",
+									"type": "boolean",
+									"default": false,
+									"description": "This enable debug mode for RESTFul.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].restFul.enable === true;"
+									}
 								}
 							}
 						},
@@ -825,16 +855,6 @@
 									"default": false,
 									"description": "This enable MQTT client."
 								},
-								"debug": {
-									"title": "Debug",
-									"type": "boolean",
-									"default": false,
-									"description": "This enable debug mode for MQTT.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									},
-									"required": false
-								},
 								"host": {
 									"title": "IP/Hostname",
 									"type": "string",
@@ -843,8 +863,7 @@
 									"description": "Here set the IP/Hostname of MQTT Broker.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									},
-									"required": false
+									}
 								},
 								"port": {
 									"title": "Port",
@@ -853,8 +872,7 @@
 									"description": "Here set the port of MQTT Broker.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									},
-									"required": false
+									}
 								},
 								"clientId": {
 									"title": "Client ID",
@@ -863,49 +881,59 @@
 									"description": "Here optional set the Client ID of MQTT Broker.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true"
-									},
-									"required": false
+									}
 								},
 								"prefix": {
 									"title": "Prefix",
 									"type": "string",
-									"placeholder": "home/envoy",
+									"placeholder": "home",
 									"description": "Here set the prefix.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									},
-									"required": false
+									}
+								},
+								"debug": {
+									"title": "Debug",
+									"type": "boolean",
+									"default": false,
+									"description": "This enable debug mode for MQTT.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+									}
 								},
 								"auth": {
 									"title": "Authorization",
-									"type": "boolean",
-									"default": false,
-									"description": "This enable authorization for MQTT Broker.",
+									"type": "object",
+									"properties": {
+										"enable": {
+											"title": "Enable",
+											"type": "boolean",
+											"default": false,
+											"description": "This enable authorization for MQTT Broker."
+										},
+										"user": {
+											"title": "User",
+											"type": "string",
+											"placeholder": "user",
+											"description": "Here set the user of MQTT Broker.",
+											"condition": {
+												"functionBody": "return model.devices[arrayIndices].mqtt.auth.enable === true;"
+											}
+										},
+										"passwd": {
+											"title": "Password",
+											"type": "string",
+											"placeholder": "password",
+											"description": "Here set the password of MQTT Broker.",
+											"format": "password",
+											"condition": {
+												"functionBody": "return model.devices[arrayIndices].mqtt.auth.enable === true;"
+											}
+										}
+									},
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									},
-									"required": false
-								},
-								"user": {
-									"title": "User",
-									"type": "string",
-									"placeholder": "user",
-									"description": "Here set the user of MQTT Broker.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
-									},
-									"required": false
-								},
-								"passwd": {
-									"title": "Password",
-									"type": "string",
-									"placeholder": "password",
-									"description": "Here set the password of MQTT Broker.",
-									"format": "password",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
-									},
-									"required": false
+									}
 								}
 							}
 						}
@@ -925,32 +953,29 @@
 				"devices[].xboxLiveId",
 				"devices[].disableAccessory",
 				{
-					"key": "devices[]",
+					"key": "devices[].inputs",
 					"type": "section",
 					"title": "Inputs",
 					"expandable": true,
 					"expanded": false,
 					"items": [
-						"devices[].getInputsFromDevice",
-						"devices[].filterGames",
-						"devices[].filterApps",
-						"devices[].filterSystemApps",
-						"devices[].filterDlc",
-						"devices[].inputsDisplayOrder",
+						"devices[].inputs.getFromDevice",
+						"devices[].inputs.filterGames",
+						"devices[].inputs.filterApps",
+						"devices[].inputs.filterSystemApps",
+						"devices[].inputs.filterDlc",
+						"devices[].inputs.displayOrder",
 						{
-							"key": "devices[].inputs",
+							"key": "devices[].inputs.data",
 							"type": "tabarray",
 							"title": "{{ value.name || 'input' }}",
 							"items": [
-								"devices[].inputs[].name",
-								"devices[].inputs[].titleId",
-								"devices[].inputs[].reference",
-								"devices[].inputs[].oneStoreProductId",
-								"devices[].inputs[].contentType"
-							],
-							"condition": {
-								"functionBody": "return model.devices && model.devices[arrayIndices].getInputsFromDevice === false || model.devices[arrayIndices].webApiControl === false;"
-							}
+								"devices[].inputs.data[].name",
+								"devices[].inputs.data[].titleId",
+								"devices[].inputs.data[].reference",
+								"devices[].inputs.data[].oneStoreProductId",
+								"devices[].inputs.data[].contentType"
+							]
 						}
 					],
 					"condition": {
@@ -969,10 +994,10 @@
 							"type": "tabarray",
 							"title": "{{ value.name || 'button' }}",
 							"items": [
+								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].mediaCommand",
-								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
 							],
 							"condition": {
@@ -984,10 +1009,10 @@
 							"type": "tabarray",
 							"title": "{{ value.name || 'button' }}",
 							"items": [
+								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].gamePadCommand",
-								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
 							],
 							"condition": {
@@ -999,10 +1024,10 @@
 							"type": "tabarray",
 							"title": "{{ value.name || 'button' }}",
 							"items": [
+								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].tvRemoteCommand",
-								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
 							],
 							"condition": {
@@ -1014,10 +1039,10 @@
 							"type": "tabarray",
 							"title": "{{ value.name || 'button' }}",
 							"items": [
+								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].consoleControlCommand",
-								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
 							],
 							"condition": {
@@ -1029,10 +1054,10 @@
 							"type": "tabarray",
 							"title": "{{ value.name || 'button' }}",
 							"items": [
+								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].gameAppControlCommand",
-								"devices[].buttons[].displayType",
 								"devices[].buttons[].namePrefix"
 							],
 							"condition": {
@@ -1057,37 +1082,37 @@
 							"title": "{{ value.title }}",
 							"items": [
 								{
-									"key": "devices[]",
+									"key": "devices[].volume",
 									"title": "Volume",
 									"items": [
-										"devices[].volumeControl",
-										"devices[].volumeControlName",
-										"devices[].volumeControlNamePrefix"
+										"devices[].volume.displayType",
+										"devices[].volume.name",
+										"devices[].volume.namePrefix"
 									]
 								},
 								{
-									"key": "devices[]",
+									"key": "devices[].sensors",
 									"title": "Sensors",
 									"items": [
-										"devices[].sensorPower",
-										"devices[].sensorScreenSaver",
-										"devices[].sensorInput",
+										"devices[].sensors.power",
+										"devices[].sensors.screenSaver",
+										"devices[].sensors.input",
 										{
-											"key": "devices[]",
+											"key": "devices[].sensors",
 											"type": "section",
-											"title": "Custom Inputs",
+											"title": "Inputs",
 											"expandable": true,
 											"expanded": false,
 											"items": [
 												{
-													"key": "devices[].sensorInputs",
+													"key": "devices[].sensors.inputs",
 													"type": "tabarray",
 													"title": "{{ value.name || 'sensor' }}",
 													"items": [
-														"devices[].sensorInputs[].name",
-														"devices[].sensorInputs[].reference",
-														"devices[].sensorInputs[].displayType",
-														"devices[].sensorInputs[].namePrefix"
+														"devices[].sensors.inputs[].displayType",
+														"devices[].sensors.inputs[].name",
+														"devices[].sensors.inputs[].reference",
+														"devices[].sensors.inputs[].namePrefix"
 													]
 												}
 											]
@@ -1102,31 +1127,34 @@
 									]
 								},
 								{
-									"key": "devices[]",
+									"key": "devices[].webApi",
 									"title": "Web Api",
 									"items": [
-										"devices[].webApiControl",
+										"devices[].webApi.enable",
 										{
-											"key": "devices[].webApiToken",
+											"key": "devices[].webApi.token",
 											"type": "password"
 										},
-										"devices[].webApiClientId",
 										{
-											"key": "devices[].webApiClientSecret",
+											"key": "devices[].webApi.clientId",
+											"type": "password"
+										},
+										{
+											"key": "devices[].webApi.clientSecret",
 											"type": "password"
 										}
 									]
 								},
 								{
-									"key": "devices[]",
+									"key": "devices[].log",
 									"title": "Log",
 									"items": [
-										"devices[].disableLogDeviceInfo",
-										"devices[].disableLogInfo",
-										"devices[].disableLogSuccess",
-										"devices[].disableLogWarn",
-										"devices[].disableLogError",
-										"devices[].enableDebugMode"
+										"devices[].log.deviceInfo",
+										"devices[].log.success",
+										"devices[].log.info",
+										"devices[].log.warn",
+										"devices[].log.error",
+										"devices[].log.debug"
 									]
 								},
 								{
@@ -1143,8 +1171,8 @@
 													"title": "RESTFul",
 													"items": [
 														"devices[].restFul.enable",
-														"devices[].restFul.debug",
-														"devices[].restFul.port"
+														"devices[].restFul.port",
+														"devices[].restFul.debug"
 													]
 												},
 												{
@@ -1152,16 +1180,22 @@
 													"title": "MQTT",
 													"items": [
 														"devices[].mqtt.enable",
-														"devices[].mqtt.debug",
 														"devices[].mqtt.host",
 														"devices[].mqtt.port",
 														"devices[].mqtt.clientId",
 														"devices[].mqtt.prefix",
-														"devices[].mqtt.auth",
-														"devices[].mqtt.user",
+														"devices[].mqtt.debug",
 														{
-															"key": "devices[].mqtt.passwd",
-															"type": "password"
+															"key": "devices[].mqtt.auth",
+															"title": "Authorization",
+															"items": [
+																"devices[].mqtt.auth.enable",
+																"devices[].mqtt.auth.user",
+																{
+																	"key": "devices[].mqtt.auth.passwd",
+																	"type": "password"
+																}
+															]
 														}
 													]
 												}

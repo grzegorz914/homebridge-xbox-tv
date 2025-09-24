@@ -1,9 +1,11 @@
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import Authentication from '../src/webApi/authentication.js';
+import Functions from '../src/functions.js';
 
 class PluginUiServer extends HomebridgePluginUiServer {
   constructor() {
     super();
+    this.functions = new Functions();
 
     //clear web api token
     this.onRequest('/clearToken', this.clearToken.bind(this));
@@ -19,17 +21,9 @@ class PluginUiServer extends HomebridgePluginUiServer {
     const hostKey = payload.host.replace(/\./g, '');
     const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${hostKey}`;
 
-    const authConfig = {
-      webApiClientId: payload.webApiClientId,
-      webApiClientSecret: payload.webApiClientSecret,
-      tokensFile
-    };
-
-    const authentication = new Authentication(authConfig);
-
     try {
       const emptyTokens = { oauth: {}, user: {}, xsts: {} };
-      await authentication.saveData(tokensFile, emptyTokens);
+      await this.functions.saveData(tokensFile, emptyTokens);
       return true;
     } catch (error) {
       throw new Error(`Clear token error: ${error?.message ?? error}`);
@@ -41,13 +35,13 @@ class PluginUiServer extends HomebridgePluginUiServer {
     const tokensFile = `${this.homebridgeStoragePath}/xboxTv/authToken_${hostKey}`;
 
     const authConfig = {
-      webApiClientId: payload.webApiClientId,
-      webApiClientSecret: payload.webApiClientSecret,
+      clientId: payload.clientId,
+      clientSecret: payload.clientSecret,
       tokensFile
     };
 
     const authentication = new Authentication(authConfig);
-    const webApiToken = payload.webApiToken;
+    const webApiToken = payload.token;
 
     try {
       // Case: Console already authorized

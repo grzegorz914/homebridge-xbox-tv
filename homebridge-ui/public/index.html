@@ -93,16 +93,16 @@
       $('deviceName').innerHTML = device.name || '';
       $('deviceHost').value = device.host || '';
       $('deviceLiveId').value = device.xboxLiveId || '';
-      $('deviceToken').value = device.webApiToken || '';
-      $('deviceWebApiControl').checked = device.webApiControl || false;
+      $('deviceToken').value = device.webApi.token || '';
+      $('deviceWebApiControl').checked = device.webApi.enable || false;
 
-      const tokenLength = device.webApiToken?.length || 0;
+      const tokenLength = device.webApi.token?.length || 0;
       $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
       $('deviceWebApiControl').disabled = tokenLength <= 10;
 
       if (tokenLength <= 10) {
         $('deviceWebApiControl').checked = false;
-        device.webApiControl = false;
+        device.webApi.enable = false;
       }
     };
 
@@ -173,10 +173,10 @@
 
       currentDevice.host = $('deviceHost').value;
       currentDevice.xboxLiveId = $('deviceLiveId').value;
-      currentDevice.webApiToken = $('deviceToken').value;
-      currentDevice.webApiControl = $('deviceWebApiControl').checked;
+      currentDevice.webApi.token = $('deviceToken').value;
+      currentDevice.webApi.enable = $('deviceWebApiControl').checked;
 
-      const tokenLength = currentDevice.webApiToken?.length || 0;
+      const tokenLength = currentDevice.webApi.token?.length || 0;
       $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
 
       if (tokenLength <= 10) {
@@ -198,8 +198,10 @@
         await homebridge.request('/clearToken', { host });
 
         Object.assign(devices[this.deviceIndex], {
-          webApiToken: '',
-          webApiControl: false
+          webApi: {
+            token: '',
+            enable: false
+          }
         });
 
         updateDeviceForm(devices[this.deviceIndex]);
@@ -229,10 +231,11 @@
 
       try {
         const device = devices[this.deviceIndex];
-        const { host, webApiClientId, webApiClientSecret, webApiToken } = device;
+        const { host, webApi } = device;
+        const { token, clientId, clientSecret } = webApi;
 
         const response = await homebridge.request('/startAuthorization', {
-          host, webApiClientId, webApiClientSecret, webApiToken
+          host, token, clientId, clientSecret
         });
 
         const { info, status } = response;
@@ -248,7 +251,7 @@
             $("startAuthorizationButton").innerText = "Activate Console";
             $("deviceWebApiControl").checked = false;
             $("deviceWebApiControl").disabled = true;
-            device.webApiControl = false;
+            device.webApi.enable = false;
 
             let timeLeft = 10;
             const timerId = setInterval(() => {
@@ -270,7 +273,7 @@
             $("startAuthorizationButton").innerText = "Check State";
             $("deviceWebApiControl").disabled = false;
             $("deviceWebApiControl").checked = true;
-            device.webApiControl = true;
+            device.webApi.enable = true;
 
             await homebridge.updatePluginConfig(pluginConfig);
             await homebridge.savePluginConfig(pluginConfig);

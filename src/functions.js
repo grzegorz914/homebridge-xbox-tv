@@ -2,9 +2,7 @@ import { promises as fsPromises } from 'fs';
 import { DiacriticsMap } from './constants.js';
 
 class Functions {
-    constructor(config) {
-
-
+    constructor() {
     }
 
     async saveData(path, data, stringify = true) {

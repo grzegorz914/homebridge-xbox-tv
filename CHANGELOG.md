@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to 2.x.x the plugin settings (xboxLiveId) need to be updated
 - After update to v3.0.0 RESTFull and MQTT config settings need to be updated
 - After update to v3.4.0 all buttons in config need to be updated
+- After update to v3.9.0 plugin need to be reconfigured and console reauthorized
+
+## [3.9.0] - (24.09.2025)
+
+## Changes
+
+- config schema and json refactor
+  - plugin need to be reconfigured
+  - console need to be reauthorized
+- fix [#234](https://github.com/grzegorz914/homebridge-xbox-tv/issues/234)
+- stability improvements
+- bump deependencies
+- redme updated
+- cleanup
 
 ## [3.8.1] - (13.09.2025)
 

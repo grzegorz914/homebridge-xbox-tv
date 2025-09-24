@@ -52,7 +52,7 @@ class Message {
         header.writeBytes(LocalApi.Messages.Flags[this.type]);
         header.writeBytes(Buffer.from(channelId || this.channelId));
 
-        const payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().slice(0, 16), crypto.getIv()));
+        const payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().subarray(0, 16), crypto.getIv()));
         let packet = Buffer.concat([header.toBuffer(), payloadEncrypted]);
         const payloadProtected = crypto.sign(packet);
         return Buffer.concat([packet, Buffer.from(payloadProtected)]);
@@ -74,13 +74,13 @@ class Message {
         };
 
         packet.type = packet.flags.type;
-        packet.payloadProtected = Buffer.from(packet.payloadProtected.slice(0, -32));
-        packet.signature = packet.payloadProtected.slice(-32);
+        packet.payloadProtected = Buffer.from(packet.payloadProtected.subarray(0, -32));
+        packet.signature = packet.payloadProtected.subarray(-32);
         this.type = packet.type;
         this.channelId = packet.channelId;
 
         if (packet.payloadProtected.length > 0 && crypto) {
-            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.slice(0, 16), crypto.getIv()));
+            const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.subarray(0, 16), crypto.getIv()));
             packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
             packet.payloadProtected = {};
 

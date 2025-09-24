@@ -11,12 +11,11 @@ class XboxWebApi extends EventEmitter {
     constructor(config) {
         super();
         this.xboxLiveId = config.xboxLiveId;
-        this.webApiClientId = config.webApiClientId;
-        this.webApiClientSecret = config.webApiClientSecret;
         this.inputs = config.inputs;
         this.getInputsFromDevice = config.getInputsFromDevice;
         this.inputsFile = config.inputsFile;
-        this.enableDebugMode = config.enableDebugMode;
+        this.logWarn = config.logWarn;
+        this.logDebug = config.logDebug;
 
         // Variables
         this.consoleAuthorized = false;
@@ -24,8 +23,8 @@ class XboxWebApi extends EventEmitter {
         this.functions = new Functions();
 
         const authConfig = {
-            webApiClientId: config.webApiClientId,
-            webApiClientSecret: config.webApiClientSecret,
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
             tokensFile: config.tokensFile
         }
         this.authentication = new Authentication(authConfig);
@@ -52,11 +51,11 @@ class XboxWebApi extends EventEmitter {
     async checkAuthorization() {
         try {
             const data = await this.authentication.checkAuthorization();
-            if (this.enableDebugMode) this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Authorization headers: ${JSON.stringify(data.headers, null, 2)}`);
 
             const authorized = data.tokens?.xsts?.Token?.trim() || false;
             if (!authorized) {
-                this.emit('warn', `Not authorized`);
+                if (this.logWarn)  this.emit('warn', `Not authorized`);
                 return false;
             }
             this.tokens = data.tokens;
@@ -83,7 +82,7 @@ class XboxWebApi extends EventEmitter {
                 if (!config || !config.retryCount) config.retryCount = 0;
                 if (config.retryCount < 2 && (error.code === 'ECONNABORTED' || error.response?.status === 429)) {
                     config.retryCount += 1;
-                    if (this.enableDebugMode) this.emit('debug', `Retry ${config.retryCount} for ${config.url}`);
+                    if (this.logDebug) this.emit('debug', `Retry ${config.retryCount} for ${config.url}`);
                     await new Promise(res => setTimeout(res, 1000));
                     return this.axiosInstance(config);
                 }
@@ -105,7 +104,7 @@ class XboxWebApi extends EventEmitter {
     async consolesList() {
         try {
             const { data } = await this.axiosInstance.get('/lists/devices?queryCurrentDevice=false&includeStorageDevices=true');
-            if (this.enableDebugMode) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
             const console = data.result.find(c => c.id === this.xboxLiveId);
             const obj = {
@@ -130,7 +129,7 @@ class XboxWebApi extends EventEmitter {
                 }))
             };
 
-            if (!obj.remoteManagementEnabled) this.emit('warn', 'Remote management not enabled on console');
+            if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', 'Remote management not enabled on console');
             this.rmEnabled = obj.remoteManagementEnabled;
 
             this.emit('restFul', 'consoleslist', data);
@@ -146,7 +145,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `/consoles/${this.xboxLiveId}`;
             const { data } = await this.axiosInstance.get(url);
-            if (this.enableDebugMode) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
 
             // Emit single console object
             const status = {
@@ -181,7 +180,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `/lists/installedApps?deviceId=${this.xboxLiveId}`;
             const { data } = await this.axiosInstance.get(url);
-            if (this.enableDebugMode) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
 
             // Filter and map
             const apps = data.result.filter(a => a.name && a.aumid).map(a => ({
@@ -216,7 +215,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.xboxLiveId}/media`;
             const { data } = await this.axiosInstance.get(url);
-            if (this.enableDebugMode) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
 
             // Emit single console object
             const state = {
@@ -245,7 +244,7 @@ class XboxWebApi extends EventEmitter {
 
     async send(commandType, command, payload) {
         if (!this.consoleAuthorized || !this.rmEnabled) {
-            this.emit('warn', `Not authorized or remote management not enabled`);
+            if (this.logWarn)  this.emit('warn', `Not authorized or remote management not enabled`);
             return;
         }
 
@@ -261,7 +260,7 @@ class XboxWebApi extends EventEmitter {
 
         try {
             const response = await this.axiosInstance.post('/commands', postParams);
-            if (this.enableDebugMode) this.emit('debug', `Command ${command} result: ${JSON.stringify(response.data)}`);
+            if (this.logDebug) this.emit('debug', `Command ${command} result: ${JSON.stringify(response.data)}`);
             return true;
         } catch (error) {
             await new Promise(resolve => setTimeout(resolve, 1000));

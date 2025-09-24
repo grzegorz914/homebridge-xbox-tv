@@ -87,9 +87,9 @@ class SgCrypto {
     }
 
     removePadding(payload) {
-        const payloadLength = payload.slice(-1).readUInt8(0);
+        const payloadLength = payload.subarray(-1).readUInt8(0);
         if (payloadLength > 0 && payloadLength < 16) {
-            return payload.slice(0, payload.length - payloadLength);
+            return payload.subarray(0, payload.length - payloadLength);
         }
         return payload;
     }

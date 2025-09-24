@@ -75,61 +75,69 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `host` | Here set the *Hsostname or Address IP* of Console.|
 | `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
 | `disableAccessory` | If enabled, the accessory will be disabled. |
-| `getInputsFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
-| `filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterSystemApps` | If enabled, System Apps (Accessory, Microsoft Store, Television) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
-| `inputsDisplayOrder` | Here select display order of the inputs list, `0 -None`, `1 -Ascending by Name`, `2 - Descending by Name`, `3 - Ascending by Reference`, `4 - Ascending by Reference`. |
-| `inputs.name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
-| `inputs.reference` | Required to identify current running app. |
-| `inputs.oneStoreProductId` | Required to switch apps. |
-| `inputs.contentType` | Here select from available content types. |
-| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
-| `buttons.mode` | Here select button mode, `0 - Media Control`, `1 - Game Pad Control`, `2 - TV Remote Control`, `3 - Console Control`, `4 - Game/App Control`. |
-| `buttons.mediaCommand` | Here select media control command. |
-| `buttons.gamePadCommand` | Here select game pad control command. |
-| `buttons.tvRemoteCommand` | Here select tv remote control command. |
-| `buttons.consoleControlCommand` | Here select console control command. |
-| `buttons.gameAppControlCommand` | Here set `oneStoreProductId`, only possible if `webApiControl` enabled. |
-| `buttons.displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`. |
-| `buttons.namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
-| `sensorPower`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
-| `sensorInput`| If enabled, then the Input will be exposed as a `Contact Sensor`, fired on every Input change. |
-| `sensorScreenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor`, fired on change to Screen Saver. |
-| `sensorInputs`| Her create custom Inputs sensor, sensors will be exposed as a `Contact Sensor`, fired if switch to it. |
-| `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
-| `sensorInputs.reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). |
-| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
-| `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
-| `webApiControl` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
-| `webApiToken` | Required if `webApiControl` enabled, use Authorization Manager to get it. |
-| `webApiClientId` | Here set your own Client Id from Azure AD or leave empty if you do not have own account. |
-| `webApiClientSecret` | Here set your Client Secret from Azure AD or leave empty if you do not have own account. |
-| `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
-| `volumeControlName` | Here set Your own volume control name or leave empty. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - Speaker`), not working yet. |
+| `webApi{}` | Web Api object. |
+| `webApi.enable` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
+| `webApi.token` | Required if `webApiControl` enabled, use Authorization Manager to get it. |
+| `webApi.clientId` | Here set your own Client Id from Azure AD or leave empty if you do not have own account. |
+| `webApi.clientSecret` | Here set your Client Secret from Azure AD or leave empty if you do not have own account. |
+| `inputs{}` | Inputs object. |
+| `inputs.getFromDevice`| If enabled, apps will be loaded from device, only available if `webApiControl` enabled. |
+| `inputs.filterGames` | If enabled, Games will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `inputs.filterApps` | If enabled, Apps will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `inputs.filterSystemApps` | If enabled, System Apps (Accessory, Microsoft Store, Television) will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `inputs.filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
+| `inputs.displayOrder` | Here select display order of the inputs list, `0 -None`, `1 -Ascending by Name`, `2 - Descending by Name`, `3 - Ascending by Reference`, `4 - Ascending by Reference`. |
+| `inputs.data[]` | Inputs data array. |
+| `inputs.data[].name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
+| `inputs.data[].reference` | Required to identify current running app. |
+| `inputs.data[].oneStoreProductId` | Required to switch apps. |
+| `inputs.data[].contentType` | Here select from available content types. |
+| `buttons[]` | Buttons array. |
+| `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`. |
+| `buttons[].name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
+| `buttons[].mode` | Here select button mode, `0 - Media Control`, `1 - Game Pad Control`, `2 - TV Remote Control`, `3 - Console Control`, `4 - Game/App Control`. |
+| `buttons[].mediaCommand` | Here select media control command. |
+| `buttons[].gamePadCommand` | Here select game pad control command. |
+| `buttons[].tvRemoteCommand` | Here select tv remote control command. |
+| `buttons[].consoleControlCommand` | Here select console control command. |
+| `buttons[].gameAppControlCommand` | Here set `oneStoreProductId`, only possible if `webApiControl` enabled. |
+| `buttons[].namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
+| `sensors{}` | Sensors object. |
+| `sensors.power`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
+| `sensors.screenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor`, fired on change to Screen Saver. |
+| `sensors.input`| If enabled, then the Input will be exposed as a `Contact Sensor`, fired on every Input change. |
+| `sensors.inputs[]` | Sensor inputs array. |
+| `sensors.inputs[].displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
+| `sensors.inputs[].name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
+| `sensors.inputs[].reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). |
+| `sensors.inputs[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
+| `volume{}` | Volume object. |
+| `volume.displayType` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - Speaker`), not working yet. |
+| `volume.name` | Here set Your own volume control name or leave empty. |
+| `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
-| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `disableLogSuccess` | If enabled, disable logging device success. |
-| `disableLogWarn` | If enabled, disable logging device warnings. |
-| `disableLogError` | If enabled, disable logging device error. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `restFul` | This is RSTful server. |
-| `enable` | If enabled, RESTful server will start automatically and respond to any path request. |
-| `port` | Here set the listening `Port` for RESTful server. |
-| `debug` | If enabled, deep log will be present in homebridge console for RESTFul server. |
-| `mqtt` | This is MQTT Broker. |
-| `enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |
-| `host` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
-| `port` | Here set the `Port` for MQTT Broker, default 1883. |
-| `clientId` | Here optional set the `Client Id` of MQTT Broker. |
-| `prefix` | Here set the `Prefix` for `Topic` or leave empty. |
-| `auth` | If enabled, MQTT Broker will use authorization credentials. |
-| `user` | Here set the MQTT Broker user. |
-| `passwd` | Here set the MQTT Broker password. |
-| `debug` | If enabled, deep log will be present in homebridge console for MQTT. |
+| `log{}` | Log object. |
+| `log.deviceInfo` | If enabled, log device info will be displayed by every connections device to the network. |
+| `log.sSuccess` | If enabled, success log will be displayed in console. |
+| `log.info` | If enabled, info log will be displayed in console. |
+| `log.warn` | If enabled, warn log will be displayed in console. |
+| `log.error` | If enabled, error log will be displayed in console. |
+| `log.debug` | If enabled, debug log will be displayed in console. |
+| `restFul{}` | RESTFul object. |
+| `restFul.enable` | If enabled, RESTful server will start automatically and respond to any path request. |
+| `restFul.port` | Here set the listening `Port` for RESTful server. |
+| `restFul.debug` | If enabled, deep log will be present in homebridge console for RESTFul server. |
+| `mqtt{}` | MQTT object. |
+| `mqtt.enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |
+| `mqtt.host` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
+| `mqtt.port` | Here set the `Port` for MQTT Broker, default 1883. |
+| `mqtt.clientId` | Here optional set the `Client Id` of MQTT Broker. |
+| `mqtt.prefix` | Here set the `Prefix` for `Topic` or leave empty. |
+| `mqtt.debug` | If enabled, deep log will be present in homebridge console for MQTT. |
+| `mqtt.auth{}` | MQTT authorization object. |
+| `mqtt.auth.enable` | Here enable authorization for MQTT Broker. |
+| `mqtt.auth.user` | Here set the MQTT Broker user. |
+| `mqtt.auth.passwd` | Here set the MQTT Broker password. |
 | `reference`, `oneStoreProductId` | If web Api enabled then all available in `./homebridge/xboxTv/inputs_xxxxxx` file. |
 
 ## Create App on Azure AD

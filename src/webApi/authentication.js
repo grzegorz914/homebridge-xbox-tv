@@ -1,4 +1,3 @@
-import { promises as fsPromises } from 'fs';
 import QueryString from 'querystring';
 import axios from 'axios';
 import { WebApi } from '../constants.js';
@@ -6,8 +5,8 @@ import Functions from '../functions.js';
 
 class Authentication {
     constructor(config) {
-        this.webApiClientId = config.webApiClientId || WebApi.ClientId;
-        this.webApiClientSecret = config.webApiClientSecret;
+        this.webApiClientId = config.clientId || WebApi.ClientId;
+        this.webApiClientSecret = config.clientSecret;
         this.tokensFile = config.tokensFile;
         this.tokens = {
             oauth: {},

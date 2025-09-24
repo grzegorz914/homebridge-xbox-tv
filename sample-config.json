@@ -23,96 +23,64 @@
 					"host": "192.168.1.6",
 					"xboxLiveId": "FD0000000000",
 					"disableAccessory": false,
-					"getInputsFromDevice": false,
-					"filterGames": false,
-					"filterApps": false,
-					"filterSystemApps": false,
-					"filterDlc": false,
-					"inputsDisplayOrder": 0,
-					"inputs": [
-						{
-							"name": "A Way Out",
-							"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
-							"oneStoreProductId": "",
-							"contentType": "Game"
-						},
-						{
-							"name": "Apple TV",
-							"reference": "AppleInc.AppleTV_nzyj5cx40ttqa!App",
-							"oneStoreProductId": "",
-							"contentType": "App"
-						}
-					],
+					"webApi": {
+						"enable": false,
+						"token": "",
+						"clientId": "",
+						"clientSecret": ""
+					},
+					"inputs": {
+						"getFromDevice": false,
+						"filterGames": false,
+						"filterApps": false,
+						"filterSystemApps": false,
+						"filterDlc": false,
+						"displayOrder": 0,
+						"data": [
+							{
+								"name": "A Way Out",
+								"reference": "AWayOut_zwks512sysnyr!AppAWayOut",
+								"oneStoreProductId": "",
+								"contentType": "Game"
+							}
+						]
+					},
 					"buttons": [
 						{
+							"displayType": 0,
 							"name": "Media Play",
 							"mode": 0,
 							"mediaCommand": "play",
-							"displayType": 0,
-							"namePrefix": false
-						},
-						{
-							"name": "Game Pad Nexus",
-							"mode": 1,
-							"gamePadCommand": "nexus",
-							"displayType": 0,
-							"namePrefix": false
-						},
-						{
-							"name": "TV Remote Vol Up",
-							"mode": 2,
-							"tvRemoteCommand": "volUp",
-							"displayType": 0,
-							"namePrefix": false
-						},
-						{
-							"name": "Record Game DVR",
-							"mode": 3,
-							"consoleControlCommand": "recordGameDvr",
-							"displayType": 0,
-							"namePrefix": false
-						},
-						{
-							"name": "Reboot",
-							"mode": 3,
-							"consoleControlCommand": "reboot",
-							"displayType": 0,
-							"namePrefix": false
-						},
-						{
-							"name": "Game/App A Way Out",
-							"mode": 4,
-							"gameAppControlCommand": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"displayType": 0,
 							"namePrefix": false
 						}
 					],
-					"sensorPower": false,
-					"sensorInput": false,
-					"sensorScreenSaver": false,
-					"sensorInputs": [
-						{
-							"name": "Dashboard",
-							"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-							"displayType": 0,
-							"namePrefix": false
-						}
-					],
-					"webApiControl": false,
-					"webApiPowerOnOff": false,
-					"webApiToken": "",
-					"webApiClientId": "",
-					"webApiClientSecret": "",
+					"sensors": {
+						"power": false,
+						"screenSaver": false,
+						"input": false,
+						"inputs": [
+							{
+								"displayType": 0,
+								"name": "Dashboard",
+								"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
+								"namePrefix": false
+							}
+						]
+					},
+					"volume": {
+						"displayType": 0,
+						"name": "Volume",
+						"namePrefix": false
+					},
+					"log": {
+						"deviceInfo": true,
+						"success": true,
+						"info": false,
+						"warn": true,
+						"error": true,
+						"debug": false
+					},
 					"infoButtonCommand": "nexus",
-					"volumeControlNamePrefix": false,
-					"volumeControlName": "Volume",
-					"volumeControl": 0,
-					"disableLogDeviceInfo": false,
-					"disableLogInfo": false,
-					"disableLogSuccess": false,
-					"disableLogWarn": false,
-					"disableLogError": false,
-					"enableDebugMode": false,
 					"restFul": {
 						"enable": false,
 						"port": 3000,
@@ -120,14 +88,16 @@
 					},
 					"mqtt": {
 						"enable": false,
-						"host": "192.168.1.33",
+						"host": "",
 						"port": 1883,
 						"clientId": "",
-						"prefix": "home/envoy",
-						"auth": false,
-						"user": "user",
-						"pass": "password",
-						"debug": false
+						"prefix": "",
+						"debug": false,
+						"auth": {
+							"enable": false,
+							"user": "",
+							"passwd": ""
+						}
 					}
 				}
 			]

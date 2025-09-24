@@ -21,8 +21,8 @@ class XboxLocalApi extends EventEmitter {
         this.xboxLiveId = config.xboxLiveId;
         this.tokensFile = config.tokensFile;
         this.devInfoFile = config.devInfoFile;
-        this.disableLogInfo = config.disableLogInfo;
-        this.enableDebugMode = config.enableDebugMode;
+        this.logWarn = config.logWarn;
+        this.logDebug = config.logDebug;
 
         this.consoleConnected = false;
         this.volume = 0;
@@ -45,7 +45,7 @@ class XboxLocalApi extends EventEmitter {
             .on('connect', async () => {
                 try {
                     if (this.consoleConnected) return;
-                    if (this.enableDebugMode) this.emit('debug', `Plugin send heart beat to console`);
+                    if (this.logDebug) this.emit('debug', `Plugin send heart beat to console`);
 
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
                     if (!state.alive) {
@@ -53,7 +53,7 @@ class XboxLocalApi extends EventEmitter {
                         return;
                     }
 
-                    if (this.enableDebugMode) this.emit('debug', `Plugin received heart beat from console`);
+                    if (this.logDebug) this.emit('debug', `Plugin received heart beat from console`);
 
                     const socket = !this.socket ? await this.connect() : true;
                     if (!socket) return;
@@ -87,17 +87,36 @@ class XboxLocalApi extends EventEmitter {
     async getSequenceNumber() {
         const seq = this.sequenceNumber;
         this.sequenceNumber = (this.sequenceNumber + 1) >>> 0;
-        if (this.enableDebugMode) this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`);
+        if (this.logDebug) this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`);
         return seq;
+    };
+
+    async sendSocketMessage(message, type) {
+        return new Promise((resolve, reject) => {
+            if (!this.socket) {
+                return reject(new Error(`Socket not initialized, cannot send message: ${type}`));
+            }
+
+            const offset = 0;
+            const length = message.byteLength;
+            this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
+                if (error) {
+                    return reject(new Error(`Socket send error: ${error}`));
+                }
+
+                if (this.logDebug) this.emit('debug', `Socket send: ${type}, ${bytes}B`);
+                resolve(true);
+            });
+        });
     };
 
     async recordGameDvr() {
         if (!this.consoleConnected || !this.isAuthorized) {
-            this.emit('warn', `Send record game ignored, connection state: ${this.consoleConnected}, authorization state: ${this.isAuthorized}`);
+            if (this.logWarn) this.emit('warn', `Send record game ignored, connection state: ${this.consoleConnected}, authorization state: ${this.isAuthorized}`);
             return;
         };
 
-        if (this.enableDebugMode) this.emit('debug', 'Send record game.');
+        if (this.logDebug) this.emit('debug', 'Send record game.');
         try {
             const sequenceNumber = await this.getSequenceNumber();
             const recordGameDvr = new MessagePacket('recordGameDvr');
@@ -137,7 +156,7 @@ class XboxLocalApi extends EventEmitter {
                         }
 
                         await this.updateState();
-                        this.emit('warn', 'Power On failed, please try again.');
+                        if (this.logWarn) this.emit('warn', 'Power On failed, please try again.');
                         break;
                 }
             })();
@@ -163,34 +182,15 @@ class XboxLocalApi extends EventEmitter {
         }
     }
 
-    async sendSocketMessage(message, type) {
-        return new Promise((resolve, reject) => {
-            if (!this.socket) {
-                return reject(new Error(`Socket not initialized, cannot send message: ${type}`));
-            }
-
-            const offset = 0;
-            const length = message.byteLength;
-            this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
-                if (error) {
-                    return reject(new Error(`Socket send error: ${error}`));
-                }
-
-                if (this.enableDebugMode) this.emit('debug', `Socket send: ${type}, ${bytes}B`);
-                resolve(true);
-            });
-        });
-    };
-
     async handleMessage(message) {
         try {
             // get message type in hex
-            const messageTypeHex = message.slice(0, 2).toString('hex');
-            if (this.enableDebugMode) this.emit('debug', `Received message type: ${messageTypeHex}`);
+            const messageTypeHex = message.subarray(0, 2).toString('hex');
+            if (this.logDebug) this.emit('debug', `Received message type: ${messageTypeHex}`);
 
             // check message type exists
             if (!Object.keys(LocalApi.Messages.Category).includes(messageTypeHex)) {
-                this.emit('warn', `Received unknown message type: ${messageTypeHex}`);
+                if (this.logWarn) this.emit('warn', `Received unknown message type: ${messageTypeHex}`);
                 return;
             }
 
@@ -212,7 +212,7 @@ class XboxLocalApi extends EventEmitter {
                     packetStructure = new MessagePacket(messageRequest);
                     break;
                 default:
-                    this.emit('warn', `No handler for type: ${messageTypeHex}`);
+                    if (this.logWarn) this.emit('warn', `No handler for type: ${messageTypeHex}`);
                     return;
             }
 
@@ -220,7 +220,7 @@ class XboxLocalApi extends EventEmitter {
             let packet;
             try {
                 packet = packetStructure.unpack(this.crypto, message);
-                if (this.enableDebugMode) this.emit('debug', `Received packet type: ${packet.type}, packet: ${JSON.stringify(packet, null, 2)}`);
+                if (this.logDebug) this.emit('debug', `Received packet type: ${packet.type}, packet: ${JSON.stringify(packet, null, 2)}`);
             } catch (error) {
                 this.emit('error', `Failed to unpack packet type: ${messageType}, error: ${error.message}`);
                 return;
@@ -234,7 +234,7 @@ class XboxLocalApi extends EventEmitter {
                 try {
                     jsonMessage = JSON.parse(packet.payloadProtected.json);
                 } catch (error) {
-                    if (this.enableDebugMode) this.emit('debug', `Failed to parse JSON payload: ${error.message}`);
+                    if (this.logDebug) this.emit('debug', `Failed to parse JSON payload: ${error.message}`);
                     return;
                 }
 
@@ -266,7 +266,7 @@ class XboxLocalApi extends EventEmitter {
                         const fullJson = fragments[datagramId].getValue().toString();
                         packet.payloadProtected = JSON.parse(fullJson);
 
-                        if (this.enableDebugMode) this.emit('debug', `Reassembled JSON packet: ${fullJson}`);
+                        if (this.logDebug) this.emit('debug', `Reassembled JSON packet: ${fullJson}`);
                         delete fragments[datagramId];
                     }
                 }
@@ -276,7 +276,7 @@ class XboxLocalApi extends EventEmitter {
                 const targetId = packet.targetParticipantId;
 
                 if (targetId !== this.participantId) {
-                    if (this.enableDebugMode) this.emit('debug', `ParticipantId mismatch: ${targetId} !== ${this.participantId}. Ignoring packet`);
+                    if (this.logDebug) this.emit('debug', `ParticipantId mismatch: ${targetId} !== ${this.participantId}. Ignoring packet`);
                     return;
                 }
 
@@ -292,7 +292,7 @@ class XboxLocalApi extends EventEmitter {
                     const deviceName = packet.consoleName;
                     const certificate = packet.certificate;
 
-                    if (this.enableDebugMode) this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType] || 'Unknown'}, name: ${deviceName}`);
+                    if (this.logDebug) this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType] || 'Unknown'}, name: ${deviceName}`);
 
                     if (!certificate) {
                         this.emit('error', 'Certificate missing from device packet');
@@ -316,7 +316,7 @@ class XboxLocalApi extends EventEmitter {
 
                     try {
                         const data = await this.crypto.getPublicKey(certificate);
-                        if (this.enableDebugMode) this.emit('debug', `Signed public key: ${data.publicKey.toString('hex')}, iv: ${data.iv.toString('hex')}`);
+                        if (this.logDebug) this.emit('debug', `Signed public key: ${data.publicKey.toString('hex')}, iv: ${data.iv.toString('hex')}`);
 
                         const connectRequest = new SimplePacket('connectRequest');
                         const uuidBuffer = Buffer.from(UuIdParse(UuIdv4()));
@@ -338,7 +338,7 @@ class XboxLocalApi extends EventEmitter {
                             connectRequest.set('connectRequestGroupEnd', 1);
                         }
 
-                        if (this.enableDebugMode) this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`);
+                        if (this.logDebug) this.emit('debug', `Client connecting using: ${this.isAuthorized ? 'XSTS token' : 'Anonymous'}`);
 
                         const message = connectRequest.pack(this.crypto);
                         await this.sendSocketMessage(message, 'connectRequest');
@@ -374,7 +374,7 @@ class XboxLocalApi extends EventEmitter {
                     this.sourceParticipantId = participantId;
                     this.targetParticipantId = packet.sourceParticipantId || this.targetParticipantId || 0;
 
-                    if (this.enableDebugMode) this.emit('debug', `Client connected, pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
+                    if (this.logDebug) this.emit('debug', `Client connected, pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
 
                     try {
                         const sequenceNumber = await this.getSequenceNumber();
@@ -406,7 +406,7 @@ class XboxLocalApi extends EventEmitter {
                         this.reference = title.aumId;
 
                         this.emit('stateChanged', this.consoleConnected, this.titleId, this.reference, this.volume, this.mute);
-                        if (this.enableDebugMode) {
+                        if (this.logDebug) {
                             this.emit('debug', `Status changed, app Id: ${this.titleId}, reference: ${this.reference}`);
                         }
 
@@ -421,7 +421,7 @@ class XboxLocalApi extends EventEmitter {
                     if (!this.acknowledgeInterval) {
                         this.acknowledgeInterval = setInterval(async () => {
                             const elapsed = (Date.now() - this.heartBeatStartTime) / 1000;
-                            if (this.enableDebugMode) this.emit('debug', `Socket received heart beat: ${elapsed.toFixed(1)} sec ago`);
+                            if (this.logDebug) this.emit('debug', `Socket received heart beat: ${elapsed.toFixed(1)} sec ago`);
 
                             if (elapsed >= 14) {
                                 clearInterval(this.acknowledgeInterval);
@@ -439,10 +439,10 @@ class XboxLocalApi extends EventEmitter {
                     break;
                 case 'pairedIdentityStateChanged':
                     const pairingState1 = packet.payloadProtected.pairingState || 0;
-                    if (this.enableDebugMode) this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`);
+                    if (this.logDebug) this.emit('debug', `Client pairing state: ${LocalApi.Console.PairingState[pairingState1]}`);
                     break;
                 default:
-                    this.emit('warn', `Received unknown packet type: ${packet.type}`);
+                    if (this.logWarn) this.emit('warn', `Received unknown packet type: ${packet.type}`);
                     break;
             }
         } catch (error) {
@@ -458,12 +458,12 @@ class XboxLocalApi extends EventEmitter {
                         reject(`Socket error: ${error}`);
                     })
                     .on('close', async () => {
-                        if (this.enableDebugMode) this.emit('debug', 'Socket closed.');
+                        if (this.logDebug) this.emit('debug', 'Socket closed.');
                         await this.updateState();
                     })
                     .on('listening', async () => {
                         const address = this.socket.address();
-                        if (this.enableDebugMode) this.emit('debug', `Socket start listening: ${address.address}:${address.port}`);
+                        if (this.logDebug) this.emit('debug', `Socket start listening: ${address.address}:${address.port}`);
                         resolve(true);
                     })
                     .on('message', this.handleMessage.bind(this));

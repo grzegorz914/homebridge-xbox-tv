@@ -145,9 +145,9 @@ class Simple {
         }
 
         if (packet.payloadProtected !== undefined) {
-            const signature = packet.payloadProtected.slice(-32);
-            const encryptedData = packet.payloadProtected.slice(0, -32);
-            const decrypted = crypto.decrypt(encryptedData, packet.iv).slice(0, packet.payloadProtectedLength);
+            const signature = packet.payloadProtected.subarray(-32);
+            const encryptedData = packet.payloadProtected.subarray(0, -32);
+            const decrypted = crypto.decrypt(encryptedData, packet.iv).subarray(0, packet.payloadProtectedLength);
 
             packet.payloadProtected = {};
             const structurePayloadDecrypted = new Structure(decrypted);
