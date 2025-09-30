@@ -1,4 +1,3 @@
-import { promises as fsPromises } from 'fs';
 import EventEmitter from 'events';
 import RestFul from './restful.js';
 import Mqtt from './mqtt.js';
@@ -24,6 +23,7 @@ class XboxDevice extends EventEmitter {
         this.name = device.name;
         this.host = device.host;
         this.xboxLiveId = device.xboxLiveId;
+        this.displayType = device.displayType;
         this.webApiControl = device.webApi.enable || false;
         this.webApiClientId = device.webApi.clientId;
         this.webApiClientSecret = device.webApi.clientSecret;
@@ -72,49 +72,49 @@ class XboxDevice extends EventEmitter {
         //sensors
         this.sensorsInputsConfigured = [];
         for (const sensor of this.sensorInputs) {
-            const sensorInputName = sensor.name ?? false;
-            const sensorInputReference = sensor.reference ?? false;
-            const sensorInputDisplayType = sensor.displayType ?? 0;
-            if (sensorInputName && sensorInputReference && sensorInputDisplayType > 0) {
-                sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
-                sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                sensor.state = false;
-                this.sensorsInputsConfigured.push(sensor);
-            } else {
-                const log = sensorInputDisplayType === 0 ? false : this.emit('info', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}`);
+            const name = sensor.name;
+            const reference = sensor.reference;
+            const displayType = sensor.displayType;
+            if (!displayType || !name || !reference) {
+                if (this.logWarn && displayType) this.emit('warn', `Sensor Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
+                continue;
             }
+
+            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
+            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+            sensor.state = false;
+            this.sensorsInputsConfigured.push(sensor);
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
+        this.sensorScreenSaverState = false;
+        this.sensorInputState = false;
 
         //buttons
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
-            const buttonName = button.name ?? false;
-            const buttonMode = button.mode ?? -1;
-            const buttonReferenceCommand = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][buttonMode] ?? false;
-            const buttonDisplayType = button.displayType ?? 0;
-            if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
-                button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
-                button.state = false;
-                this.buttonsConfigured.push(button);
-            } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}`);
+            const name = button.name;
+            const mode = button.mode;
+            const reference = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][mode];
+            const displayType = button.displayType;
+            if (!displayType || !name || !reference) {
+                if (this.logWarn && displayType) this.emit('info', `Button Name: ${name ? name : 'Missing'}, ${name ? 'Command:' : 'Reference:'} ${reference ? reference : 'Missing'}, Mode: ${mode ? mode : 'Missing'}`);
+                continue;
             }
+
+            button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
+            button.state = false;
+            this.buttonsConfigured.push(button);
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
         //variable
         this.modelName = 'Xbox';
-        this.sensorsInputsServices = [];
-        this.buttonsServices = [];
         this.inputIdentifier = 1;
         this.power = false;
         this.volume = 0;
         this.mute = false;
         this.mediaState = 2;
         this.reference = '';
-        this.sensorScreenSaverState = false;
-        this.sensorInputState = false;
         this.consoleAuthorized = false;
     }
 
@@ -415,7 +415,7 @@ class XboxDevice extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Prepare accessory`);
             const accessoryName = this.name;
             const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
-            const accessoryCategory = Categories.TV_SET_TOP_BOX;
+            const accessoryCategory = [Categories.OTHER, Categories.TELEVISION, Categories.TV_SET_TOP_BOX, Categories.TV_STREAMING_STICK, Categories.AUDIO_RECEIVER][this.displayType];
             const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
             this.accessory = accessory;
 
@@ -819,6 +819,8 @@ class XboxDevice extends EventEmitter {
             const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
             if (maxSensorInputsCount > 0) {
                 if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
+
+                this.sensorsInputsServices = [];
                 for (let i = 0; i < maxSensorInputsCount; i++) {
                     //get sensor
                     const sensorInput = this.sensorsInputsConfigured[i];
@@ -854,6 +856,8 @@ class XboxDevice extends EventEmitter {
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
                 if (this.logDebug) this.emit('debug', `Prepare buttons services`);
+
+                this.buttonsServices = [];
                 for (let i = 0; i < maxButtonsCount; i++) {
                     //get button
                     const button = this.buttonsConfigured[i];

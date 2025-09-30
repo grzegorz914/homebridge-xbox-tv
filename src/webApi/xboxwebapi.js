@@ -1,4 +1,3 @@
-import { promises as fsPromises } from 'fs';
 import EventEmitter from 'events';
 import { v4 as UuIdv4 } from 'uuid';
 import axios from 'axios';

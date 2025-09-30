@@ -19,28 +19,57 @@
 						"name": {
 							"title": "Name",
 							"type": "string",
-							"placeholder": "Game console",
-							"required": true
+							"placeholder": "Game console"
 						},
 						"host": {
 							"title": "IP/Hostname",
 							"type": "string",
 							"placeholder": "192.168.1.6",
-							"format": "hostname",
-							"required": true
+							"format": "hostname"
 						},
 						"xboxLiveId": {
 							"title": "Live ID",
 							"type": "string",
 							"placeholder": "FD00000000000000",
-							"description": "Xbox Live ID",
-							"required": true
+							"description": "Xbox Live ID"
 						},
-						"disableAccessory": {
-							"title": "Disable Accessory",
-							"type": "boolean",
-							"default": false,
-							"description": "Here You can disable this accessory."
+						"displayType": {
+							"title": "Accessory type",
+							"type": "integer",
+							"default": 2,
+							"oneOf": [
+								{
+									"title": "None/Disabled",
+									"enum": [
+										0
+									]
+								},
+								{
+									"title": "Television",
+									"enum": [
+										1
+									]
+								},
+								{
+									"title": "TV Set Top Box",
+									"enum": [
+										2
+									]
+								},
+								{
+									"title": "TV Streaming Stick",
+									"enum": [
+										3
+									]
+								},
+								{
+									"title": "Audio Receiver",
+									"enum": [
+										4
+									]
+								}
+							],
+							"description": "Accessory type for Home app"
 						},
 						"webApi": {
 							"title": "Web Api",
@@ -198,7 +227,6 @@
 											"contentType": {
 												"title": "Content Type",
 												"type": "string",
-												"default": "Game",
 												"description": "Here select source input type.",
 												"oneOf": [
 													{
@@ -225,21 +253,20 @@
 															"Dlc"
 														]
 													}
-												],
-												"required": true
+												]
 											}
 										}
 									},
 									"condition": {
-										"functionBody": "return model.devices && model.devices[arrayIndices].inputs.getFromDevice === false || model.devices[arrayIndices].webApi.enable === false;"
+										"functionBody": "return model.devices[arrayIndices].inputs.getFromDevice === false || model.devices[arrayIndices].webApi.enable === false;"
 									}
 								}
 							}
 						},
 						"buttons": {
+							"title": "Button",
 							"type": "array",
 							"items": {
-								"title": "Button",
 								"type": "object",
 								"properties": {
 									"displayType": {
@@ -248,6 +275,7 @@
 										"minimum": 0,
 										"maximum": 2,
 										"default": 0,
+										"description": "Here select display type in HomeKit app.",
 										"oneOf": [
 											{
 												"title": "None/Disabled",
@@ -267,18 +295,13 @@
 													2
 												]
 											}
-										],
-										"description": "Here select display type in HomeKit app.",
-										"required": true
+										]
 									},
 									"name": {
 										"title": "Name",
 										"type": "string",
 										"placeholder": "Button name",
-										"description": "Here set Your own name.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
-										}
+										"description": "Here set Your own name."
 									},
 									"mode": {
 										"title": "Mode",
@@ -318,16 +341,11 @@
 													4
 												]
 											}
-										],
-										"required": true,
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
-										}
+										]
 									},
 									"mediaCommand": {
 										"title": "Media Command",
 										"type": "string",
-										"default": "play",
 										"oneOf": [
 											{
 												"title": "Play",
@@ -422,13 +440,12 @@
 										],
 										"description": "Here select the media command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
 										}
 									},
 									"gamePadCommand": {
 										"title": "Game Pad Command",
 										"type": "string",
-										"default": "nexus",
 										"oneOf": [
 											{
 												"title": "Nexus",
@@ -499,13 +516,12 @@
 										],
 										"description": "Here select the controler command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
 										}
 									},
 									"tvRemoteCommand": {
 										"title": "TV Remote Command",
 										"type": "string",
-										"default": "volUp",
 										"oneOf": [
 											{
 												"title": "Volume Up",
@@ -528,13 +544,12 @@
 										],
 										"description": "Here select the tv remote command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
 										}
 									},
 									"consoleControlCommand": {
 										"title": "Console Control Command",
 										"type": "string",
-										"default": "reboot",
 										"oneOf": [
 											{
 												"title": "Reboot",
@@ -551,7 +566,7 @@
 										],
 										"description": "Here select the console control command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 3;"
 										}
 									},
 									"gameAppControlCommand": {
@@ -560,18 +575,20 @@
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api enabled, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices].webApi.enable === true && model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 4;"
 										}
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
-										"description": "Here enable/disable the accessory name as a prefix for button name.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
-										}
+										"default": false,
+										"description": "Here enable/disable the accessory name as a prefix for button name."
 									}
-								}
+								},
+								"required": [
+									"displayType",
+									"mode"
+								]
 							}
 						},
 						"sensors": {
@@ -609,6 +626,7 @@
 												"minimum": 0,
 												"maximum": 3,
 												"default": 0,
+												"description": "Here select sensor type to be exposed in HomeKit app.",
 												"oneOf": [
 													{
 														"title": "None/Disabled",
@@ -634,9 +652,7 @@
 															3
 														]
 													}
-												],
-												"description": "Here select sensor type to be exposed in HomeKit app.",
-												"required": true
+												]
 											},
 											"name": {
 												"title": "Name",
@@ -659,12 +675,13 @@
 											"namePrefix": {
 												"title": "Prefix",
 												"type": "boolean",
-												"description": "Here enable/disable the accessory name as a prefix for sensor name.",
-												"condition": {
-													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
-												}
+												"default": false,
+												"description": "Here enable/disable the accessory name as a prefix for sensor name."
 											}
-										}
+										},
+										"required": [
+											"displayType"
+										]
 									}
 								}
 							}
@@ -705,70 +722,30 @@
 												3
 											]
 										}
-									],
-									"required": true
+									]
 								},
 								"name": {
 									"title": "Name",
 									"type": "string",
 									"placeholder": "Volume Control Name",
-									"description": "Here set Your own volume control name or leave empty.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
-									}
+									"description": "Here set Your own volume control name or leave empty."
 								},
 								"namePrefix": {
-									"title": "Volume Control Name Prefix",
+									"title": "Prefix",
 									"type": "boolean",
 									"default": false,
-									"description": "Here enable/disable the accessory name as a prefix for volume control name.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
-									}
+									"description": "Here enable/disable the accessory name as a prefix for volume control name."
 								}
-							}
-						},
-						"log": {
-							"title": "Log",
-							"type": "object",
-							"properties": {
-								"deviceInfo": {
-									"title": "Device Info",
-									"type": "boolean",
-									"default": true,
-									"description": "This enable logging device info by every connections device to the network."
-								},
-								"success": {
-									"title": "Log Success",
-									"type": "boolean",
-									"default": true
-								},
-								"info": {
-									"title": "Log Info",
-									"type": "boolean",
-									"default": false
-								},
-								"warn": {
-									"title": "Log Warn",
-									"type": "boolean",
-									"default": true
-								},
-								"error": {
-									"title": "Log Error",
-									"type": "boolean",
-									"default": true
-								},
-								"debug": {
-									"title": "Log Debug",
-									"type": "boolean",
-									"default": false
-								}
-							}
+							},
+							"required": [
+								"displayType"
+							]
 						},
 						"infoButtonCommand": {
 							"title": "Info Button",
 							"type": "string",
 							"default": "nexus",
+							"description": "Here select the function of info button in RC.",
 							"oneOf": [
 								{
 									"title": "Game Pad View",
@@ -812,8 +789,44 @@
 										"y"
 									]
 								}
-							],
-							"description": "Here select the function of info button in RC."
+							]
+						},
+						"log": {
+							"title": "Log",
+							"type": "object",
+							"properties": {
+								"deviceInfo": {
+									"title": "Device Info",
+									"type": "boolean",
+									"default": true,
+									"description": "This enable logging device info by every connections device to the network."
+								},
+								"success": {
+									"title": "Log Success",
+									"type": "boolean",
+									"default": true
+								},
+								"info": {
+									"title": "Log Info",
+									"type": "boolean",
+									"default": false
+								},
+								"warn": {
+									"title": "Log Warn",
+									"type": "boolean",
+									"default": true
+								},
+								"error": {
+									"title": "Log Error",
+									"type": "boolean",
+									"default": true
+								},
+								"debug": {
+									"title": "Log Debug",
+									"type": "boolean",
+									"default": false
+								}
+							}
 						},
 						"restFul": {
 							"title": "RESTFul",
@@ -937,7 +950,13 @@
 								}
 							}
 						}
-					}
+					},
+					"required": [
+						"name",
+						"host",
+						"xboxLiveId",
+						"displayType"
+					]
 				}
 			}
 		}
@@ -951,7 +970,7 @@
 				"devices[].name",
 				"devices[].host",
 				"devices[].xboxLiveId",
-				"devices[].disableAccessory",
+				"devices[].displayType",
 				{
 					"key": "devices[].inputs",
 					"type": "section",
@@ -977,10 +996,7 @@
 								"devices[].inputs.data[].contentType"
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
-					}
+					]
 				},
 				{
 					"key": "devices[]",
@@ -998,76 +1014,14 @@
 								"devices[].buttons[].name",
 								"devices[].buttons[].mode",
 								"devices[].buttons[].mediaCommand",
-								"devices[].buttons[].namePrefix"
-							],
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 0;"
-							}
-						},
-						{
-							"key": "devices[].buttons",
-							"type": "tabarray",
-							"title": "{{ value.name || 'button' }}",
-							"items": [
-								"devices[].buttons[].displayType",
-								"devices[].buttons[].name",
-								"devices[].buttons[].mode",
 								"devices[].buttons[].gamePadCommand",
-								"devices[].buttons[].namePrefix"
-							],
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 1;"
-							}
-						},
-						{
-							"key": "devices[].buttons",
-							"type": "tabarray",
-							"title": "{{ value.name || 'button' }}",
-							"items": [
-								"devices[].buttons[].displayType",
-								"devices[].buttons[].name",
-								"devices[].buttons[].mode",
 								"devices[].buttons[].tvRemoteCommand",
-								"devices[].buttons[].namePrefix"
-							],
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 2;"
-							}
-						},
-						{
-							"key": "devices[].buttons",
-							"type": "tabarray",
-							"title": "{{ value.name || 'button' }}",
-							"items": [
-								"devices[].buttons[].displayType",
-								"devices[].buttons[].name",
-								"devices[].buttons[].mode",
 								"devices[].buttons[].consoleControlCommand",
-								"devices[].buttons[].namePrefix"
-							],
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 3;"
-							}
-						},
-						{
-							"key": "devices[].buttons",
-							"type": "tabarray",
-							"title": "{{ value.name || 'button' }}",
-							"items": [
-								"devices[].buttons[].displayType",
-								"devices[].buttons[].name",
-								"devices[].buttons[].mode",
 								"devices[].buttons[].gameAppControlCommand",
 								"devices[].buttons[].namePrefix"
-							],
-							"condition": {
-								"functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 4;"
-							}
+							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
-					}
+					]
 				},
 				{
 					"key": "devices[]",
@@ -1098,7 +1052,6 @@
 										"devices[].sensors.screenSaver",
 										"devices[].sensors.input",
 										{
-											"key": "devices[].sensors",
 											"type": "section",
 											"title": "Inputs",
 											"expandable": true,
@@ -1205,10 +1158,7 @@
 								}
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
-					}
+					]
 				}
 			]
 		}

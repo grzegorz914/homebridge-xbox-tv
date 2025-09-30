@@ -24,12 +24,8 @@ class XboxPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-
-				//check accessory is enabled
-				const disableAccessory = device.disableAccessory || false;
-				if (disableAccessory) {
-					continue;
-				}
+				const displayType = device.displayType ?? 2;
+				if (displayType === 0) continue;
 
 				const deviceName = device.name;
 				const host = device.host;
@@ -99,31 +95,31 @@ class XboxPlatform {
 				//xbox device
 				try {
 					//create impulse generator
-					const impulseGenerator = new ImpulseGenerator();
-					impulseGenerator.on('start', async () => {
-						try {
-							const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
-								.on('devInfo', (info) => logLevel.devInfo && log.info(info))
-								.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${deviceName}, ${msg}`))
-								.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${deviceName}, ${msg}`))
-								.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${deviceName}, debug: ${msg}`))
-								.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${deviceName}, ${msg}`))
-								.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${deviceName}, ${msg}`));
+					const impulseGenerator = new ImpulseGenerator()
+						.on('start', async () => {
+							try {
+								const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
+									.on('devInfo', (info) => logLevel.devInfo && log.info(info))
+									.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${deviceName}, ${msg}`))
+									.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${deviceName}, ${msg}`))
+									.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${deviceName}, debug: ${msg}`))
+									.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${deviceName}, ${msg}`))
+									.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${deviceName}, ${msg}`));
 
-							const accessory = await xboxDevice.start();
-							if (accessory) {
-								api.publishExternalAccessories(PluginName, [accessory]);
-								if (logLevel.success) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+								const accessory = await xboxDevice.start();
+								if (accessory) {
+									api.publishExternalAccessories(PluginName, [accessory]);
+									if (logLevel.success) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 
-								await impulseGenerator.stop();
-								await xboxDevice.startImpulseGenerator();
+									await impulseGenerator.stop();
+									await xboxDevice.startImpulseGenerator();
+								}
+							} catch (error) {
+								if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Start impulse generator error: ${error.message ?? error}, trying again.`);
 							}
-						} catch (error) {
-							if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Start impulse generator error: ${error.message ?? error}, trying again.`);
-						}
-					}).on('state', (state) => {
-						if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Start impulse generator ${state ? 'started' : 'stopped'}`);
-					});
+						}).on('state', (state) => {
+							if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Start impulse generator ${state ? 'started' : 'stopped'}`);
+						});
 
 					//start impulse generator
 					await impulseGenerator.start([{ name: 'start', sampling: 60000 }]);

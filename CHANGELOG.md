@@ -12,6 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v3.4.0 all buttons in config need to be updated
 - After update to v3.9.0 plugin need to be reconfigured and console reauthorized
 
+## [3.9.1] - (30.09.2025)
+
+## Changes
+
+- added possibility to change accessory display type in Home app
+- stability improvements
+- redme updated
+- cleanup
+
 ## [3.9.0] - (24.09.2025)
 
 ## Changes
