@@ -187,8 +187,7 @@
 												4
 											]
 										}
-									],
-									"required": true
+									]
 								},
 								"data": {
 									"title": "Inputs",
@@ -261,7 +260,10 @@
 										"functionBody": "return model.devices[arrayIndices].inputs.getFromDevice === false || model.devices[arrayIndices].webApi.enable === false;"
 									}
 								}
-							}
+							},
+							"required": [
+								"displayOrder"
+							]
 						},
 						"buttons": {
 							"title": "Button",
@@ -301,14 +303,16 @@
 										"title": "Name",
 										"type": "string",
 										"placeholder": "Button name",
-										"description": "Here set Your own name."
+										"description": "Here set Your own name.",
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+										}
 									},
 									"mode": {
 										"title": "Mode",
 										"type": "integer",
 										"minimum": 0,
 										"maximum": 4,
-										"default": 0,
 										"description": "Here select the function mode.",
 										"oneOf": [
 											{
@@ -341,11 +345,15 @@
 													4
 												]
 											}
-										]
+										],
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+										}
 									},
 									"mediaCommand": {
 										"title": "Media Command",
 										"type": "string",
+										"description": "Here select the media command.",
 										"oneOf": [
 											{
 												"title": "Play",
@@ -438,14 +446,14 @@
 												]
 											}
 										],
-										"description": "Here select the media command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
 										}
 									},
 									"gamePadCommand": {
 										"title": "Game Pad Command",
 										"type": "string",
+										"description": "Here select the controler command.",
 										"oneOf": [
 											{
 												"title": "Nexus",
@@ -514,14 +522,14 @@
 												]
 											}
 										],
-										"description": "Here select the controler command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
 										}
 									},
 									"tvRemoteCommand": {
 										"title": "TV Remote Command",
 										"type": "string",
+										"description": "Here select the tv remote command.",
 										"oneOf": [
 											{
 												"title": "Volume Up",
@@ -542,14 +550,14 @@
 												]
 											}
 										],
-										"description": "Here select the tv remote command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
 										}
 									},
 									"consoleControlCommand": {
 										"title": "Console Control Command",
 										"type": "string",
+										"description": "Here select the console control command.",
 										"oneOf": [
 											{
 												"title": "Reboot",
@@ -564,9 +572,8 @@
 												]
 											}
 										],
-										"description": "Here select the console control command.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 3;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 3;"
 										}
 									},
 									"gameAppControlCommand": {
@@ -575,19 +582,21 @@
 										"placeholder": "oneStoreProductId",
 										"description": "Here set the *oneStoreProductId*. If web api enabled, switch app/games will be possible, all available in */var/lib/homebridge/xboxTv/inputs_xxxxxx* file.",
 										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 4;"
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 4;"
 										}
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
 										"default": false,
-										"description": "Here enable/disable the accessory name as a prefix for button name."
+										"description": "Here enable/disable the accessory name as a prefix for button name.",
+										"condition": {
+											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+										}
 									}
 								},
 								"required": [
-									"displayType",
-									"mode"
+									"displayType"
 								]
 							}
 						},
@@ -660,7 +669,7 @@
 												"placeholder": "Name",
 												"description": "Here set Your own name.",
 												"condition": {
-													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
+													"functionBody": "return model.devices[arrayIndices[0]].sensors.inputs[arrayIndices[1]].displayType > 0;"
 												}
 											},
 											"reference": {
@@ -669,14 +678,17 @@
 												"placeholder": "Input/App reference",
 												"description": "Here set the Input/App reference.",
 												"condition": {
-													"functionBody": "return model.devices[arrayIndices].sensors.inputs[arrayIndices].displayType > 0;"
+													"functionBody": "return model.devices[arrayIndices[0]].sensors.inputs[arrayIndices[1]].displayType > 0;"
 												}
 											},
 											"namePrefix": {
 												"title": "Prefix",
 												"type": "boolean",
 												"default": false,
-												"description": "Here enable/disable the accessory name as a prefix for sensor name."
+												"description": "Here enable/disable the accessory name as a prefix for sensor name.",
+												"condition": {
+													"functionBody": "return model.devices[arrayIndices[0]].sensors.inputs[arrayIndices[1]].displayType > 0;"
+												}
 											}
 										},
 										"required": [
@@ -728,13 +740,19 @@
 									"title": "Name",
 									"type": "string",
 									"placeholder": "Volume Control Name",
-									"description": "Here set Your own volume control name or leave empty."
+									"description": "Here set Your own volume control name or leave empty.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
+									}
 								},
 								"namePrefix": {
 									"title": "Prefix",
 									"type": "boolean",
 									"default": false,
-									"description": "Here enable/disable the accessory name as a prefix for volume control name."
+									"description": "Here enable/disable the accessory name as a prefix for volume control name.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
+									}
 								}
 							},
 							"required": [
@@ -996,7 +1014,10 @@
 								"devices[].inputs.data[].contentType"
 							]
 						}
-					]
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
+					}
 				},
 				{
 					"key": "devices[]",
@@ -1021,7 +1042,10 @@
 								"devices[].buttons[].namePrefix"
 							]
 						}
-					]
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
+					}
 				},
 				{
 					"key": "devices[]",
@@ -1158,7 +1182,10 @@
 								}
 							]
 						}
-					]
+					],
+					"condition": {
+						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
+					}
 				}
 			]
 		}
