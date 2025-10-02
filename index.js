@@ -38,12 +38,12 @@ class XboxPlatform {
 
 				//log config
 				const logLevel = {
-					devInfo: device.log.deviceInfo,
-					success: device.log.success,
-					info: device.log.info,
-					warn: device.log.warn,
-					error: device.log.error,
-					debug: device.log.debug
+					devInfo: device.log?.deviceInfo,
+					success: device.log?.success,
+					info: device.log?.info,
+					warn: device.log?.warn,
+					error: device.log?.error,
+					debug: device.log?.debug
 				};
 				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
 

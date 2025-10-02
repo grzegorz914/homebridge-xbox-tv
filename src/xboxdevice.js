@@ -24,28 +24,28 @@ class XboxDevice extends EventEmitter {
         this.host = device.host;
         this.xboxLiveId = device.xboxLiveId;
         this.displayType = device.displayType;
-        this.webApiControl = device.webApi.enable || false;
-        this.webApiClientId = device.webApi.clientId;
+        this.webApiControl = device.webApi?.enable || false;
+        this.webApiClientId = device.webApi?.clientId;
         this.webApiClientSecret = device.webApi.clientSecret;
-        this.getInputsFromDevice = this.webApiControl ? device.inputs.getFromDevice : false;
-        this.filterGames = device.inputs.filterGames || false;
-        this.filterApps = device.inputs.filterApps || false;
-        this.filterSystemApps = device.inputs.filterSystemApps || false;
-        this.filterDlc = device.inputs.filterDlc || false;
-        this.inputsDisplayOrder = device.inputs.displayOrder || 0;
-        this.inputs = device.inputs.data || [];
+        this.getInputsFromDevice = this.webApiControl ? device.inputs?.getFromDevice : false;
+        this.filterGames = device.inputs?.filterGames || false;
+        this.filterApps = device.inputs?.filterApps || false;
+        this.filterSystemApps = device.inputs?.filterSystemApps || false;
+        this.filterDlc = device.inputs?.filterDlc || false;
+        this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
+        this.inputs = device.inputs?.data || [];
         this.buttons = device.buttons || [];
-        this.sensorPower = device.sensors.power || false;
-        this.sensorInput = device.sensors.input || false;
-        this.sensorScreenSaver = device.sensors.screenSaver || false;
-        this.sensorInputs = device.sensors.inputs || [];
+        this.sensorPower = device.sensors?.power || false;
+        this.sensorInput = device.sensors?.input || false;
+        this.sensorScreenSaver = device.sensors?.screenSaver || false;
+        this.sensorInputs = device.sensors?.inputs || [];
+        this.volumeControl = device.volume?.displayType || 0;
+        this.volumeControlName = device.volume?.name || 'Volume';
+        this.volumeControlNamePrefix = device.volume?.namePrefix || false;
         this.infoButtonCommand = device.infoButtonCommand || 'nexus';
-        this.volumeControl = device.volume.displayType || 0;
-        this.volumeControlName = device.volume.name || 'Volume';
-        this.volumeControlNamePrefix = device.volume.namePrefix || false;
-        this.logInfo = device.log.info || false;
-        this.logWarn = device.log.warn || false;
-        this.logDebug = device.log.debug || false;
+        this.logInfo = device.log?.info || false;
+        this.logWarn = device.log?.warn || false;
+        this.logDebug = device.log?.debug || false;
         this.authTokenFile = authTokenFile;
         this.devInfoFile = devInfoFile;
         this.inputsFile = inputsFile;
@@ -202,8 +202,8 @@ class XboxDevice extends EventEmitter {
                     port: this.mqtt.port || 1883,
                     clientId: this.mqtt.clientId ? `microsoft_${this.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `microsoft_${Math.random().toString(16).slice(3)}`,
                     prefix: this.mqtt.prefix ? `microsoft/${this.mqtt.prefix}/${this.name}` : `microsoft/${this.name}`,
-                    user: this.mqtt.auth.user,
-                    passwd: this.mqtt.auth.passwd,
+                    user: this.mqtt.auth?.user,
+                    passwd: this.mqtt.auth?.passwd,
                     debug: this.mqtt.debug || false
                 })
                     .on('connected', (message) => {
