@@ -49,6 +49,7 @@ class XboxLocalApi extends EventEmitter {
                     const state = await Ping.promise.probe(this.host, { timeout: 3 });
                     if (!state.alive) {
                         if (this.socket) this.socket.close();
+                        await this.updateState();
                         return;
                     }
 
@@ -202,7 +203,6 @@ class XboxLocalApi extends EventEmitter {
             switch (messageRequest) {
                 case 'discoveryRequest':
                 case 'discoveryResponse':
-                case 'powerOn':
                 case 'connectRequest':
                 case 'connectResponse':
                     packetStructure = new SimplePacket(messageRequest);
