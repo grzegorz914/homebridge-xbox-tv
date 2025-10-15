@@ -83,8 +83,7 @@
 					"infoButtonCommand": "nexus",
 					"restFul": {
 						"enable": false,
-						"port": 3000,
-						"debug": false
+						"port": 3000
 					},
 					"mqtt": {
 						"enable": false,
@@ -92,7 +91,6 @@
 						"port": 1883,
 						"clientId": "",
 						"prefix": "",
-						"debug": false,
 						"auth": {
 							"enable": false,
 							"user": "",
