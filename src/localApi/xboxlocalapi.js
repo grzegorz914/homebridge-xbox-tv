@@ -79,8 +79,9 @@ class XboxLocalApi extends EventEmitter {
         this.participantId = false;
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
+        this.power = false;
 
-        this.emit('stateChanged', this.consoleConnected, this.titleId, this.reference, this.volume, this.mute);
+        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute);
         return true;
     };
 
@@ -401,15 +402,16 @@ class XboxLocalApi extends EventEmitter {
                     const activeTitles = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles : [];
                     if (activeTitles.length > 0) {
                         const title = activeTitles[0];
+                        this.power = true;
                         this.titleId = title.titleId;
                         this.reference = title.aumId;
 
-                        this.emit('stateChanged', this.consoleConnected, this.titleId, this.reference, this.volume, this.mute);
+                        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute);
                         if (this.logDebug) {
                             this.emit('debug', `Status changed, app Id: ${this.titleId}, reference: ${this.reference}`);
                         }
 
-                        const state = { power: this.consoleConnected, titleId: this.titleId, reference: this.reference, volume: this.volume, mute: this.mute };
+                        const state = { power: this.power, titleId: this.titleId, reference: this.reference, volume: this.volume, mute: this.mute };
                         this.emit('restFul', 'state', state);
                         this.emit('mqtt', 'State', state);
                     }
@@ -453,7 +455,8 @@ class XboxLocalApi extends EventEmitter {
         return new Promise((resolve, reject) => {
             try {
                 this.socket = Dgram.createSocket(this.udpType)
-                    .on('error', (error) => {
+                    .on('error', async (error) => {
+                        await this.updateState();
                         reject(`Socket error: ${error}`);
                     })
                     .on('close', async () => {

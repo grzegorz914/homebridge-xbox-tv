@@ -112,7 +112,7 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `sensors.inputs[].reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). |
 | `sensors.inputs[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
 | `volume{}` | Volume object. |
-| `volume.displayType` | Here choice what a additional volume control mode You want to use (`0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - Speaker`), not working yet. |
+| `volume.displayType` | Here choice what a additional volume control mode You want to use `0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - TV Speaker`, `4 - TV Speaker / Lightbulb`, `5 - TV Speaker / Fan`. |
 | `volume.name` | Here set Your own volume control name or leave empty. |
 | `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
@@ -126,14 +126,12 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `restFul{}` | RESTFul object. |
 | `restFul.enable` | If enabled, RESTful server will start automatically and respond to any path request. |
 | `restFul.port` | Here set the listening `Port` for RESTful server. |
-| `restFul.debug` | If enabled, deep log will be present in homebridge console for RESTFul server. |
 | `mqtt{}` | MQTT object. |
 | `mqtt.enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |
 | `mqtt.host` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
 | `mqtt.port` | Here set the `Port` for MQTT Broker, default 1883. |
 | `mqtt.clientId` | Here optional set the `Client Id` of MQTT Broker. |
 | `mqtt.prefix` | Here set the `Prefix` for `Topic` or leave empty. |
-| `mqtt.debug` | If enabled, deep log will be present in homebridge console for MQTT. |
 | `mqtt.auth{}` | MQTT authorization object. |
 | `mqtt.auth.enable` | Here enable authorization for MQTT Broker. |
 | `mqtt.auth.user` | Here set the MQTT Broker user. |

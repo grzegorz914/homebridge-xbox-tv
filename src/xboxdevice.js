@@ -34,11 +34,11 @@ class XboxDevice extends EventEmitter {
         this.filterDlc = device.inputs?.filterDlc || false;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
         this.inputs = device.inputs?.data || [];
-        this.buttons = device.buttons || [];
+        this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
         this.sensorPower = device.sensors?.power || false;
         this.sensorInput = device.sensors?.input || false;
         this.sensorScreenSaver = device.sensors?.screenSaver || false;
-        this.sensorInputs = device.sensors?.inputs || [];
+        this.sensorInputs = (device.sensors?.inputs || []).filter(sensor => (sensor.displayType ?? 0) > 0);
         this.volumeControl = device.volume?.displayType || 0;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
@@ -70,42 +70,22 @@ class XboxDevice extends EventEmitter {
         this.inputs = this.getInputsFromDevice ? DefaultInputs : [...DefaultInputs, ...inputsArr];
 
         //sensors
-        this.sensorsInputsConfigured = [];
         for (const sensor of this.sensorInputs) {
-            const name = sensor.name;
-            const reference = sensor.reference;
-            const displayType = sensor.displayType;
-            if (!displayType || !name || !reference) {
-                if (this.logWarn && displayType) this.emit('warn', `Sensor Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
-                continue;
-            }
-
-            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
-            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+            sensor.name = button.name || 'Sensor Input';
+            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensor.displayType];
+            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensor.displayType];
             sensor.state = false;
-            this.sensorsInputsConfigured.push(sensor);
         }
-        this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
         this.sensorScreenSaverState = false;
         this.sensorInputState = false;
 
         //buttons
-        this.buttonsConfigured = [];
         for (const button of this.buttons) {
-            const name = button.name;
-            const mode = button.mode;
-            const reference = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][mode];
-            const displayType = button.displayType;
-            if (!displayType || !name || !reference) {
-                if (this.logWarn && displayType) this.emit('info', `Button Name: ${name ? name : 'Missing'}, ${name ? 'Command:' : 'Reference:'} ${reference ? reference : 'Missing'}, Mode: ${mode ? mode : 'Missing'}`);
-                continue;
-            }
-
-            button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
+            button.name = button.name || 'Button';
+            button.reference = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][button.mode];
+            button.serviceType = ['', Service.Outlet, Service.Switch][button.displayType];
             button.state = false;
-            this.buttonsConfigured.push(button);
         }
-        this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
         //variable
         this.modelName = 'Xbox';
@@ -176,7 +156,8 @@ class XboxDevice extends EventEmitter {
             if (restFulEnabled) {
                 this.restFul1 = new RestFul({
                     port: this.restFul.port || 3000,
-                    debug: this.restFul.debug || false
+                    logWarn: this.logWarn,
+                    logDebug: this.logDebug
                 })
                     .on('connected', (message) => {
                         this.emit('success', message);
@@ -204,7 +185,8 @@ class XboxDevice extends EventEmitter {
                     prefix: this.mqtt.prefix ? `microsoft/${this.mqtt.prefix}/${this.name}` : `microsoft/${this.name}`,
                     user: this.mqtt.auth?.user,
                     passwd: this.mqtt.auth?.passwd,
-                    debug: this.mqtt.debug || false
+                    logWarn: this.logWarn,
+                    logDebug: this.logDebug
                 })
                     .on('connected', (message) => {
                         this.emit('success', message);
@@ -633,76 +615,187 @@ class XboxDevice extends EventEmitter {
 
             //Prepare volume service
             if (this.volumeControl > 0) {
-                const debug3 = this.logDebug ? this.emit('debug', `Prepare television speaker service`) : false;
                 const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
-                this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
-                    .onGet(async () => {
-                        const state = this.power;
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                    });
+                const volumeServiceNameTv = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
 
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
-                    .onGet(async () => {
-                        const state = 3; //none, relative, relative with current, absolute
-                        return state;
-                    });
-
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
-                    .onSet(async (volumeSelector) => {
-                        try {
-                            switch (volumeSelector) {
-                                case 0: //Up
-                                    await this.xboxWebApi.send('Volume', 'Up');
-                                    break;
-                                case 1: //Down
-                                    await this.xboxWebApi.send('Volume', 'Down');
-                                    break;
-                            }
-                            if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
-                        }
-                    })
-
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
-                    .onGet(async () => {
-                        const volume = this.volume;
-                        return volume;
-                    })
-                    .onSet(async (volume) => {
-                        if (this.logInfo) this.emit('info', `set Volume: ${volume}`);
-                    });
-
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
-                    .onGet(async () => {
-                        const state = this.mute;
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                        try {
-                            switch (state) {
-                                case 0: //Mute
-                                    await this.xboxWebApi.send('Audio', 'Mute');
-                                    break;
-                                case 1: //Unmute
-                                    await this.xboxWebApi.send('Audio', 'Unmute');
-                                    break;
-                            }
-                            if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
-                        }
-                    });
-
-                //legacy control
                 switch (this.volumeControl) {
                     case 1: //lightbulb
-                        const debug = this.logDebug ? this.emit('debug', `Prepare volume service lightbulb`) : false;
+                        if (this.logDebug) this.emit('debug', `Prepare volume service lightbulb`);
+                        this.volumeServiceLightbulb = accessory.addService(Service.Lightbulb, volumeServiceName, 'Lightbulb Speaker');
+                        this.volumeServiceLightbulb.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceLightbulb.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.Brightness)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 2: //fan
+                        if (this.logDebug) this.emit('debug', `Prepare volume service fan`);
+                        this.volumeServiceFan = accessory.addService(Service.Fan, volumeServiceName, 'Fan Speaker');
+                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 3: // tv speaker
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        const volumeServiceName3 = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName3, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName3);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (volumeSelector) => {
+                                try {
+                                    switch (volumeSelector) {
+                                        case 0: //Up
+                                            await this.xboxWebApi.send('Volume', 'Up');
+                                            break;
+                                        case 1: //Down
+                                            await this.xboxWebApi.send('Volume', 'Down');
+                                            break;
+                                    }
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 4: // tv speaker + lightbulb
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (volumeSelector) => {
+                                try {
+                                    switch (volumeSelector) {
+                                        case 0: //Up
+                                            await this.xboxWebApi.send('Volume', 'Up');
+                                            break;
+                                        case 1: //Down
+                                            await this.xboxWebApi.send('Volume', 'Down');
+                                            break;
+                                    }
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+
+                        // lightbulb
+                        if (this.logDebug) this.emit('debug', `Prepare volume service lightbulb`);
                         this.volumeServiceLightbulb = accessory.addService(Service.Lightbulb, volumeServiceName, 'Lightbulb Speaker');
                         this.volumeServiceLightbulb.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeServiceLightbulb.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
@@ -723,8 +816,65 @@ class XboxDevice extends EventEmitter {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
                         break;
-                    case 2: //fan
-                        const debug1 = this.logDebug ? this.emit('debug', `Prepare volume service fan`) : false;
+                    case 5: // tv speaker + fan
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (volumeSelector) => {
+                                try {
+                                    switch (volumeSelector) {
+                                        case 0: //Up
+                                            await this.xboxWebApi.send('Volume', 'Up');
+                                            break;
+                                        case 1: //Down
+                                            await this.xboxWebApi.send('Volume', 'Down');
+                                            break;
+                                    }
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+
+                        // fan
+                        if (this.logDebug) this.emit('debug', `Prepare volume service fan`);
                         this.volumeServiceFan = accessory.addService(Service.Fan, volumeServiceName, 'Fan Speaker');
                         this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
@@ -743,35 +893,6 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
-                            });
-                        break;
-                    case 3: // speaker
-                        const debug2 = this.logDebug ? this.emit('debug', `Prepare volume service speaker`) : false;
-                        this.volumeServiceSpeaker = accessory.addService(Service.Speaker, volumeServiceName, 'Speaker');
-                        this.volumeServiceSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Mute)
-                            .onGet(async () => {
-                                const state = this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, state);
-                            });
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Active)
-                            .onGet(async () => {
-                                const state = this.power;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                            });
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Volume)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (value) => {
-                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
                             });
                         break;
                 }
@@ -816,20 +937,20 @@ class XboxDevice extends EventEmitter {
 
             //prepare sonsor service
             const possibleSensorInputsCount = 99 - this.accessory.services.length;
-            const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
+            const maxSensorInputsCount = this.sensorInputs.length >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorInputs.length;
             if (maxSensorInputsCount > 0) {
                 if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
 
                 this.sensorsInputsServices = [];
                 for (let i = 0; i < maxSensorInputsCount; i++) {
                     //get sensor
-                    const sensorInput = this.sensorsInputsConfigured[i];
+                    const sensorInput = this.sensorInputs[i];
 
                     //get sensor name		
                     const sensorInputName = sensorInput.name;
 
                     //get sensor name prefix
-                    const namePrefix = sensorInput.namePrefix || false;
+                    const namePrefix = sensorInput.namePrefix;
 
                     //get service type
                     const serviceType = sensorInput.serviceType;
@@ -853,14 +974,14 @@ class XboxDevice extends EventEmitter {
 
             //Prepare buttons services
             const possibleButtonsCount = 99 - this.accessory.services.length;
-            const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
+            const maxButtonsCount = this.buttons.length >= possibleButtonsCount ? possibleButtonsCount : this.buttons.length;
             if (maxButtonsCount > 0) {
                 if (this.logDebug) this.emit('debug', `Prepare buttons services`);
 
                 this.buttonsServices = [];
                 for (let i = 0; i < maxButtonsCount; i++) {
                     //get button
-                    const button = this.buttonsConfigured[i];
+                    const button = this.buttons[i];
 
                     //get button name
                     const buttonName = button.name;
@@ -869,10 +990,10 @@ class XboxDevice extends EventEmitter {
                     const buttonMode = button.mode;
 
                     //get button command
-                    const buttonCommand = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][buttonMode];
+                    const buttonCommand = button.reference;
 
                     //get button name prefix
-                    const namePrefix = button.namePrefix ?? false;
+                    const namePrefix = button.namePrefix;
 
                     //get service type
                     const serviceType = button.serviceType;
@@ -1081,8 +1202,8 @@ class XboxDevice extends EventEmitter {
                     this.sensorScreenSaverService?.updateCharacteristic(Characteristic.ContactSensorState, screenSaver);
                     this.sensorScreenSaverState = screenSaver;
 
-                    for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                        const sensorInput = this.sensorsInputsConfigured[i];
+                    for (let i = 0; i < this.sensorInputs.length; i++) {
+                        const sensorInput = this.sensorInputs[i];
                         const state = power ? sensorInput.reference === reference : false;
                         sensorInput.state = state;
                         const characteristicType = sensorInput.characteristicType;
@@ -1090,9 +1211,9 @@ class XboxDevice extends EventEmitter {
                     }
 
                     //buttons
-                    for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                        const button = this.buttonsConfigured[i];
-                        const state = this.power ? button.reference === reference : false;
+                    for (let i = 0; i < this.buttons.length; i++) {
+                        const button = this.buttons[i];
+                        const state = power ? button.reference === reference : false;
                         button.state = state;
                         this.buttonsServices?.[i]?.updateCharacteristic(Characteristic.On, state);
                     }

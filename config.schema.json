@@ -699,14 +699,12 @@
 							}
 						},
 						"volume": {
-							"title": "Volume Control",
+							"title": "Volume",
 							"type": "object",
 							"properties": {
 								"displayType": {
 									"title": "Display Type",
 									"type": "integer",
-									"minimum": 0,
-									"maximum": 3,
 									"default": 0,
 									"description": "Here select what a extra volume/mute control type You want to use.",
 									"oneOf": [
@@ -729,9 +727,21 @@
 											]
 										},
 										{
-											"title": "Speaker",
+											"title": "TV Speaker",
 											"enum": [
 												3
+											]
+										},
+										{
+											"title": "TV Speaker / Lightbulb",
+											"enum": [
+												4
+											]
+										},
+										{
+											"title": "TV Speaker / Fan",
+											"enum": [
+												5
 											]
 										}
 									]
@@ -864,15 +874,6 @@
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].restFul.enable === true;"
 									}
-								},
-								"debug": {
-									"title": "Debug",
-									"type": "boolean",
-									"default": false,
-									"description": "This enable debug mode for RESTFul.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].restFul.enable === true;"
-									}
 								}
 							}
 						},
@@ -919,15 +920,6 @@
 									"type": "string",
 									"placeholder": "home",
 									"description": "Here set the prefix.",
-									"condition": {
-										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-									}
-								},
-								"debug": {
-									"title": "Debug",
-									"type": "boolean",
-									"default": false,
-									"description": "This enable debug mode for MQTT.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
 									}
@@ -1148,8 +1140,7 @@
 													"title": "RESTFul",
 													"items": [
 														"devices[].restFul.enable",
-														"devices[].restFul.port",
-														"devices[].restFul.debug"
+														"devices[].restFul.port"
 													]
 												},
 												{
@@ -1161,7 +1152,6 @@
 														"devices[].mqtt.port",
 														"devices[].mqtt.clientId",
 														"devices[].mqtt.prefix",
-														"devices[].mqtt.debug",
 														{
 															"key": "devices[].mqtt.auth",
 															"title": "Authorization",
