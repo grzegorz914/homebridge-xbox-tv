@@ -58,7 +58,7 @@
         <button id="configButton" type="button" class="btn btn-secondary"><i class="fas fa-gear"></i></button>
       </div>
     </form>
-    <div id="consoleButton" class="text-center mt-2"></div>
+    <div id="consoleButton" class="d-flex flex-wrap justify-content-center gap-1 mt-3"></div>
   </div>
 </div>
 
@@ -73,7 +73,6 @@
       return;
     }
 
-    this.configButtonState = false;
     this.deviceIndex = 0;
     const devices = pluginConfig[0].devices || [];
     const devicesCount = devices.length;
@@ -107,15 +106,20 @@
     };
 
     // Create buttons for each device
+    const container = document.getElementById("consoleButton");
+    container.style.display = 'flex';
+    container.style.flexWrap = 'wrap';
+    container.style.justifyContent = 'center';
+    container.style.gap = '0.25rem';
+
     devices.forEach((device, i) => {
       const button = document.createElement("button");
       button.type = "button";
       button.id = `button${i}`;
-      button.className = "btn btn-secondary mt-2";
-      button.style.textTransform = "none";
+      button.className = "btn btn-primary";
+      button.style.textTransform = 'none';
       button.innerText = device.name || `Device ${i + 1}`;
-
-      $("consoleButton").appendChild(button);
+      container.appendChild(button);
 
       button.addEventListener("click", async () => {
         setButtonClass(i);
@@ -133,10 +137,11 @@
     $("authorizationManager").style.display = "block";
 
     // Config button toggle
+    let configButtonState = false;
     $("configButton").addEventListener("click", () => {
-      this.configButtonState ? homebridge.hideSchemaForm() : homebridge.showSchemaForm();
-      $("configButton").className = this.configButtonState ? "btn btn-secondary" : "btn btn-primary";
-      this.configButtonState = !this.configButtonState;
+      configButtonState = !configButtonState;
+      homebridge[configButtonState ? 'showSchemaForm' : 'hideSchemaForm']();
+      configButton.className = configButtonState ? 'btn btn-primary' : 'btn btn-secondary';
     });
 
     // Token toggle
