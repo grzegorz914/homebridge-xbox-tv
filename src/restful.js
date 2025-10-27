@@ -70,7 +70,7 @@ class RestFul extends EventEmitter {
 
             // Start the server
             app.listen(this.port, () => {
-                this.emit('connected', `RESTful started on port: ${this.restFulPort}`);
+                this.emit('connected', `RESTful started on port: ${this.port}`);
             });
         } catch (error) {
             if (this.logWarn) this.emit('warn', `RESTful Connect error: ${error}`);

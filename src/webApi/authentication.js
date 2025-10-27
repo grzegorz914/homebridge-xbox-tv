@@ -178,8 +178,7 @@ class Authentication {
     async checkAuthorization() {
         if (this.webApiClientId) {
             try {
-                const data = await this.functions.readData(this.tokensFile);
-                const tokens = data.length > 0 ? JSON.parse(data) : false;
+                const tokens = await this.functions.readData(this.tokensFile, true);
                 this.tokens = !tokens ? this.tokens : tokens;
                 const refreshToken = this.tokens.oauth.refresh_token ?? false;
 

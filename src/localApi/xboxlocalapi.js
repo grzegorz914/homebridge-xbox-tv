@@ -302,10 +302,9 @@ class XboxLocalApi extends EventEmitter {
                     let token = null;
                     let userHash = null;
                     try {
-                        const response = await this.functions.readData(this.tokensFile);
-                        const parsed = JSON.parse(response);
-                        token = parsed?.xsts?.Token || null;
-                        userHash = parsed.xsts.DisplayClaims?.xui?.[0]?.uhs;
+                        const response = await this.functions.readData(this.tokensFile, true);
+                        token = response?.xsts?.Token || null;
+                        userHash = response.xsts.DisplayClaims?.xui?.[0]?.uhs;
 
                         if (token && userHash) {
                             this.isAuthorized = true;
