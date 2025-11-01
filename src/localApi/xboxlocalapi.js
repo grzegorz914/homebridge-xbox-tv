@@ -1,5 +1,4 @@
 import Dgram from 'dgram';
-import Net from 'net';
 import { parse as UuIdParse, v4 as UuIdv4 } from 'uuid';
 import EventEmitter from 'events';
 import Ping from 'ping';
@@ -15,7 +14,6 @@ class XboxLocalApi extends EventEmitter {
         super();
 
         this.crypto = new SGCrypto();
-        this.udpType = Net.isIPv6(config.host) ? 'udp6' : 'udp4';
         this.host = config.host;
         this.xboxLiveId = config.xboxLiveId;
         this.tokensFile = config.tokensFile;
@@ -280,7 +278,7 @@ class XboxLocalApi extends EventEmitter {
                     return;
                 }
 
-                if (this.consoleConnected && packet.flags.needAcknowlegde) {
+                if (packet.flags.needAcknowlegde) {
                     await this.acknowledge(packet.sequenceNumber);
                 }
             }
@@ -366,14 +364,13 @@ class XboxLocalApi extends EventEmitter {
                         this.emit('error', `Connect error: ${errorTable[connectResult] || connectResult}`);
                         return;
                     }
+                    if (this.logDebug) this.emit('debug', `Client connected, pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
 
                     this.firstRun = true;
                     this.consoleConnected = true;
                     this.participantId = participantId;
                     this.sourceParticipantId = participantId;
                     this.targetParticipantId = packet.sourceParticipantId || this.targetParticipantId || 0;
-
-                    if (this.logDebug) this.emit('debug', `Client connected, pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
 
                     try {
                         const sequenceNumber = await this.getSequenceNumber();
@@ -453,7 +450,7 @@ class XboxLocalApi extends EventEmitter {
     async connect() {
         return new Promise((resolve, reject) => {
             try {
-                this.socket = Dgram.createSocket(this.udpType)
+                this.socket = Dgram.createSocket('udp4')
                     .on('error', async (error) => {
                         await this.updateState();
                         reject(`Socket error: ${error}`);
@@ -467,9 +464,8 @@ class XboxLocalApi extends EventEmitter {
                         if (this.logDebug) this.emit('debug', `Socket start listening: ${address.address}:${address.port}`);
                         resolve(true);
                     })
-                    .on('message', this.handleMessage.bind(this));
-
-                this.socket.bind();
+                    .on('message', this.handleMessage.bind(this))
+                    .bind();
             } catch (error) {
                 reject(`Connect error: ${error.message || error}`);
             };

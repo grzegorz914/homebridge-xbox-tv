@@ -37,7 +37,7 @@
 							"title": "Accessory type",
 							"type": "integer",
 							"default": 2,
-							"oneOf": [
+							"anyOf": [
 								{
 									"title": "None/Disabled",
 									"enum": [
@@ -156,7 +156,7 @@
 									"maximum": 4,
 									"default": 0,
 									"description": "Here select display order of the inputs list.",
-									"oneOf": [
+									"anyOf": [
 										{
 											"title": "None",
 											"enum": [
@@ -227,7 +227,7 @@
 												"title": "Content Type",
 												"type": "string",
 												"description": "Here select source input type.",
-												"oneOf": [
+												"anyOf": [
 													{
 														"title": "Game",
 														"enum": [
@@ -278,7 +278,7 @@
 										"maximum": 2,
 										"default": 0,
 										"description": "Here select display type in HomeKit app.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "None/Disabled",
 												"enum": [
@@ -314,7 +314,7 @@
 										"minimum": 0,
 										"maximum": 4,
 										"description": "Here select the function mode.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "Media Control",
 												"enum": [
@@ -354,7 +354,7 @@
 										"title": "Media Command",
 										"type": "string",
 										"description": "Here select the media command.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "Play",
 												"enum": [
@@ -454,7 +454,7 @@
 										"title": "Game Pad Command",
 										"type": "string",
 										"description": "Here select the controler command.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "Nexus",
 												"enum": [
@@ -530,7 +530,7 @@
 										"title": "TV Remote Command",
 										"type": "string",
 										"description": "Here select the tv remote command.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "Volume Up",
 												"enum": [
@@ -558,7 +558,7 @@
 										"title": "Console Control Command",
 										"type": "string",
 										"description": "Here select the console control command.",
-										"oneOf": [
+										"anyOf": [
 											{
 												"title": "Reboot",
 												"enum": [
@@ -636,7 +636,7 @@
 												"maximum": 3,
 												"default": 0,
 												"description": "Here select sensor type to be exposed in HomeKit app.",
-												"oneOf": [
+												"anyOf": [
 													{
 														"title": "None/Disabled",
 														"enum": [
@@ -707,7 +707,7 @@
 									"type": "integer",
 									"default": 0,
 									"description": "Here select what a extra volume/mute control type You want to use.",
-									"oneOf": [
+									"anyOf": [
 										{
 											"title": "None/Disabled",
 											"enum": [
@@ -774,7 +774,7 @@
 							"type": "string",
 							"default": "nexus",
 							"description": "Here select the function of info button in RC.",
-							"oneOf": [
+							"anyOf": [
 								{
 									"title": "Game Pad View",
 									"enum": [
