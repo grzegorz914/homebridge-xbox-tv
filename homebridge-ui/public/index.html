@@ -192,11 +192,18 @@
       await homebridge.savePluginConfig(pluginConfig);
     });
 
+    function updateInfo(id, text, color) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerText = text;
+        el.style.color = color;
+      }
+    }
+
     // Clear token button logic
     $("clearTokenButton").addEventListener("click", async () => {
+      updateInfo('info', 'Start clearing token...', 'yellow');
       homebridge.showSpinner();
-      $("info").textContent = "Start clearing token...";
-      $("info").style.color = "yellow";
 
       try {
         const host = devices[this.deviceIndex].host;
@@ -210,18 +217,14 @@
         });
 
         updateDeviceForm(devices[this.deviceIndex]);
-
-        $("info").textContent = "Web API token cleared, now you can start a new authorization process.";
-        $("info").style.color = "green";
+        updateInfo('info', "Web API token cleared, now you can start a new authorization process.", "green");
         $("startAuthorizationButton").removeAttribute("disabled");
 
         await homebridge.updatePluginConfig(pluginConfig);
         await homebridge.savePluginConfig(pluginConfig);
       } catch (error) {
-        $("info").textContent = "Clear Web API token error.";
-        $("info").style.color = "yellow";
-        $("info1").textContent = `Error: ${error}`;
-        $("info1").style.color = "red";
+        updateInfo('info', "Clear Web API token error.", "yellow");
+        updateInfo('info1', `Error: ${error}`, "red");
       } finally {
         homebridge.hideSpinner();
       }
@@ -231,8 +234,7 @@
     $("startAuthorizationButton").addEventListener("click", async () => {
       homebridge.showSpinner();
       $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
-      $("info").textContent = "Starting authorization...";
-      $("info").style.color = "yellow";
+      updateInfo('info', "Starting authorization...", "yellow");
 
       try {
         const device = devices[this.deviceIndex];
@@ -247,8 +249,7 @@
 
         switch (status) {
           case 0: // Authorized
-            $("info").textContent = info;
-            $("info").style.color = "green";
+            updateInfo('info', info, "green");
             $("startAuthorizationButton").innerText = "Check State";
             $("deviceWebApiControl").disabled = false;
             break;
@@ -263,18 +264,15 @@
               if (timeLeft <= 0) {
                 open(info);
                 clearInterval(timerId);
-                $("info").innerText = "Now paste the *code* into *Web API Token* and press *Activate Console*.";
-                $("info").style.color = "yellow";
+                updateInfo('info', "Now paste the *code* into *Web API Token* and press *Activate Console*.", "yellow");
               } else {
-                $("info").innerText = `After ${timeLeft} sec, sign in to Xbox Live and authorize. Then copy the code after ?code= and return here.`;
-                $("info").style.color = "yellow";
+                updateInfo('info', `After ${timeLeft} sec, sign in to Xbox Live and authorize. Then copy the code after ?code= and return here.`, "yellow");
                 timeLeft--;
               }
             }, 1000);
             break;
           case 2: // Successfully authorized
-            $("info").textContent = info;
-            $("info").style.color = "green";
+            updateInfo('info', info, "green");
             $("startAuthorizationButton").innerText = "Check State";
             $("deviceWebApiControl").disabled = false;
             $("deviceWebApiControl").checked = true;
@@ -285,12 +283,10 @@
             break;
         }
       } catch (error) {
-        $("info").textContent = "Check your credential data and try again.";
-        $("info").style.color = "yellow";
-        $("info1").textContent = `Error: ${error}`;
-        $("info1").style.color = "red";
+        updateInfo('info', "Authorization error.", "yellow");
+        updateInfo('info1', `Error: ${JSON.stringify(error)}`, "red");
       } finally {
-        $("startAuthorizationButton").removeAttribute("disabled"); // odblokowanie przycisku
+        $("startAuthorizationButton").removeAttribute("disabled");
         homebridge.hideSpinner();
       }
     });

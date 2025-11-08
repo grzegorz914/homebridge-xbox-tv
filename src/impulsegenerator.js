@@ -7,46 +7,34 @@ class ImpulseGenerator extends EventEmitter {
         this.timers = [];
     }
 
-    async start(timers) {
-        if (this.timersState) {
-            this.state(true);
-            return true;
+    async state(state, timers = [], runOnStart = true) {
+        // Stop current timers before new start
+        if (this.timersState && state) {
+            await this.state(false);
         }
 
-        this.timers = [];
+        if (state) {
+            if (!Array.isArray(timers)) throw new Error('Timers must be an array');
 
-        for (const timer of timers) {
-            this.emit(timer.name);
+            for (const { name, sampling } of timers) {
+                if (!name || !sampling) continue;
 
-            const interval = setInterval(() => {
-                this.emit(timer.name);
-            }, timer.sampling);
+                if (runOnStart) this.emit(name);
 
-            this.timers.push(interval);
+                const interval = setInterval(() => {
+                    this.emit(name);
+                }, sampling);
+
+                this.timers.push(interval);
+            }
+        } else {
+            this.timers.forEach(clearInterval);
+            this.timers = [];
         }
 
-        this.state(true);
-        return true;
-    }
-
-    async stop() {
-        if (!this.timersState) {
-            this.state(false);
-            return true;
-        }
-
-        for (const timer of this.timers) {
-            clearInterval(timer);
-        }
-
-        this.timers = [];
-        this.state(false);
-        return true;
-    }
-
-    state(state) {
         this.timersState = state;
         this.emit('state', state);
+        return true;
     }
 }
 

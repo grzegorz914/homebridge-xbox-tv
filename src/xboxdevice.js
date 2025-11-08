@@ -20,20 +20,18 @@ class XboxDevice extends EventEmitter {
         AccessoryUUID = api.hap.uuid;
 
         //device configuration
+        this.device = device;
         this.name = device.name;
-        this.host = device.host;
-        this.xboxLiveId = device.xboxLiveId;
+        this.liveId = device.xboxLiveId;
         this.displayType = device.displayType;
         this.webApiControl = device.webApi?.enable || false;
-        this.webApiClientId = device.webApi?.clientId;
-        this.webApiClientSecret = device.webApi.clientSecret;
-        this.getInputsFromDevice = this.webApiControl ? device.inputs?.getFromDevice : false;
+        this.getInputsFromDevice = device.webApi?.enable ? device.inputs?.getFromDevice : false;
         this.filterGames = device.inputs?.filterGames || false;
         this.filterApps = device.inputs?.filterApps || false;
         this.filterSystemApps = device.inputs?.filterSystemApps || false;
         this.filterDlc = device.inputs?.filterDlc || false;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
-        this.inputs = device.inputs?.data || [];
+        this.inputs = (device.inputs?.data || []).filter(input => input.name && input.reference);
         this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
         this.sensorPower = device.sensors?.power || false;
         this.sensorInput = device.sensors?.input || false;
@@ -58,16 +56,6 @@ class XboxDevice extends EventEmitter {
         this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
         this.functions = new Functions();
-
-
-        //add configured inputs to the default inputs and chack duplicated inputs
-        const inputsArr = [];
-        for (const input of this.inputs) {
-            const inputName = input.name;
-            const inputReference = input.reference;
-            if (inputName && inputReference) inputsArr.push(input);
-        }
-        this.inputs = this.getInputsFromDevice ? DefaultInputs : [...DefaultInputs, ...inputsArr];
 
         //sensors
         for (const sensor of this.sensorInputs) {
@@ -237,13 +225,13 @@ class XboxDevice extends EventEmitter {
         }
     }
 
-    async startImpulseGenerator() {
+    async startStopImpulseGenerator(state, timers = []) {
         try {
             //start web api impulse generator
-            if (this.consoleAuthorized) await this.xboxWebApi.impulseGenerator.start([{ name: 'checkAuthorization', sampling: 900000 }]);
+            if (this.consoleAuthorized) await this.xboxWebApi.impulseGenerator.state(true, [{ name: 'checkAuthorization', sampling: 900000 }]);
 
-            //start local api impulse generator 
-            await this.xboxLocalApi.impulseGenerator.start([{ name: 'connect', sampling: 15000 }]);
+            //start impulse generator 
+            await this.xboxLocalApi.impulseGenerator.state(state, timers)
             return true;
         } catch (error) {
             throw new Error(`Impulse generator start error: ${error}`);
@@ -253,28 +241,35 @@ class XboxDevice extends EventEmitter {
     async displayOrder() {
         try {
             const sortStrategies = {
-                1: (a, b) => a.name.localeCompare(b.name),      // A → Z
-                2: (a, b) => b.name.localeCompare(a.name),      // Z → A
+                1: (a, b) => a.name.localeCompare(b.name),
+                2: (a, b) => b.name.localeCompare(a.name),
                 3: (a, b) => a.reference.localeCompare(b.reference),
                 4: (a, b) => b.reference.localeCompare(a.reference),
             };
 
             const sortFn = sortStrategies[this.inputsDisplayOrder];
-            if (!sortFn) return;
 
-            // Sort inputs in memory
-            this.inputsServices.sort(sortFn);
+            // Sort only if a valid function exists
+            if (sortFn) {
+                this.inputsServices.sort(sortFn);
+            }
 
-            // Debug dump
+            // Debug
             if (this.logDebug) {
-                const orderDump = this.inputsServices.map(svc => ({ name: svc.name, reference: svc.reference, identifier: svc.identifier, }));
+                const orderDump = this.inputsServices.map(svc => ({
+                    name: svc.name,
+                    reference: svc.reference,
+                    identifier: svc.identifier,
+                }));
                 this.emit('debug', `Inputs display order:\n${JSON.stringify(orderDump, null, 2)}`);
             }
 
-            // Update DisplayOrder characteristic (base64 encoded)
+            // Always update DisplayOrder characteristic, even for "none"
             const displayOrder = this.inputsServices.map(svc => svc.identifier);
             const encodedOrder = Encode(1, displayOrder).toString('base64');
             this.televisionService.updateCharacteristic(Characteristic.DisplayOrder, encodedOrder);
+
+            return;
         } catch (error) {
             throw new Error(`Display order error: ${error}`);
         }
@@ -284,6 +279,8 @@ class XboxDevice extends EventEmitter {
         try {
             if (!this.inputsServices) return;
 
+            let updated = false;
+            
             for (const input of inputs) {
                 if (this.inputsServices.length >= 85 && !remove) continue;
 
@@ -309,7 +306,7 @@ class XboxDevice extends EventEmitter {
                         if (this.logDebug) this.emit('debug', `Removing input: ${input.name}, reference: ${inputReference}`);
                         this.accessory.removeService(svc);
                         this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
-                        await this.displayOrder();
+                        updated = true;
                     }
                     continue;
                 }
@@ -317,12 +314,13 @@ class XboxDevice extends EventEmitter {
                 let inputService = this.inputsServices.find(s => s.reference === inputReference);
                 if (inputService) {
                     const nameChanged = inputService.name !== sanitizedName;
-                    if (!nameChanged) {
+                    if (nameChanged) {
                         inputService.name = sanitizedName;
                         inputService
                             .updateCharacteristic(Characteristic.Name, sanitizedName)
                             .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName);
                         if (this.logDebug) this.emit('debug', `Updated Input: ${input.name}, reference: ${inputReference}`);
+                        updated = true;
                     }
                 } else {
                     const identifier = this.inputsServices.length + 1;
@@ -376,10 +374,13 @@ class XboxDevice extends EventEmitter {
                     this.televisionService.addLinkedService(inputService);
 
                     if (this.logDebug) this.emit('debug', `Added Input: ${input.name}, reference: ${inputReference}`);
+                    updated = true;
                 }
             }
 
-            await this.displayOrder();
+            // Only one time run
+            if (updated) await this.displayOrder();
+
             return true;
         } catch (error) {
             throw new Error(`Add/Remove/Update input error: ${error}`);
@@ -392,7 +393,7 @@ class XboxDevice extends EventEmitter {
             //Accessory
             if (this.logDebug) this.emit('debug', `Prepare accessory`);
             const accessoryName = this.name;
-            const accessoryUUID = AccessoryUUID.generate(this.xboxLiveId);
+            const accessoryUUID = AccessoryUUID.generate(this.liveId);
             const accessoryCategory = [Categories.OTHER, Categories.TELEVISION, Categories.TV_SET_TOP_BOX, Categories.TV_STREAMING_STICK, Categories.AUDIO_RECEIVER][this.displayType];
             const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
             this.accessory = accessory;
@@ -401,7 +402,7 @@ class XboxDevice extends EventEmitter {
             this.informationService = accessory.getService(Service.AccessoryInformation)
                 .setCharacteristic(Characteristic.Manufacturer, this.savedInfo.manufacturer)
                 .setCharacteristic(Characteristic.Model, this.savedInfo.modelName)
-                .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? this.xboxLiveId)
+                .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber ?? this.liveId)
                 .setCharacteristic(Characteristic.FirmwareRevision, this.savedInfo.firmwareRevision)
                 .setCharacteristic(Characteristic.ConfiguredName, accessoryName);
 
@@ -417,15 +418,12 @@ class XboxDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    if (this.power == state) {
-                        return;
-                    }
+                    if (!!state === this.power) return;
 
                     try {
-                        await this.xboxWebApi.send('Power', this.power ? 'TurnOff' : 'WakeUp');
-                        //await this.xboxLocalApi.setPower(this.power ? 'Off' : 'On');
+                        await this.xboxWebApi.send('Power', state ? 'WakeUp' : 'TurnOff');
                         if (this.logInfo) this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
-                        await new Promise(resolve => setTimeout(resolve, 1500));
+                        await new Promise(resolve => setTimeout(resolve, 2000));
                     } catch (error) {
                         if (this.logWarn) this.emit('warn', `set Power, error: ${error}`);
                     }
@@ -444,17 +442,12 @@ class XboxDevice extends EventEmitter {
                             return;
                         }
 
-                        const { oneStoreProductId: oneStoreProductId, name: name, reference: reference } = input;
-
                         if (!this.power) {
-                            // Schedule retry attempts without blocking Homebridge
-                            this.emit('debug', `TV is off, deferring input switch to '${activeIdentifier}'`);
-
                             (async () => {
-                                for (let attempt = 0; attempt < 10; attempt++) {
+                                for (let attempt = 0; attempt < 20; attempt++) {
                                     await new Promise(resolve => setTimeout(resolve, 1500));
                                     if (this.power && this.inputIdentifier !== activeIdentifier) {
-                                        this.emit('debug', `TV powered on, retrying input switch`);
+                                        if (this.logDebug) this.emit('debug', `TV powered on, retrying input switch`);
                                         this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
                                         break;
                                     }
@@ -464,6 +457,7 @@ class XboxDevice extends EventEmitter {
                             return;
                         }
 
+                        const { oneStoreProductId: oneStoreProductId, name: name, reference: reference } = input;
                         let channelName;
                         let command;
                         let payload;
@@ -1060,22 +1054,15 @@ class XboxDevice extends EventEmitter {
     async start() {
         try {
             // Save inputs
-            await this.functions.saveData(this.inputsFile, this.inputs);
+            if (!this.getInputsFromDevice) {
+                const inputs = [...DefaultInputs, ...this.inputs];
+                await this.functions.saveData(this.inputsFile, inputs);
+            }
 
             // Web api client
             if (this.webApiControl) {
                 try {
-                    this.xboxWebApi = new XboxWebApi({
-                        xboxLiveId: this.xboxLiveId,
-                        clientId: this.webApiClientId,
-                        clientSecret: this.webApiClientSecret,
-                        inputs: this.inputs,
-                        tokensFile: this.authTokenFile,
-                        inputsFile: this.inputsFile,
-                        getInputsFromDevice: this.getInputsFromDevice,
-                        logWarn: this.logWarn,
-                        logDebug: this.logDebug
-                    })
+                    this.xboxWebApi = new XboxWebApi(this.device, this.authTokenFile, this.inputsFile)
                         .on('consoleStatus', (status) => {
                             this.modelName = status.consoleType;
                             this.mediaState = WebApi.Console.PlaybackStateHomeKit[status.playbackState];
@@ -1118,19 +1105,12 @@ class XboxDevice extends EventEmitter {
             }
 
             // Local api client
-            this.xboxLocalApi = new XboxLocalApi({
-                host: this.host,
-                xboxLiveId: this.xboxLiveId,
-                tokensFile: this.authTokenFile,
-                devInfoFile: this.devInfoFile,
-                logWarn: this.logWarn,
-                logDebug: this.logDebug
-            })
+            this.xboxLocalApi = new XboxLocalApi(this.device, this.authTokenFile, this.devInfoFile)
                 .on('deviceInfo', async (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer:  Microsoft`);
                     this.emit('devInfo', `Model: ${this.modelName}`);
-                    this.emit('devInfo', `Serialnr: ${this.xboxLiveId}`);
+                    this.emit('devInfo', `Serialnr: ${this.liveId}`);
                     this.emit('devInfo', `Firmware: ${info.firmwareRevision}`);
                     this.emit('devInfo', `Locale: ${info.locale}`);
                     this.emit('devInfo', `----------------------------------`);
@@ -1138,7 +1118,7 @@ class XboxDevice extends EventEmitter {
                     const obj = {
                         manufacturer: 'Microsoft',
                         modelName: this.modelName,
-                        serialNumber: this.xboxLiveId,
+                        serialNumber: this.liveId,
                         firmwareRevision: info.firmwareRevision,
                         locale: info.locale
                     };

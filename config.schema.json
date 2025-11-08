@@ -36,6 +36,8 @@
 						"displayType": {
 							"title": "Accessory type",
 							"type": "integer",
+							"minimum": 0,
+                        "maximum": 4,
 							"default": 2,
 							"anyOf": [
 								{

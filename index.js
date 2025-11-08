@@ -111,8 +111,10 @@ class XboxPlatform {
 									api.publishExternalAccessories(PluginName, [accessory]);
 									if (logLevel.success) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 
-									await impulseGenerator.stop();
-									await xboxDevice.startImpulseGenerator();
+									await xboxDevice.startStopImpulseGenerator(true, [{ name: 'connect', sampling: 6000 }]);
+
+									//stop impulse generator
+									await impulseGenerator.state(false);
 								}
 							} catch (error) {
 								if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Start impulse generator error: ${error.message ?? error}, trying again.`);
@@ -122,7 +124,7 @@ class XboxPlatform {
 						});
 
 					//start impulse generator
-					await impulseGenerator.start([{ name: 'start', sampling: 60000 }]);
+					await impulseGenerator.state(true, [{ name: 'start', sampling: 120000 }]);
 				} catch (error) {
 					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error.message ?? error}`);
 				}

@@ -4,17 +4,17 @@ import axios from 'axios';
 import Authentication from './authentication.js';
 import ImpulseGenerator from '../impulsegenerator.js';
 import Functions from '../functions.js';
-import { WebApi } from '../constants.js';
+import { WebApi, DefaultInputs } from '../constants.js';
 
 class XboxWebApi extends EventEmitter {
-    constructor(config) {
+    constructor(config, authTokenFile, inputsFile) {
         super();
-        this.xboxLiveId = config.xboxLiveId;
-        this.inputs = config.inputs;
-        this.getInputsFromDevice = config.getInputsFromDevice;
-        this.inputsFile = config.inputsFile;
-        this.logWarn = config.logWarn;
-        this.logDebug = config.logDebug;
+        this.liveId = config.xboxLiveId;
+        this.getInputsFromDevice = config.inputs?.getFromDevice;
+        this.logWarn = config.log?.warn;
+        this.logError = config.log?.error;
+        this.logDebug = config.log?.debug;
+        this.inputsFile = inputsFile;
 
         // Variables
         this.consoleAuthorized = false;
@@ -22,9 +22,9 @@ class XboxWebApi extends EventEmitter {
         this.functions = new Functions();
 
         const authConfig = {
-            clientId: config.clientId,
-            clientSecret: config.clientSecret,
-            tokensFile: config.tokensFile
+            clientId: config.webApi?.clientId,
+            clientSecret: config.webApi?.clientSecret,
+            tokensFile: authTokenFile
         }
         this.authentication = new Authentication(authConfig);
 
@@ -37,13 +37,13 @@ class XboxWebApi extends EventEmitter {
                     this.call = true;
                     await this.checkAuthorization();
                 } catch (error) {
-                    this.emit('error', `Web Api generator error: ${error}`);
+                    if (this.logError) this.emit('error', `Web Api generator error: ${error}`);
                 } finally {
                     this.call = false;
                 }
             })
             .on('state', (state) => {
-                this.emit('success', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
+                this.emit(state ? 'success' : 'warn', `Web Api monitoring ${state ? 'started' : 'stopped'}`);
             });
     }
 
@@ -54,7 +54,7 @@ class XboxWebApi extends EventEmitter {
 
             const authorized = data.tokens?.xsts?.Token?.trim() || false;
             if (!authorized) {
-                if (this.logWarn)  this.emit('warn', `Not authorized`);
+                if (this.logWarn) this.emit('warn', `Not authorized`);
                 return false;
             }
             this.tokens = data.tokens;
@@ -105,7 +105,7 @@ class XboxWebApi extends EventEmitter {
             const { data } = await this.axiosInstance.get('/lists/devices?queryCurrentDevice=false&includeStorageDevices=true');
             if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
-            const console = data.result.find(c => c.id === this.xboxLiveId);
+            const console = data.result.find(c => c.id === this.liveId);
             const obj = {
                 id: console.id,
                 name: console.name,
@@ -142,7 +142,7 @@ class XboxWebApi extends EventEmitter {
 
     async consoleStatus() {
         try {
-            const url = `/consoles/${this.xboxLiveId}`;
+            const url = `/consoles/${this.liveId}`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
 
@@ -176,8 +176,10 @@ class XboxWebApi extends EventEmitter {
     }
 
     async installedApps() {
+        if (!this.getInputsFromDevice) return true;
+
         try {
-            const url = `/lists/installedApps?deviceId=${this.xboxLiveId}`;
+            const url = `/lists/installedApps?deviceId=${this.liveId}`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
 
@@ -195,8 +197,8 @@ class XboxWebApi extends EventEmitter {
             this.emit('restFul', 'apps', data);
             this.emit('mqtt', 'Apps', data);
 
-            if (!this.getInputsFromDevice) return true;
-            const inputs = [...this.inputs, ...apps];
+            // Join inputs
+            const inputs = [...DefaultInputs, ...apps];
 
             // Save inputs
             await this.functions.saveData(this.inputsFile, inputs);
@@ -212,7 +214,7 @@ class XboxWebApi extends EventEmitter {
 
     async mediaState() {
         try {
-            const url = `/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.xboxLiveId}/media`;
+            const url = `/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.liveId}/media`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
 
@@ -243,7 +245,7 @@ class XboxWebApi extends EventEmitter {
 
     async send(commandType, command, payload) {
         if (!this.consoleAuthorized || !this.rmEnabled) {
-            if (this.logWarn)  this.emit('warn', `Not authorized or remote management not enabled`);
+            if (this.logWarn) this.emit('warn', `Not authorized or remote management not enabled`);
             return;
         }
 
@@ -254,7 +256,7 @@ class XboxWebApi extends EventEmitter {
             sessionId: UuIdv4(),
             sourceId: 'com.microsoft.smartglass',
             parameters: payload ?? [],
-            linkedXboxId: this.xboxLiveId
+            linkedXboxId: this.liveId
         };
 
         try {

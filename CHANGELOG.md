@@ -12,6 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v3.4.0 all buttons in config need to be updated
 - After update to v3.9.0 plugin need to be reconfigured and console reauthorized
 
+## [3.9.11] - (08.11.2025)
+
+## Changes
+
+- stability and performance improvements
+- bump deependencies
+- config schema updated
+- redme updated
+- cleanup
+
 ## [3.9.1] - (30.09.2025)
 
 ## Changes

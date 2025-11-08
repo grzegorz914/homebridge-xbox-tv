@@ -71,7 +71,7 @@ class PluginUiServer extends HomebridgePluginUiServer {
           status: 1  // Needs user authorization
         };
       } catch (error) {
-        throw new Error(`Failed to generate authorization URL: ${error?.message ?? error}`);
+        throw new Error(error);
       }
     }
   }
