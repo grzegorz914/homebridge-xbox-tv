@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v3.4.0 all buttons in config need to be updated
 - After update to v3.9.0 plugin need to be reconfigured and console reauthorized
 
+## Warning
+
+- Do not use Homebridge UI > v5.5.0 because of break config.json
+
 ## [3.9.11] - (08.11.2025)
 
 ## Changes
