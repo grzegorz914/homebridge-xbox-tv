@@ -357,7 +357,12 @@ export const LocalApi = {
             0xF2C: "systemTextInput",
             0xF2E: "systemTouch",
             0xF34: "systemTextAck",
-            0xF35: "systemTextDone"
+            0xF35: "systemTextDone",
+            powerOn: Buffer.from('dd02', 'hex'),
+            discoveryRequest: Buffer.from('dd00', 'hex'),
+            discoveryResponse: Buffer.from('dd01', 'hex'),
+            connectRequest: Buffer.from('cc00', 'hex'),
+            connectResponse: Buffer.from('cc01', 'hex'),
         }
     }
 };

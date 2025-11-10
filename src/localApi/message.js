@@ -81,14 +81,14 @@ class Message {
 
         if (packet.payloadProtected.length > 0 && crypto) {
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.subarray(0, 16), crypto.getIv()));
-            packet.payloadDecrypted = new Structure(payloadDecrypted).toBuffer();
+            const structurePayloadProtected = new Structure(payloadDecrypted);
+            packet.payloadDecrypted = structurePayloadProtected.toBuffer();
             packet.payloadProtected = {};
 
             const packetDef = this.packets[packet.type];
             if (packetDef) {
-                const structPayload = new Structure(payloadDecrypted);
                 for (const name in packetDef) {
-                    packet.payloadProtected[name] = packetDef[name].unpack(structPayload);
+                    packet.payloadProtected[name] = packetDef[name].unpack(structurePayloadProtected);
                 }
             }
         }

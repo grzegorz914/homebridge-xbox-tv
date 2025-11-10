@@ -1,26 +1,13 @@
 import Packets from './packets.js';
 import Structure from './structure.js';
-
-// === Constants ===
-const PACKET_TYPES = {
-    POWER_ON: Buffer.from('dd02', 'hex'),
-    DISCOVERY_REQUEST: Buffer.from('dd00', 'hex'),
-    DISCOVERY_RESPONSE: Buffer.from('dd01', 'hex'),
-    CONNECT_REQUEST: Buffer.from('cc00', 'hex'),
-    CONNECT_RESPONSE: Buffer.from('cc01', 'hex'),
-};
-
-const VERSION = {
-    V0: 0,
-    V2: 2,
-};
+import { LocalApi } from '../constants.js';
 
 class Simple {
     constructor(type) {
         this.type = type;
         this.packets = new Packets();
         this.packet = this.packets[type];
-        this.packetProtected = this.packet.payloadProtected !== undefined ? this.packets[`${type}Protected`] : false;
+        this.packetProtected = this.packet.payloadProtected ? this.packets[`${type}Protected`] : false;
     }
 
     // === Helpers ===
@@ -72,18 +59,19 @@ class Simple {
             }
         }
 
+        const payload = structure.toBuffer();
         switch (this.type) {
             case 'powerOn':
-                packet = this.pack1(PACKET_TYPES.POWER_ON, structure.toBuffer(), '');
+                packet = this.pack1(LocalApi.Messages.Flags.powerOn, payload, '');
                 break;
             case 'discoveryRequest':
-                packet = this.pack1(PACKET_TYPES.DISCOVERY_REQUEST, structure.toBuffer(), Buffer.from('0000', 'hex'));
+                packet = this.pack1(LocalApi.Messages.Flags.discoveryRequest, payload, Buffer.from('0000', 'hex'));
                 break;
             case 'discoveryResponse':
-                packet = this.pack1(PACKET_TYPES.DISCOVERY_RESPONSE, structure.toBuffer(), Buffer.from([0, VERSION.V2]));
+                packet = this.pack1(LocalApi.Messages.Flags.discoveryResponse, payload, Buffer.from([0, 2]));
                 break;
             case 'connectRequest':
-                packet = this.pack1(PACKET_TYPES.CONNECT_REQUEST, structure.toBuffer(), Buffer.from('0002', 'hex'), payloadProtectedLength, payloadProtectedLengthReal);
+                packet = this.pack1(LocalApi.Messages.Flags.connectRequest, payload, Buffer.from('0002', 'hex'), payloadProtectedLength, payloadProtectedLengthReal);
                 const payloadProtected = crypto.sign(packet);
                 packet = Buffer.concat([packet, Buffer.from(payloadProtected)]);
                 break;
@@ -94,10 +82,10 @@ class Simple {
                 packet = payloadEncrypted.toBuffer();
                 break;
             case 'connectResponse':
-                packet = this.pack1(PACKET_TYPES.CONNECT_RESPONSE, structure.toBuffer(), Buffer.from([0, VERSION.V2]));
+                packet = this.pack1(LocalApi.Messages.Flags.connectResponse, payload, Buffer.from([0, 2]));
                 break;
             default:
-                packet = structure.toBuffer();
+                packet = payload;
         }
         return packet;
     }
@@ -105,21 +93,18 @@ class Simple {
     pack1(type, payload, version, payloadProtectedLength = 0, payloadProtectedLengthReal = 0) {
         const structure = new Structure();
         const structureProtected = new Structure();
-        let packet;
 
         if (payloadProtectedLength > 0) {
             structure.writeUInt16(payload.length - payloadProtectedLengthReal);
             const payloadLength = structure.toBuffer();
             structureProtected.writeUInt16(payloadProtectedLength);
-            const payloadProtectedBuffer = structureProtected.toBuffer();
-            packet = Buffer.concat([type, payloadLength, payloadProtectedBuffer, version, payload]);
-        } else {
-            structure.writeUInt16(payload.length);
-            const payloadLength = structure.toBuffer();
-            packet = Buffer.concat([type, payloadLength, Buffer.from([0, version[1] || VERSION.V0]), payload]);
+            payloadProtectedLength = structureProtected.toBuffer();
+            return Buffer.concat([type, payloadLength, payloadProtectedLength, version, payload]);
         }
 
-        return packet;
+        structure.writeUInt16(payload.length);
+        const payloadLength = structure.toBuffer();
+        return Buffer.concat([type, payloadLength, Buffer.from([0, version[1] || 0]), payload]);
     }
 
     unpack(crypto = undefined, data = false) {
@@ -134,7 +119,7 @@ class Simple {
             version: structure.readUInt16(),
         };
 
-        if (packet.version !== VERSION.V0 && packet.version !== VERSION.V2) {
+        if (packet.version !== 0 && packet.version !== 2) {
             packet.payloadProtectedLength = packet.version;
             packet.version = structure.readUInt16();
         }

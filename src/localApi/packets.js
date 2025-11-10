@@ -1,8 +1,8 @@
 import { LocalApi } from '../constants.js';
 
 class Packets {
-    constructor(structure) {
-        this.structure = structure;
+    constructor(type) {
+        this.type = type;
 
         const types = {
             flags(length, value) {
@@ -100,13 +100,13 @@ class Packets {
                 return packet;
             },
 
-            sgArray(structure, value = []) {
+            sgArray(type, value = []) {
                 const packet = {
                     value,
-                    structure,
+                    type,
                     pack(packetStructure) {
                         packetStructure.writeUInt16(this.value.length);
-                        const arrayStructure = packets[this.structure];
+                        const arrayStructure = packets[this.type];
                         for (const item of this.value) {
                             Object.keys(arrayStructure).forEach(name => {
                                 arrayStructure[name].value = item[name];
@@ -119,7 +119,7 @@ class Packets {
                         const arrayCount = packetStructure.readUInt16();
                         const array = [];
                         for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = packets[this.structure];
+                            const arrayStructure = packets[this.type];
                             const item = {};
                             Object.keys(arrayStructure).forEach(name => {
                                 item[name] = arrayStructure[name].unpack(packetStructure);
@@ -132,13 +132,13 @@ class Packets {
                 return packet;
             },
 
-            sgList(structure, value = []) {
+            sgList(type, value = []) {
                 const packet = {
                     value,
-                    structure,
+                    type,
                     pack(packetStructure) {
                         packetStructure.writeUInt32(this.value.length);
-                        const arrayStructure = packets[this.structure];
+                        const arrayStructure = packets[this.type];
                         for (const item of this.value) {
                             Object.keys(arrayStructure).forEach(name => {
                                 arrayStructure[name].value = item[name];
@@ -151,7 +151,7 @@ class Packets {
                         const arrayCount = packetStructure.readUInt32();
                         const array = [];
                         for (let i = 0; i < arrayCount; i++) {
-                            const arrayStructure = packets[this.structure];
+                            const arrayStructure = packets[this.type];
                             const item = {};
                             Object.keys(arrayStructure).forEach(name => {
                                 item[name] = arrayStructure[name].unpack(packetStructure);

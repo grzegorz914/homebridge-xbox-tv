@@ -1,7 +1,6 @@
 import dgram from 'dgram';
 import { parse as UuIdParse, v4 as UuIdv4 } from 'uuid';
 import EventEmitter from 'events';
-import Ping from 'ping';
 import SimplePacket from './simple.js';
 import MessagePacket from './message.js';
 import SGCrypto from './sgcrypto.js';
@@ -42,22 +41,29 @@ class XboxLocalApi extends EventEmitter {
         this.impulseGenerator = new ImpulseGenerator()
             .on('connect', async () => {
                 try {
-                    if (this.connected) return;
-                    if (this.logDebug) this.emit('debug', `Plugin send heart beat to console`);
+                    if (this.connected || this.connecting) return;
+                    if (this.logDebug) this.emit('debug', `Plugin send heartbeat to console`);
 
-                    const state = await Ping.promise.probe(this.host, { timeout: 3 });
-                    if (!state.alive) {
+                    const state = await this.functions.ping(this.host);
+                    if (!state.online) {
                         return;
                     }
 
-                    if (this.logDebug) this.emit('debug', `Plugin received heart beat from console`);
-                    await this.connect();
+                    if (this.logDebug) this.emit('debug', `Plugin received heartbeat from console`);
 
-                    const discoveryRequest = new SimplePacket('discoveryRequest');
-                    const message = discoveryRequest.pack(this.crypto);
-                    await this.sendSocketMessage(message, 'discoveryRequest');
+                    this.connecting = true;
+                    try {
+                        await this.connect();
+                    } catch (error) {
+                        if (this.logError) this.emit('error', `Connection error: ${error}`);
+                    } finally {
+                        const discoveryRequest = new SimplePacket('discoveryRequest');
+                        const message = discoveryRequest.pack(this.crypto);
+                        await this.sendSocketMessage(message, 'discoveryRequest');
+                        this.connecting = false;
+                    }
                 } catch (error) {
-                    if (this.logError) this.emit('error', `Local API heart beat error: ${error}, will retry`);
+                    if (this.logError) this.emit('error', `Local API heartbeat error: ${error}, will retry`);
                 }
             })
             .on('state', (state) => {
@@ -123,15 +129,15 @@ class XboxLocalApi extends EventEmitter {
                         if (this.logDebug) this.emit('debug', `Socket start listening: ${address.address}:${address.port}`);
                         resolve(true);
                     })
-                    .on('message', async (message) => {
+                    .on('message', async (data) => {
                         try {
                             // get message type in hex
-                            const messageTypeHex = message.subarray(0, 2).toString('hex');
+                            const messageTypeHex = data.subarray(0, 2).toString('hex');
                             if (this.logDebug) this.emit('debug', `Received message type: ${messageTypeHex}`);
 
                             // check message type exists
                             if (!Object.keys(LocalApi.Messages.Category).includes(messageTypeHex)) {
-                                if (this.logWarn) this.emit('warn', `Received unknown message type: ${messageTypeHex}`);
+                                if (this.logWarn) this.emit('warn', `Received unknown message type: ${messageTypeHex}, message: ${data}`);
                                 return;
                             }
 
@@ -159,7 +165,7 @@ class XboxLocalApi extends EventEmitter {
                             // unpack packet
                             let packet;
                             try {
-                                packet = packetStructure.unpack(this.crypto, message);
+                                packet = packetStructure.unpack(this.crypto, data);
                                 if (this.logDebug) this.emit('debug', `Received packet type: ${packet.type}, packet: ${JSON.stringify(packet, null, 2)}`);
                             } catch (error) {
                                 if (this.logError) this.emit('error', `Failed to unpack packet type: ${messageType}, error: ${error.message}`);

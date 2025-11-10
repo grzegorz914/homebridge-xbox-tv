@@ -1,5 +1,8 @@
 import { promises as fsPromises } from 'fs';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { DiacriticsMap } from './constants.js';
+const execAsync = promisify(exec);
 
 class Functions {
     constructor() {
@@ -70,6 +73,22 @@ class Functions {
     async scaleValue(value, inMin, inMax, outMin, outMax) {
         const scaledValue = parseFloat((((Math.max(inMin, Math.min(inMax, value)) - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin).toFixed(0));
         return scaledValue;
+    }
+
+    async ping(ipOrHost) {
+        const isWindows = process.platform === 'win32';
+        const cmd = isWindows ? `ping -n 1 ${ipOrHost}` : `ping -c 1 ${ipOrHost}`;
+
+        try {
+            const { stdout } = await execAsync(cmd);
+            const alive = /ttl=/i.test(stdout);
+            const timeMatch = stdout.match(/time[=<]([\d.]+)\s*ms/i);
+            const time = timeMatch ? parseFloat(timeMatch[1]) : null;
+
+            return { online: alive, time };
+        } catch {
+            return { online: false };
+        }
     }
 }
 export default Functions

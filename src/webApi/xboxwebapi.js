@@ -57,7 +57,6 @@ class XboxWebApi extends EventEmitter {
                 if (this.logWarn) this.emit('warn', `Not authorized`);
                 return false;
             }
-            this.tokens = data.tokens;
             this.consoleAuthorized = true;
 
             // Axios instance with global timeout and retry
@@ -92,7 +91,7 @@ class XboxWebApi extends EventEmitter {
             await this.consolesList();
             await this.consoleStatus();
             await this.installedApps();
-            //await this.mediaState();
+            //await this.mediaState(data.tokens);
 
             return true;
         } catch (error) {
@@ -212,9 +211,9 @@ class XboxWebApi extends EventEmitter {
         }
     }
 
-    async mediaState() {
+    async mediaState(tokens) {
         try {
-            const url = `/users/xuid(${this.tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.liveId}/media`;
+            const url = `/users/xuid(${tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.liveId}/media`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
 
