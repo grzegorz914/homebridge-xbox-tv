@@ -280,7 +280,7 @@ class XboxDevice extends EventEmitter {
             if (!this.inputsServices) return;
 
             let updated = false;
-            
+
             for (const input of inputs) {
                 if (this.inputsServices.length >= 85 && !remove) continue;
 
@@ -324,7 +324,7 @@ class XboxDevice extends EventEmitter {
                     }
                 } else {
                     const identifier = this.inputsServices.length + 1;
-                    inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${identifier}`);
+                    inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${inputReference}`);
                     inputService.identifier = identifier;
                     inputService.reference = inputReference;
                     inputService.name = sanitizedName;
