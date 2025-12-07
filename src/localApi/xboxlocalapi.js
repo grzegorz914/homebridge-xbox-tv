@@ -297,8 +297,6 @@ class XboxLocalApi extends EventEmitter {
 
                                         const message = connectRequest.pack(this.crypto);
                                         await this.sendSocketMessage(message, 'connectRequest');
-
-                                        this.connected = true;
                                     } catch (error) {
                                         if (this.logError) this.emit('error', `Sign certificate error: ${error}`);
                                     }
@@ -323,6 +321,7 @@ class XboxLocalApi extends EventEmitter {
                                         return;
                                     }
                                     if (this.logDebug) this.emit('debug', `Client connected, pairing state: ${LocalApi.Console.PairingState[pairingState]}`);
+                                    this.connected = true;
 
                                     try {
                                         this.sourceParticipantId = participantId;
