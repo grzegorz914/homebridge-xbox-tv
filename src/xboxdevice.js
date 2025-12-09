@@ -1134,15 +1134,9 @@ class XboxDevice extends EventEmitter {
                         ?.setCharacteristic(Characteristic.Model, this.modelName)
                         .setCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision);
                 })
-                .on('stateChanged', (power, titleId, reference, volume, mute) => {
+                .on('stateChanged', async (power, titleId, reference, volume, mute) => {
                     const input = this.inputsServices?.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
 
                     // Update characteristics
                     this.televisionService
@@ -1172,15 +1166,16 @@ class XboxDevice extends EventEmitter {
 
                     if (reference !== this.reference) {
                         for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            this.sensorInputService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            const state = power ? (i === 0 ? true : false) : false;
                             this.sensorInputState = state;
+                            this.sensorInputService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     }
 
                     const screenSaver = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                    this.sensorScreenSaverService?.updateCharacteristic(Characteristic.ContactSensorState, screenSaver);
                     this.sensorScreenSaverState = screenSaver;
+                    this.sensorScreenSaverService?.updateCharacteristic(Characteristic.ContactSensorState, screenSaver);
 
                     for (let i = 0; i < this.sensorInputs.length; i++) {
                         const sensorInput = this.sensorInputs[i];
@@ -1198,6 +1193,11 @@ class XboxDevice extends EventEmitter {
                         this.buttonsServices?.[i]?.updateCharacteristic(Characteristic.On, state);
                     }
 
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
                     if (this.logInfo) {
                         const name = input ? input.name : reference;
                         const productId = input ? input.oneStoreProductId : reference;
