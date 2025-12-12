@@ -54,19 +54,17 @@
 							"namePrefix": false
 						}
 					],
-					"sensors": {
-						"power": false,
-						"screenSaver": false,
-						"input": false,
-						"inputs": [
-							{
-								"displayType": 0,
-								"name": "Dashboard",
-								"reference": "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application",
-								"namePrefix": false
-							}
-						]
-					},
+					"sensors": [
+						{
+							"displayType": 0,
+							"mode": 0,
+							"name": "",
+							"reference": "",
+							"pulse": false,
+							"namePrefix": false,
+							"level": 0
+						}
+					],
 					"volume": {
 						"displayType": 0,
 						"name": "Volume",

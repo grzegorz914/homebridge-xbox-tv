@@ -71,9 +71,9 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 
 | Key | Description |
 | --- | --- |
-| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
-| `host` | Here set the *Hsostname or Address IP* of Console.|
-| `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as **Xbox network device ID**. *You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number*. |
+| `name` | Here set the accessory `Name` to be displayed in `Homebridge/HomeKit`. |
+| `host` | Here set the `Hsostname or Address IP` of Console.|
+| `xboxLiveId` | On your console select Profile > Settings > System > Console info, listed as ``Xbox network device ID``. `You can only find the Xbox network device ID in Settings on your console, this is different from your console serial number`. |
 | `displayType` | Accessory type to be displayed in Home app: `0 - None/Disabled`, `1 - Television` , `2 - TV Set Top Box`, `3 - TV Streaming Stick`, `4 - Audio Receiver`. |
 | `webApi{}` | Web Api object. |
 | `webApi.enable` | This enable console control over Web Api. Additional functions are available in `Advanced Settings` section. |
@@ -88,13 +88,13 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `inputs.filterDlc` | If enabled, Dlc will be hidden and not displayed in the inputs list, only available if `webApiControl` enabled. |
 | `inputs.displayOrder` | Here select display order of the inputs list, `0 -None`, `1 -Ascending by Name`, `2 - Descending by Name`, `3 - Ascending by Reference`, `4 - Ascending by Reference`. |
 | `inputs.data[]` | Inputs data array. |
-| `inputs.data[].name` | Here set *Input Name* which You want expose to the *Homebridge/HomeKit*, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
+| `inputs.data[].name` | Here set `Input Name` which You want expose to the `Homebridge/HomeKit`, `Screensaver`, `Television`, `TV Settings`, `Dashboard`, `Accessory`, `Settings`, `Network Troubleshooter`, `Microsoft Store`, `Xbox Guide` are created by default. |
 | `inputs.data[].reference` | Required to identify current running app. |
 | `inputs.data[].oneStoreProductId` | Required to switch apps. |
 | `inputs.data[].contentType` | Here select from available content types. |
 | `buttons[]` | Buttons array. |
 | `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`. |
-| `buttons[].name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*. |
+| `buttons[].name` | Here set `Button Name` which You want expose to the `Homebridge/HomeKit`. |
 | `buttons[].mode` | Here select button mode, `0 - Media Control`, `1 - Game Pad Control`, `2 - TV Remote Control`, `3 - Console Control`, `4 - Game/App Control`. |
 | `buttons[].mediaCommand` | Here select media control command. |
 | `buttons[].gamePadCommand` | Here select game pad control command. |
@@ -102,17 +102,16 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | `buttons[].consoleControlCommand` | Here select console control command. |
 | `buttons[].gameAppControlCommand` | Here set `oneStoreProductId`, only possible if `webApiControl` enabled. |
 | `buttons[].namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
-| `sensors{}` | Sensors object. |
-| `sensors.power`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
-| `sensors.screenSaver`| If enabled, then the Screen Saver will be exposed as a `Motion Sensor`, fired on change to Screen Saver. |
-| `sensors.input`| If enabled, then the Input will be exposed as a `Contact Sensor`, fired on every Input change. |
-| `sensors.inputs[]` | Sensor inputs array. |
-| `sensors.inputs[].displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
-| `sensors.inputs[].name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
-| `sensors.inputs[].reference` | Here set *Reference* like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application` to be exposed as sensor (active on switch to this Input). |
-| `sensors.inputs[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
+| `sensors[]` | Sensors array. |
+| `sensors[].displayType` | Here choose the sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
+| `sensors[].mode` | Here choose the sensor mode, possible `0 - App / Games`, `1 - Power`, `2 - Volume`, `3 - Mute`, `4 - Screen Saver`, `5 - Play State`. |
+| `sensors[].name` | Here set own sensor `Name` which You want expose to the `Homebridge/HomeKit`. |
+| `sensors[].reference` | Here set mode `Reference` like `Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application`, sensor fired on switch to this reference. |
+| `sensors[].pulse` | Here enable sensor pulse, sensor send pulse and fired on every value change of selected mode. |
+| `sensors[].namePrefix` | Here enable the accessory name as a prefix for sensor name. |
+| `sensors[].level` | Here set `Level` between `0-100`, sensor fired on this level. |
 | `volume{}` | Volume object. |
-| `volume.displayType` | Here choice what a additional volume control mode You want to use `0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - TV Speaker`, `4 - TV Speaker / Lightbulb`, `5 - TV Speaker / Fan`. |
+| `volume.displayType` | Here choice what a additional volume control mode You want to use `0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - TV Speaker (only hardware buttons on R.C. app)`, `4 - TV Speaker / Lightbulb`, `5 - TV Speaker / Fan`. |
 | `volume.name` | Here set Your own volume control name or leave empty. |
 | `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |

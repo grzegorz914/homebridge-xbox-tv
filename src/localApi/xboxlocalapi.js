@@ -9,7 +9,7 @@ import ImpulseGenerator from '../impulsegenerator.js';
 import Functions from '../functions.js';
 
 class XboxLocalApi extends EventEmitter {
-    constructor(config, tokensFile, devInfoFile) {
+    constructor(config, tokensFile, devInfoFile, restFulEnabled, mqttEnabled) {
         super();
 
         this.crypto = new SGCrypto();
@@ -22,12 +22,16 @@ class XboxLocalApi extends EventEmitter {
         this.tokensFile = tokensFile;
         this.devInfoFile = devInfoFile;
 
+        this.restFulEnabled = restFulEnabled;
+        this.mqttEnabled = mqttEnabled;
+
         this.connected = false;
         this.power = false;
         this.volume = 0;
         this.mute = false;
         this.titleId = '';
         this.reference = '';
+        this.playState = false;
 
         this.firstRun = false;
         this.fragments = {};
@@ -81,7 +85,7 @@ class XboxLocalApi extends EventEmitter {
         this.sourceParticipantId = 0;
         this.power = false;
 
-        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute);
+        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute, this.playState);
         return true;
     };
 
@@ -357,13 +361,14 @@ class XboxLocalApi extends EventEmitter {
                                         this.power = true;
                                         this.titleId = title.titleId;
                                         this.reference = title.aumId;
+                                        this.playState = false;
 
-                                        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute);
+                                        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute,  this.playState);
                                         if (this.logDebug) this.emit('debug', `Status changed, app Id: ${this.titleId}, reference: ${this.reference}`);
 
                                         const state = { power: this.power, titleId: this.titleId, reference: this.reference, volume: this.volume, mute: this.mute };
-                                        this.emit('restFul', 'state', state);
-                                        this.emit('mqtt', 'State', state);
+                                        if( this.restFulEnabled) this.emit('restFul', 'state', state);
+                                        if( this.mqttEnabled) this.emit('mqtt', 'State', state);
                                     }
                                     break;
                                 case 'acknowledge':

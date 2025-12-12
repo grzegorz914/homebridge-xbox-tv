@@ -32,11 +32,8 @@ class XboxDevice extends EventEmitter {
         this.filterDlc = device.inputs?.filterDlc || false;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
         this.inputs = (device.inputs?.data || []).filter(input => input.name && input.reference);
-        this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
-        this.sensorPower = device.sensors?.power || false;
-        this.sensorInput = device.sensors?.input || false;
-        this.sensorScreenSaver = device.sensors?.screenSaver || false;
-        this.sensorInputs = (device.sensors?.inputs || []).filter(sensor => (sensor.displayType ?? 0) > 0);
+        this.buttons = (device.buttons ?? []).filter(button => (button.displayType ?? 0) > 0);
+        this.sensors = Array.isArray(device.sensors) ? (device.sensors ?? []).filter(sensor => (sensor.displayType ?? 0) > 0 && (sensor.mode ?? -1) >= 0) : [];
         this.volumeControl = device.volume?.displayType || 0;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
@@ -58,18 +55,14 @@ class XboxDevice extends EventEmitter {
         this.functions = new Functions();
 
         //sensors
-        for (const sensor of this.sensorInputs) {
-            sensor.name = button.name || 'Sensor Input';
+        for (const sensor of this.sensors) {
             sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensor.displayType];
             sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensor.displayType];
             sensor.state = false;
         }
-        this.sensorScreenSaverState = false;
-        this.sensorInputState = false;
 
         //buttons
         for (const button of this.buttons) {
-            button.name = button.name || 'Button';
             button.reference = [button.mediaCommand, button.gamePadCommand, button.tvRemoteCommand, button.consoleControlCommand, button.gameAppControlCommand][button.mode];
             button.serviceType = ['', Service.Outlet, Service.Switch][button.displayType];
             button.state = false;
@@ -81,8 +74,10 @@ class XboxDevice extends EventEmitter {
         this.power = false;
         this.volume = 0;
         this.mute = false;
+        this.playState = false;
         this.mediaState = 2;
         this.reference = '';
+        this.screenSaver = false;
         this.consoleAuthorized = false;
     }
 
@@ -892,77 +887,38 @@ class XboxDevice extends EventEmitter {
                 }
             }
 
-            //prepare sensor service
-            if (this.sensorPower) {
-                if (this.logDebug) this.emit('debug', `Prepare power sensor service`);
-                this.sensorPowerService = accessory.addService(Service.ContactSensor, `${accessoryName} Power Sensor`, `Power Sensor`);
-                this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
-                this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.power;
-                        return state;
-                    });
-            }
-
-            if (this.sensorInput) {
-                if (this.logDebug) this.emit('debug', `Prepare input sensor service`);
-                this.sensorInputService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
-                this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
-                this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.power ? this.sensorInputState : false;
-                        return state;
-                    });
-            }
-
-            if (this.sensorScreenSaver) {
-                if (this.logDebug) this.emit('debug', `Prepare screen saver sensor service`);
-                this.sensorScreenSaverService = accessory.addService(Service.ContactSensor, `${accessoryName} Screen Saver Sensor`, `Screen Saver Sensor`);
-                this.sensorScreenSaverService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorScreenSaverService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Screen Saver Sensor`);
-                this.sensorScreenSaverService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.power ? this.sensorScreenSaverState : false;
-                        return state;
-                    });
-            }
-
             //prepare sonsor service
-            const possibleSensorInputsCount = 99 - this.accessory.services.length;
-            const maxSensorInputsCount = this.sensorInputs.length >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorInputs.length;
-            if (maxSensorInputsCount > 0) {
-                if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
-
-                this.sensorsInputsServices = [];
-                for (let i = 0; i < maxSensorInputsCount; i++) {
-                    //get sensor
-                    const sensorInput = this.sensorInputs[i];
+            const possibleSensorCount = 99 - this.accessory.services.length;
+            const maxSensorCount = this.sensors.length >= possibleSensorCount ? possibleSensorCount : this.sensors.length;
+            if (maxSensorCount > 0) {
+                this.sensorServices = [];
+                if (this.logDebug) this.emit('debug', `Prepare sensors services`);
+                for (let i = 0; i < maxSensorCount; i++) {
+                    const sensor = this.sensors[i];
 
                     //get sensor name		
-                    const sensorInputName = sensorInput.name;
+                    const name = sensor.name || `Sensor ${i}`;
 
                     //get sensor name prefix
-                    const namePrefix = sensorInput.namePrefix;
+                    const namePrefix = sensor.namePrefix;
 
                     //get service type
-                    const serviceType = sensorInput.serviceType;
+                    const serviceType = sensor.serviceType;
 
-                    //get service type
-                    const characteristicType = sensorInput.characteristicType;
+                    //get characteristic type
+                    const characteristicType = sensor.characteristicType;
 
-                    const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
-                    const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
-                    sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                    sensorInputService.getCharacteristic(characteristicType)
+                    const serviceName = namePrefix ? `${accessoryName} ${name}` : name;
+                    const sensorService = new serviceType(serviceName, `Sensor ${i}`);
+                    sensorService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    sensorService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                    sensorService.getCharacteristic(characteristicType)
                         .onGet(async () => {
-                            const state = sensorInput.state;
+                            const state = sensor.state;
                             return state;
                         });
-                    this.sensorsInputsServices.push(sensorInputService);
-                    accessory.addService(sensorInputService);
+                    this.sensorServices.push(sensorService);
+                    accessory.addService(sensorService);
                 }
             }
 
@@ -978,7 +934,7 @@ class XboxDevice extends EventEmitter {
                     const button = this.buttons[i];
 
                     //get button name
-                    const buttonName = button.name;
+                    const buttonName = button.name || `Button ${i}`;
 
                     //get button command
                     const buttonMode = button.mode;
@@ -1066,10 +1022,11 @@ class XboxDevice extends EventEmitter {
             // Web api client
             if (this.webApiControl) {
                 try {
-                    this.xboxWebApi = new XboxWebApi(this.device, this.authTokenFile, this.inputsFile)
+                    this.xboxWebApi = new XboxWebApi(this.device, this.authTokenFile, this.inputsFile, this.channelsFile, this.mqtt.enable)
                         .on('consoleStatus', (status) => {
                             this.modelName = status.consoleType;
                             this.mediaState = WebApi.Console.PlaybackStateHomeKit[status.playbackState];
+                            this.playState = this.mediaState === 0
 
                             this.informationService?.setCharacteristic(Characteristic.Model, this.modelName);
                             this.televisionService?.updateCharacteristic(Characteristic.CurrentMediaState, this.mediaState);
@@ -1082,8 +1039,6 @@ class XboxDevice extends EventEmitter {
 
                             // Update characteristics
                             this.televisionService?.updateCharacteristic(Characteristic.Active, power);
-                            this.sensorPowerService?.updateCharacteristic(Characteristic.ContactSensorState, power);
-
 
                             if (this.logInfo) {
                                 this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
@@ -1109,7 +1064,7 @@ class XboxDevice extends EventEmitter {
             }
 
             // Local api client
-            this.xboxLocalApi = new XboxLocalApi(this.device, this.authTokenFile, this.devInfoFile)
+            this.xboxLocalApi = new XboxLocalApi(this.device, this.authTokenFile, this.devInfoFile, this.channelsFile, this.mqtt.enable)
                 .on('deviceInfo', async (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer:  Microsoft`);
@@ -1134,7 +1089,7 @@ class XboxDevice extends EventEmitter {
                         ?.setCharacteristic(Characteristic.Model, this.modelName)
                         .setCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision);
                 })
-                .on('stateChanged', async (power, titleId, reference, volume, mute) => {
+                .on('stateChanged', async (power, titleId, reference, volume, mute, playState) => {
                     const input = this.inputsServices?.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
 
@@ -1162,27 +1117,68 @@ class XboxDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Volume, volume)
                         .updateCharacteristic(Characteristic.Mute, mute);
 
-                    this.sensorPowerService?.updateCharacteristic(Characteristic.ContactSensorState, power);
+                    // sensors
+                    const screenSaver = (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application');
+                    const currentStateModeMap = {
+                        0: reference,
+                        1: power,
+                        2: volume,
+                        3: mute,
+                        4: screenSaver,
+                        6: playState
+                    };
 
-                    if (reference !== this.reference) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? (i === 0 ? true : false) : false;
-                            this.sensorInputState = state;
-                            this.sensorInputService?.updateCharacteristic(Characteristic.ContactSensorState, state);
-                            await new Promise(resolve => setTimeout(resolve, 500));
+                    const previousStateModeMap = {
+                        0: this.reference,
+                        1: this.power,
+                        2: this.volume,
+                        3: this.mute,
+                        4: this.screenSaver,
+                        5: this.playState
+                    };
+
+                    for (let i = 0; i < this.sensors.length; i++) {
+                        let state = false;
+
+                        const sensor = this.sensors[i];
+                        const currentValue = currentStateModeMap[sensor.mode];
+                        const previousValue = previousStateModeMap[sensor.mode];
+                        const pulse = sensor.pulse;
+                        const reference = sensor.reference;
+                        const level = sensor.level;
+                        const characteristicType = sensor.characteristicType;
+                        const isActiveMode = power;
+
+                        if (pulse && currentValue !== previousValue) {
+                            for (let step = 0; step < 2; step++) {
+                                state = isActiveMode ? (step === 0) : false;
+                                sensor.state = state;
+                                this.sensorServices?.[i]?.updateCharacteristic(characteristicType, state);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+                        } else {
+                            if (isActiveMode) {
+                                switch (sensor.mode) {
+                                    case 0: // reference mode
+                                        state = currentValue === reference;
+                                        break;
+                                    case 2: // volume mode
+                                        state = currentValue === level;
+                                        break;
+                                    case 1: // power
+                                    case 3: // mute
+                                    case 4: // screenSaver
+                                    case 5: // playState
+                                        state = currentValue === true;
+                                        break;
+                                    default:
+                                        state = false;
+                                }
+                            }
+
+                            sensor.state = state;
+                            this.sensorServices?.[i]?.updateCharacteristic(characteristicType, state);
                         }
-                    }
-
-                    const screenSaver = power ? (reference === 'Xbox.IdleScreen_8wekyb3d8bbwe!Xbox.IdleScreen.Application') : false;
-                    this.sensorScreenSaverState = screenSaver;
-                    this.sensorScreenSaverService?.updateCharacteristic(Characteristic.ContactSensorState, screenSaver);
-
-                    for (let i = 0; i < this.sensorInputs.length; i++) {
-                        const sensorInput = this.sensorInputs[i];
-                        const state = power ? sensorInput.reference === reference : false;
-                        sensorInput.state = state;
-                        const characteristicType = sensorInput.characteristicType;
-                        this.sensorsInputsServices?.[i]?.updateCharacteristic(characteristicType, state);
                     }
 
                     //buttons
@@ -1198,6 +1194,8 @@ class XboxDevice extends EventEmitter {
                     this.reference = reference;
                     this.volume = volume;
                     this.mute = mute;
+                    this.screenSaver = screenSaver;
+                    this.playState = playState;
                     if (this.logInfo) {
                         const name = input ? input.name : reference;
                         const productId = input ? input.oneStoreProductId : reference;

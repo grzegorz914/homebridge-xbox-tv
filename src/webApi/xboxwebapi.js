@@ -130,8 +130,8 @@ class XboxWebApi extends EventEmitter {
             if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', 'Remote management not enabled on console');
             this.rmEnabled = obj.remoteManagementEnabled;
 
-            this.emit('restFul', 'consoleslist', data);
-            this.emit('mqtt', 'Consoles List', data);
+            if( this.restFulEnabled) this.emit('restFul', 'consoleslist', data);
+            if( this.mqttEnabled) this.emit('mqtt', 'Consoles List', data);
 
             return true;
         } catch (error) {
@@ -165,8 +165,8 @@ class XboxWebApi extends EventEmitter {
             // Emit console type
             this.emit('consoleStatus', status);
 
-            this.emit('restFul', 'status', data);
-            this.emit('mqtt', 'Status', data);
+            if( this.restFulEnabled) this.emit('restFul', 'status', data);
+            if( this.mqttEnabled) this.emit('mqtt', 'Status', data);
 
             return true;
         } catch (error) {
@@ -193,8 +193,8 @@ class XboxWebApi extends EventEmitter {
                 mode: 0,
             }));
 
-            this.emit('restFul', 'apps', data);
-            this.emit('mqtt', 'Apps', data);
+            if( this.restFulEnabled) this.emit('restFul', 'apps', data);
+            if( this.mqttEnabled) this.emit('mqtt', 'Apps', data);
 
             // Join inputs
             const inputs = [...DefaultInputs, ...apps];
@@ -233,8 +233,8 @@ class XboxWebApi extends EventEmitter {
             // Emit console type
             this.emit('mediaState', state);
 
-            this.emit('restFul', 'mediastate', data);
-            this.emit('mqtt', 'Media State', data);
+            if( this.restFulEnabled) this.emit('restFul', 'mediastate', data);
+            if( this.mqttEnabled) this.emit('mqtt', 'Media State', data);
 
             return true;
         } catch (error) {

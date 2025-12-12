@@ -24,15 +24,9 @@ class XboxPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				const displayType = device.displayType ?? 2;
-				if (displayType === 0) continue;
-
-				const deviceName = device.name;
-				const host = device.host;
-				const xboxLiveId = device.xboxLiveId;
-
-				if (!deviceName || !host || !xboxLiveId) {
-					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, Host: ${host ? 'OK' : host}, Xbox Live ID: ${xboxLiveId ? 'OK' : xboxLiveId}, wrong or missing.`);
+				const { name, host, xboxLiveId, displayType } = device;
+				if (!name || !host || !xboxLiveId || !displayType) {
+					log.warn(`Device: ${host || 'host missing'},  ${name || 'name missing'}, ${xboxLiveId || 'xbox live id missing'}${!displayType ? ', disply type disabled' : ''} in config, will not be published in the Home app`);
 					continue;
 				}
 
@@ -45,7 +39,7 @@ class XboxPlatform {
 					error: device.log?.error,
 					debug: device.log?.debug
 				};
-				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, did finish launching.`);
+				if (logLevel.debug) log.info(`Device: ${host} ${name}, did finish launching.`);
 
 				const safeConfig = {
 					...device,
@@ -62,7 +56,7 @@ class XboxPlatform {
 						}
 					},
 				};
-				if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(safeConfig, null, 2)}.`);
+				if (logLevel.debug) log.info(`Device: ${host} ${name}, Config: ${JSON.stringify(safeConfig, null, 2)}.`);
 
 				//check files exists, if not then create it
 				const postFix = host.split('.').join('');
@@ -88,7 +82,7 @@ class XboxPlatform {
 						}
 					});
 				} catch (error) {
-					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error.message ?? error}`);
+					if (logLevel.error) log.error(`Device: ${host} ${name}, Prepare files error: ${error.message ?? error}`);
 					continue;
 				}
 
@@ -99,17 +93,17 @@ class XboxPlatform {
 						.on('start', async () => {
 							try {
 								const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
-									.on('devInfo', (info) => logLevel.devInfo && log.info(info))
-									.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${deviceName}, ${msg}`))
-									.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${deviceName}, ${msg}`))
-									.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${deviceName}, debug: ${msg}`))
-									.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${deviceName}, ${msg}`))
-									.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${deviceName}, ${msg}`));
+									.on('devInfo', (info) => log.info(info))
+									.on('success', (msg) => log.success(`Device: ${host} ${name}, ${msg}`))
+									.on('info', (msg) => log.info(`Device: ${host} ${name}, ${msg}`))
+									.on('debug', (msg) => log.info(`Device: ${host} ${name}, debug: ${msg}`))
+									.on('warn', (msg) => log.warn(`Device: ${host} ${name}, ${msg}`))
+									.on('error', (msg) => log.error(`Device: ${host} ${name}, ${msg}`));
 
 								const accessory = await xboxDevice.start();
 								if (accessory) {
 									api.publishExternalAccessories(PluginName, [accessory]);
-									if (logLevel.success) log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+									if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
 
 									await xboxDevice.startStopImpulseGenerator(true, [{ name: 'connect', sampling: 6000 }]);
 
@@ -117,16 +111,16 @@ class XboxPlatform {
 									await impulseGenerator.state(false);
 								}
 							} catch (error) {
-								if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Start impulse generator error: ${error.message ?? error}, trying again.`);
+								if (logLevel.error) log.error(`Device: ${host} ${name}, Start impulse generator error: ${error.message ?? error}, trying again.`);
 							}
 						}).on('state', (state) => {
-							if (logLevel.debug) log.info(`Device: ${host} ${deviceName}, Start impulse generator ${state ? 'started' : 'stopped'}`);
+							if (logLevel.debug) log.info(`Device: ${host} ${name}, Start impulse generator ${state ? 'started' : 'stopped'}`);
 						});
 
 					//start impulse generator
 					await impulseGenerator.state(true, [{ name: 'start', sampling: 120000 }]);
 				} catch (error) {
-					if (logLevel.error) log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error.message ?? error}`);
+					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${error.message ?? error}`);
 				}
 			}
 		});
