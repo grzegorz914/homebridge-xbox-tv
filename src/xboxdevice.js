@@ -82,6 +82,11 @@ class XboxDevice extends EventEmitter {
     }
 
     async setOverExternalIntegration(integration, key, value) {
+        if (!this.webApiControl && this.logWarn) {
+            this.emit('warn', `set over external integration not possible, web api not enabled`);
+            return;
+        }
+
         try {
             let set = false
             switch (key) {
@@ -227,7 +232,7 @@ class XboxDevice extends EventEmitter {
     async startStopImpulseGenerator(state, timers = []) {
         try {
             //start web api impulse generator
-            if (this.consoleAuthorized) await this.xboxWebApi.impulseGenerator.state(true, [{ name: 'checkAuthorization', sampling: 900000 }]);
+            if (this.webApiControl) await this.xboxWebApi.impulseGenerator.state(true, [{ name: 'checkAuthorization', sampling: 900000 }]);
 
             //start impulse generator 
             await this.xboxLocalApi.impulseGenerator.state(state, timers)
@@ -417,6 +422,11 @@ class XboxDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
+                    if (!this.webApiControl && this.logWarn) {
+                        this.emit('warn', `set power not possible, web api not enabled`);
+                        return;
+                    }
+
                     if (!!state === this.power) return;
 
                     try {
@@ -434,6 +444,11 @@ class XboxDevice extends EventEmitter {
                     return inputIdentifier;
                 })
                 .onSet(async (activeIdentifier) => {
+                    if (!this.webApiControl && this.logWarn) {
+                        this.emit('warn', `set game/app not possible, web api not enabled`);
+                        return;
+                    }
+
                     try {
                         const input = this.inputsServices.find(i => i.identifier === activeIdentifier);
                         if (!input) {
@@ -490,6 +505,11 @@ class XboxDevice extends EventEmitter {
 
             this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                 .onSet(async (remoteKey) => {
+                    if (!this.webApiControl && this.logWarn) {
+                        this.emit('warn', `set remote key not possible, web api not enabled`);
+                        return;
+                    }
+
                     try {
                         let channelName;
                         let command;
@@ -582,6 +602,11 @@ class XboxDevice extends EventEmitter {
 
             this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
                 .onSet(async (powerModeSelection) => {
+                    if (!this.webApiControl && this.logWarn) {
+                        this.emit('warn', `set power mode selection not possible, web api not enabled`);
+                        return;
+                    }
+
                     try {
                         switch (powerModeSelection) {
                             case 0: //SHOW
@@ -687,6 +712,11 @@ class XboxDevice extends EventEmitter {
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
+                                if (!this.webApiControl && this.logWarn) {
+                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    return;
+                                }
+
                                 try {
                                     switch (volumeSelector) {
                                         case 0: //Up
@@ -744,6 +774,11 @@ class XboxDevice extends EventEmitter {
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
+                                if (!this.webApiControl && this.logWarn) {
+                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    return;
+                                }
+
                                 try {
                                     switch (volumeSelector) {
                                         case 0: //Up
@@ -823,6 +858,11 @@ class XboxDevice extends EventEmitter {
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
+                                if (!this.webApiControl && this.logWarn) {
+                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    return;
+                                }
+
                                 try {
                                     switch (volumeSelector) {
                                         case 0: //Up
@@ -958,6 +998,11 @@ class XboxDevice extends EventEmitter {
                             return state;
                         })
                         .onSet(async (state) => {
+                            if (!this.webApiControl && this.logWarn) {
+                                this.emit('warn', `set button not possible, web api not enabled`);
+                                return;
+                            }
+
                             if (!this.power) {
                                 if (this.logWarn) this.emit('warn', `console is off`);
                                 return;
