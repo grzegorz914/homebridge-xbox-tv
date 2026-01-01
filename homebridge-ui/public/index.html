@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xbox Authorization Manager</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
-</head>
-
 <div class="container mt-3">
   <div class="text-center">
     <img src="homebridge-xbox-tv.png" alt="Image" height="120" />
@@ -73,7 +62,6 @@
       return;
     }
 
-    this.deviceIndex = 0;
     const devices = pluginConfig[0].devices || [];
     const devicesCount = devices.length;
 
@@ -113,6 +101,8 @@
     container.style.gap = '0.25rem';
 
     devices.forEach((device, i) => {
+      this.device = device;
+
       const button = document.createElement("button");
       button.type = "button";
       button.id = `button${i}`;
@@ -124,7 +114,7 @@
       button.addEventListener("click", async () => {
         setButtonClass(i);
         updateDeviceForm(devices[i]);
-        this.deviceIndex = i;
+        this.device = device;
       });
 
       // Auto-select the first device
@@ -174,7 +164,7 @@
 
     // Update config on form input
     $("configForm").addEventListener("input", async () => {
-      const currentDevice = devices[this.deviceIndex];
+      const currentDevice = this.device;
 
       currentDevice.host = $('deviceHost').value;
       currentDevice.xboxLiveId = $('deviceLiveId').value;
@@ -206,17 +196,17 @@
       homebridge.showSpinner();
 
       try {
-        const host = devices[this.deviceIndex].host;
+        const host = this.device.host;
         await homebridge.request('/clearToken', { host });
 
-        Object.assign(devices[this.deviceIndex], {
+        Object.assign(this.device, {
           webApi: {
             token: '',
             enable: false
           }
         });
 
-        updateDeviceForm(devices[this.deviceIndex]);
+        updateDeviceForm(this.device);
         updateInfo('info', "Web API token cleared, now you can start a new authorization process.", "green");
         $("startAuthorizationButton").removeAttribute("disabled");
 
@@ -232,13 +222,12 @@
 
     // Start authorization logic
     $("startAuthorizationButton").addEventListener("click", async () => {
-      homebridge.showSpinner();
       $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
       updateInfo('info', "Starting authorization...", "yellow");
+      homebridge.showSpinner();
 
       try {
-        const device = devices[this.deviceIndex];
-        const { host, webApi } = device;
+        const { host, webApi } = this.device;
         const { token, clientId, clientSecret } = webApi;
 
         const response = await homebridge.request('/startAuthorization', {
@@ -257,7 +246,7 @@
             $("startAuthorizationButton").innerText = "Activate Console";
             $("deviceWebApiControl").checked = false;
             $("deviceWebApiControl").disabled = true;
-            device.webApi.enable = false;
+            webApi.enable = false;
 
             let timeLeft = 10;
             const timerId = setInterval(() => {
@@ -276,7 +265,7 @@
             $("startAuthorizationButton").innerText = "Check State";
             $("deviceWebApiControl").disabled = false;
             $("deviceWebApiControl").checked = true;
-            device.webApi.enable = true;
+            webApi.enable = true;
 
             await homebridge.updatePluginConfig(pluginConfig);
             await homebridge.savePluginConfig(pluginConfig);

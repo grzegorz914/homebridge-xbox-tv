@@ -25,6 +25,11 @@ Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox
 | [Homebridge UI](https://github.com/homebridge/homebridge-config-ui-x) | [Homebridge UI Wiki](https://github.com/homebridge/homebridge-config-ui-x/wiki) | Homebridge Web User Interface | Required |
 | [Xbox TV](https://www.npmjs.com/package/homebridge-xbox-tv) | [Plug-In Wiki](https://github.com/grzegorz914/homebridge-xbox-tv/wiki) | Homebridge Plug-In | Required |
 
+## Warning
+
+* For plugin < v4.1.0 use Homebridge UI <= v5.5.0.
+* For plugin >= v4.1.0 use Homebridge UI >= v5.13.0.
+
 ## About The Plugin
 
 * Power ON/OFF short press tile in HomeKit app.

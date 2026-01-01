@@ -121,7 +121,6 @@
 								"getFromDevice": {
 									"title": "Load Inputs From Device",
 									"type": "boolean",
-									"default": false,
 									"description": "This function get all available inputs direct from device, manually configured inputs will be skipped.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
@@ -156,11 +155,10 @@
 									"type": "integer",
 									"minimum": 0,
 									"maximum": 4,
-									"default": 0,
 									"description": "Here select display order of the inputs list.",
 									"anyOf": [
 										{
-											"title": "None",
+											"title": "Disabled",
 											"enum": [
 												0
 											]
@@ -262,10 +260,7 @@
 										"functionBody": "return model.devices[arrayIndices].inputs.getFromDevice === false || model.devices[arrayIndices].webApi.enable === false;"
 									}
 								}
-							},
-							"required": [
-								"displayOrder"
-							]
+							}
 						},
 						"buttons": {
 							"title": "Button",
@@ -278,11 +273,10 @@
 										"type": "integer",
 										"minimum": 0,
 										"maximum": 2,
-										"default": 0,
 										"description": "Here select display type in HomeKit app.",
 										"anyOf": [
 											{
-												"title": "None / Disabled",
+												"title": "Disabled",
 												"enum": [
 													0
 												]
@@ -305,10 +299,7 @@
 										"title": "Name",
 										"type": "string",
 										"placeholder": "Button name",
-										"description": "Here set Your own name.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
-										}
+										"description": "Here set Your own name."
 									},
 									"mode": {
 										"title": "Mode",
@@ -590,15 +581,163 @@
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
-										"default": false,
 										"description": "Here enable/disable the accessory name as a prefix for button name.",
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
 										}
 									}
 								},
-								"required": [
-									"displayType"
+								"allOf": [
+									{
+										"if": {
+											"required": [
+												"displayType"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"mode"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												},
+												"mode": {
+													"enum": [
+														0
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"mediaCommand"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												},
+												"mode": {
+													"enum": [
+														1
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"gamePadCommand"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												},
+												"mode": {
+													"enum": [
+														2
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"tvRemoteCommand"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												},
+												"mode": {
+													"enum": [
+														3
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"consoleControlCommand"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2
+													]
+												},
+												"mode": {
+													"enum": [
+														4
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"gameAppControlCommand"
+											]
+										}
+									}
 								]
 							}
 						},
@@ -616,7 +755,7 @@
 										"default": 0,
 										"anyOf": [
 											{
-												"title": "None / Disabled",
+												"title": "Disabled",
 												"enum": [
 													0
 												]
@@ -647,7 +786,6 @@
 										"type": "integer",
 										"minimum": 0,
 										"maximum": 5,
-										"default": 0,
 										"anyOf": [
 											{
 												"title": "App / Games",
@@ -695,15 +833,11 @@
 										"title": "Name",
 										"type": "string",
 										"placeholder": "Name",
-										"description": "Here set Your own name.",
-										"condition": {
-											"functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
-										}
+										"description": "Here set Your own name."
 									},
 									"namePrefix": {
 										"title": "Prefix",
 										"type": "boolean",
-										"default": false,
 										"description": "Here enable the accessory name as a prefix for sensor name.",
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
@@ -712,7 +846,6 @@
 									"pulse": {
 										"title": "Pulse",
 										"type": "boolean",
-										"default": false,
 										"description": "Here enable sensor pulse, sensor send pulse and fired on every value change of selected mode.",
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
@@ -733,16 +866,96 @@
 										"minimum": 0,
 										"maximum": 100,
 										"multipleOf": 1,
-										"default": 100,
 										"description": "Here set the level between 0-100% at which the sensor fired.",
 										"condition": {
 											"functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].pulse === false && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].mode === 2;"
 										}
 									}
 								},
-								"required": [
-									"displayType",
-									"mode"
+								"allOf": [
+									{
+										"if": {
+											"required": [
+												"displayType"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2,
+														3
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"mode"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode",
+												"pulse"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2,
+														3
+													]
+												},
+												"pulse": {
+													"const": false
+												},
+												"mode": {
+													"enum": [
+														0
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"reference"
+											]
+										}
+									},
+									{
+										"if": {
+											"required": [
+												"displayType",
+												"mode",
+												"pulse"
+											],
+											"properties": {
+												"displayType": {
+													"enum": [
+														1,
+														2,
+														3
+													]
+												},
+												"pulse": {
+													"const": false
+												},
+												"mode": {
+													"enum": [
+														2
+													]
+												}
+											}
+										},
+										"then": {
+											"required": [
+												"level"
+											]
+										}
+									}
 								]
 							}
 						},
@@ -753,11 +966,10 @@
 								"displayType": {
 									"title": "Display Type",
 									"type": "integer",
-									"default": 0,
 									"description": "Here select what a extra volume/mute control type You want to use.",
 									"anyOf": [
 										{
-											"title": "None / Disabled",
+											"title": "Disabled",
 											"enum": [
 												0
 											]
@@ -806,16 +1018,12 @@
 								"namePrefix": {
 									"title": "Prefix",
 									"type": "boolean",
-									"default": false,
 									"description": "Here enable/disable the accessory name as a prefix for volume control name.",
 									"condition": {
 										"functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
 									}
 								}
-							},
-							"required": [
-								"displayType"
-							]
+							}
 						},
 						"infoButtonCommand": {
 							"title": "Info Button",
@@ -979,7 +1187,6 @@
 										"enable": {
 											"title": "Enable",
 											"type": "boolean",
-											"default": false,
 											"description": "This enable authorization for MQTT Broker."
 										},
 										"user": {
@@ -1023,7 +1230,7 @@
 		{
 			"key": "devices",
 			"type": "tabarray",
-			"title": "{{ value.name || 'device' }}",
+			"title": "{{ value.name || 'Device' }}",
 			"items": [
 				"devices[].name",
 				"devices[].host",
@@ -1045,7 +1252,7 @@
 						{
 							"key": "devices[].inputs.data",
 							"type": "tabarray",
-							"title": "{{ value.name || 'input' }}",
+							"title": "{{ value.name || 'Input' }}",
 							"items": [
 								"devices[].inputs.data[].name",
 								"devices[].inputs.data[].titleId",
@@ -1054,10 +1261,7 @@
 								"devices[].inputs.data[].contentType"
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
-					}
+					]
 				},
 				{
 					"key": "devices[]",
@@ -1069,7 +1273,7 @@
 						{
 							"key": "devices[].buttons",
 							"type": "tabarray",
-							"title": "{{ value.name || 'button' }}",
+							"title": "{{ value.name || 'Button' }}",
 							"items": [
 								"devices[].buttons[].displayType",
 								"devices[].buttons[].name",
@@ -1082,10 +1286,7 @@
 								"devices[].buttons[].namePrefix"
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
-					}
+					]
 				},
 				{
 					"key": "devices[]",
@@ -1115,7 +1316,7 @@
 										{
 											"key": "devices[].sensors",
 											"type": "tabarray",
-											"title": "{{ value.name || 'sensor' }}",
+											"title": "{{ value.name || 'Sensor' }}",
 											"items": [
 												"devices[].sensors[].displayType",
 												"devices[].sensors[].mode",
@@ -1212,10 +1413,7 @@
 								}
 							]
 						}
-					],
-					"condition": {
-						"functionBody": "return model.devices[arrayIndices].displayType > 0;"
-					}
+					]
 				}
 			]
 		}

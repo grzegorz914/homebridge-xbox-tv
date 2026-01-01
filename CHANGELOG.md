@@ -15,7 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Warning
 
-- Do not use Homebridge UI > v5.5.0 because of break config.json
+- For plugin < v4.1.0 use Homebridge UI <= v5.5.0
+- For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
+
+## [4.1.0] - (01.01.2026)
+
+## Changes
+
+- added support for Homebridge UI >= v5.13.0
+- config schema updated
+- readme updated
 
 ## [4.0.0] - (12.12.2025)
 
