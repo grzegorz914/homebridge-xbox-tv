@@ -88,7 +88,9 @@ class XboxWebApi extends EventEmitter {
             });
 
             // Check console data
-            await this.consolesList();
+            const consoleExist = await this.consolesList();
+            if (!consoleExist) return false;
+
             await this.consoleStatus();
             await this.installedApps();
             //await this.mediaState(data.tokens);
@@ -105,6 +107,11 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
             const console = data.result.find(c => c.id === this.liveId);
+            if (!console) {
+                if (this.logWarn) this.emit('warn', `Console with Live ID ${this.liveId} not found on server`);
+                return false;
+            }
+
             const obj = {
                 id: console.id,
                 name: console.name,
@@ -127,11 +134,11 @@ class XboxWebApi extends EventEmitter {
                 }))
             };
 
-            if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', 'Remote management not enabled on console');
+            if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', `Console with Live ID ${this.liveId} remote management not enabled`);
             this.rmEnabled = obj.remoteManagementEnabled;
 
-            if( this.restFulEnabled) this.emit('restFul', 'consoleslist', data);
-            if( this.mqttEnabled) this.emit('mqtt', 'Consoles List', data);
+            if (this.restFulEnabled) this.emit('restFul', 'consoleslist', data);
+            if (this.mqttEnabled) this.emit('mqtt', 'Consoles List', data);
 
             return true;
         } catch (error) {
@@ -165,8 +172,8 @@ class XboxWebApi extends EventEmitter {
             // Emit console type
             this.emit('consoleStatus', status);
 
-            if( this.restFulEnabled) this.emit('restFul', 'status', data);
-            if( this.mqttEnabled) this.emit('mqtt', 'Status', data);
+            if (this.restFulEnabled) this.emit('restFul', 'status', data);
+            if (this.mqttEnabled) this.emit('mqtt', 'Status', data);
 
             return true;
         } catch (error) {
@@ -193,8 +200,8 @@ class XboxWebApi extends EventEmitter {
                 mode: 0,
             }));
 
-            if( this.restFulEnabled) this.emit('restFul', 'apps', data);
-            if( this.mqttEnabled) this.emit('mqtt', 'Apps', data);
+            if (this.restFulEnabled) this.emit('restFul', 'apps', data);
+            if (this.mqttEnabled) this.emit('mqtt', 'Apps', data);
 
             // Join inputs
             const inputs = [...DefaultInputs, ...apps];
@@ -233,8 +240,8 @@ class XboxWebApi extends EventEmitter {
             // Emit console type
             this.emit('mediaState', state);
 
-            if( this.restFulEnabled) this.emit('restFul', 'mediastate', data);
-            if( this.mqttEnabled) this.emit('mqtt', 'Media State', data);
+            if (this.restFulEnabled) this.emit('restFul', 'mediastate', data);
+            if (this.mqttEnabled) this.emit('mqtt', 'Media State', data);
 
             return true;
         } catch (error) {

@@ -112,7 +112,26 @@
 										"functionBody": "return model.devices[arrayIndices].webApi.enable === true;"
 									}
 								}
-							}
+							},
+							"allOf": [
+								{
+									"if": {
+										"required": [
+											"enable"
+										],
+										"properties": {
+											"enable": {
+												"const": true
+											}
+										}
+									},
+									"then": {
+										"required": [
+											"token"
+										]
+									}
+								}
+							]
 						},
 						"inputs": {
 							"title": "Inputs",
