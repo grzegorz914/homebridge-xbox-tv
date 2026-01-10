@@ -93,8 +93,8 @@ class XboxPlatform {
 						.on('start', async () => {
 							try {
 								const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
-									.on('devInfo', (info) => log.info(info))
-									.on('success', (msg) => log.success(`Device: ${host} ${name}, ${msg}`))
+									.on('devInfo', (info) => logLevel.devInfo && log.info(info))
+									.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 									.on('info', (msg) => log.info(`Device: ${host} ${name}, ${msg}`))
 									.on('debug', (msg) => log.info(`Device: ${host} ${name}, debug: ${msg}`))
 									.on('warn', (msg) => log.warn(`Device: ${host} ${name}, ${msg}`))
