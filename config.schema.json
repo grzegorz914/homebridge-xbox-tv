@@ -10,6 +10,11 @@
 	"schema": {
 		"type": "object",
 		"properties": {
+			"name": {
+				"title": "Platform",
+				"type": "string",
+				"default": "Xbox TV"
+			},
 			"devices": {
 				"type": "array",
 				"items": {
