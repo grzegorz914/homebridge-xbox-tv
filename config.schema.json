@@ -1107,32 +1107,37 @@
 									"title": "Device Info",
 									"type": "boolean",
 									"default": true,
-									"description": "This enable logging device info by every connections device to the network."
+									"description": "This enable log level device info, will display overall device info by every plugin restart"
 								},
 								"success": {
-									"title": "Log Success",
+									"title": "Success",
 									"type": "boolean",
-									"default": true
+									"default": true,
+									"description": "This enable log level success"
 								},
 								"info": {
-									"title": "Log Info",
+									"title": "Info",
 									"type": "boolean",
-									"default": false
+									"default": false,
+									"description": "This enable log level info"
 								},
 								"warn": {
-									"title": "Log Warn",
+									"title": "Warn",
 									"type": "boolean",
-									"default": true
+									"default": true,
+									"description": "This enable log level warn"
 								},
 								"error": {
-									"title": "Log Error",
+									"title": "Error",
 									"type": "boolean",
-									"default": true
+									"default": true,
+									"description": "This enable log level error"
 								},
 								"debug": {
-									"title": "Log Debug",
+									"title": "Debug",
 									"type": "boolean",
-									"default": false
+									"default": false,
+									"description": "This enable log level debug"
 								}
 							}
 						},
