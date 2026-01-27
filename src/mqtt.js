@@ -38,10 +38,8 @@ class Mqtt extends EventEmitter {
                     }
                 });
 
-                // MQTT v5 subscription results contain reason codes
-                if (config.logDebug) this.emit('debug', `Subscribed to ${subscribeTopic}, reason codes: ${JSON.stringify(result)}`);
-                this.emit('subscribed', `MQTT Subscribe topic: ${subscribeTopic}`);
-
+                // MQTT v5 subscription results
+                this.emit('connected', `MQTT Subscribe topic: ${subscribeTopic}`);
             } catch (error) {
                 if (config.logWarn) this.emit('warn', `MQTT Subscribe error: ${error}`);
             }
