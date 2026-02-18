@@ -13,8 +13,6 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-xbox-tv.svg)](https://github.com/grzegorz914/homebridge-xbox-tv/issues)
 
-Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox Series X.
-
 <a href="https://buycoffee.to/grzegorz914" target="_blank"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/main/graphics/buycoffee-button.png" style="width: 234px; height: 61px" alt="Supports My Work"></a> <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/main/graphics/QR_buycoffee.png" width="61"></a>
 
 </span>
