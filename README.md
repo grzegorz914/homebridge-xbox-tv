@@ -15,7 +15,7 @@
 
 Homebridge plugin for Microsoft game Consoles. Tested with Xbox One X/S and Xbox Series X.
 
-<a href="https://buycoffee.to/grzegorz914" target="_blank"><img src="https://buycoffee.to/static/img/share/share-button-primary.png" style="width: 234px; height: 61px" alt="Supports My Work"></a><a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/main/graphics/QR_buycoffee.png" width="61"></a>
+<a href="https://buycoffee.to/grzegorz914" target="_blank"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/main/graphics/buycoffee-button.png" style="width: 234px; height: 61px" alt="Supports My Work"></a> <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/main/graphics/QR_buycoffee.png" width="61"></a>
 
 </span>
 
