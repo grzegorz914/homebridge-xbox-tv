@@ -162,7 +162,7 @@ class XboxLocalApi extends EventEmitter {
                                     packetStructure = new MessagePacket(messageRequest);
                                     break;
                                 default:
-                                    if (this.logWarn) this.emit('warn', `No handler for type: ${messageTypeHex}`);
+                                    if (this.logDebug) this.emit('debug', `No handler for type: ${messageTypeHex}`);
                                     return;
                             }
 
