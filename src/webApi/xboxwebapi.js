@@ -106,6 +106,13 @@ class XboxWebApi extends EventEmitter {
             const { data } = await this.axiosInstance.get('/lists/devices?queryCurrentDevice=false&includeStorageDevices=true');
             if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
+            const status = data.status?.errorCode === 'OK';
+            const error = data.status?.errorMerssage;
+            if (!status) {
+                if (this.logDebug) this.emit('debug', `Console list data error: ${error}`);
+                return false;
+            }
+
             const console = data.result.find(c => c.id === this.liveId);
             if (!console) {
                 if (this.logWarn) this.emit('warn', `Console with Live ID ${this.liveId} not found on server`);
@@ -165,9 +172,16 @@ class XboxWebApi extends EventEmitter {
                 focusAppAumid: data.focusAppAumid,
                 isTvConfigured: !!data.isTvConfigured,
                 digitalAssistantRemoteControlEnabled: !!data.digitalAssistantRemoteControlEnabled,
-                remoteManagementEnabled: !!data.remoteManagementEnabled,
                 consoleStreamingEnabled: !!data.consoleStreamingEnabled,
+                remoteManagementEnabled: !!data.remoteManagementEnabled,
+                status: data.status?.errorCode === 'OK',
+                error: data.status?.errorMerssage
             };
+
+            if (!status.status) {
+                if (this.logDebug) this.emit('debug', `Console status error: ${status.error}`);
+                return
+            }
 
             // Emit console type
             this.emit('consoleStatus', status);
@@ -188,6 +202,13 @@ class XboxWebApi extends EventEmitter {
             const url = `/lists/installedApps?deviceId=${this.liveId}`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
+
+            const status = data.status?.errorCode === 'OK';
+            const error = data.status?.errorMerssage;
+            if (!status) {
+                if (this.logDebug) this.emit('debug', `Installed apps data error: ${error}`);
+                return false;
+            }
 
             // Filter and map
             const apps = data.result.filter(a => a.name && a.aumid).map(a => ({
@@ -223,6 +244,13 @@ class XboxWebApi extends EventEmitter {
             const url = `/users/xuid(${tokens.xsts.DisplayClaims.xui[0].xid})/devices/${this.liveId}/media`;
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
+
+            const status = data.status?.errorCode === 'OK';
+            const error = data.status?.errorMerssage;
+            if (!status) {
+                if (this.logDebug) this.emit('debug', `Installed apps data error: ${error}`);
+                return false;
+            }
 
             // Emit single console object
             const state = {
