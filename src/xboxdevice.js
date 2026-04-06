@@ -419,11 +419,11 @@ class XboxDevice extends EventEmitter {
             }
 
             await this.xboxWebApi.send(channelName, command, payload);
-            if (this.logInfo) this.emit('info', `Set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
+            if (this.logInfo) this.emit('info', `Set game/app: ${name}, reference: ${reference}, product id: ${oneStoreProductId}`);
 
             return;
         } catch (error) {
-            if (this.logWarn) this.emit('warn', `Set Input or Channel error: ${error}`);
+            if (this.logWarn) this.emit('warn', `Set game/app error: ${error}`);
         }
     }
 
@@ -488,12 +488,12 @@ class XboxDevice extends EventEmitter {
                     try {
                         const input = this.inputsServices.find(i => i.identifier === activeIdentifier);
                         if (!input) {
-                            if (this.logWarn) this.emit('warn', `Input with identifier ${activeIdentifier} not found`);
+                            if (this.logWarn) this.emit('warn', `Game/App with identifier ${activeIdentifier} not found`);
                             return;
                         }
 
                         if (!this.power) {
-                            if (this.logDebug) this.emit('debug', `Device is off, deferring input switch to '${activeIdentifier}'`);
+                            if (this.logDebug) this.emit('debug', `Device is off, deferring game/app switch to '${activeIdentifier}'`);
 
                             (async () => {
                                 for (let attempt = 0; attempt < 20; attempt++) {
@@ -503,20 +503,20 @@ class XboxDevice extends EventEmitter {
 
                                         // if input didn't switch → retry
                                         if (this.inputIdentifier !== activeIdentifier) {
-                                            if (this.logDebug) this.emit('debug', `Retrying channel switch (${attempt + 1}/20)`);
+                                            if (this.logDebug) this.emit('debug', `Retrying game/app switch (${attempt + 1}/20)`);
                                             await this.setInput(input);
                                         } else {
                                             // sukces
                                             this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
-                                            if (this.logInfo) this.emit('info', `Channel set successfully: ${input.name}`);
+                                            if (this.logInfo) this.emit('info', `Game/App set successfully: ${input.name}`);
                                             return;
                                         }
                                     }
                                 }
 
-                                if (this.logWarn) this.emit('warn', `Failed to set channel after retries: ${input.name}`);
+                                if (this.logWarn) this.emit('warn', `Failed to set game/app after retries: ${input.name}`);
                             })().catch(err => {
-                                if (this.logWarn) this.emit('warn', `Set channel retry error: ${err}`);
+                                if (this.logWarn) this.emit('warn', `Set game/app retry error: ${err}`);
                             });
 
                             return;
@@ -524,9 +524,9 @@ class XboxDevice extends EventEmitter {
 
                         // device is on
                         await this.setInput(input);
-                        if (this.logInfo) this.emit('info', `Set Channel Name: ${input.name}, Reference: ${input.reference}`);
+                        if (this.logInfo) this.emit('info', `Set game/app name: ${input.name}, Reference: ${input.reference}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `Set Input error: ${JSON.stringify(error, null, 2)}`);
+                        if (this.logWarn) this.emit('warn', `Set game/app error: ${JSON.stringify(error, null, 2)}`);
                     }
                 });
 
