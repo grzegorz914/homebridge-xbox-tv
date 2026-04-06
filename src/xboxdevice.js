@@ -83,7 +83,7 @@ class XboxDevice extends EventEmitter {
 
     async setOverExternalIntegration(integration, key, value) {
         if (!this.webApiControl && this.logWarn) {
-            this.emit('warn', `set over external integration not possible, web api not enabled`);
+            this.emit('warn', `Set over external integration not possible, web api not enabled`);
             return;
         }
 
@@ -391,6 +391,42 @@ class XboxDevice extends EventEmitter {
         }
     }
 
+    async setInput(input) {
+        try {
+            const { oneStoreProductId, name, reference } = input;
+            let channelName;
+            let command;
+            let payload;
+            switch (oneStoreProductId) {
+                case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
+                    channelName = 'Shell';
+                    command = 'GoHome';
+                    break;
+                case 'Television':
+                    channelName = 'TV';
+                    command = 'ShowGuide';
+                    break;
+                case 'XboxGuide':
+                    channelName = 'Shell';
+                    command = 'ShowGuideTab';
+                    payload = [{ 'tabName': 'Guide' }];
+                    break;
+                default:
+                    channelName = 'Shell';
+                    command = 'ActivateApplicationWithOneStoreProductId';
+                    payload = [{ 'oneStoreProductId': oneStoreProductId }];
+                    break;
+            }
+
+            await this.xboxWebApi.send(channelName, command, payload);
+            if (this.logInfo) this.emit('info', `Set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
+
+            return;
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `Set Input or Channel error: ${error}`);
+        }
+    }
+
     //Prepare accessory
     async prepareAccessory() {
         try {
@@ -423,7 +459,7 @@ class XboxDevice extends EventEmitter {
                 })
                 .onSet(async (state) => {
                     if (!this.webApiControl && this.logWarn) {
-                        this.emit('warn', `set power not possible, web api not enabled`);
+                        this.emit('warn', `Set power not possible, web api not enabled`);
                         return;
                     }
 
@@ -431,10 +467,10 @@ class XboxDevice extends EventEmitter {
 
                     try {
                         await this.xboxWebApi.send('Power', state ? 'WakeUp' : 'TurnOff');
-                        if (this.logInfo) this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
+                        if (this.logInfo) this.emit('info', `Set Power: ${state ? 'ON' : 'OFF'}`);
                         await new Promise(resolve => setTimeout(resolve, 2000));
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Power, error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Power, error: ${error}`);
                     }
                 });
 
@@ -445,7 +481,7 @@ class XboxDevice extends EventEmitter {
                 })
                 .onSet(async (activeIdentifier) => {
                     if (!this.webApiControl && this.logWarn) {
-                        this.emit('warn', `set game/app not possible, web api not enabled`);
+                        this.emit('warn', `Set game/app not possible, web api not enabled`);
                         return;
                     }
 
@@ -457,56 +493,47 @@ class XboxDevice extends EventEmitter {
                         }
 
                         if (!this.power) {
+                            if (this.logDebug) this.emit('debug', `Device is off, deferring input switch to '${activeIdentifier}'`);
+
                             (async () => {
                                 for (let attempt = 0; attempt < 20; attempt++) {
                                     await new Promise(resolve => setTimeout(resolve, 1500));
-                                    if (this.power && this.inputIdentifier !== activeIdentifier) {
-                                        if (this.logDebug) this.emit('debug', `TV powered on, retrying input switch`);
-                                        this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
-                                        break;
+
+                                    if (this.power) {
+
+                                        // if input didn't switch → retry
+                                        if (this.inputIdentifier !== activeIdentifier) {
+                                            if (this.logDebug) this.emit('debug', `Retrying channel switch (${attempt + 1}/20)`);
+                                            await this.setInput(input);
+                                        } else {
+                                            // sukces
+                                            this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                            if (this.logInfo) this.emit('info', `Channel set successfully: ${input.name}`);
+                                            return;
+                                        }
                                     }
                                 }
-                            })();
+
+                                if (this.logWarn) this.emit('warn', `Failed to set channel after retries: ${input.name}`);
+                            })().catch(err => {
+                                if (this.logWarn) this.emit('warn', `Set channel retry error: ${err}`);
+                            });
 
                             return;
                         }
 
-                        const { oneStoreProductId: oneStoreProductId, name: name, reference: reference } = input;
-                        let channelName;
-                        let command;
-                        let payload;
-                        switch (oneStoreProductId) {
-                            case 'Dashboard': case 'Settings': case 'SettingsTv': case 'Accessory': case 'Screensaver': case 'NetworkTroubleshooter': case 'MicrosoftStore':
-                                channelName = 'Shell';
-                                command = 'GoHome';
-                                break;
-                            case 'Television':
-                                channelName = 'TV';
-                                command = 'ShowGuide';
-                                break;
-                            case 'XboxGuide':
-                                channelName = 'Shell';
-                                command = 'ShowGuideTab';
-                                payload = [{ 'tabName': 'Guide' }];
-                                break;
-                            default:
-                                channelName = 'Shell';
-                                command = 'ActivateApplicationWithOneStoreProductId';
-                                payload = [{ 'oneStoreProductId': oneStoreProductId }];
-                                break;
-                        }
-
-                        await this.xboxWebApi.send(channelName, command, payload);
-                        if (this.logInfo) this.emit('info', `set Input: ${name}, Reference: ${reference}, Product Id: ${oneStoreProductId}`);
+                        // device is on
+                        await this.setInput(input);
+                        if (this.logInfo) this.emit('info', `Set Channel Name: ${input.name}, Reference: ${input.reference}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Input error: ${JSON.stringify(error, null, 2)}`);
+                        if (this.logWarn) this.emit('warn', `Set Input error: ${JSON.stringify(error, null, 2)}`);
                     }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                 .onSet(async (remoteKey) => {
                     if (!this.webApiControl && this.logWarn) {
-                        this.emit('warn', `set remote key not possible, web api not enabled`);
+                        this.emit('warn', `Set remote key not possible, web api not enabled`);
                         return;
                     }
 
@@ -572,7 +599,7 @@ class XboxDevice extends EventEmitter {
                         await this.xboxWebApi.send(channelName, 'InjectKey', [{ 'keyType': command }]);
                         if (this.logInfo) this.emit('info', `Remote Key: ${command}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Remote Key error: ${JSON.stringify(error, null, 2)}`);
+                        if (this.logWarn) this.emit('warn', `Set Remote Key error: ${JSON.stringify(error, null, 2)}`);
                     }
                 });
 
@@ -594,16 +621,16 @@ class XboxDevice extends EventEmitter {
                     try {
                         const newMediaState = value;
                         const setMediaState = this.power ? false : false;
-                        if (this.logInfo) this.emit('info', `set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        if (this.logInfo) this.emit('info', `Set Target Media: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Target Media error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Target Media error: ${error}`);
                     }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
                 .onSet(async (powerModeSelection) => {
                     if (!this.webApiControl && this.logWarn) {
-                        this.emit('warn', `set power mode selection not possible, web api not enabled`);
+                        this.emit('warn', `Set power mode selection not possible, web api not enabled`);
                         return;
                     }
 
@@ -616,9 +643,9 @@ class XboxDevice extends EventEmitter {
                                 await this.xboxWebApi.send('Shell', 'InjectKey', [{ 'keyType': 'b' }]);
                                 break;
                         };
-                        if (this.logInfo) this.emit('info', `set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
+                        if (this.logInfo) this.emit('info', `Set Power Mode Selection: ${powerModeSelection === 0 ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Power Mode Selection error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Power Mode Selection error: ${error}`);
                     }
                 });
 
@@ -645,9 +672,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (value) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceLightbulb.getCharacteristic(Characteristic.On)
@@ -657,9 +684,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -675,9 +702,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (value) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceFan.getCharacteristic(Characteristic.On)
@@ -687,9 +714,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -713,7 +740,7 @@ class XboxDevice extends EventEmitter {
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
                                 if (!this.webApiControl && this.logWarn) {
-                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    this.emit('warn', `Set volume selector not possible, web api not enabled`);
                                     return;
                                 }
 
@@ -726,9 +753,9 @@ class XboxDevice extends EventEmitter {
                                             await this.xboxWebApi.send('Volume', 'Down');
                                             break;
                                     }
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -738,9 +765,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (value) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -750,9 +777,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -775,7 +802,7 @@ class XboxDevice extends EventEmitter {
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
                                 if (!this.webApiControl && this.logWarn) {
-                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    this.emit('warn', `Set volume selector not possible, web api not enabled`);
                                     return;
                                 }
 
@@ -788,9 +815,9 @@ class XboxDevice extends EventEmitter {
                                             await this.xboxWebApi.send('Volume', 'Down');
                                             break;
                                     }
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -800,9 +827,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (value) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -812,9 +839,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
 
@@ -859,7 +886,7 @@ class XboxDevice extends EventEmitter {
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
                             .onSet(async (volumeSelector) => {
                                 if (!this.webApiControl && this.logWarn) {
-                                    this.emit('warn', `set volume selector not possible, web api not enabled`);
+                                    this.emit('warn', `Set volume selector not possible, web api not enabled`);
                                     return;
                                 }
 
@@ -872,9 +899,9 @@ class XboxDevice extends EventEmitter {
                                             await this.xboxWebApi.send('Volume', 'Down');
                                             break;
                                     }
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${volumeSelector ? 'Down' : 'UP'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -884,9 +911,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (value) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -896,9 +923,9 @@ class XboxDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
 
@@ -999,7 +1026,7 @@ class XboxDevice extends EventEmitter {
                         })
                         .onSet(async (state) => {
                             if (!this.webApiControl && this.logWarn) {
-                                this.emit('warn', `set button not possible, web api not enabled`);
+                                this.emit('warn', `Set button not possible, web api not enabled`);
                                 return;
                             }
 
@@ -1041,7 +1068,7 @@ class XboxDevice extends EventEmitter {
                                         break;
                                 }
                             } catch (error) {
-                                if (this.logWarn) this.emit('warn', `set Button error: ${error}`);
+                                if (this.logWarn) this.emit('warn', `Set Button error: ${error}`);
                             }
                         });
                     this.buttonsServices.push(buttonService);
