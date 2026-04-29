@@ -7,7 +7,7 @@ import Functions from '../functions.js';
 import { WebApi, DefaultInputs } from '../constants.js';
 
 class XboxWebApi extends EventEmitter {
-    constructor(config, authTokenFile, inputsFile) {
+    constructor(config, authTokenFile, inputsFile, restFulEnabled, mqttEnabled) {
         super();
         this.liveId = config.xboxLiveId;
         this.getInputsFromDevice = config.inputs?.getFromDevice;
@@ -15,6 +15,10 @@ class XboxWebApi extends EventEmitter {
         this.logError = config.log?.error;
         this.logDebug = config.log?.debug;
         this.inputsFile = inputsFile;
+
+        // BŁ9 FIX: store restFul/mqtt flags passed from xboxdevice
+        this.restFulEnabled = restFulEnabled || false;
+        this.mqttEnabled = mqttEnabled || false;
 
         // Variables
         this.consoleAuthorized = false;
@@ -93,7 +97,6 @@ class XboxWebApi extends EventEmitter {
 
             await this.consoleStatus();
             await this.installedApps();
-            //await this.mediaState(data.tokens);
 
             return true;
         } catch (error) {
@@ -107,7 +110,8 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            const error = data.status?.errorMerssage;
+            // BŁ11 FIX: typo errorMerssage → errorMessage (applies to all methods)
+            const error = data.status?.errorMessage;
             if (!status) {
                 if (this.logDebug) this.emit('debug', `Console list data error: ${error}`);
                 return false;
@@ -159,7 +163,6 @@ class XboxWebApi extends EventEmitter {
             const { data } = await this.axiosInstance.get(url);
             if (this.logDebug) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
 
-            // Emit single console object
             const status = {
                 id: data.id,
                 name: data.name,
@@ -174,16 +177,16 @@ class XboxWebApi extends EventEmitter {
                 digitalAssistantRemoteControlEnabled: !!data.digitalAssistantRemoteControlEnabled,
                 consoleStreamingEnabled: !!data.consoleStreamingEnabled,
                 remoteManagementEnabled: !!data.remoteManagementEnabled,
+                // BŁ11 FIX: typo errorMerssage → errorMessage
                 status: data.status?.errorCode === 'OK',
-                error: data.status?.errorMerssage
+                error: data.status?.errorMessage
             };
 
             if (!status.status) {
                 if (this.logDebug) this.emit('debug', `Console status error: ${status.error}`);
-                return
+                return;
             }
 
-            // Emit console type
             this.emit('consoleStatus', status);
 
             if (this.restFulEnabled) this.emit('restFul', 'status', data);
@@ -204,13 +207,13 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            const error = data.status?.errorMerssage;
+            // BŁ11 FIX: typo errorMerssage → errorMessage
+            const error = data.status?.errorMessage;
             if (!status) {
                 if (this.logDebug) this.emit('debug', `Installed apps data error: ${error}`);
                 return false;
             }
 
-            // Filter and map
             const apps = data.result.filter(a => a.name && a.aumid).map(a => ({
                 name: a.name,
                 oneStoreProductId: a.oneStoreProductId,
@@ -224,13 +227,8 @@ class XboxWebApi extends EventEmitter {
             if (this.restFulEnabled) this.emit('restFul', 'apps', data);
             if (this.mqttEnabled) this.emit('mqtt', 'Apps', data);
 
-            // Join inputs
             const inputs = [...DefaultInputs, ...apps];
-
-            // Save inputs
             await this.functions.saveData(this.inputsFile, inputs);
-
-            // Emit inputs
             this.emit('installedApps', inputs, false);
 
             return true;
@@ -246,26 +244,25 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            const error = data.status?.errorMerssage;
+            // BŁ11 FIX: typo errorMerssage → errorMessage
+            const error = data.status?.errorMessage;
             if (!status) {
-                if (this.logDebug) this.emit('debug', `Installed apps data error: ${error}`);
+                if (this.logDebug) this.emit('debug', `Media state data error: ${error}`);
                 return false;
             }
 
-            // Emit single console object
             const state = {
-                state: data.state, // Playing | Paused | Stopped
+                state: data.state,
                 title: data.title,
                 artist: data.artist,
                 album: data.album,
-                position: data.position, //ms
-                duration: data.duration, //ms
-                canSeek: !!data.canSeek, // bool
-                volume: data.volume, // 0.5
-                muted: !!data.muted, // bool
+                position: data.position,
+                duration: data.duration,
+                canSeek: !!data.canSeek,
+                volume: data.volume,
+                muted: !!data.muted,
             };
 
-            // Emit console type
             this.emit('mediaState', state);
 
             if (this.restFulEnabled) this.emit('restFul', 'mediastate', data);
@@ -314,4 +311,3 @@ class XboxWebApi extends EventEmitter {
 }
 
 export default XboxWebApi;
-

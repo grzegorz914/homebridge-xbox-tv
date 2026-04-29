@@ -12,7 +12,7 @@ class Authentication {
             oauth: {},
             user: {},
             xsts: {}
-        }
+        };
 
         this.functions = new Functions();
     }
@@ -20,19 +20,19 @@ class Authentication {
     async refreshToken(token) {
         try {
             const payload = {
-                "client_id": this.webApiClientId,
-                "grant_type": "refresh_token",
-                "scope": WebApi.Scopes,
-                "refresh_token": token,
-            }
+                'client_id': this.webApiClientId,
+                'grant_type': 'refresh_token',
+                'scope': WebApi.Scopes,
+                'refresh_token': token,
+            };
 
             if (this.webApiClientSecret) {
                 payload.client_secret = this.webApiClientSecret;
             }
 
             const postData = QueryString.stringify(payload);
-            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            const response = await axios.post(WebApi.Url.RefreshToken, postData, headers);
+            // BŁ12 FIX: axios.post expects config object as 3rd arg, not bare headers object
+            const response = await axios.post(WebApi.Url.RefreshToken, postData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
             const refreshToken = response.data;
             refreshToken.issued = new Date().toISOString();
             this.tokens.oauth = refreshToken;
@@ -45,18 +45,17 @@ class Authentication {
     async getUserToken(accessToken) {
         try {
             const payload = {
-                "RelyingParty": 'http://auth.xboxlive.com',
-                "TokenType": 'JWT',
-                "Properties": {
-                    "AuthMethod": 'RPS',
-                    "SiteName": 'user.auth.xboxlive.com',
-                    "RpsTicket": `d=${accessToken}`
+                'RelyingParty': 'http://auth.xboxlive.com',
+                'TokenType': 'JWT',
+                'Properties': {
+                    'AuthMethod': 'RPS',
+                    'SiteName': 'user.auth.xboxlive.com',
+                    'RpsTicket': `d=${accessToken}`
                 }
-            }
+            };
 
             const postData = JSON.stringify(payload);
-            const headers = { 'Content-Type': 'application/json' };
-            const response = await axios.post(WebApi.Url.UserToken, postData, { headers });
+            const response = await axios.post(WebApi.Url.UserToken, postData, { headers: { 'Content-Type': 'application/json' } });
             const userToken = response.data;
             this.tokens.user = userToken;
             this.tokens.xsts = {};
@@ -69,17 +68,17 @@ class Authentication {
     async getXstsToken(userToken) {
         try {
             const payload = {
-                "RelyingParty": 'http://xboxlive.com',
-                "TokenType": 'JWT',
-                "Properties": {
-                    "UserTokens": [userToken],
-                    "SandboxId": 'RETAIL',
+                'RelyingParty': 'http://xboxlive.com',
+                'TokenType': 'JWT',
+                'Properties': {
+                    'UserTokens': [userToken],
+                    'SandboxId': 'RETAIL',
                 }
-            }
+            };
 
             const postData = JSON.stringify(payload);
-            const headers = { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' };
-            const response = await axios.post(WebApi.Url.XstsToken, postData, headers);
+            // BŁ12 FIX: was passing bare headers object without { headers } wrapper
+            const response = await axios.post(WebApi.Url.XstsToken, postData, { headers: { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' } });
             const xstsToken = response.data;
             this.tokens.xsts = xstsToken;
             return true;
@@ -91,20 +90,20 @@ class Authentication {
     async accessToken(webApiToken) {
         try {
             const payload = {
-                "client_id": this.webApiClientId,
-                "grant_type": 'authorization_code',
-                "scope": WebApi.Scopes,
-                "code": webApiToken,
-                "redirect_uri": WebApi.Url.Redirect
-            }
+                'client_id': this.webApiClientId,
+                'grant_type': 'authorization_code',
+                'scope': WebApi.Scopes,
+                'code': webApiToken,
+                'redirect_uri': WebApi.Url.Redirect
+            };
 
             if (this.webApiClientSecret) {
                 payload.client_secret = this.webApiClientSecret;
             }
 
             const postData = QueryString.stringify(payload);
-            const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-            const response = await axios.post(WebApi.Url.AccessToken, postData, headers);
+            // BŁ12 FIX: consistent { headers } wrapper
+            const response = await axios.post(WebApi.Url.AccessToken, postData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
             const accessToken = response.data;
             accessToken.issued = new Date().toISOString();
             this.tokens.oauth = accessToken;
@@ -120,23 +119,22 @@ class Authentication {
             case 'user':
                 if (this.tokens.user.Token) {
                     const tokenExpired = new Date() > new Date(this.tokens.user.NotAfter).getTime();
-                    switch (tokenExpired) {
-                        case true:
-                            try {
-                                await this.refreshToken(this.tokens.oauth.refresh_token);
-                                await this.getUserToken(this.tokens.oauth.access_token);
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
-                        case false:
-                            try {
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
+                    if (tokenExpired) {
+                        try {
+                            await this.refreshToken(this.tokens.oauth.refresh_token);
+                            await this.getUserToken(this.tokens.oauth.access_token);
+                            await this.refreshTokens('xsts');
+                            return true;
+                        } catch (error) {
+                            throw new Error(error);
+                        }
+                    } else {
+                        try {
+                            await this.refreshTokens('xsts');
+                            return true;
+                        } catch (error) {
+                            throw new Error(error);
+                        }
                     }
                 } else {
                     try {
@@ -150,17 +148,17 @@ class Authentication {
             case 'xsts':
                 if (this.tokens.xsts.Token) {
                     const tokenExpired = new Date() > new Date(this.tokens.xsts.NotAfter).getTime();
-                    switch (tokenExpired) {
-                        case true:
-                            try {
-                                await this.getXstsToken(this.tokens.user.Token);
-                                await this.refreshTokens('xsts');
-                                return true;
-                            } catch (error) {
-                                throw new Error(error);
-                            };
-                        case false:
+                    if (tokenExpired) {
+                        try {
+                            // BŁ13 FIX: was calling refreshTokens('xsts') after getXstsToken → infinite recursion
+                            // when token expired. Now just refresh once and return.
+                            await this.getXstsToken(this.tokens.user.Token);
                             return true;
+                        } catch (error) {
+                            throw new Error(error);
+                        }
+                    } else {
+                        return true;
                     }
                 } else {
                     try {
@@ -171,7 +169,7 @@ class Authentication {
                     }
                 }
             default:
-                throw new Error(`Unknow refresh token type: ${type}`);
+                throw new Error(`Unknown refresh token type: ${type}`);
         }
     }
 
@@ -187,7 +185,7 @@ class Authentication {
                     await this.functions.saveData(this.tokensFile, this.tokens);
                     return { headers: `XBL3.0 x=${this.tokens.xsts.DisplayClaims.xui[0].uhs};${this.tokens.xsts.Token}`, tokens: this.tokens };
                 } else {
-                    throw new Error('No oauth token found. Use authorization manager first.')
+                    throw new Error('No oauth token found. Use authorization manager first.');
                 }
             } catch (error) {
                 throw new Error(error);
@@ -200,12 +198,12 @@ class Authentication {
     async generateAuthorizationUrl() {
         try {
             const payload = {
-                "client_id": this.webApiClientId,
-                "response_type": 'code',
-                "approval_prompt": 'auto',
-                "scope": WebApi.Scopes,
-                "redirect_uri": WebApi.Url.Redirect
-            }
+                'client_id': this.webApiClientId,
+                'response_type': 'code',
+                'approval_prompt': 'auto',
+                'scope': WebApi.Scopes,
+                'redirect_uri': WebApi.Url.Redirect
+            };
             const params = QueryString.stringify(payload);
             const oauth2URI = `${WebApi.Url.oauth2}?${params}`;
             return oauth2URI;

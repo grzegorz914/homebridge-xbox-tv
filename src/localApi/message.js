@@ -52,6 +52,7 @@ class Message {
         header.writeBytes(LocalApi.Messages.Flags[this.type]);
         header.writeBytes(Buffer.from(channelId || this.channelId));
 
+        // Original sgcrypto.encrypt(data, key, iv) and decrypt(data, iv, key) — kept as-is
         const payloadEncrypted = crypto.encrypt(structure.toBuffer(), crypto.getKey(), crypto.encrypt(header.toBuffer().subarray(0, 16), crypto.getIv()));
         let packet = Buffer.concat([header.toBuffer(), payloadEncrypted]);
         const payloadProtected = crypto.sign(packet);
@@ -74,12 +75,16 @@ class Message {
         };
 
         packet.type = packet.flags.type;
-        packet.payloadProtected = Buffer.from(packet.payloadProtected.subarray(0, -32));
+        // FIX: extract signature BEFORE truncating payloadProtected.
+        // Original order was reversed: truncate first, then subarray(-32) of truncated buffer
+        // → read bytes [-64..-32] instead of the actual last 32 bytes [-32..].
         packet.signature = packet.payloadProtected.subarray(-32);
+        packet.payloadProtected = Buffer.from(packet.payloadProtected.subarray(0, -32));
         this.type = packet.type;
         this.channelId = packet.channelId;
 
         if (packet.payloadProtected.length > 0 && crypto) {
+            // Original: decrypt(data, iv) — matches sgcrypto.decrypt(data, iv, key)
             const payloadDecrypted = crypto.decrypt(packet.payloadProtected, crypto.encrypt(data.subarray(0, 16), crypto.getIv()));
             const structurePayloadProtected = new Structure(payloadDecrypted);
             packet.payloadDecrypted = structurePayloadProtected.toBuffer();

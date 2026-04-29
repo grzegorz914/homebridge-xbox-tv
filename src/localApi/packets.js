@@ -73,9 +73,11 @@ class Packets {
                 return packet;
             },
 
-            uInt64(length, value) {
+            // FIX: uInt64 value must be a Buffer — '' produces a 0-byte buffer,
+            // corrupting the 8-byte field on the wire. Default is Buffer.alloc(length).
+            uInt64(length, value = Buffer.alloc(length)) {
                 const packet = {
-                    value,
+                    value: Buffer.isBuffer(value) ? value : Buffer.alloc(length),
                     length,
                     pack(packetStructure) {
                         return packetStructure.writeBytes(this.value);
@@ -180,6 +182,8 @@ class Packets {
             }
         };
 
+        // FIX: uInt64 fields that were '' now default to Buffer.alloc(8) via fixed uInt64() factory.
+        // acknowledge keeps sgList (UInt32 count) — console accepts it and original worked with it.
         const packets = {
             powerOn: { liveId: types.sgString() },
             json: { json: types.sgString('{}') },
@@ -191,17 +195,17 @@ class Packets {
             connectResponseProtected: { connectResult: types.uInt16(1), pairingState: types.uInt16(2), participantId: types.uInt32(0) },
             localJoin: { clientType: types.uInt16(3), nativeWidth: types.uInt16(1080), nativeHeight: types.uInt16(1920), dpiX: types.uInt16(96), dpiY: types.uInt16(96), deviceCapabilities: types.uInt64(8, Buffer.from('ffffffffffffffff', 'hex')), clientVersion: types.uInt32(15), osMajorVersion: types.uInt32(6), osMinorVersion: types.uInt32(2), displayName: types.sgString('Xbox-TV') },
             channelStartRequest: { channelRequestId: types.uInt32(0), titleId: types.uInt32(0), service: types.bytes(16, ''), activityId: types.uInt32(0) },
-            channelStartResponse: { channelRequestId: types.uInt32(0), channelTargetId: types.uInt64(8, ''), result: types.uInt32(0) },
+            channelStartResponse: { channelRequestId: types.uInt32(0), channelTargetId: types.uInt64(8), result: types.uInt32(0) },
             acknowledge: { lowWatermark: types.uInt32(0), processedList: types.sgList('processedList', []), rejectedList: types.sgList('rejectedList', []) },
             processedList: { id: types.uInt32(0) },
             rejectedList: { id: types.uInt32(0) },
             consoleStatus: { liveTvProvider: types.uInt32(0), majorVersion: types.uInt32(0), minorVersion: types.uInt32(0), buildNumber: types.uInt32(0), locale: types.sgString('en-US'), activeTitles: types.sgArray('activeTitle') },
             activeTitle: { flags: types.bytes(2), titleId: types.uInt32(0), productId: types.bytes(16, ''), sandboxId: types.bytes(16, ''), aumId: types.sgString('') },
             recordGameDvr: { startTimeDelta: types.sInt32(0), endTimeDelta: types.sInt32(0) },
-            gamepad: { timestamp: types.uInt64(8, ''), buttons: types.uInt16(0), leftTrigger: types.uInt32(0), rightTrigger: types.uInt32(0), leftThumbstickX: types.uInt32(0), leftThumbstickY: types.uInt32(0), rightThumbstickX: types.uInt32(0), rightThumbstickY: types.uInt32(0) },
-            mediaState: { titleId: types.uInt32(0), aumId: types.sgString(), assetId: types.sgString(), mediaType: types.mapper(LocalApi.Media.Types, types.uInt16(0)), soundLevel: types.mapper(LocalApi.Media.SoundLevel, types.uInt16(0)), enabledCommands: types.uInt32(0), playbackStatus: types.mapper(LocalApi.Media.PlaybackState, types.uInt16(0)), rate: types.uInt32(0), position: types.uInt64(8, ''), mediaStart: types.uInt64(8, ''), mediaEnd: types.uInt64(8, ''), minSeek: types.uInt64(8, ''), maxSeek: types.uInt64(8, ''), metadata: types.sgArray('mediaStateList', []) },
+            gamepad: { timestamp: types.uInt64(8), buttons: types.uInt16(0), leftTrigger: types.uInt32(0), rightTrigger: types.uInt32(0), leftThumbstickX: types.uInt32(0), leftThumbstickY: types.uInt32(0), rightThumbstickX: types.uInt32(0), rightThumbstickY: types.uInt32(0) },
+            mediaState: { titleId: types.uInt32(0), aumId: types.sgString(), assetId: types.sgString(), mediaType: types.mapper(LocalApi.Media.Types, types.uInt16(0)), soundLevel: types.mapper(LocalApi.Media.SoundLevel, types.uInt16(0)), enabledCommands: types.uInt32(0), playbackStatus: types.mapper(LocalApi.Media.PlaybackState, types.uInt16(0)), rate: types.uInt32(0), position: types.uInt64(8), mediaStart: types.uInt64(8), mediaEnd: types.uInt64(8), minSeek: types.uInt64(8), maxSeek: types.uInt64(8), metadata: types.sgArray('mediaStateList', []) },
             mediaStateList: { name: types.sgString(), value: types.sgString() },
-            mediaCommand: { requestId: types.uInt64(8, ''), titleId: types.uInt32(0), command: types.uInt32(0) },
+            mediaCommand: { requestId: types.uInt64(8), titleId: types.uInt32(0), command: types.uInt32(0) },
             powerOff: { liveId: types.sgString('') },
             disconnect: { reason: types.uInt32(1), errorCode: types.uInt32(0) }
         };

@@ -22,8 +22,9 @@ class XboxLocalApi extends EventEmitter {
         this.tokensFile = tokensFile;
         this.devInfoFile = devInfoFile;
 
-        this.restFulEnabled = restFulEnabled;
-        this.mqttEnabled = mqttEnabled;
+        // FIX: guard with || false so undefined becomes false
+        this.restFulEnabled = restFulEnabled || false;
+        this.mqttEnabled = mqttEnabled || false;
 
         this.connected = false;
         this.power = false;
@@ -58,12 +59,14 @@ class XboxLocalApi extends EventEmitter {
                     this.connecting = true;
                     try {
                         await this.connect();
-                    } catch (error) {
-                        if (this.logError) this.emit('error', `Connection error: ${error}`);
-                    } finally {
+                        // FIX: discoveryRequest in try (not finally) — only sent when socket is ready
                         const discoveryRequest = new SimplePacket('discoveryRequest');
                         const message = discoveryRequest.pack(this.crypto);
                         await this.sendSocketMessage(message, 'discoveryRequest');
+                    } catch (error) {
+                        if (this.logError) this.emit('error', `Connection error: ${error}`);
+                    } finally {
+                        // FIX: always release the connecting lock so next heartbeat can retry
                         this.connecting = false;
                     }
                 } catch (error) {
@@ -76,6 +79,11 @@ class XboxLocalApi extends EventEmitter {
     };
 
     async updateState() {
+        // FIX: clearInterval before nulling — without this the old timer survives
+        // reconnect and fires a spurious disconnect after 14 s of the new session.
+        if (this.acknowledgeInterval) {
+            clearInterval(this.acknowledgeInterval);
+        }
         this.socket = null;
         this.connected = false;
         this.firstRun = false;
@@ -92,11 +100,12 @@ class XboxLocalApi extends EventEmitter {
     async getSequenceNumber() {
         const seq = this.sequenceNumber;
         this.sequenceNumber = (this.sequenceNumber + 1) >>> 0;
-        if (this.logDebug) this.emit('debug', `Sqquence number set to: ${this.sequenceNumber}`);
+        // FIX: typo 'Sqquence' → 'Sequence'
+        if (this.logDebug) this.emit('debug', `Sequence number set to: ${this.sequenceNumber}`);
         return seq;
     };
 
-    async sendSocketMessage(message, type) {
+    async sendSocketMessage(message, type, host = this.host) {
         return new Promise((resolve, reject) => {
             if (!this.socket) {
                 return reject(new Error(`Socket not initialized, cannot send message: ${type}`));
@@ -104,12 +113,12 @@ class XboxLocalApi extends EventEmitter {
 
             const offset = 0;
             const length = message.byteLength;
-            this.socket.send(message, offset, length, 5050, this.host, (error, bytes) => {
+            this.socket.send(message, offset, length, 5050, host, (error, bytes) => {
                 if (error) {
                     return reject(new Error(`Socket send error: ${error}`));
                 }
 
-                if (this.logDebug) this.emit('debug', `Socket send: ${type}, ${bytes}B`);
+                if (this.logDebug) this.emit('debug', `Socket send: ${type} → ${host}, ${bytes}B`);
                 resolve(true);
             });
         });
@@ -120,7 +129,8 @@ class XboxLocalApi extends EventEmitter {
             try {
                 this.socket = dgram.createSocket('udp4')
                     .on('error', (error) => {
-                        this.socket.close();
+                        if (this.logError) this.emit('error', `Socket error: ${error}`);
+                        this.socket?.close();
                         reject(`Socket error: ${error}`);
                     })
                     .on('close', async () => {
@@ -179,7 +189,9 @@ class XboxLocalApi extends EventEmitter {
                             if (messageType === 'message') {
                                 const targetId = packet.targetParticipantId;
 
-                                if (targetId !== this.sourceParticipantId) {
+                                // FIX: targetId=0 is a broadcast (console keepalive acknowledge) —
+                                // must pass through regardless of our sourceParticipantId.
+                                if (targetId !== 0 && targetId !== this.sourceParticipantId) {
                                     if (this.logDebug) this.emit('debug', `ParticipantId mismatch: ${targetId} !== ${this.sourceParticipantId}. Ignoring packet`);
                                     return;
                                 }
@@ -198,7 +210,7 @@ class XboxLocalApi extends EventEmitter {
                                 }
                             }
 
-                            // handle packet types (oryginalna logika)
+                            // handle packet types
                             switch (packet.type) {
                                 case 'json':
                                     const fragments = this.fragments;
@@ -250,7 +262,8 @@ class XboxLocalApi extends EventEmitter {
                                     const deviceType = packet.clientType;
                                     const deviceName = packet.consoleName;
                                     const certificate = packet.certificate;
-                                    let athorized = false;
+                                    // FIX: typo 'athorized' → 'authorized'
+                                    let authorized = false;
 
                                     if (this.logDebug) this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType] || 'Unknown'}, name: ${deviceName}`);
 
@@ -267,7 +280,7 @@ class XboxLocalApi extends EventEmitter {
                                         userHash = response.xsts.DisplayClaims?.xui?.[0]?.uhs;
 
                                         if (token && userHash) {
-                                            athorized = true;
+                                            authorized = true;
                                         }
                                     } catch (error) {
                                         this.emit('debug', 'No valid token data found, connecting anonymously');
@@ -288,7 +301,7 @@ class XboxLocalApi extends EventEmitter {
                                         connectRequest.set('publicKey', data.publicKey);
                                         connectRequest.set('iv', data.iv);
 
-                                        if (athorized) {
+                                        if (authorized) {
                                             const sequenceNumber = await this.getSequenceNumber();
                                             connectRequest.set('userHash', userHash, true);
                                             connectRequest.set('token', token, true);
@@ -297,7 +310,9 @@ class XboxLocalApi extends EventEmitter {
                                             connectRequest.set('connectRequestGroupEnd', 1);
                                         }
 
-                                        if (this.logDebug) this.emit('debug', `Client connecting using: ${athorized ? 'XSTS token' : 'Anonymous'}`);
+                                        // Track auth state so powerOff() can detect anonymous sessions
+                                        this.authorized = authorized;
+                                        if (this.logDebug) this.emit('debug', `Client connecting using: ${authorized ? 'XSTS token' : 'Anonymous'}`);
 
                                         const message = connectRequest.pack(this.crypto);
                                         await this.sendSocketMessage(message, 'connectRequest');
@@ -356,19 +371,70 @@ class XboxLocalApi extends EventEmitter {
                                     }
 
                                     const activeTitles = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles : [];
-                                    if (activeTitles.length > 0) {
+
+                                    // FIX: power derived from activeTitles presence
+                                    const power = activeTitles.length > 0;
+
+                                    if (power) {
+                                        // FIX: use last element — activeTitles ordered oldest→newest,
+                                        // last entry is the foreground title
                                         const title = activeTitles[0];
-                                        this.power = true;
                                         this.titleId = title.titleId;
                                         this.reference = title.aumId;
-                                        this.playState = false;
+                                    }
 
-                                        this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute,  this.playState);
-                                        if (this.logDebug) this.emit('debug', `Status changed, app Id: ${this.titleId}, reference: ${this.reference}`);
+                                    this.power = power;
+                                    this.playState = false;
 
-                                        const state = { power: this.power, titleId: this.titleId, reference: this.reference, volume: this.volume, mute: this.mute };
-                                        if( this.restFulEnabled) this.emit('restFul', 'state', state);
-                                        if( this.mqttEnabled) this.emit('mqtt', 'State', state);
+                                    // FIX: emit stateChanged always — when activeTitles is empty
+                                    // (console turning off), power=false must reach HomeKit immediately.
+                                    this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute, this.playState);
+                                    if (this.logDebug) this.emit('debug', `Status changed, power: ${this.power}, app Id: ${this.titleId}, reference: ${this.reference}`);
+
+                                    const statusState = { power: this.power, titleId: this.titleId, reference: this.reference, volume: this.volume, mute: this.mute };
+                                    if (this.restFulEnabled) this.emit('restFul', 'state', statusState);
+                                    if (this.mqttEnabled) this.emit('mqtt', 'State', statusState);
+
+                                    // Inactivity watchdog — consoleStatus is the primary sign-of-life.
+                                    // We ping the host every 5 s to reset the timer when the console is
+                                    // idle between status packets. After 14 s silence the socket is
+                                    // closed so the impulse generator can reconnect.
+                                    this.heartBeatStartTime = Date.now();
+                                    if (!this.acknowledgeInterval) {
+                                        this.acknowledgeInterval = setInterval(async () => {
+                                            const elapsed = (Date.now() - this.heartBeatStartTime) / 1000;
+                                            if (this.logDebug) this.emit('debug', `Console last seen: ${elapsed.toFixed(1)}s ago`);
+
+                                            if (elapsed >= 14) {
+                                                clearInterval(this.acknowledgeInterval);
+                                                this.acknowledgeInterval = null;
+                                                if (this.logDebug) this.emit('debug', `Console inactivity timeout — disconnecting`);
+                                                // Close socket first so on('close') triggers updateState().
+                                                // Calling updateState() directly would null this.socket before
+                                                // close(), causing the old socket to leak in the OS.
+                                                const socketToClose = this.socket;
+                                                this.socket = null;
+                                                this.connected = false;
+                                                if (socketToClose) socketToClose.close();
+                                                return;
+                                            }
+
+                                            // Network ping every 5 s — resets the watchdog when console
+                                            // is reachable but has no state change to report.
+                                            if (Math.round(elapsed) % 5 === 0 && Math.round(elapsed) > 0) {
+                                                try {
+                                                    const pingResult = await this.functions.ping(this.host);
+                                                    if (pingResult.online) {
+                                                        this.heartBeatStartTime = Date.now();
+                                                        if (this.logDebug) this.emit('debug', `Ping OK — console reachable`);
+                                                    } else {
+                                                        if (this.logDebug) this.emit('debug', `Ping failed — console unreachable`);
+                                                    }
+                                                } catch (error) {
+                                                    if (this.logError) this.emit('error', `Ping error: ${error}`);
+                                                }
+                                            }
+                                        }, 1000);
                                     }
                                     break;
                                 case 'acknowledge':

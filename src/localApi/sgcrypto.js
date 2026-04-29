@@ -68,6 +68,8 @@ class SgCrypto {
         return Buffer.from(encryptedPayload, 'binary');
     }
 
+    // Note: argument order (data, iv, key) differs from encrypt(data, key, iv) — kept as original.
+    // All call sites pass (data, iv) relying on key defaulting to this.key.
     decrypt(data, iv, key) {
         key = key || this.key;
         iv = iv || IV;
