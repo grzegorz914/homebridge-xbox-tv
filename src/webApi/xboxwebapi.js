@@ -16,7 +16,6 @@ class XboxWebApi extends EventEmitter {
         this.logDebug = config.log?.debug;
         this.inputsFile = inputsFile;
 
-        // BŁ9 FIX: store restFul/mqtt flags passed from xboxdevice
         this.restFulEnabled = restFulEnabled || false;
         this.mqttEnabled = mqttEnabled || false;
 
@@ -100,7 +99,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Check authorization error: ${error}`);
+            throw new Error(`Check authorization error: ${error.message}`, { cause: error });
         }
     }
 
@@ -110,7 +109,6 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            // BŁ11 FIX: typo errorMerssage → errorMessage (applies to all methods)
             const error = data.status?.errorMessage;
             if (!status) {
                 if (this.logDebug) this.emit('debug', `Console list data error: ${error}`);
@@ -153,7 +151,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Consoles list error: ${error}`);
+            throw new Error(`Consoles list error: ${error.message}`, { cause: error });
         }
     }
 
@@ -177,7 +175,6 @@ class XboxWebApi extends EventEmitter {
                 digitalAssistantRemoteControlEnabled: !!data.digitalAssistantRemoteControlEnabled,
                 consoleStreamingEnabled: !!data.consoleStreamingEnabled,
                 remoteManagementEnabled: !!data.remoteManagementEnabled,
-                // BŁ11 FIX: typo errorMerssage → errorMessage
                 status: data.status?.errorCode === 'OK',
                 error: data.status?.errorMessage
             };
@@ -194,7 +191,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Console status error: ${error}`);
+            throw new Error(`Console status error: ${error.message}`, { cause: error });
         }
     }
 
@@ -207,7 +204,6 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Installed apps data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            // BŁ11 FIX: typo errorMerssage → errorMessage
             const error = data.status?.errorMessage;
             if (!status) {
                 if (this.logDebug) this.emit('debug', `Installed apps data error: ${error}`);
@@ -233,7 +229,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Installed apps error: ${error}`);
+            throw new Error(`Installed apps error: ${error.message}`, { cause: error });
         }
     }
 
@@ -244,7 +240,6 @@ class XboxWebApi extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Media state data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
-            // BŁ11 FIX: typo errorMerssage → errorMessage
             const error = data.status?.errorMessage;
             if (!status) {
                 if (this.logDebug) this.emit('debug', `Media state data error: ${error}`);
@@ -270,7 +265,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Media state error: ${error}`);
+            throw new Error(`Media state error: ${error.message}`, { cause: error });
         }
     }
 
@@ -298,7 +293,7 @@ class XboxWebApi extends EventEmitter {
             await new Promise(resolve => setTimeout(resolve, 1000));
             if (command === 'WakeUp') this.emit('stateChanged', false);
             if (command === 'TurnOff') this.emit('stateChanged', true);
-            throw new Error(`Failed to send command: type=${commandType}, command=${command}, error=${error.message}`);
+            throw new Error(`Failed to send command: type=${commandType}, command=${command}, error=${error.message}`, { cause: error });
         }
     }
 

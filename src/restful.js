@@ -17,8 +17,7 @@ class RestFul extends EventEmitter {
             consoleslist: DEFAULT_MESSAGE,
             profile: DEFAULT_MESSAGE,
             apps: DEFAULT_MESSAGE,
-            storages: DEFAULT_MESSAGE,
-            status: DEFAULT_MESSAGE
+            storages: DEFAULT_MESSAGE
         }
         this.connect();
     }
@@ -69,11 +68,18 @@ class RestFul extends EventEmitter {
             });
 
             // Start the server
-            app.listen(this.port, () => {
+            this.server = app.listen(this.port, () => {
                 this.emit('connected', `RESTful started on port: ${this.port}`);
             });
         } catch (error) {
             if (this.logWarn) this.emit('warn', `RESTful Connect error: ${error}`);
+        }
+    }
+
+    close() {
+        if (this.server) {
+            this.server.close();
+            this.server = null;
         }
     }
 

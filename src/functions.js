@@ -76,6 +76,9 @@ class Functions {
     }
 
     async ping(ipOrHost) {
+        if (!/^[a-zA-Z0-9.\-_]+$/.test(ipOrHost)) {
+            return { online: false };
+        }
         const isWindows = process.platform === 'win32';
         const cmd = isWindows ? `ping -n 1 ${ipOrHost}` : `ping -c 1 ${ipOrHost}`;
 

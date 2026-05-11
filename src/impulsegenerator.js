@@ -17,7 +17,7 @@ class ImpulseGenerator extends EventEmitter {
             if (!Array.isArray(timers)) throw new Error('Timers must be an array');
 
             for (const { name, sampling } of timers) {
-                if (!name || !sampling) continue;
+                if (!name || !sampling || sampling <= 0) continue;
 
                 if (runOnStart) this.emit(name);
 

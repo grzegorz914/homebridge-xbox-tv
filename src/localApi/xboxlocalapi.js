@@ -22,7 +22,6 @@ class XboxLocalApi extends EventEmitter {
         this.tokensFile = tokensFile;
         this.devInfoFile = devInfoFile;
 
-        // FIX: guard with || false so undefined becomes false
         this.restFulEnabled = restFulEnabled || false;
         this.mqttEnabled = mqttEnabled || false;
 
@@ -59,14 +58,12 @@ class XboxLocalApi extends EventEmitter {
                     this.connecting = true;
                     try {
                         await this.connect();
-                        // FIX: discoveryRequest in try (not finally) — only sent when socket is ready
                         const discoveryRequest = new SimplePacket('discoveryRequest');
                         const message = discoveryRequest.pack(this.crypto);
                         await this.sendSocketMessage(message, 'discoveryRequest');
                     } catch (error) {
                         if (this.logError) this.emit('error', `Connection error: ${error}`);
                     } finally {
-                        // FIX: always release the connecting lock so next heartbeat can retry
                         this.connecting = false;
                     }
                 } catch (error) {
@@ -79,7 +76,6 @@ class XboxLocalApi extends EventEmitter {
     };
 
     async updateState() {
-        // FIX: clearInterval before nulling — without this the old timer survives
         // reconnect and fires a spurious disconnect after 14 s of the new session.
         if (this.acknowledgeInterval) {
             clearInterval(this.acknowledgeInterval);
@@ -89,6 +85,7 @@ class XboxLocalApi extends EventEmitter {
         this.firstRun = false;
         this.acknowledgeInterval = null;
         this.sequenceNumber = 0;
+        this.fragments = {};
         this.targetParticipantId = 0;
         this.sourceParticipantId = 0;
         this.power = false;
@@ -100,7 +97,6 @@ class XboxLocalApi extends EventEmitter {
     async getSequenceNumber() {
         const seq = this.sequenceNumber;
         this.sequenceNumber = (this.sequenceNumber + 1) >>> 0;
-        // FIX: typo 'Sqquence' → 'Sequence'
         if (this.logDebug) this.emit('debug', `Sequence number set to: ${this.sequenceNumber}`);
         return seq;
     };
@@ -189,7 +185,6 @@ class XboxLocalApi extends EventEmitter {
                             if (messageType === 'message') {
                                 const targetId = packet.targetParticipantId;
 
-                                // FIX: targetId=0 is a broadcast (console keepalive acknowledge) —
                                 // must pass through regardless of our sourceParticipantId.
                                 if (targetId !== 0 && targetId !== this.sourceParticipantId) {
                                     if (this.logDebug) this.emit('debug', `ParticipantId mismatch: ${targetId} !== ${this.sourceParticipantId}. Ignoring packet`);
@@ -262,7 +257,6 @@ class XboxLocalApi extends EventEmitter {
                                     const deviceType = packet.clientType;
                                     const deviceName = packet.consoleName;
                                     const certificate = packet.certificate;
-                                    // FIX: typo 'athorized' → 'authorized'
                                     let authorized = false;
 
                                     if (this.logDebug) this.emit('debug', `Discovered device: ${LocalApi.Console.Name[deviceType] || 'Unknown'}, name: ${deviceName}`);
@@ -371,12 +365,9 @@ class XboxLocalApi extends EventEmitter {
                                     }
 
                                     const activeTitles = Array.isArray(packet.payloadProtected.activeTitles) ? packet.payloadProtected.activeTitles : [];
-
-                                    // FIX: power derived from activeTitles presence
                                     const power = activeTitles.length > 0;
 
                                     if (power) {
-                                        // FIX: use last element — activeTitles ordered oldest→newest,
                                         // last entry is the foreground title
                                         const title = activeTitles[0];
                                         this.titleId = title.titleId;
@@ -386,7 +377,6 @@ class XboxLocalApi extends EventEmitter {
                                     this.power = power;
                                     this.playState = false;
 
-                                    // FIX: emit stateChanged always — when activeTitles is empty
                                     // (console turning off), power=false must reach HomeKit immediately.
                                     this.emit('stateChanged', this.power, this.titleId, this.reference, this.volume, this.mute, this.playState);
                                     if (this.logDebug) this.emit('debug', `Status changed, power: ${this.power}, app Id: ${this.titleId}, reference: ${this.reference}`);

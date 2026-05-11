@@ -31,14 +31,13 @@ class Authentication {
             }
 
             const postData = QueryString.stringify(payload);
-            // BŁ12 FIX: axios.post expects config object as 3rd arg, not bare headers object
             const response = await axios.post(WebApi.Url.RefreshToken, postData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
             const refreshToken = response.data;
             refreshToken.issued = new Date().toISOString();
             this.tokens.oauth = refreshToken;
             return true;
         } catch (error) {
-            throw new Error(`Refresh token error: ${error}`);
+            throw new Error(`Refresh token error: ${error.message}`, { cause: error });
         }
     }
 
@@ -61,7 +60,7 @@ class Authentication {
             this.tokens.xsts = {};
             return true;
         } catch (error) {
-            throw new Error(`User token error: ${error}`);
+            throw new Error(`User token error: ${error.message}`, { cause: error });
         }
     }
 
@@ -77,13 +76,12 @@ class Authentication {
             };
 
             const postData = JSON.stringify(payload);
-            // BŁ12 FIX: was passing bare headers object without { headers } wrapper
             const response = await axios.post(WebApi.Url.XstsToken, postData, { headers: { 'Content-Type': 'application/json', 'x-xbl-contract-version': '1' } });
             const xstsToken = response.data;
             this.tokens.xsts = xstsToken;
             return true;
         } catch (error) {
-            throw new Error(`Xsts token error: ${error}`);
+            throw new Error(`Xsts token error: ${error.message}`, { cause: error });
         }
     }
 
@@ -102,7 +100,6 @@ class Authentication {
             }
 
             const postData = QueryString.stringify(payload);
-            // BŁ12 FIX: consistent { headers } wrapper
             const response = await axios.post(WebApi.Url.AccessToken, postData, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
             const accessToken = response.data;
             accessToken.issued = new Date().toISOString();
@@ -110,7 +107,7 @@ class Authentication {
             await this.functions.saveData(this.tokensFile, this.tokens);
             return true;
         } catch (error) {
-            throw new Error(`Access token error: ${error}`);
+            throw new Error(`Access token error: ${error.message}`, { cause: error });
         }
     }
 
@@ -118,55 +115,34 @@ class Authentication {
         switch (type) {
             case 'user':
                 if (this.tokens.user.Token) {
-                    const tokenExpired = new Date() > new Date(this.tokens.user.NotAfter).getTime();
+                    const tokenExpired = Date.now() > new Date(this.tokens.user.NotAfter).getTime();
                     if (tokenExpired) {
-                        try {
-                            await this.refreshToken(this.tokens.oauth.refresh_token);
-                            await this.getUserToken(this.tokens.oauth.access_token);
-                            await this.refreshTokens('xsts');
-                            return true;
-                        } catch (error) {
-                            throw new Error(error);
-                        }
-                    } else {
-                        try {
-                            await this.refreshTokens('xsts');
-                            return true;
-                        } catch (error) {
-                            throw new Error(error);
-                        }
-                    }
-                } else {
-                    try {
+                        await this.refreshToken(this.tokens.oauth.refresh_token);
                         await this.getUserToken(this.tokens.oauth.access_token);
                         await this.refreshTokens('xsts');
                         return true;
-                    } catch (error) {
-                        throw new Error(error);
+                    } else {
+                        await this.refreshTokens('xsts');
+                        return true;
                     }
+                } else {
+                    await this.getUserToken(this.tokens.oauth.access_token);
+                    await this.refreshTokens('xsts');
+                    return true;
                 }
             case 'xsts':
                 if (this.tokens.xsts.Token) {
-                    const tokenExpired = new Date() > new Date(this.tokens.xsts.NotAfter).getTime();
+                    const tokenExpired = Date.now() > new Date(this.tokens.xsts.NotAfter).getTime();
                     if (tokenExpired) {
-                        try {
-                            // BŁ13 FIX: was calling refreshTokens('xsts') after getXstsToken → infinite recursion
-                            // when token expired. Now just refresh once and return.
-                            await this.getXstsToken(this.tokens.user.Token);
-                            return true;
-                        } catch (error) {
-                            throw new Error(error);
-                        }
+                        // when token expired. Now just refresh once and return.
+                        await this.getXstsToken(this.tokens.user.Token);
+                        return true;
                     } else {
                         return true;
                     }
                 } else {
-                    try {
-                        await this.getXstsToken(this.tokens.user.Token);
-                        return true;
-                    } catch (error) {
-                        throw new Error(error);
-                    }
+                    await this.getXstsToken(this.tokens.user.Token);
+                    return true;
                 }
             default:
                 throw new Error(`Unknown refresh token type: ${type}`);

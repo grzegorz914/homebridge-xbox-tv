@@ -73,6 +73,12 @@ class Mqtt extends EventEmitter {
             });
     }
 
+    disconnect() {
+        return new Promise((resolve) => {
+            this.mqttClient.end(false, {}, resolve);
+        });
+    }
+
     publish(topic, message) {
         return new Promise((resolve, reject) => {
             const fullTopic = `${this.config.prefix}/${topic}`;
