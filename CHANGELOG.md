@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.1.19] - (24.05.2026)
+
+## Changes
+
+- fix: console power-off detected in ~14 s instead of ~3 min (watchdog timer no longer reset by network ping)
+- security: replaced `elliptic` and `jsrsasign` with Node.js built-in crypto (removes GHSA-848j-6mx2-7j84 CVE)
+
 ## [4.1.13] - (06.04.2026)
 
 ## Changes

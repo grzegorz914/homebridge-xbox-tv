@@ -147,7 +147,7 @@ class XboxLocalApi extends EventEmitter {
 
                             // check message type exists
                             if (!Object.keys(LocalApi.Messages.Category).includes(messageTypeHex)) {
-                                if (this.logWarn) this.emit('warn', `Received unknown message type: ${messageTypeHex}, message: ${data}`);
+                                if (this.logDebug) this.emit('debug', `Received unknown message type: ${messageTypeHex}, message: ${data}`);
                                 return;
                             }
 
@@ -385,10 +385,10 @@ class XboxLocalApi extends EventEmitter {
                                     if (this.restFulEnabled) this.emit('restFul', 'state', statusState);
                                     if (this.mqttEnabled) this.emit('mqtt', 'State', statusState);
 
-                                    // Inactivity watchdog — consoleStatus is the primary sign-of-life.
-                                    // We ping the host every 5 s to reset the timer when the console is
-                                    // idle between status packets. After 14 s silence the socket is
-                                    // closed so the impulse generator can reconnect.
+                                    // Inactivity watchdog — only SmartGlass packets (consoleStatus or
+                                    // acknowledge) reset the timer. Ping is diagnostic only and must NOT
+                                    // reset it: a console in standby keeps responding to pings for several
+                                    // minutes, which would otherwise prevent OFF detection.
                                     this.heartBeatStartTime = Date.now();
                                     if (!this.acknowledgeInterval) {
                                         this.acknowledgeInterval = setInterval(async () => {
@@ -409,17 +409,11 @@ class XboxLocalApi extends EventEmitter {
                                                 return;
                                             }
 
-                                            // Network ping every 5 s — resets the watchdog when console
-                                            // is reachable but has no state change to report.
+                                            // Diagnostic ping — logged only, does not reset the watchdog.
                                             if (Math.round(elapsed) % 5 === 0 && Math.round(elapsed) > 0) {
                                                 try {
                                                     const pingResult = await this.functions.ping(this.host);
-                                                    if (pingResult.online) {
-                                                        this.heartBeatStartTime = Date.now();
-                                                        if (this.logDebug) this.emit('debug', `Ping OK — console reachable`);
-                                                    } else {
-                                                        if (this.logDebug) this.emit('debug', `Ping failed — console unreachable`);
-                                                    }
+                                                    if (this.logDebug) this.emit('debug', `Ping ${pingResult.online ? 'OK' : 'failed'} — console ${pingResult.online ? 'reachable' : 'unreachable'}`);
                                                 } catch (error) {
                                                     if (this.logError) this.emit('error', `Ping error: ${error}`);
                                                 }

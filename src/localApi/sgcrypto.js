@@ -1,8 +1,6 @@
-import JsRsaSign from 'jsrsasign';
 import Crypto from 'crypto';
 import { EOL } from 'os';
-import Elliptic from 'elliptic';
-const EC = Elliptic.ec;
+
 const IV = Buffer.from('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00');
 
 class SgCrypto {
@@ -10,7 +8,6 @@ class SgCrypto {
         this.key = false;
         this.iv = false;
         this.hashKey = false;
-        this.ec = new EC('p256'); // P-256
     }
 
     async getPublicKey(certificate) {
@@ -18,28 +15,29 @@ class SgCrypto {
             certificate = certificate.toString('base64').match(/.{0,64}/g).join('\n');
             const pem = `-----BEGIN CERTIFICATE-----${EOL}${certificate}-----END CERTIFICATE-----`;
 
-            const ecKey = JsRsaSign.X509.getPublicKeyFromCertPEM(pem);
-            const sha512 = Crypto.createHash('sha512');
+            // Extract the console's P-256 public key from the certificate (SPKI DER,
+            // last 65 bytes = uncompressed point: 04 || x || y).
+            const x509 = new Crypto.X509Certificate(pem);
+            const spki = x509.publicKey.export({ type: 'spki', format: 'der' });
+            const consolePublicKey = spki.slice(-65);
 
-            const key1 = this.ec.genKeyPair();
-            const key2 = this.ec.keyFromPublic(ecKey.pubKeyHex, 'hex');
+            // Generate an ephemeral P-256 key pair and compute the ECDH shared secret.
+            const ecdh = Crypto.createECDH('prime256v1');
+            ecdh.generateKeys();
+            const sharedSecret = ecdh.computeSecret(consolePublicKey);
 
-            const shared1 = key1.derive(key2.getPublic());
-            const derivedSecret = Buffer.from(shared1.toString(16), 'hex');
-            const publicKeyClient = key1.getPublic('hex');
+            // Strip the 04 uncompressed-point prefix → 64-byte (x || y) public key.
+            const publicKey = ecdh.getPublicKey().slice(1);
 
             const preSalt = Buffer.from('d637f1aae2f0418c', 'hex');
             const postSalt = Buffer.from('a8f81a574e228ab7', 'hex');
-            const prePostSalt = Buffer.concat([preSalt, derivedSecret, postSalt]);
+            const shaSecret = Crypto.createHash('sha512')
+                .update(Buffer.concat([preSalt, sharedSecret, postSalt]))
+                .digest();
 
-            const shaSecret = sha512.update(prePostSalt).digest();
-
-            const publicKey = Buffer.from(publicKeyClient.substring(2), 'hex');
-            const secret = Buffer.from(shaSecret.toString('hex'), 'hex');
-
-            this.key = secret.subarray(0, 16);
-            this.iv = secret.subarray(16, 32);
-            this.hashKey = secret.subarray(32, 64);
+            this.key = shaSecret.subarray(0, 16);
+            this.iv = shaSecret.subarray(16, 32);
+            this.hashKey = shaSecret.subarray(32, 64);
 
             return { publicKey, iv: this.iv };
         } catch (error) {
