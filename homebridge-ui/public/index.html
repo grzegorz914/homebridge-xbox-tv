@@ -84,7 +84,11 @@
       $('deviceWebApiControl').checked = device.webApi.enable || false;
 
       const tokenLength = device.webApi.token?.length || 0;
-      $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+      const btn = $('startAuthorizationButton');
+      if (btn.dataset.phase !== 'activate') {
+        btn.innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+        btn.dataset.phase = tokenLength <= 10 ? 'start' : 'check';
+      }
       $('deviceWebApiControl').disabled = tokenLength <= 10;
 
       if (tokenLength <= 10) {
@@ -172,10 +176,14 @@
       currentDevice.webApi.enable = $('deviceWebApiControl').checked;
 
       const tokenLength = currentDevice.webApi.token?.length || 0;
-      $('startAuthorizationButton').innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+      const authBtn = $('startAuthorizationButton');
+      if (authBtn.dataset.phase !== 'activate') {
+        authBtn.innerText = tokenLength <= 10 ? "Start Authorization" : "Check State";
+        authBtn.dataset.phase = tokenLength <= 10 ? 'start' : 'check';
+      }
 
       if (tokenLength <= 10) {
-        $('startAuthorizationButton').removeAttribute('disabled');
+        authBtn.removeAttribute('disabled');
       }
 
       await homebridge.updatePluginConfig(pluginConfig);
@@ -190,49 +198,78 @@
       }
     }
 
+    // Trigger the operation via homebridge.request() (Socket.IO — unreliable for response),
+    // then poll _result.json via HTTP until the server writes the result.
+    // HTTP fetch bypasses the unreliable Socket.IO server→client path entirely.
+    async function requestViaFile(path, body, ms = 15000) {
+      const ts = Date.now();
+
+      homebridge.request(path, body).catch(() => {}); // fire-and-forget
+
+      const deadline = ts + ms;
+      while (Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 300));
+        try {
+          const res = await fetch(`_result.json?t=${Date.now()}`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if ((data.ts ?? 0) >= ts) {
+            if (data.ok) return data.data ?? true;
+            throw new Error(data.error || 'Unknown error');
+          }
+        } catch (e) {
+          if (e.message && e.message !== 'Failed to fetch') throw e;
+        }
+      }
+      throw new Error('Request timed out');
+    }
+
     // Clear token button logic
     $("clearTokenButton").addEventListener("click", async () => {
-      updateInfo('info', 'Start clearing token...', 'yellow');
+      $("clearTokenButton").disabled = true;
+      updateInfo('info', 'Clearing token...', 'yellow');
+      updateInfo('info1', '', '');
       homebridge.showSpinner();
 
       try {
         const host = this.device.host;
-        await homebridge.request('/clearToken', { host });
+        await requestViaFile('/clearToken', { host }, 10000);
 
-        Object.assign(this.device, {
-          webApi: {
-            token: '',
-            enable: false
-          }
-        });
-
+        Object.assign(this.device, { webApi: { token: '', enable: false } });
         updateDeviceForm(this.device);
-        updateInfo('info', "Web API token cleared, now you can start a new authorization process.", "green");
+        updateInfo('info', "Web API token cleared. Now you can start a new authorization process.", "green");
         $("startAuthorizationButton").removeAttribute("disabled");
 
+        homebridge.hideSpinner();
         await homebridge.updatePluginConfig(pluginConfig);
         await homebridge.savePluginConfig(pluginConfig);
       } catch (error) {
-        updateInfo('info', "Clear Web API token error.", "yellow");
-        updateInfo('info1', `Error: ${error}`, "red");
+        updateInfo('info', "Clear Web API token error.", "red");
+        updateInfo('info1', String(error), "red");
       } finally {
         homebridge.hideSpinner();
+        $("clearTokenButton").disabled = false;
       }
     });
 
     // Start authorization logic
     $("startAuthorizationButton").addEventListener("click", async () => {
-      $("startAuthorizationButton").setAttribute("disabled", "true"); // blokada wielokliku
-      updateInfo('info', "Starting authorization...", "yellow");
+      const phase = $("startAuthorizationButton").dataset.phase || 'start';
+      $("startAuthorizationButton").disabled = true;
+      const infoMsg = phase === 'activate' ? "Activating console..."
+        : phase === 'check' ? "Checking authorization state..."
+        : "Starting authorization...";
+      updateInfo('info', infoMsg, "yellow");
+      updateInfo('info1', '', '');
       homebridge.showSpinner();
 
       try {
         const { host, webApi } = this.device;
         const { token, clientId, clientSecret } = webApi;
 
-        const response = await homebridge.request('/startAuthorization', {
+        const response = await requestViaFile('/startAuthorization', {
           host, token, clientId, clientSecret
-        });
+        }, 60000);
 
         const { info, status } = response;
 
@@ -240,43 +277,38 @@
           case 0: // Authorized
             updateInfo('info', info, "green");
             $("startAuthorizationButton").innerText = "Check State";
+            $("startAuthorizationButton").dataset.phase = 'check';
             $("deviceWebApiControl").disabled = false;
             break;
           case 1: // Needs user interaction
             $("startAuthorizationButton").innerText = "Activate Console";
+            $("startAuthorizationButton").dataset.phase = 'activate';
             $("deviceWebApiControl").checked = false;
             $("deviceWebApiControl").disabled = true;
             webApi.enable = false;
 
-            let timeLeft = 10;
-            const timerId = setInterval(() => {
-              if (timeLeft <= 0) {
-                open(info);
-                clearInterval(timerId);
-                updateInfo('info', "Now paste the *code* into *Web API Token* and press *Activate Console*.", "yellow");
-              } else {
-                updateInfo('info', `After ${timeLeft} sec, sign in to Xbox Live and authorize. Then copy the code after ?code= and return here.`, "yellow");
-                timeLeft--;
-              }
-            }, 1000);
+            open(info);
+            updateInfo('info', "Sign in to Xbox Live. After redirected to localhost:8888, copy everything after ?code= and paste it into the Web API Token field, then press Activate Console.", "yellow");
+            updateInfo('info1', '', '');
             break;
           case 2: // Successfully authorized
             updateInfo('info', info, "green");
             $("startAuthorizationButton").innerText = "Check State";
+            $("startAuthorizationButton").dataset.phase = 'check';
             $("deviceWebApiControl").disabled = false;
             $("deviceWebApiControl").checked = true;
             webApi.enable = true;
-
+            homebridge.hideSpinner();
             await homebridge.updatePluginConfig(pluginConfig);
             await homebridge.savePluginConfig(pluginConfig);
             break;
         }
       } catch (error) {
-        updateInfo('info', "Authorization error.", "yellow");
-        updateInfo('info1', `Error: ${JSON.stringify(error)}`, "red");
+        updateInfo('info', "Authorization error.", "red");
+        updateInfo('info1', JSON.stringify(error), "red");
       } finally {
-        $("startAuthorizationButton").removeAttribute("disabled");
         homebridge.hideSpinner();
+        $("startAuthorizationButton").disabled = false;
       }
     });
 

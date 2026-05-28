@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.1.20] - (28.05.2026)
+
+## Changes
+
+- fix: plugin config UI — authorization manager spinner no longer hangs indefinitely
+- fix: server responses now delivered via HTTP file polling, bypassing unreliable Socket.IO server→client channel in Homebridge Config UI
+- fix: button label and status message correctly reflect current authorization phase (Start Authorization / Activate Console / Check State)
+- fix: Web API Token field now accepts full callback URL (code extracted automatically) and URL-encoded codes (%24 → $ etc.)
+
 ## [4.1.19] - (24.05.2026)
 
 ## Changes
