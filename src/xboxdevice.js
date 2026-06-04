@@ -1,6 +1,4 @@
 import EventEmitter from 'events';
-import RestFul from './restful.js';
-import Mqtt from './mqtt.js';
 import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
 import Functions from './functions.js';
@@ -9,7 +7,7 @@ import { DefaultInputs, WebApi } from './constants.js';
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class XboxDevice extends EventEmitter {
-    constructor(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile) {
+    constructor(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile, restFul1 = null, restFulConnected = false, mqtt1 = null, mqttConnected = false) {
         super();
 
         Accessory = api.platformAccessory;
@@ -49,9 +47,11 @@ class XboxDevice extends EventEmitter {
 
         //external integrations
         this.restFul = device.restFul ?? {};
-        this.restFulConnected = false;
+        this.restFul1 = restFul1;
+        this.restFulConnected = restFulConnected;
         this.mqtt = device.mqtt ?? {};
-        this.mqttConnected = false;
+        this.mqtt1 = mqtt1;
+        this.mqttConnected = mqttConnected;
         this.functions = new Functions();
 
         //sensors
@@ -135,74 +135,6 @@ class XboxDevice extends EventEmitter {
         } catch (error) {
             throw new Error(`${integration} set key: ${key}, value: ${value}, error: ${error}`);
         }
-    }
-
-    async externalIntegrations() {
-        //RESTFul server
-        const restFulEnabled = this.restFul.enable || false;
-        if (restFulEnabled) {
-            try {
-                this.restFul1 = new RestFul({
-                    port: this.restFul.port || 3000,
-                    logWarn: this.logWarn,
-                    logDebug: this.logDebug
-                })
-                    .on('connected', (message) => {
-                        this.emit('success', message);
-                        this.restFulConnected = true;
-                    })
-                    .on('set', async (key, value) => {
-                        try {
-                            await this.setOverExternalIntegration('RESTFul', key, value);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `RESTFul set error: ${error}`);
-                        }
-                    })
-                    .on('debug', (debug) => this.emit('debug', debug))
-                    .on('warn', (warn) => this.emit('warn', warn))
-                    .on('error', (error) => this.emit('error', error));
-            } catch (error) {
-                if (this.logWarn) this.emit('warn', `RESTFul integration start error: ${error}`);
-            }
-        }
-
-        //mqtt client
-        const mqttEnabled = this.mqtt.enable || false;
-        if (mqttEnabled) {
-            try {
-                this.mqtt1 = new Mqtt({
-                    host: this.mqtt.host,
-                    port: this.mqtt.port || 1883,
-                    clientId: this.mqtt.clientId ? `microsoft_${this.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `microsoft_${Math.random().toString(16).slice(3)}`,
-                    prefix: this.mqtt.prefix ? `microsoft/${this.mqtt.prefix}/${this.name}` : `microsoft/${this.name}`,
-                    user: this.mqtt.auth?.user,
-                    passwd: this.mqtt.auth?.passwd,
-                    logWarn: this.logWarn,
-                    logDebug: this.logDebug
-                })
-                    .on('connected', (message) => {
-                        this.emit('success', message);
-                        this.mqttConnected = true;
-                    })
-                    .on('subscribed', (message) => {
-                        this.emit('success', message);
-                    })
-                    .on('set', async (key, value) => {
-                        try {
-                            await this.setOverExternalIntegration('MQTT', key, value);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `MQTT set error: ${error}`);
-                        }
-                    })
-                    .on('debug', (debug) => this.emit('debug', debug))
-                    .on('warn', (warn) => this.emit('warn', warn))
-                    .on('error', (error) => this.emit('error', error));
-            } catch (error) {
-                if (this.logWarn) this.emit('warn', `MQTT integration start error: ${error}`);
-            }
-        };
-
-        return true;
     }
 
     async prepareDataForAccessory() {
@@ -1275,9 +1207,6 @@ class XboxDevice extends EventEmitter {
             // Connect to local api
             const connect = await this.xboxLocalApi.connect();
             if (!connect) return false;
-
-            // Start external integrations
-            if (restFulEnabled || mqttEnabled) await this.externalIntegrations();
 
             //prepare data for accessory
             await this.prepareDataForAccessory();
