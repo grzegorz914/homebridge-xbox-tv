@@ -123,6 +123,19 @@ class XboxLocalApi extends EventEmitter {
     async connect() {
         return new Promise((resolve, reject) => {
             try {
+                // A previous attempt may have bound a socket that never completed
+                // the handshake (eg. console in standby, no discoveryResponse).
+                // Close it before binding a new one, otherwise every retry leaks
+                // a UDP socket on a fresh ephemeral port. Listeners are stripped
+                // first so the stale socket's 'close' handler can't fire
+                // updateState() against the session we're about to create.
+                if (this.socket) {
+                    const staleSocket = this.socket;
+                    this.socket = null;
+                    staleSocket.removeAllListeners();
+                    staleSocket.close();
+                }
+
                 this.socket = dgram.createSocket('udp4')
                     .on('error', (error) => {
                         if (this.logError) this.emit('error', `Socket error: ${error}`);
@@ -431,14 +444,26 @@ class XboxLocalApi extends EventEmitter {
 
                                             if (elapsed >= 14) {
                                                 clearInterval(this.acknowledgeInterval);
+                                                this.acknowledgeInterval = null;
 
-                                                const sequenceNumber = await this.getSequenceNumber();
-                                                const disconnect = new MessagePacket('disconnect');
-                                                disconnect.set('reason', 2);
-                                                disconnect.set('errorCode', 0);
-                                                const message = disconnect.pack(this.crypto, sequenceNumber, this.targetParticipantId, this.sourceParticipantId);
-                                                await this.sendSocketMessage(message, 'disconnect');
-                                                await this.updateState();
+                                                try {
+                                                    const sequenceNumber = await this.getSequenceNumber();
+                                                    const disconnect = new MessagePacket('disconnect');
+                                                    disconnect.set('reason', 2);
+                                                    disconnect.set('errorCode', 0);
+                                                    const message = disconnect.pack(this.crypto, sequenceNumber, this.targetParticipantId, this.sourceParticipantId);
+                                                    await this.sendSocketMessage(message, 'disconnect');
+                                                } catch (error) {
+                                                    if (this.logError) this.emit('error', `Send disconnect error: ${error}`);
+                                                }
+
+                                                // Close socket first so on('close') triggers updateState().
+                                                // Calling updateState() directly would null this.socket before
+                                                // close(), causing the old socket to leak in the OS.
+                                                const socketToClose = this.socket;
+                                                this.socket = null;
+                                                this.connected = false;
+                                                if (socketToClose) socketToClose.close();
                                             }
                                         }, 1000);
                                     }

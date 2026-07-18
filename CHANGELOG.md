@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.1.22] - (18.07.2026)
+
+## Changes
+
+- fix: Local API — UDP socket leak causing socket count to grow continuously while the Xbox is in standby; each 6 s reconnect heartbeat that found the console ping-reachable but not yet handshaked opened a brand-new socket on a fresh ephemeral port without closing the previous, still-open one; `connect()` now closes any stale socket before binding a new one, and the `acknowledge` inactivity watchdog now closes its socket instead of only clearing the in-memory reference
+- chore: bump `@homebridge/plugin-ui-utils` to ^2.2.5, `mqtt` to ^5.15.2, `uuid` to ^14.0.1, `axios` to ^1.18.1
+
 ## [4.1.21] - (04.06.2026)
 
 ## Changes
