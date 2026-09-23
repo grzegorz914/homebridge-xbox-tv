@@ -41,7 +41,7 @@
 * Apps, Inputs, Games can be switched if `webApiControl` is enabled and console is authorized.
 * Siri can be used for all functions, some times need to be created legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need to be created legacy buttons/switches/sensors.
-* Support external integrations, [RESTFul](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#restful-integration), [MQTT](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#mqtt-integration).
+* Support external integrations, [RESTFul](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#restful-integration), [MQTT](https://github.com/grzegorz914/homebridge-xbox-tv?tab=readme-ov-file#mqtt-integration), [HA Discovery](https://github.com/grzegorz914/homeassistant-mqtt-media-player).
 
 <p align="center">
  <a href="https://github.com/grzegorz914/homebridge-xbox-tv"><img alt="Accessory tile in the HomeKit app" src="https://raw.githubusercontent.com/grzegorz914/homebridge-xbox-tv/master/graphics/homekit.png" width="382" /></a>
