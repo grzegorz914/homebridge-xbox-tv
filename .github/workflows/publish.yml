@@ -1,0 +1,75 @@
+name: Publish to npm
+
+# Stable GitHub release (e.g. v4.11.2)            -> npm dist-tag "latest"
+# GitHub pre-release (e.g. v4.11.3-beta.0)         -> npm dist-tag "beta"
+# Manual run publishes the version from package.json on the selected branch/tag.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # npm trusted publishing (OIDC) and provenance
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing requires npm >= 11.5.1
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Resolve version and dist-tag
+        id: meta
+        env:
+          EVENT: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+
+          if [ "$EVENT" = "release" ] && [ "${RELEASE_TAG#v}" != "$VERSION" ]; then
+            echo "::error::Release tag $RELEASE_TAG does not match package.json version $VERSION"
+            exit 1
+          fi
+
+          # Prerelease versions (x.y.z-beta.n) go to the tag named after the identifier, default beta
+          case "$VERSION" in
+            *-*) PRE_ID=$(echo "${VERSION#*-}" | cut -d. -f1); DIST_TAG=${PRE_ID:-beta} ;;
+            *)   DIST_TAG=latest ;;
+          esac
+
+          if [ "$EVENT" = "release" ] && [ "$PRERELEASE" = "true" ] && [ "$DIST_TAG" = "latest" ]; then
+            echo "::error::Release is marked as pre-release but version $VERSION has no prerelease suffix (e.g. -beta.0)"
+            exit 1
+          fi
+          if [ "$EVENT" = "release" ] && [ "$PRERELEASE" != "true" ] && [ "$DIST_TAG" != "latest" ]; then
+            echo "::error::Version $VERSION is a prerelease but the GitHub release is not marked as pre-release"
+            exit 1
+          fi
+
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "::error::$NAME@$VERSION is already published on npm"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dist_tag=$DIST_TAG" >> "$GITHUB_OUTPUT"
+          echo "Publishing $NAME@$VERSION with dist-tag $DIST_TAG"
+
+      - name: Publish
+        run: npm publish --provenance --access public --tag ${{ steps.meta.outputs.dist_tag }}
