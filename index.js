@@ -119,6 +119,7 @@ class XboxPlatform {
 					const timer = setTimeout(resolve, 5000);
 					restFul1 = new RestFul({
 						port: device.restFul.port || 3000,
+						token: device.restFul.token,
 						logWarn: logLevel.warn,
 						logDebug: logLevel.debug,
 					})

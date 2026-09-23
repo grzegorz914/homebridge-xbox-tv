@@ -1,5 +1,6 @@
 import express, { json } from 'express';
 import EventEmitter from 'events';
+import { createHash, timingSafeEqual } from 'crypto';
 
 const DEFAULT_MESSAGE = 'This data is not available at this time.';
 
@@ -7,6 +8,7 @@ class RestFul extends EventEmitter {
     constructor(config) {
         super();
         this.port = config.port;
+        this.token = typeof config.token === 'string' ? config.token.trim() : '';
         this.logWarn = config.logWarn;
         this.logDebug = config.logDebug;
 
@@ -27,6 +29,19 @@ class RestFul extends EventEmitter {
             const app = express();
             app.set('json spaces', 2);
             app.use(json());
+
+            // Optional token auth, when a token is configured every route requires "Authorization: Bearer <token>"
+            if (this.token) {
+                app.use((req, res, next) => {
+                    const header = req.headers.authorization ?? '';
+                    const provided = header.startsWith('Bearer ') ? header.slice(7) : '';
+                    if (!this.tokenValid(provided)) {
+                        if (this.logWarn) this.emit('warn', `RESTFul Unauthorized request from: ${req.ip}, ${req.method} ${req.path}`);
+                        return res.status(401).json({ error: 'RESTFul Unauthorized' });
+                    }
+                    next();
+                });
+            }
 
             // Register GET routes for all keys
             for (const key of Object.keys(this.restFulData)) {
@@ -81,6 +96,13 @@ class RestFul extends EventEmitter {
             this.server.close();
             this.server = null;
         }
+    }
+
+    tokenValid(provided) {
+        // Compare fixed-length hashes so the check takes the same time regardless of token length or content
+        const a = createHash('sha256').update(provided).digest();
+        const b = createHash('sha256').update(this.token).digest();
+        return timingSafeEqual(a, b);
     }
 
     update(path, data) {
