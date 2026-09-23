@@ -12,12 +12,20 @@ class Mqtt extends EventEmitter {
         const isV5 = protocolVersion === 5;
         this.isV5 = isV5;
 
+        // Home Assistant discovery, availability is reported with a retained last will
+        this.haDiscovery = config.haDiscovery === true;
+        this.haPrefix = config.haPrefix || 'homeassistant';
+        this.availabilityTopic = `${config.prefix}/Availability`;
+
         const options = {
             clientId: config.clientId,
             username: config.user,
             password: config.passwd,
             protocolVersion,
             clean: !isV5,
+            ...(this.haDiscovery ? {
+                will: { topic: this.availabilityTopic, payload: 'offline', qos: 1, retain: true }
+            } : {}),
             ...(isV5 ? {
                 properties: {
                     sessionExpiryInterval: 60 * 60,
@@ -36,6 +44,7 @@ class Mqtt extends EventEmitter {
             .on('connect', async () => {
                 hasConnected = true;
                 this.emit('connected', `MQTT v${protocolVersion} connected.`);
+                if (this.haDiscovery) this.publishRetained(this.availabilityTopic, 'online').catch(() => { });
 
                 try {
                     await new Promise((resolve, reject) => {
@@ -92,6 +101,24 @@ class Mqtt extends EventEmitter {
     disconnect() {
         return new Promise((resolve) => {
             this.mqttClient.end(false, {}, resolve);
+        });
+    }
+
+    publishRetained(fullTopic, payload) {
+        return new Promise((resolve, reject) => {
+            // + and # are wildcards, the client would never complete such a publish
+            if (/[+#]/.test(fullTopic)) {
+                return reject(new Error(`Invalid topic ${fullTopic}, the name or prefix must not contain + or #`));
+            }
+
+            this.mqttClient.publish(fullTopic, payload, { qos: 1, retain: true }, (error) => {
+                if (error) {
+                    if (this.config.logWarn) this.emit('warn', `MQTT Publish error: ${error.message}`);
+                    return reject(error);
+                }
+                if (this.config.logDebug) this.emit('debug', `MQTT Publish retained Topic: ${fullTopic}, Payload: ${payload}`);
+                resolve();
+            });
         });
     }
 

@@ -157,6 +157,7 @@ class XboxPlatform {
 						clientId: device.mqtt.clientId ? `microsoft_${device.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `microsoft_${Math.random().toString(16).slice(3)}`,
 						prefix: device.mqtt.prefix ? `microsoft/${device.mqtt.prefix}/${name}` : `microsoft/${name}`,
 						protocolVersion: device.mqtt.protocolVersion,
+						haDiscovery: device.mqtt.haDiscovery,
 						user: device.mqtt.auth?.user,
 						passwd: device.mqtt.auth?.passwd,
 						logWarn: logLevel.warn,

@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
 import Functions from './functions.js';
+import HaDiscovery from './hadiscovery.js';
 import { DefaultInputs, WebApi } from './constants.js';
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
@@ -100,10 +101,18 @@ class XboxDevice extends EventEmitter {
                             break;
                     }
                     break;
-                case 'App':
+                case 'App': {
+                    // Known inputs (also Dashboard, Settings, Television...) are switched the same way as from HomeKit
+                    const input = this.inputsServices?.find(i => i.oneStoreProductId === value);
+                    if (input) {
+                        await this.setInput(input);
+                        set = true;
+                        break;
+                    }
                     const payload = [{ 'oneStoreProductId': value }];
                     set = await this.xboxWebApi.send('Shell', 'ActivateApplicationWithOneStoreProductId', payload);
                     break;
+                }
                 case 'Volume':
                     switch (value) {
                         case 'up':
@@ -316,6 +325,7 @@ class XboxDevice extends EventEmitter {
 
             // Only one time run
             if (updated) await this.displayOrder();
+            if (updated) this.haPublishConfig();
 
             return true;
         } catch (error) {
@@ -991,6 +1001,64 @@ class XboxDevice extends EventEmitter {
         };
     }
 
+    //home assistant discovery
+    async setupHaDiscovery() {
+        if (!this.mqttConnected || !this.mqtt.haDiscovery) return;
+
+        try {
+            this.ha = new HaDiscovery(this.mqtt1, {
+                objectId: `xbox_${this.liveId}`,
+                name: this.name,
+                deviceClass: 'receiver',
+                device: {
+                    manufacturer: 'Microsoft',
+                    model: this.modelName ?? this.savedInfo?.modelName,
+                    sw_version: this.savedInfo?.firmwareRevision
+                },
+                commands: {
+                    power: { key: 'Power' },
+                    // The console can only step the volume
+                    volume_step: { key: 'Volume', up: 'up', down: 'down' },
+                    mute: { key: 'Mute' },
+                    source: { key: 'App' },
+                    play_pause: { key: 'RcControl', value: 'playPause' }
+                }
+            });
+            await this.haPublishConfig();
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery setup error: ${error}`);
+        }
+    }
+
+    async haPublishConfig() {
+        if (!this.ha) return;
+
+        try {
+            const sources = (this.inputsServices ?? []).map(input => ({ id: input.oneStoreProductId, name: input.name }));
+            await this.ha.publishConfig({ sources });
+            await this.haUpdateState();
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery publish error: ${error}`);
+        }
+    }
+
+    async haUpdateState() {
+        if (!this.ha) return;
+
+        try {
+            const input = this.inputsServices?.find(input => input.identifier === this.inputIdentifier);
+            await this.ha.updateState({
+                power: this.power,
+                state: this.power ? (this.playState ? 'playing' : 'on') : 'off',
+                muted: typeof this.mute === 'boolean' ? this.mute : undefined,
+                source: input?.oneStoreProductId,
+                app_name: input?.name ?? ''
+            });
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery state error: ${error}`);
+        }
+    }
+
     //start
     async start() {
         try {
@@ -1022,6 +1090,7 @@ class XboxDevice extends EventEmitter {
                         })
                         .on('stateChanged', (power) => {
                             this.power = power;
+                            this.haUpdateState();
 
                             this.televisionService?.updateCharacteristic(Characteristic.Active, power);
 
@@ -1179,6 +1248,7 @@ class XboxDevice extends EventEmitter {
                     this.mute = mute;
                     this.screenSaver = screenSaver;
                     this.playState = playState;
+                    this.haUpdateState();
                     if (this.logInfo) {
                         const name = input ? input.name : reference;
                         const productId = input ? input.oneStoreProductId : reference;
@@ -1213,6 +1283,7 @@ class XboxDevice extends EventEmitter {
 
             // Prepare accessory
             const accessory = await this.prepareAccessory();
+            this.setupHaDiscovery();
             return accessory;
         } catch (error) {
             throw new Error(`Start error: ${error}`);

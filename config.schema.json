@@ -1238,6 +1238,15 @@
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
 									}
 								},
+								"haDiscovery": {
+									"title": "HA Discovery",
+									"type": "boolean",
+									"default": false,
+									"description": "Publish a Home Assistant MQTT discovery message so the device appears as one media player (class receiver). Requires the MQTT Universal Media Player integration in Home Assistant: https://github.com/grzegorz914/homeassistant-mqtt-media-player",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+									}
+								},
 								"auth": {
 									"title": "Authorization",
 									"type": "object",
@@ -1492,6 +1501,7 @@
 														"devices[].mqtt.clientId",
 														"devices[].mqtt.prefix",
 														"devices[].mqtt.protocolVersion",
+														"devices[].mqtt.haDiscovery",
 														{
 															"key": "devices[].mqtt.auth",
 															"title": "Authorization",

@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.2.0] - (23.09.2026)
+
+### Changes
+
+- added: Home Assistant discovery (`HA Discovery` option in the MQTT section). The device appears in Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration
+- added: MQTT availability topic (`<prefix>/Availability`, retained `online` / `offline` last will) when HA Discovery is enabled
+- fix: MQTT/RESTFul `App` command now switches built-in inputs (Dashboard, Settings, Television, Xbox Guide...) the same way as HomeKit
+- readme update
+- sample config update
+
 ## [4.1.25] - (23.09.2026)
 
 ### Changes

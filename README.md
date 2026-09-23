@@ -138,6 +138,7 @@
 | `mqtt.clientId` | Here optional set the `Client Id` of MQTT Broker. |
 | `mqtt.prefix` | Here set the `Prefix` for `Topic` or leave empty. |
 | `mqtt.protocolVersion` | Here select the MQTT protocol version, `5.0` (default) or `3.1.1` for brokers that only support 3.1.1 (e.g. ioBroker MQTT adapter). |
+| `mqtt.haDiscovery` | If enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. |
 | `mqtt.auth{}` | MQTT authorization object. |
 | `mqtt.auth.enable` | Here enable authorization for MQTT Broker. |
 | `mqtt.auth.user` | Here set the MQTT Broker user. |
