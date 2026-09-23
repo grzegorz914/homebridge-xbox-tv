@@ -1219,6 +1219,25 @@
 										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
 									}
 								},
+								"protocolVersion": {
+									"title": "Protocol Version",
+									"type": "integer",
+									"default": 5,
+									"oneOf": [
+										{
+											"title": "5.0",
+											"enum": [5]
+										},
+										{
+											"title": "3.1.1",
+											"enum": [4]
+										}
+									],
+									"description": "MQTT protocol version used to connect to the broker. Some brokers (e.g. the ioBroker MQTT adapter) only support 3.1.1 and will silently reject 5.0 connections.",
+									"condition": {
+										"functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+									}
+								},
 								"auth": {
 									"title": "Authorization",
 									"type": "object",
@@ -1472,6 +1491,7 @@
 														"devices[].mqtt.port",
 														"devices[].mqtt.clientId",
 														"devices[].mqtt.prefix",
+														"devices[].mqtt.protocolVersion",
 														{
 															"key": "devices[].mqtt.auth",
 															"title": "Authorization",

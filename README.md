@@ -137,6 +137,7 @@
 | `mqtt.port` | Here set the `Port` for MQTT Broker, default 1883. |
 | `mqtt.clientId` | Here optional set the `Client Id` of MQTT Broker. |
 | `mqtt.prefix` | Here set the `Prefix` for `Topic` or leave empty. |
+| `mqtt.protocolVersion` | Here select the MQTT protocol version, `5.0` (default) or `3.1.1` for brokers that only support 3.1.1 (e.g. ioBroker MQTT adapter). |
 | `mqtt.auth{}` | MQTT authorization object. |
 | `mqtt.auth.enable` | Here enable authorization for MQTT Broker. |
 | `mqtt.auth.user` | Here set the MQTT Broker user. |

@@ -8,35 +8,47 @@ class Mqtt extends EventEmitter {
 
         const url = `mqtt://${config.host}:${config.port}`;
         const subscribeTopic = `${config.prefix}/Set`;
+        const protocolVersion = config.protocolVersion === 4 ? 4 : 5;
+        const isV5 = protocolVersion === 5;
+        this.isV5 = isV5;
 
         const options = {
             clientId: config.clientId,
             username: config.user,
             password: config.passwd,
-            protocolVersion: 5,
-            clean: false,
-            properties: {
-                sessionExpiryInterval: 60 * 60,
-                userProperties: {
-                    source: 'node-client'
+            protocolVersion,
+            clean: !isV5,
+            ...(isV5 ? {
+                properties: {
+                    sessionExpiryInterval: 60 * 60,
+                    userProperties: {
+                        source: 'node-client'
+                    }
                 }
-            }
+            } : {})
         };
+
+        const startTime = Date.now();
+        let hasConnected = false;
+        let warnedStalled = false;
 
         this.mqttClient = connect(url, options)
             .on('connect', async () => {
-                this.emit('connected', 'MQTT v5 connected.');
+                hasConnected = true;
+                this.emit('connected', `MQTT v${protocolVersion} connected.`);
 
                 try {
                     await new Promise((resolve, reject) => {
                         this.mqttClient.subscribe(subscribeTopic,
                             {
                                 qos: 1,
-                                properties: {
-                                    userProperties: {
-                                        type: 'subscription'
+                                ...(isV5 ? {
+                                    properties: {
+                                        userProperties: {
+                                            type: 'subscription'
+                                        }
                                     }
-                                }
+                                } : {})
                             },
                             (error) => {
                                 if (error) return reject(error);
@@ -69,6 +81,10 @@ class Mqtt extends EventEmitter {
                 if (config.logDebug) this.emit('debug', 'MQTT Reconnecting...');
             })
             .on('close', () => {
+                if (!hasConnected && !warnedStalled && Date.now() - startTime > 30000) {
+                    warnedStalled = true;
+                    this.emit('warn', `MQTT has not connected after 30s of retries using protocol v${protocolVersion}. Check broker address, credentials, and whether the broker supports this MQTT protocol version.`);
+                }
                 if (config.logDebug) this.emit('debug', 'MQTT Connection closed.');
             });
     }
@@ -87,13 +103,15 @@ class Mqtt extends EventEmitter {
             this.mqttClient.publish(fullTopic, publishMessage,
                 {
                     qos: 1,
-                    properties: {
-                        contentType: 'application/json',
-                        userProperties: {
-                            source: 'node',
-                            action: 'set'
+                    ...(this.isV5 ? {
+                        properties: {
+                            contentType: 'application/json',
+                            userProperties: {
+                                source: 'node',
+                                action: 'set'
+                            }
                         }
-                    }
+                    } : {})
                 },
                 (error) => {
                     if (error) {

@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.1.25] - (23.09.2026)
+
+### Changes
+
+- fix: MQTT client had `protocolVersion: 5` hardcoded, so brokers that only support MQTT 3.1.1 (e.g. the ioBroker MQTT adapter) accepted the TCP connection, failed the handshake, and got disconnected every second forever, with nothing published and no error logged. Added a `Protocol Version` option (5.0 / 3.1.1) in the MQTT section, and a one-time warning if no successful connection is established within 30 seconds
+- readme update
+
 ## [4.1.24] - (23.09.2026)
 
 ### Added
