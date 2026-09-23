@@ -179,6 +179,10 @@
 ### MQTT Integration
 
 * Subscribe data as a JSON Object `{App: "Xbox.Dashboard_8wekyb3d8bbwe!Xbox.Dashboard.Application"}`
+* HA Discovery - if enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Games and apps are available as sources, volume can be changed only up and down. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. Additional retained topics:
+  * `homeassistant/media_player/<id>/config` - discovery message.
+  * `HA State` - `{"power": true, "state": "playing", "muted": false, "source": "9WZDNCRFJ3TJ", "app_name": "Netflix"}`.
+  * `Availability` - `online`, `offline` (last will).
 
 | Method | Topic | Message | Type |
 | --- | --- | --- | --- |
