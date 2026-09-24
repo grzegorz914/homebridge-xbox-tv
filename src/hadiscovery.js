@@ -71,7 +71,10 @@ class HaDiscovery {
         try {
             image = key ? await fetchImage() : null;
         } catch {
+            // Network or device error, allow a retry on the next state update
             image = null;
+            if (key === this.lastImageKey) this.lastImageKey = undefined;
+            return false;
         }
 
         // The source changed again while fetching, a newer call publishes its own image
