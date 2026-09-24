@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.2.2] - (24.09.2026)
+
+### Changes
+
+- fix: with 85 inputs (the HomeKit limit) the input list from the console no longer updated existing inputs, the limit skipped every input instead of only new ones, so names of existing inputs were never refreshed. The limit now applies to new inputs only
+
 ## [4.2.1] - (24.09.2026)
 
 ### Changes
