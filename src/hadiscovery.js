@@ -20,12 +20,14 @@ class HaDiscovery {
         this.configTopic = `${mqtt.haPrefix}/media_player/${this.objectId}/config`;
         this.stateTopic = `${mqtt.config.prefix}/HA State`;
         this.commandTopic = `${mqtt.config.prefix}/Set`;
+        this.imageTopic = config.image ? `${mqtt.config.prefix}/HA Image` : null;
 
         this.sources = [];
         this.soundModes = [];
         this.state = {};
         this.lastConfig = '';
         this.lastState = '';
+        this.lastImageKey = undefined;
     }
 
     // Publish (or republish when changed) the retained discovery message
@@ -45,6 +47,7 @@ class HaDiscovery {
             state_topic: this.stateTopic,
             command_topic: this.commandTopic,
             availability_topic: this.mqtt.availabilityTopic,
+            ...(this.imageTopic ? { image_topic: this.imageTopic } : {}),
             device,
             commands: this.commands,
             sources: this.sources,
@@ -55,6 +58,25 @@ class HaDiscovery {
         if (payload === this.lastConfig) return false;
         this.lastConfig = payload;
         await this.mqtt.publishRetained(this.configTopic, payload);
+        return true;
+    }
+
+    // Publish the image of the current source (app icon, channel picon) once per source.
+    // key identifies the image, fetchImage returns a Buffer or null, null clears the image
+    async updateImage(key, fetchImage) {
+        if (!this.imageTopic || key === this.lastImageKey) return false;
+        this.lastImageKey = key;
+
+        let image = null;
+        try {
+            image = key ? await fetchImage() : null;
+        } catch {
+            image = null;
+        }
+
+        // The source changed again while fetching, a newer call publishes its own image
+        if (key !== this.lastImageKey) return false;
+        await this.mqtt.publishRetained(this.imageTopic, image ?? '');
         return true;
     }
 

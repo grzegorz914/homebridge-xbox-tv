@@ -116,7 +116,7 @@ class Mqtt extends EventEmitter {
                     if (this.config.logWarn) this.emit('warn', `MQTT Publish error: ${error.message}`);
                     return reject(error);
                 }
-                if (this.config.logDebug) this.emit('debug', `MQTT Publish retained Topic: ${fullTopic}, Payload: ${payload}`);
+                if (this.config.logDebug) this.emit('debug', `MQTT Publish retained Topic: ${fullTopic}, Payload: ${typeof payload === 'string' ? payload : `${payload.length} bytes`}`);
                 resolve();
             });
         });
