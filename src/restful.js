@@ -28,6 +28,49 @@ class RestFul extends EventEmitter {
         try {
             const app = express();
             app.set('json spaces', 2);
+
+            // Request rate limit per client, protects Homebridge from request floods (CWE-770)
+            const rateLimitWindow = 60 * 1000;
+            const rateLimitMax = 600;
+            const rateLimitClients = 1000;
+            const clients = new Map();
+            let clientsLimitWarned = 0;
+            app.use((req, res, next) => {
+                const now = Date.now();
+
+                // Drop expired windows so the map cannot grow without limit
+                if (clients.size > 100) {
+                    for (const [ip, client] of clients) {
+                        if (now - client.start >= rateLimitWindow) clients.delete(ip);
+                    }
+                }
+
+                let client = clients.get(req.ip);
+                if (!client || now - client.start >= rateLimitWindow) {
+                    // Hard limit of tracked addresses, new addresses wait until older windows expire
+                    if (!client && clients.size >= rateLimitClients) {
+                        if (now - clientsLimitWarned >= rateLimitWindow) {
+                            clientsLimitWarned = now;
+                            if (this.logWarn) this.emit('warn', `RESTFul too many clients (${rateLimitClients}) in one minute, new clients are rejected until the window ends`);
+                        }
+                        res.set('Retry-After', String(Math.ceil(rateLimitWindow / 1000)));
+                        return res.status(429).json({ error: 'RESTFul Too Many Requests' });
+                    }
+                    client = { count: 0, start: now, warned: false };
+                    clients.set(req.ip, client);
+                }
+
+                if (++client.count > rateLimitMax) {
+                    // Warn once per client and window, a flood must not flood the log too
+                    if (!client.warned && this.logWarn) this.emit('warn', `RESTFul rate limit ${rateLimitMax} requests per minute exceeded by: ${req.ip}, further requests are rejected until the window ends`);
+                    client.warned = true;
+                    res.set('Retry-After', String(Math.ceil((client.start + rateLimitWindow - now) / 1000)));
+                    return res.status(429).json({ error: 'RESTFul Too Many Requests' });
+                }
+
+                next();
+            });
+
             app.use(json());
 
             // Optional token auth, when a token is configured every route requires "Authorization: Bearer <token>"
