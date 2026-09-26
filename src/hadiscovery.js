@@ -21,9 +21,12 @@ class HaDiscovery {
         this.stateTopic = `${mqtt.config.prefix}/HA State`;
         this.commandTopic = `${mqtt.config.prefix}/Set`;
         this.imageTopic = config.image ? `${mqtt.config.prefix}/HA Image` : null;
+        // Media browser icons requested by Home Assistant with the BrowseImage key, answered by answerBrowseImage
+        this.browseImageTopic = config.browseImages ? `${mqtt.config.prefix}/HA Browse Image` : null;
 
         this.sources = [];
         this.soundModes = [];
+        this.browse = [];
         this.state = {};
         this.lastConfig = '';
         this.lastState = '';
@@ -31,9 +34,11 @@ class HaDiscovery {
     }
 
     // Publish (or republish when changed) the retained discovery message
-    async publishConfig({ sources = this.sources, soundModes = this.soundModes } = {}) {
+    // browse: media browser folders [{ name, type, items: [{ id, name }] }], at most MaxBrowseItems items in total
+    async publishConfig({ sources = this.sources, soundModes = this.soundModes, browse = this.browse } = {}) {
         this.sources = uniqueByName(sources);
         this.soundModes = uniqueByName(soundModes);
+        this.browse = limitBrowse(browse);
 
         const device = { identifiers: [this.uniqueId], name: this.name };
         for (const [key, value] of Object.entries(this.device)) {
@@ -48,10 +53,12 @@ class HaDiscovery {
             command_topic: this.commandTopic,
             availability_topic: this.mqtt.availabilityTopic,
             ...(this.imageTopic ? { image_topic: this.imageTopic } : {}),
+            ...(this.browseImageTopic ? { browse_image_topic: this.browseImageTopic } : {}),
             device,
             commands: this.commands,
             sources: this.sources,
-            sound_modes: this.soundModes
+            sound_modes: this.soundModes,
+            ...(this.browse.length > 0 ? { browse: this.browse } : {})
         };
 
         const payload = JSON.stringify(config);
@@ -83,6 +90,21 @@ class HaDiscovery {
         return true;
     }
 
+    // Answer a media browser icon request, not retained, an empty payload when the item has no icon
+    async answerBrowseImage(key, fetchImage) {
+        // The key becomes a topic level, only the md5 hex key of the integration is accepted
+        if (!this.browseImageTopic || !/^[a-f0-9]{32}$/.test(String(key))) return false;
+
+        let image = null;
+        try {
+            image = await fetchImage();
+        } catch {
+            image = null;
+        }
+        await new Promise(resolve => this.mqtt.mqttClient.publish(`${this.browseImageTopic}/${key}`, image ?? '', { qos: 0 }, () => resolve()));
+        return true;
+    }
+
     // Merge a partial state and publish it retained when something changed
     async updateState(partial) {
         for (const [key, value] of Object.entries(partial)) {
@@ -96,6 +118,24 @@ class HaDiscovery {
         await this.mqtt.publishRetained(this.stateTopic, payload);
         return true;
     }
+}
+
+// The discovery message stays small enough for the broker and Home Assistant, big bouquets are cut
+const MaxBrowseItems = 2000;
+function limitBrowse(folders) {
+    let left = MaxBrowseItems;
+    const result = [];
+    for (const folder of folders ?? []) {
+        const name = String(folder.name ?? '').trim();
+        const items = (folder.items ?? [])
+            .filter(item => item.id !== undefined && item.id !== null && String(item.name ?? '').trim())
+            .slice(0, Math.max(left, 0))
+            .map(item => ({ id: item.id, name: String(item.name).trim() }));
+        if (!name || items.length === 0) continue;
+        left -= items.length;
+        result.push({ name, ...(folder.type ? { type: folder.type } : {}), items });
+    }
+    return result;
 }
 
 // Home Assistant needs unique names, keep the first item for a duplicated name
