@@ -16,6 +16,8 @@ class HaDiscovery {
         this.deviceClass = config.deviceClass;
         // Separate play, pause and stop buttons in the Home Assistant media card
         this.assumedState = config.assumedState === true;
+        // Players with the same group id can be grouped in Home Assistant, e.g. the zones of one receiver
+        this.group = config.group?.id ? { id: String(config.group.id), leader: config.group.leader === true } : null;
         this.device = config.device ?? {};
         this.commands = config.commands ?? {};
 
@@ -52,6 +54,7 @@ class HaDiscovery {
             unique_id: this.uniqueId,
             device_class: this.deviceClass,
             ...(this.assumedState ? { assumed_state: true } : {}),
+            ...(this.group ? { group: this.group } : {}),
             state_topic: this.stateTopic,
             command_topic: this.commandTopic,
             availability_topic: this.mqtt.availabilityTopic,
