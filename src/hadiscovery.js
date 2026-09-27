@@ -14,6 +14,8 @@ class HaDiscovery {
         this.uniqueId = this.objectId;
         this.name = config.name;
         this.deviceClass = config.deviceClass;
+        // Separate play, pause and stop buttons in the Home Assistant media card
+        this.assumedState = config.assumedState === true;
         this.device = config.device ?? {};
         this.commands = config.commands ?? {};
 
@@ -49,6 +51,7 @@ class HaDiscovery {
             platform: PLATFORM,
             unique_id: this.uniqueId,
             device_class: this.deviceClass,
+            ...(this.assumedState ? { assumed_state: true } : {}),
             state_topic: this.stateTopic,
             command_topic: this.commandTopic,
             availability_topic: this.mqtt.availabilityTopic,
