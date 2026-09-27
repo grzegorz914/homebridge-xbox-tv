@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.3.1] - (27.09.2026)
+
+### Changes
+
+- changed: the Home Assistant icons of the system menus are dark gray without a background, the same style as in the other plugins
+
 ## [4.3.0] - (27.09.2026)
 
 ### Changes
