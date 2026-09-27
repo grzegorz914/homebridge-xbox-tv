@@ -3,6 +3,7 @@ import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
 import Functions from './functions.js';
 import HaDiscovery from './hadiscovery.js';
+import AppIcons from './appicons.js';
 import { DefaultInputs, WebApi } from './constants.js';
 
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
@@ -83,6 +84,12 @@ class XboxDevice extends EventEmitter {
     }
 
     async setOverExternalIntegration(integration, key, value) {
+        // Media browser icon of an app, the id is the oneStoreProductId, works without the web api
+        if (key === 'BrowseImage') {
+            const input = this.inputsServices?.find(i => i.oneStoreProductId === value?.id) ?? { oneStoreProductId: value?.id };
+            return await this.ha?.answerBrowseImage(value?.key, () => AppIcons.get(input));
+        }
+
         if (!this.consoleAuthorized && this.logWarn) {
             this.emit('warn', `Set over external integration not possible, web api not enabled`);
             return;
@@ -1009,6 +1016,9 @@ class XboxDevice extends EventEmitter {
         try {
             this.ha = new HaDiscovery(this.mqtt1, {
                 objectId: `xbox_${this.liveId}`,
+                // App icons from the Microsoft Store, system menus with icons bundled with the plugin
+                image: true,
+                browseImages: true,
                 name: this.name,
                 deviceClass: 'receiver',
                 device: {
@@ -1055,6 +1065,10 @@ class XboxDevice extends EventEmitter {
                 source: input?.oneStoreProductId,
                 app_name: input?.name ?? ''
             });
+
+            // Icon of the current app
+            const productId = this.power ? input?.oneStoreProductId ?? null : null;
+            this.ha.updateImage(productId, () => AppIcons.get(input)).catch(() => { });
         } catch (error) {
             if (this.logWarn) this.emit('warn', `HA Discovery state error: ${error}`);
         }

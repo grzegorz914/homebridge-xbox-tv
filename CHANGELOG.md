@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.3.0] - (27.09.2026)
+
+### Changes
+
+- added: Home Assistant app icons in the media browser and the media card. Store apps and games use their logo or box art from the public Microsoft Store catalog, Dashboard, Settings, Television and the other system menus use icons bundled with the plugin (MQTT Universal Media Player integration 0.5.0 or newer)
+- added: Home Assistant media search in the apps (MQTT Universal Media Player integration 0.7.0 or newer)
+
 ## [4.2.2] - (24.09.2026)
 
 ### Changes
