@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.3.2] - (28.09.2026)
+
+### Changes
+
+- fixed: Home Assistant gets all inputs, the HomeKit limit of 85 inputs no longer applies to the source list and the media browser
+
 ## [4.3.1] - (27.09.2026)
 
 ### Changes

@@ -73,6 +73,7 @@ class XboxDevice extends EventEmitter {
         //variable
         this.modelName = 'Xbox';
         this.inputIdentifier = 1;
+        this.haInputs = new Map();
         this.power = false;
         this.volume = 0;
         this.mute = false;
@@ -110,7 +111,7 @@ class XboxDevice extends EventEmitter {
                     break;
                 case 'App': {
                     // Known inputs (also Dashboard, Settings, Television...) are switched the same way as from HomeKit
-                    const input = this.inputsServices?.find(i => i.oneStoreProductId === value);
+                    const input = this.inputsServices?.find(i => i.oneStoreProductId === value) ?? [...this.haInputs.values()].find(i => i.oneStoreProductId === value);
                     if (input) {
                         await this.setInput(input);
                         set = true;
@@ -250,6 +251,10 @@ class XboxDevice extends EventEmitter {
                 const inputOneStoreProductId = input.oneStoreProductId;
                 const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
+                // Home Assistant gets all inputs, the HomeKit limit of 85 does not apply
+                if (remove) this.haInputs.delete(inputReference);
+                else this.haInputs.set(inputReference, { reference: inputReference, name: sanitizedName, oneStoreProductId: inputOneStoreProductId, titleId: inputTitleId, isGame: input.isGame, contentType });
+
                 if (remove) {
                     const svc = this.inputsServices.find(s => s.reference === inputReference);
                     if (svc) {
@@ -333,7 +338,8 @@ class XboxDevice extends EventEmitter {
 
             // Only one time run
             if (updated) await this.displayOrder();
-            if (updated) this.haPublishConfig();
+            // Home Assistant also gets the inputs over the HomeKit limit, publishConfig skips an unchanged config
+            this.haPublishConfig();
 
             return true;
         } catch (error) {
@@ -1045,7 +1051,7 @@ class XboxDevice extends EventEmitter {
         if (!this.ha) return;
 
         try {
-            const sources = (this.inputsServices ?? []).map(input => ({ id: input.oneStoreProductId, name: input.name }));
+            const sources = [...this.haInputs.values()].map(input => ({ id: input.oneStoreProductId, name: input.name }));
             await this.ha.publishConfig({ sources });
             await this.haUpdateState();
         } catch (error) {
@@ -1057,7 +1063,9 @@ class XboxDevice extends EventEmitter {
         if (!this.ha) return;
 
         try {
-            const input = this.inputsServices?.find(input => input.identifier === this.inputIdentifier);
+            // The running app, also one over the HomeKit limit
+            const match = (input) => input.reference === this.reference || (this.titleId && input.titleId === this.titleId);
+            const input = this.inputsServices?.find(match) ?? [...this.haInputs.values()].find(match) ?? this.inputsServices?.find(input => input.identifier === this.inputIdentifier);
             await this.ha.updateState({
                 power: this.power,
                 state: this.power ? (this.playState ? 'playing' : 'on') : 'off',
@@ -1158,6 +1166,7 @@ class XboxDevice extends EventEmitter {
                         .setCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision);
                 })
                 .on('stateChanged', async (power, titleId, reference, volume, mute, playState) => {
+                    this.titleId = titleId;
                     const input = this.inputsServices?.find(input => input.reference === reference || input.titleId === titleId) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
 
