@@ -74,6 +74,14 @@ class HaDiscovery {
         return true;
     }
 
+    // The broker may have lost the retained messages (restart without persistence), the next publish sends
+    // the config, the whole state and the image again
+    reset() {
+        this.lastConfig = '';
+        this.lastState = '';
+        this.lastImageKey = undefined;
+    }
+
     // Publish the image of the current source (app icon, channel picon) once per source.
     // key identifies the image, fetchImage returns a Buffer or null, null clears the image
     async updateImage(key, fetchImage) {

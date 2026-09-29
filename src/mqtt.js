@@ -36,6 +36,7 @@ class Mqtt extends EventEmitter {
             } : {})
         };
 
+        this.connected = false;
         const startTime = Date.now();
         let hasConnected = false;
         let warnedStalled = false;
@@ -45,6 +46,9 @@ class Mqtt extends EventEmitter {
                 hasConnected = true;
                 this.emit('connected', `MQTT v${protocolVersion} connected.`);
                 if (this.haDiscovery) this.publishRetained(this.availabilityTopic, 'online').catch(() => { });
+                // Every connect, also when the broker was not running at start or restarted, devices publish again
+                this.connected = true;
+                this.emit('online');
 
                 try {
                     await new Promise((resolve, reject) => {
@@ -90,6 +94,7 @@ class Mqtt extends EventEmitter {
                 if (config.logDebug) this.emit('debug', 'MQTT Reconnecting...');
             })
             .on('close', () => {
+                this.connected = false;
                 if (!hasConnected && !warnedStalled && Date.now() - startTime > 30000) {
                     warnedStalled = true;
                     this.emit('warn', `MQTT has not connected after 30s of retries using protocol v${protocolVersion}. Check broker address, credentials, and whether the broker supports this MQTT protocol version.`);
