@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.3.4] - (29.10.2026)
+
+### Changes
+
+- fixed: security, updated the locked versions of proxy-addr, follow-redirects and ip-address to fix the vulnerabilities reported by Dependabot
+
 ## [4.3.3] - (29.09.2026)
 
 ### Changes
