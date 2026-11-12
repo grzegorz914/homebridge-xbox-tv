@@ -1025,6 +1025,17 @@ class XboxDevice extends EventEmitter {
 
     //home assistant discovery
     // MQTT connected, at start when the broker was not running yet or after a restart of the broker
+    // RestFul and MQTT are connected after the console answered for the first time
+    async attachIntegrations(restFul1, restFulConnected, mqtt1, mqttConnected) {
+        this.restFul1 = restFul1;
+        this.restFulConnected = restFulConnected;
+        this.mqtt1 = mqtt1;
+        if (!mqtt1) return;
+
+        this.mqtt1.on('online', () => this.mqttOnline().catch((error) => this.emit('warn', `MQTT online error: ${error}`)));
+        if (mqttConnected) await this.mqttOnline();
+    }
+
     async mqttOnline() {
         this.mqttConnected = true;
         if (!this.haReady) return;
@@ -1160,6 +1171,13 @@ class XboxDevice extends EventEmitter {
             // BŁ4 FIX: pass restFulEnabled/mqttEnabled booleans, not channelsFile string
             this.xboxLocalApi = new XboxLocalApi(this.device, this.authTokenFile, this.devInfoFile, restFulEnabled, mqttEnabled)
                 .on('reachable', (reachable) => { this.reachable = reachable; })
+                .on('online', async () => {
+                    try {
+                        await this.onConsoleOnline?.();
+                    } catch (error) {
+                        this.emit('warn', `Start integrations error: ${error}`);
+                    }
+                })
                 .on('deviceInfo', async (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer:  Microsoft`);
@@ -1323,11 +1341,20 @@ class XboxDevice extends EventEmitter {
             //prepare data for accessory
             await this.prepareDataForAccessory();
 
-            // Prepare accessory
-            const accessory = await this.prepareAccessory();
+            // MQTT and Home Assistant work on the console, they do not depend on the HomeKit accessory
             this.haReady = true;
             this.setupHaDiscovery();
-            return accessory;
+
+            // Prepare accessory, when it is not possible the console is still controlled over MQTT and RESTFul
+            this.accessory = null;
+            try {
+                this.accessory = await this.prepareAccessory();
+            } catch (error) {
+                this.accessory = null;
+                this.emit('error', `HomeKit accessory not created: ${error}`);
+            }
+
+            return true;
         } catch (error) {
             throw new Error(`Start error: ${error}`);
         }

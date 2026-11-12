@@ -107,83 +107,88 @@ class XboxPlatform {
 			return;
 		}
 
-		// Create RestFul and MQTT once — before the retry loop — so the port/connection
-		// is established a single time and survives across all connect attempts.
 		// The 'set' handler uses activeDevice so it always routes to the current instance.
 		let activeDevice = null;
-		let restFul1 = null;
-		let restFulConnected = false;
-		if (device.restFul?.enable) {
-			try {
-				await new Promise((resolve) => {
-					const timer = setTimeout(resolve, 5000);
-					restFul1 = new RestFul({
-						port: device.restFul.port || 3000,
-						token: device.restFul.token,
-						logWarn: logLevel.warn,
-						logDebug: logLevel.debug,
-					})
-						.once('connected', (msg) => {
-							clearTimeout(timer);
-							restFulConnected = true;
-							if (logLevel.success) log.success(`Device: ${host} ${name}, ${msg}`);
-							resolve();
+		// RestFul and MQTT are created once, when the console answers the ping for the first time, so nothing
+		// is started or published while the console is not reachable
+		let integrations = null;
+		const startIntegrations = () => (integrations ??= connectIntegrations());
+		const connectIntegrations = async () => {
+			let restFul1 = null;
+			let restFulConnected = false;
+			let mqtt1 = null;
+			let mqttConnected = false;
+			if (device.restFul?.enable) {
+				try {
+					await new Promise((resolve) => {
+						const timer = setTimeout(resolve, 5000);
+						restFul1 = new RestFul({
+							port: device.restFul.port || 3000,
+							token: device.restFul.token,
+							logWarn: logLevel.warn,
+							logDebug: logLevel.debug,
 						})
-						.on('set', async (key, value) => {
-							try {
-								if (activeDevice) await activeDevice.setOverExternalIntegration('RESTFul', key, value);
-							} catch (error) {
-								if (logLevel.warn) log.warn(`Device: ${host} ${name}, RESTFul set error: ${error.message ?? error}`);
-							}
-						})
-						.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
-						.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
-						.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
-				});
-			} catch (error) {
-				if (logLevel.warn) log.warn(`Device: ${host} ${name}, RESTFul start error: ${error.message ?? error}`);
+							.once('connected', (msg) => {
+								clearTimeout(timer);
+								restFulConnected = true;
+								if (logLevel.success) log.success(`Device: ${host} ${name}, ${msg}`);
+								resolve();
+							})
+							.on('set', async (key, value) => {
+								try {
+									if (activeDevice) await activeDevice.setOverExternalIntegration('RESTFul', key, value);
+								} catch (error) {
+									if (logLevel.warn) log.warn(`Device: ${host} ${name}, RESTFul set error: ${error.message ?? error}`);
+								}
+							})
+							.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
+							.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
+							.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
+					});
+				} catch (error) {
+					if (logLevel.warn) log.warn(`Device: ${host} ${name}, RESTFul start error: ${error.message ?? error}`);
+				}
 			}
-		}
 
-		let mqtt1 = null;
-		let mqttConnected = false;
-		if (device.mqtt?.enable) {
-			try {
-				await new Promise((resolve) => {
-					const timer = setTimeout(resolve, 10000);
-					mqtt1 = new Mqtt({
-						host: device.mqtt.host,
-						port: device.mqtt.port || 1883,
-						clientId: device.mqtt.clientId ? `microsoft_${device.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `microsoft_${Math.random().toString(16).slice(3)}`,
-						prefix: device.mqtt.prefix ? `microsoft/${device.mqtt.prefix}/${name}` : `microsoft/${name}`,
-						protocolVersion: device.mqtt.protocolVersion,
-						haDiscovery: device.mqtt.haDiscovery,
-						user: device.mqtt.auth?.user,
-						passwd: device.mqtt.auth?.passwd,
-						logWarn: logLevel.warn,
-						logDebug: logLevel.debug,
-					})
-						.once('connected', (msg) => {
-							clearTimeout(timer);
-							mqttConnected = true;
-							if (logLevel.success) log.success(`Device: ${host} ${name}, ${msg}`);
-							resolve();
+			if (device.mqtt?.enable) {
+				try {
+					await new Promise((resolve) => {
+						const timer = setTimeout(resolve, 10000);
+						mqtt1 = new Mqtt({
+							host: device.mqtt.host,
+							port: device.mqtt.port || 1883,
+							clientId: device.mqtt.clientId ? `microsoft_${device.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `microsoft_${Math.random().toString(16).slice(3)}`,
+							prefix: device.mqtt.prefix ? `microsoft/${device.mqtt.prefix}/${name}` : `microsoft/${name}`,
+							protocolVersion: device.mqtt.protocolVersion,
+							haDiscovery: device.mqtt.haDiscovery,
+							user: device.mqtt.auth?.user,
+							passwd: device.mqtt.auth?.passwd,
+							logWarn: logLevel.warn,
+							logDebug: logLevel.debug,
 						})
-						.on('set', async (key, value) => {
-							try {
-								if (activeDevice) await activeDevice.setOverExternalIntegration('MQTT', key, value);
-							} catch (error) {
-								if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT set error: ${error.message ?? error}`);
-							}
-						})
-						.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
-						.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
-						.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
-				});
-			} catch (error) {
-				if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT start error: ${error.message ?? error}`);
+							.once('connected', (msg) => {
+								clearTimeout(timer);
+								mqttConnected = true;
+								if (logLevel.success) log.success(`Device: ${host} ${name}, ${msg}`);
+								resolve();
+							})
+							.on('set', async (key, value) => {
+								try {
+									if (activeDevice) await activeDevice.setOverExternalIntegration('MQTT', key, value);
+								} catch (error) {
+									if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT set error: ${error.message ?? error}`);
+								}
+							})
+							.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
+							.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
+							.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
+					});
+				} catch (error) {
+					if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT start error: ${error.message ?? error}`);
+				}
 			}
-		}
+			return { restFul1, restFulConnected, mqtt1, mqttConnected };
+		};
 
 		// The startup impulse generator retries the full connect cycle
 		// every 120 s until it succeeds, then hands off to the xboxDevice
@@ -195,7 +200,7 @@ class XboxPlatform {
 						device, name, host,
 						authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile,
 						logLevel, log, api, impulseGenerator,
-						restFul1, restFulConnected, mqtt1, mqttConnected,
+						startIntegrations,
 						onDeviceReady: (d) => { activeDevice = d; },
 					});
 				} catch (error) {
@@ -211,8 +216,8 @@ class XboxPlatform {
 
 	// ── Connect and register a single Xbox device as a Homebridge accessory ───
 
-	async startDevice({ device, name, host, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile, logLevel, log, api, impulseGenerator, restFul1, restFulConnected, mqtt1, mqttConnected, onDeviceReady }) {
-		const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile, restFul1, restFulConnected, mqtt1, mqttConnected)
+	async startDevice({ device, name, host, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile, logLevel, log, api, impulseGenerator, startIntegrations, onDeviceReady }) {
+		const xboxDevice = new XboxDevice(api, device, authTokenFile, devInfoFile, inputsFile, inputsNamesFile, inputsTargetVisibilityFile)
 			.on('devInfo', (info) => logLevel.devInfo && log.info(info))
 			.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 			.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${name}, ${msg}`))
@@ -220,12 +225,20 @@ class XboxPlatform {
 			.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
 			.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
 
-		const accessory = await xboxDevice.start();
-		if (!accessory) return;
+		// The integrations start when the console answers, they do not need the HomeKit accessory
+		xboxDevice.onConsoleOnline = async () => {
+			const { restFul1, restFulConnected, mqtt1, mqttConnected } = await startIntegrations();
+			await xboxDevice.attachIntegrations(restFul1, restFulConnected, mqtt1, mqttConnected);
+		};
+
+		const started = await xboxDevice.start();
+		if (!started) return;
 
 		onDeviceReady(xboxDevice);
-		api.publishExternalAccessories(PluginName, [accessory]);
-		if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
+		if (xboxDevice.accessory) {
+			api.publishExternalAccessories(PluginName, [xboxDevice.accessory]);
+			if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
+		}
 
 		// Hand off to the xboxDevice impulse generator and stop the startup one.
 		await xboxDevice.startStopImpulseGenerator(true, [{ name: 'connect', sampling: 6000 }]);

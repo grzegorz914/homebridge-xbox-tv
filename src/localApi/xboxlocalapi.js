@@ -95,14 +95,18 @@ class XboxLocalApi extends EventEmitter {
 
             if (state.online) {
                 this.lastPingOk = now;
+                if (!this.onlineEmitted) {
+                    this.onlineEmitted = true;
+                    this.emit('online');
+                }
                 if (!this.reachable) {
                     this.reachable = true;
-                    this.emit('success', `Console is reachable again`);
+                    this.emit('success', `reachable again`);
                     this.emit('reachable', true);
                 }
             } else if (this.reachable && now - this.lastPingOk >= 20000) {
                 this.reachable = false;
-                this.emit('warn', `Console is not reachable`);
+                this.emit('warn', `not reachable`);
                 this.emit('reachable', false);
             }
 

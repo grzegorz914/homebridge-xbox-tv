@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.4.1] - (12.11.2026)
+
+### Changes
+
+- changed: the log of a console that cannot be reached shows only `not reachable` and `reachable again`
+- changed: MQTT and RESTFul start when the console answers the ping for the first time, and they do not depend on the HomeKit accessory, when the accessory cannot be created the console is still controlled over MQTT and RESTFul
+
 ## [4.4.0] - (12.11.2026)
 
 ### Changes
