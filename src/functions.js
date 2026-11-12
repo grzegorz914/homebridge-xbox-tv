@@ -80,7 +80,8 @@ class Functions {
             return { online: false };
         }
         const isWindows = process.platform === 'win32';
-        const cmd = isWindows ? `ping -n 1 ${ipOrHost}` : `ping -c 1 ${ipOrHost}`;
+        // a limit of 3 seconds for the answer, without it the ping to a console that is not in the network takes about 10 seconds
+        const cmd = isWindows ? `ping -n 1 -w 3000 ${ipOrHost}` : process.platform === 'darwin' ? `ping -c 1 -t 3 ${ipOrHost}` : `ping -c 1 -W 3 ${ipOrHost}`;
 
         try {
             const { stdout } = await execAsync(cmd);

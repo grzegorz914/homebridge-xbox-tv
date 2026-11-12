@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.4.0-beta.1] - (12.11.2026)
+
+### Changes
+
+- fixed: a console that is not in the network was tried to connect at the start of the plugin and the error `send EHOSTDOWN` was logged, the connection is now made only after a finished ping that was answered
+- changed: the ping has a limit of 3 seconds for the answer, before it took about 10 seconds when the console did not answer
+
 ## [4.4.0-beta.0] - (12.11.2026)
 
 ### Changes

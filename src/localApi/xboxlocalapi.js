@@ -28,7 +28,7 @@ class XboxLocalApi extends EventEmitter {
         this.connected = false;
         this.reachable = true;
         this.lastPingOk = Date.now();
-        this.pingOnline = true;
+        this.pingOnline = false;
         this.pinging = false;
         this.power = false;
         this.volume = 0;
@@ -49,6 +49,9 @@ class XboxLocalApi extends EventEmitter {
         this.impulseGenerator = new ImpulseGenerator()
             .on('connect', async () => {
                 try {
+                    // the previous ping is still running, the result of an old ping is never used to connect to the console
+                    if (this.pinging) return;
+
                     // the presence of the console in the network is checked all the time, also when the plugin is connected
                     const online = await this.checkReachability();
                     if (this.connected || this.connecting) return;
@@ -82,7 +85,7 @@ class XboxLocalApi extends EventEmitter {
 
     // The console that does not answer the ping for 20 seconds is shown as not responding in the Home app, the state of the console is not changed
     async checkReachability() {
-        if (this.pinging) return this.pingOnline;
+        if (this.pinging) return false;
 
         this.pinging = true;
         try {
