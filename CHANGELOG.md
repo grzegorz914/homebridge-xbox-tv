@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.4.0-beta.0] - (12.11.2026)
+
+### Changes
+
+- changed: a console that does not answer the ping for 20 seconds is shown as not responding in the Home app, the read of the accessory fails with a communication error, the plugin does not change the state of the console and the console works again when it answers the ping, the ping is now sent all the time and not only when the plugin is not connected to the console
+
 ## [4.3.5] - (04.11.2026)
 
 ### Changes

@@ -26,6 +26,10 @@ class XboxLocalApi extends EventEmitter {
         this.mqttEnabled = mqttEnabled || false;
 
         this.connected = false;
+        this.reachable = true;
+        this.lastPingOk = Date.now();
+        this.pingOnline = true;
+        this.pinging = false;
         this.power = false;
         this.volume = 0;
         this.mute = false;
@@ -45,11 +49,12 @@ class XboxLocalApi extends EventEmitter {
         this.impulseGenerator = new ImpulseGenerator()
             .on('connect', async () => {
                 try {
+                    // the presence of the console in the network is checked all the time, also when the plugin is connected
+                    const online = await this.checkReachability();
                     if (this.connected || this.connecting) return;
                     if (this.logDebug) this.emit('debug', `Plugin send heartbeat to console`);
 
-                    const state = await this.functions.ping(this.host);
-                    if (!state.online) {
+                    if (!online) {
                         return;
                     }
 
@@ -74,6 +79,35 @@ class XboxLocalApi extends EventEmitter {
                 this.emit(state ? 'success' : 'warn', `Local Api monitoring ${state ? 'started' : 'stopped'}`);
             });
     };
+
+    // The console that does not answer the ping for 20 seconds is shown as not responding in the Home app, the state of the console is not changed
+    async checkReachability() {
+        if (this.pinging) return this.pingOnline;
+
+        this.pinging = true;
+        try {
+            const state = await this.functions.ping(this.host);
+            const now = Date.now();
+            this.pingOnline = state.online;
+
+            if (state.online) {
+                this.lastPingOk = now;
+                if (!this.reachable) {
+                    this.reachable = true;
+                    this.emit('success', `Console is reachable again`);
+                    this.emit('reachable', true);
+                }
+            } else if (this.reachable && now - this.lastPingOk >= 20000) {
+                this.reachable = false;
+                this.emit('warn', `Console is not reachable`);
+                this.emit('reachable', false);
+            }
+
+            return state.online;
+        } finally {
+            this.pinging = false;
+        }
+    }
 
     async updateState() {
         // reconnect and fires a spurious disconnect after 14 s of the new session.
