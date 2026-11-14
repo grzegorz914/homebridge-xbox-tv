@@ -26,8 +26,6 @@ class XboxLocalApi extends EventEmitter {
         this.mqttEnabled = mqttEnabled || false;
 
         this.connected = false;
-        this.reachable = true;
-        this.lastPingOk = Date.now();
         this.pingOnline = false;
         this.pinging = false;
         this.power = false;
@@ -55,13 +53,13 @@ class XboxLocalApi extends EventEmitter {
                     // the presence of the console in the network is checked all the time, also when the plugin is connected
                     const online = await this.checkReachability();
                     if (this.connected || this.connecting) return;
-                    if (this.logDebug) this.emit('debug', `Plugin send heartbeat to console`);
+                    if (this.logDebug) this.emit('debug', `Plugin send heartbeat`);
 
                     if (!online) {
                         return;
                     }
 
-                    if (this.logDebug) this.emit('debug', `Plugin received heartbeat from console`);
+                    if (this.logDebug) this.emit('debug', `Plugin received heartbeat`);
 
                     this.connecting = true;
                     try {
@@ -83,31 +81,18 @@ class XboxLocalApi extends EventEmitter {
             });
     };
 
-    // The console that does not answer the ping for 20 seconds is shown as not responding in the Home app, the state of the console is not changed
+    // The presence of the console in the network, the state of the console is set by the connection with it
     async checkReachability() {
         if (this.pinging) return false;
 
         this.pinging = true;
         try {
             const state = await this.functions.ping(this.host);
-            const now = Date.now();
             this.pingOnline = state.online;
 
-            if (state.online) {
-                this.lastPingOk = now;
-                if (!this.onlineEmitted) {
-                    this.onlineEmitted = true;
-                    this.emit('online');
-                }
-                if (!this.reachable) {
-                    this.reachable = true;
-                    this.emit('success', `reachable again`);
-                    this.emit('reachable', true);
-                }
-            } else if (this.reachable && now - this.lastPingOk >= 20000) {
-                this.reachable = false;
-                this.emit('warn', `not reachable`);
-                this.emit('reachable', false);
+            if (state.online && !this.onlineEmitted) {
+                this.onlineEmitted = true;
+                this.emit('online');
             }
 
             return state.online;
@@ -447,12 +432,12 @@ class XboxLocalApi extends EventEmitter {
                                     if (!this.acknowledgeInterval) {
                                         this.acknowledgeInterval = setInterval(async () => {
                                             const elapsed = (Date.now() - this.heartBeatStartTime) / 1000;
-                                            if (this.logDebug) this.emit('debug', `Console last seen: ${elapsed.toFixed(1)}s ago`);
+                                            if (this.logDebug) this.emit('debug', `Last seen: ${elapsed.toFixed(1)}s ago`);
 
                                             if (elapsed >= 14) {
                                                 clearInterval(this.acknowledgeInterval);
                                                 this.acknowledgeInterval = null;
-                                                if (this.logDebug) this.emit('debug', `Console inactivity timeout — disconnecting`);
+                                                if (this.logDebug) this.emit('debug', `Inactivity timeout, disconnecting`);
                                                 // Close socket first so on('close') triggers updateState().
                                                 // Calling updateState() directly would null this.socket before
                                                 // close(), causing the old socket to leak in the OS.
@@ -467,7 +452,7 @@ class XboxLocalApi extends EventEmitter {
                                             if (Math.round(elapsed) % 5 === 0 && Math.round(elapsed) > 0) {
                                                 try {
                                                     const pingResult = await this.functions.ping(this.host);
-                                                    if (this.logDebug) this.emit('debug', `Ping ${pingResult.online ? 'OK' : 'failed'} — console ${pingResult.online ? 'reachable' : 'unreachable'}`);
+                                                    if (this.logDebug) this.emit('debug', `Ping ${pingResult.online ? 'OK' : 'failed'}`);
                                                 } catch (error) {
                                                     if (this.logError) this.emit('error', `Ping error: ${error}`);
                                                 }

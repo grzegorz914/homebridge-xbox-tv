@@ -106,18 +106,18 @@ class XboxWebApi extends EventEmitter {
     async consolesList() {
         try {
             const { data } = await this.axiosInstance.get('/lists/devices?queryCurrentDevice=false&includeStorageDevices=true');
-            if (this.logDebug) this.emit('debug', `Consoles list data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `List data: ${JSON.stringify(data, null, 2)}`);
 
             const status = data.status?.errorCode === 'OK';
             const error = data.status?.errorMessage;
             if (!status) {
-                if (this.logDebug) this.emit('debug', `Console list data error: ${error}`);
+                if (this.logDebug) this.emit('debug', `List data error: ${error}`);
                 return false;
             }
 
             const console = data.result.find(c => c.id === this.liveId);
             if (!console) {
-                if (this.logWarn) this.emit('warn', `Console with Live ID ${this.liveId} not found on server`);
+                if (this.logWarn) this.emit('warn', `Live ID ${this.liveId} not found on server`);
                 return false;
             }
 
@@ -143,7 +143,7 @@ class XboxWebApi extends EventEmitter {
                 }))
             };
 
-            if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', `Console with Live ID ${this.liveId} remote management not enabled`);
+            if (!obj.remoteManagementEnabled && this.logWarn) this.emit('warn', `Live ID ${this.liveId} remote management not enabled`);
             this.rmEnabled = obj.remoteManagementEnabled;
 
             if (this.restFulEnabled) this.emit('restFul', 'consoleslist', data);
@@ -151,7 +151,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Consoles list error: ${error.message}`, { cause: error });
+            throw new Error(`List error: ${error.message}`, { cause: error });
         }
     }
 
@@ -159,7 +159,7 @@ class XboxWebApi extends EventEmitter {
         try {
             const url = `/consoles/${this.liveId}`;
             const { data } = await this.axiosInstance.get(url);
-            if (this.logDebug) this.emit('debug', `Console status data: ${JSON.stringify(data, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Status data: ${JSON.stringify(data, null, 2)}`);
 
             const status = {
                 id: data.id,
@@ -180,7 +180,7 @@ class XboxWebApi extends EventEmitter {
             };
 
             if (!status.status) {
-                if (this.logDebug) this.emit('debug', `Console status error: ${status.error}`);
+                if (this.logDebug) this.emit('debug', `Status error: ${status.error}`);
                 return;
             }
 
@@ -191,7 +191,7 @@ class XboxWebApi extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Console status error: ${error.message}`, { cause: error });
+            throw new Error(`Status error: ${error.message}`, { cause: error });
         }
     }
 

@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v4.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v4.1.0 use Homebridge UI >= v5.13.0
 
+## [4.4.2] - (14.11.2026)
+
+### Changes
+
+- fixed: the console was shown as not responding in the Home app when it did not answer the ping, for example in the energy saving mode, the change of `4.4.0` is reverted, the state of the console is set by the connection with it again
+- changed: removed the word console from the log messages
+
 ## [4.4.1] - (12.11.2026)
 
 ### Changes

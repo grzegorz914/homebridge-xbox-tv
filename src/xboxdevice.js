@@ -2,7 +2,6 @@ import EventEmitter from 'events';
 import XboxWebApi from './webApi/xboxwebapi.js';
 import XboxLocalApi from './localApi/xboxlocalapi.js';
 import Functions from './functions.js';
-import { applyReachability } from './reachability.js';
 import HaDiscovery from './hadiscovery.js';
 import AppIcons from './appicons.js';
 import { DefaultInputs, WebApi } from './constants.js';
@@ -19,8 +18,6 @@ class XboxDevice extends EventEmitter {
         Categories = api.hap.Categories;
         Encode = api.hap.encode;
         AccessoryUUID = api.hap.uuid;
-        this.hap = api.hap;
-        this.reachable = true;
 
         //device configuration
         this.device = device;
@@ -970,7 +967,7 @@ class XboxDevice extends EventEmitter {
                             }
 
                             if (!this.power) {
-                                if (this.logWarn) this.emit('warn', `console is off`);
+                                if (this.logWarn) this.emit('warn', `power is off`);
                                 return;
                             }
 
@@ -1014,8 +1011,6 @@ class XboxDevice extends EventEmitter {
                     accessory.addService(buttonService);
                 }
             }
-
-            applyReachability(accessory, this.hap, () => this.reachable);
 
             return accessory;
         } catch (error) {
@@ -1170,7 +1165,6 @@ class XboxDevice extends EventEmitter {
 
             // BŁ4 FIX: pass restFulEnabled/mqttEnabled booleans, not channelsFile string
             this.xboxLocalApi = new XboxLocalApi(this.device, this.authTokenFile, this.devInfoFile, restFulEnabled, mqttEnabled)
-                .on('reachable', (reachable) => { this.reachable = reachable; })
                 .on('online', async () => {
                     try {
                         await this.onConsoleOnline?.();
