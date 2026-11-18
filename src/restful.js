@@ -126,15 +126,31 @@ class RestFul extends EventEmitter {
             });
 
             // Start the server
-            this.server = app.listen(this.port, () => {
-                this.emit('connected', `RESTful started on port: ${this.port}`);
-            });
+            this.listen(app);
         } catch (error) {
             if (this.logWarn) this.emit('warn', `RESTful Connect error: ${error}`);
         }
     }
 
+    // When the port cannot be opened, for example it is still used after a restart, the server tries again until it starts
+    listen(app) {
+        this.server = app.listen(this.port);
+        const server = this.server;
+        server.once('listening', () => {
+            this.listenWarned = false;
+            this.emit('connected', `RESTful started on port: ${this.port}`);
+        });
+        server.on('error', (error) => {
+            if (this.closed) return;
+            if (this.logWarn && !this.listenWarned) this.emit('warn', `RESTful cannot start on port: ${this.port}, ${error.code ?? error}, trying again every 10 seconds`);
+            this.listenWarned = true;
+            server.close();
+            setTimeout(() => this.listen(app), 10000).unref?.();
+        });
+    }
+
     close() {
+        this.closed = true;
         if (this.server) {
             this.server.close();
             this.server = null;

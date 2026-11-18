@@ -57,6 +57,7 @@ class XboxDevice extends EventEmitter {
         // The broker may come online after the start or restart, the device then publishes again
         this.haReady = false;
         this.mqtt1?.on('online', () => this.mqttOnline().catch((error) => this.emit('warn', `MQTT online error: ${error}`)));
+        this.mqtt1?.on('offline', () => { this.mqttConnected = false; });
         this.functions = new Functions();
 
         //sensors
@@ -1028,6 +1029,7 @@ class XboxDevice extends EventEmitter {
         if (!mqtt1) return;
 
         this.mqtt1.on('online', () => this.mqttOnline().catch((error) => this.emit('warn', `MQTT online error: ${error}`)));
+        this.mqtt1.on('offline', () => { this.mqttConnected = false; });
         if (mqttConnected) await this.mqttOnline();
     }
 

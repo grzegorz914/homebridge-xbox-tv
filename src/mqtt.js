@@ -94,7 +94,10 @@ class Mqtt extends EventEmitter {
                 if (config.logDebug) this.emit('debug', 'MQTT Reconnecting...');
             })
             .on('close', () => {
+                // The broker is gone, the plugin stops to publish until it is connected again, the client would only queue the messages
+                const wasConnected = this.connected;
                 this.connected = false;
+                if (wasConnected) this.emit('offline');
                 if (!hasConnected && !warnedStalled && Date.now() - startTime > 30000) {
                     warnedStalled = true;
                     this.emit('warn', `MQTT has not connected after 30s of retries using protocol v${protocolVersion}. Check broker address, credentials, and whether the broker supports this MQTT protocol version.`);
